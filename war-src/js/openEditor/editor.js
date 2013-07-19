@@ -562,6 +562,8 @@ var WeSchemeEditor;
 
       // Create and render a Picker object for searching images.
       function createPicker() {
+
+
         console.log("In create picker")
         var view = new google.picker.View(google.picker.ViewId.DOCS);
         view.setMimeTypes("image/png,image/jpeg,image/jpg");
@@ -579,6 +581,52 @@ var WeSchemeEditor;
       // A simple callback implementation.
       function pickerCallback(data) {
         if (data.action == google.picker.Action.PICKED) {
+          var SCOPES = [
+              'https://www.googleapis.com/auth/drive.file',
+              'https://www.googleapis.com/auth/drive'
+                        ];
+          var CLIENT_ID = "979522551881-h4kj3gi4p7bm93jb9asec6i807tudps2.apps.googleusercontent.com";
+
+
+          gapi.auth.authorize(
+              {'client_id': CLIENT_ID,
+               'scope': SCOPES.join(' '),
+                'immediate': false},
+              function (authResult) {
+                if (authResult){
+                  console.log("YAY SUCCESS IN AUTH");
+
+                  var fileId = data.docs[0].id;
+                  //insertPermissions(fileId);
+                  var body =
+                            {
+                              "role": "reader",
+                              "type": "anyone",
+                              "value": "default",
+                              "withLink": true
+                            };
+
+                    gapi.client.load('drive', 'v2', function(){
+                    var request = gapi.client.drive.permissions.insert({
+                                    'fileId': fileId,
+                                        'resource': body
+                                        });
+                                request.execute(function(resp) { });
+                              });
+                      code = editor.getCode();
+                            curPos = editor.getCursorStartPosition();
+                            preCursorCode = code.slice(0, curPos);
+                            postCursorCode = code.slice(curPos, code.length);
+                            pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
+                            editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
+
+                }
+                else {
+                  console.log(authResult);
+                  console.log("ERROR In AUTH");
+                }
+                });
+          /*
           var fileId = data.docs[0].id;
           //insertPermissions(fileId);
           var body =
@@ -602,7 +650,8 @@ var WeSchemeEditor;
           postCursorCode = code.slice(curPos, code.length);
           pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
           editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
-        }
+          */
+          }
       }
 
         createPicker();
