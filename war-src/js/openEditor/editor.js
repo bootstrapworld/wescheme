@@ -22,9 +22,9 @@ var WeSchemeEditor;
     // The timeout between autosaving.
     var AUTOSAVE_TIMEOUT = 10000;
 
-    // 
+    //
     // These are the dependencies we're trying to maintain.
-    // 
+    //
 
     // isDirty: true if the file has been changed
     //          false when the file becomes saved.
@@ -34,16 +34,16 @@ var WeSchemeEditor;
     //             and you own the file
     //             and you are logged in (non-"null" name)
 
-    // 
+    //
     // cloneButton: enabled when you are logged in (non-"null" name)
     //              and the file isn't dirty
 
-    // 
+    //
     // runButton: enabled all the time
 
     // the definitions and filename areas: readonly if you don't own the file,
 
-    
+
     //////////////////////////////////////////////////////////////////////
 
     WeSchemeEditor = function(attrs, afterInit) {
@@ -74,12 +74,12 @@ var WeSchemeEditor;
 	    attrs.interactions,
 	    function(interactions) {
 		that.interactions = interactions;
-		    
+
 		that.interactions.setSourceHighlighter(function(id, offset, line, column, span, color) {
 		    that.unhighlightAll();
 		    return that.highlight(id, offset, line, column, span, color);
 		});
-		
+
 		that.interactions.setAddToCurrentHighlighter(function(id, offset, line, column, span, color) {
 		    return that.highlight(id, offset, line, column, span, color);
 		});
@@ -88,7 +88,7 @@ var WeSchemeEditor;
 		that.interactions.setMoveCursor(function(id, offset){that.moveCursor(id, offset)});
 		that.interactions.setScrollIntoView(function(id, offset, margin){that.scrollIntoView(id, offset, margin)});
 		that.interactions.setFocus(function(id){that.focus(id)});
-		that.interactions.addSetSelection(function(id, offset, line, column, span){ 
+		that.interactions.addSetSelection(function(id, offset, line, column, span){
 			that.setSelection(id, offset, line, column, span);});
 
 		// pid: (or false number)
@@ -115,7 +115,7 @@ var WeSchemeEditor;
 
 		that.defn.getSourceB().changes().mapE(function() {
 		    //when text changes, everything unhighlighted
-		    that.unhighlightAll();		  
+		    that.unhighlightAll();
 		    plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
 		});
 
@@ -125,7 +125,7 @@ var WeSchemeEditor;
 
 		// savedE is a boolean eventStream which receives true
 		// when a save has happened.
-		that.savedE = receiverE();	
+		that.savedE = receiverE();
 
 		// loadedE is a boolean eventStream that receives true whenever
 		// a load has happened.
@@ -140,39 +140,39 @@ var WeSchemeEditor;
 		that.contentChangedE = mergeE(
 		    constantE(changes(that.defn.getSourceB()), true),
 		    constantE(changes(that.filenameEntry.behavior), true));
-		
+
 
 		that.isOwnerE = receiverE();
 
 		// loggedInB is a boolean behavior that's true when the user has
 		// logged in.
 		that.isLoggedInB = constantB(that._getIsLoggedIn());
-		
-	
+
+
 	        // The program id pid as a behavior.
 		// A number or false behavior.
 		that.pidB = startsWith(
 		    that.loadedE.mapE(function(v) {
 			return that.pid; }),
 		    that.pid);
-		
-		
+
+
 		// Returns true if the file is new.
 		that.isNewFileB = startsWith(
  		    changes(that.pidB).mapE(function(v) {
  			return that.pid == false; }),
  		    that.pid == false);
-		
-		
+
+
 		that.isPublishedB = startsWith(that.isPublishedE,
 					       false);
 
-		
+
 		// isOwnerB is a boolean behavior that's true if we own the file,
 		// and false otherwise.  It changes on load.
 		that.isOwnerB = startsWith(that.isOwnerE, that.isOwner);
-		
-		
+
+
 		// isDirtyB is initially false, and changes when
 		// saves or changes to the source occur.
 		that.isDirtyB = startsWith(
@@ -195,19 +195,19 @@ var WeSchemeEditor;
 
 		// We'll fire off an autosave if the content has changed and
 		// saving is enabled, and it's not a new file.
-		that.autosaveRequestedE = 
+		that.autosaveRequestedE =
 		    calmE(andE(that.contentChangedE,
 			       changes(that.isAutosaveEnabledB)),
 			  constantB(AUTOSAVE_TIMEOUT));
-		
-		
+
+
 
 		//////////////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////
 		// HOOKS
 
 		// Autosave
-		that.autosaveRequestedE.mapE(function(v) { 
+		that.autosaveRequestedE.mapE(function(v) {
 		    if (v) {
 			that._autosave();
 		    }
@@ -257,7 +257,7 @@ var WeSchemeEditor;
 
 
     WeSchemeEditor.prototype.highlight = function(id, offset, line, column, span, color) {
-    	if(id === '<no-location>'){ 
+    	if(id === '<no-location>'){
     		//do nothing
     	}
 		else if (id === '<definitions>') {
@@ -274,7 +274,7 @@ var WeSchemeEditor;
 		    this.interactions.previousInteractionsTextContainers[id].setSelection(id, offset, line, column, span);
 		}
     };
-    
+
     WeSchemeEditor.prototype.unhighlightAll = function() {
     	var key;
       for(key in this.interactions.previousInteractionsTextContainers) {
@@ -336,7 +336,7 @@ var WeSchemeEditor;
 	};
 
 	var onFirstSave = function() {
-	    that.actions.save({ pid: false, 
+	    that.actions.save({ pid: false,
 		                title: that.filenameEntry.attr("value"),
 		                code : that.defn.getCode()},
 		              doPageReload,
@@ -362,7 +362,7 @@ var WeSchemeEditor;
 			that.defn.getCode(),
 			function(newPid) {
 	                    that.actions.save(
-                                { pid: newPid, 
+                                { pid: newPid,
 		                  title: that.filenameEntry.attr("value"),
 		                  code : that.defn.getCode()},
                                 function() {
@@ -381,12 +381,12 @@ var WeSchemeEditor;
         var doPageReload = function(pid) {
             that.suppressWarningBeforeUnloadE.sendEvent(true);
             plt.wescheme.WeSchemeIntentBus.notify("before-editor-reload-on-save", that)
-	    window.location = 
+	    window.location =
 		"/openEditor?pid=" + encodeURIComponent(pid);
         };
-	
 
-	that.filenameEntry.attr("value", 
+
+	that.filenameEntry.attr("value",
 				plt.wescheme.helpers.trimWhitespace(
 				    that.filenameEntry.attr("value")));
 	that._enforceNonemptyName(afterFileNameChosen,
@@ -408,7 +408,7 @@ var WeSchemeEditor;
 	    var onSaveButton = function() {
 		buttonPressed = true;
 		dialogWindow.dialog("close");
-		that.filenameEntry.attr("value", 
+		that.filenameEntry.attr("value",
 					plt.wescheme.helpers.trimWhitespace(
 					    inputField.attr("value")));
 		that._enforceNonemptyName(afterK, abortK, false);
@@ -482,7 +482,7 @@ var WeSchemeEditor;
     WeSchemeEditor.prototype.load = function(attrs, onSuccess, onFail) {
 	var that = this;
 
-	
+
 	var whenLoadSucceeds = function(aProgram) {
  	    that.pid = aProgram.getId();
  	    var publicUrl = getAbsoluteUrl(
@@ -499,7 +499,7 @@ var WeSchemeEditor;
  	            that.defn.setCode(";;  << Source code has not been shared >>");
                 }
             }
-	    
+
 	    if (that.userName === aProgram.getOwner()) {
 		that._setIsOwner(true);
 	    } else {
@@ -511,7 +511,7 @@ var WeSchemeEditor;
 	    if (onSuccess) { onSuccess(aProgram.getSourceCode()); }
 	};
 
-	var whenLoadFails = function() { 
+	var whenLoadFails = function() {
 	    // FIXME
 	    alert("The load failed.");
 	    if (onFail) { onFail(); }
@@ -539,7 +539,7 @@ var WeSchemeEditor;
 	anchor.href = relativeUrl;
 	return anchor.href;
     }
-	
+
 
     WeSchemeEditor.prototype.share = function() {
 	var dialog = new plt.wescheme.SharingDialog(this.pid, this.defn.getCode());
@@ -557,14 +557,14 @@ var WeSchemeEditor;
     };
 
     WeSchemeEditor.prototype.showPicker = function() {
-    
+
       console.log("In show picker")
 
       // Create and render a Picker object for searching images.
       function createPicker() {
         console.log("In create picker")
         var view = new google.picker.View(google.picker.ViewId.DOCS);
-        view.setMimeTypes("image/png,image/jpeg,image/jpg");    
+        view.setMimeTypes("image/png,image/jpeg,image/jpg");
         var picker = new google.picker.PickerBuilder()
             .enableFeature(google.picker.Feature.NAV_HIDDEN)
             .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
@@ -581,12 +581,14 @@ var WeSchemeEditor;
       function pickerCallback(data) {
         if (data.action == google.picker.Action.PICKED) {
           var fileId = data.docs[0].id;
-          alert('The user selected: ' + fileId);
+          var url = "https://drive.google.com/uc?export=download&id=" + fileId;
+
+          alert('The user selected: ' + url);
         }
       }
       createPicker();
 
-    
+
     }
 
 
@@ -595,14 +597,14 @@ var WeSchemeEditor;
 	plt.wescheme.WeSchemeIntentBus.notify("before-run", this);
 	this.interactions.reset();
 	this.interactions.runCode(
-	    this.defn.getCode(), 
+	    this.defn.getCode(),
 	    "<definitions>",
 	    function() {
 		plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
 		if (after) { after(); }
 	    });
     };
-    
+
     WeSchemeEditor.prototype.getDefinitionsText = function() {
         return this.defn.getCode();
     };
@@ -631,7 +633,7 @@ var WeSchemeEditor;
 	    var a = document.createElement("a");
 	    a.href = "/view?publicId=" + encodeURIComponent(publicId);
 	    a.appendChild(document.createTextNode(a.href));
-	    return jQuery(a); 
+	    return jQuery(a);
 	}
     }
 
