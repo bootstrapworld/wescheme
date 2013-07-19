@@ -580,22 +580,32 @@ var WeSchemeEditor;
       function pickerCallback(data) {
         if (data.action == google.picker.Action.PICKED) {
           var fileId = data.docs[0].id;
-<<<<<<< HEAD
-          var url = "https://drive.google.com/uc?export=download&id=" + fileId;
+          //insertPermissions(fileId);
+          var body =
+          {
+            "role": "reader",
+            "type": "anyone",
+            "value": "default",
+            "withLink": true
+          };
 
-          alert('The user selected: ' + url);
-=======
+          gapi.client.load('drive', 'v2', function(){
+              var request = gapi.client.drive.permissions.insert({
+              'fileId': fileId,
+                  'resource': body
+                  });
+              request.execute(function(resp) { });
+            });
           code = editor.getCode();
           curPos = editor.getCursorStartPosition();
           preCursorCode = code.slice(0, curPos);
           postCursorCode = code.slice(curPos, code.length);
           pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
           editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
->>>>>>> ff894c4cdaf07bfdd76a5ac527f6228c9377d91b
         }
       }
-      createPicker();
 
+        createPicker();
 
     }
 
