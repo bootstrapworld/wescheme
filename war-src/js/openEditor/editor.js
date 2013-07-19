@@ -566,10 +566,8 @@ var WeSchemeEditor;
         var view = new google.picker.View(google.picker.ViewId.DOCS);
         view.setMimeTypes("image/png,image/jpeg,image/jpg");
         var picker = new google.picker.PickerBuilder()
-            .enableFeature(google.picker.Feature.NAV_HIDDEN)
             .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
             .setAppId("united-blend-281")
-            //.setOAuthToken(AUTH_TOKEN) //Optional: The auth token used in the current Drive API session.
             .addView(view)
             .addView(new google.picker.DocsUploadView())
             .setCallback(pickerCallback)
@@ -577,13 +575,23 @@ var WeSchemeEditor;
          picker.setVisible(true);
       }
 
+      editor = this.defn;
       // A simple callback implementation.
       function pickerCallback(data) {
         if (data.action == google.picker.Action.PICKED) {
           var fileId = data.docs[0].id;
+<<<<<<< HEAD
           var url = "https://drive.google.com/uc?export=download&id=" + fileId;
 
           alert('The user selected: ' + url);
+=======
+          code = editor.getCode();
+          curPos = editor.getCursorStartPosition();
+          preCursorCode = code.slice(0, curPos);
+          postCursorCode = code.slice(curPos, code.length);
+          pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
+          editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
+>>>>>>> ff894c4cdaf07bfdd76a5ac527f6228c9377d91b
         }
       }
       createPicker();
