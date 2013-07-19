@@ -141,6 +141,7 @@ var initializeEditor;
 			jQuery("#save").click(function() { myEditor.save(); });
 			jQuery("#share").click(function()  { myEditor.share(); });
 			jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
+ 			jQuery("#images").click(function() { myEditor.showPicker() });
 			jQuery("#logout").click(function() { 
                             if(confirm("You will be logged out of WeScheme and other Google services.")) {
                                 submitPost("/logout"); 

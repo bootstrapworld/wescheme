@@ -556,6 +556,39 @@ var WeSchemeEditor;
         dialog.show(onSuccess, onFail);
     };
 
+    WeSchemeEditor.prototype.showPicker = function() {
+    
+      console.log("In show picker")
+
+      // Create and render a Picker object for searching images.
+      function createPicker() {
+        console.log("In create picker")
+        var view = new google.picker.View(google.picker.ViewId.DOCS);
+        view.setMimeTypes("image/png,image/jpeg,image/jpg");    
+        var picker = new google.picker.PickerBuilder()
+            .enableFeature(google.picker.Feature.NAV_HIDDEN)
+            .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+            .setAppId("united-blend-281")
+            //.setOAuthToken(AUTH_TOKEN) //Optional: The auth token used in the current Drive API session.
+            .addView(view)
+            .addView(new google.picker.DocsUploadView())
+            .setCallback(pickerCallback)
+            .build();
+         picker.setVisible(true);
+      }
+
+      // A simple callback implementation.
+      function pickerCallback(data) {
+        if (data.action == google.picker.Action.PICKED) {
+          var fileId = data.docs[0].id;
+          alert('The user selected: ' + fileId);
+        }
+      }
+      createPicker();
+
+    
+    }
+
 
     WeSchemeEditor.prototype.run = function(after) {
 	var that = this;
