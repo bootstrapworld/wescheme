@@ -167,6 +167,7 @@ a#stop   span:before{content: url(break.png);  margin-right: 3px;}
 a#save   span:before{content: url(save.png);   margin-right: 3px;}
 a#share  span:before{content: url(share.png);  margin-right: 3px;}
 a#recipe span:before{content: url(recipe.png); margin-right: 3px;}
+a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 #toolbar li a, #toolbar li a:visited{
     display:		block;
