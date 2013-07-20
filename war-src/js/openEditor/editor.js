@@ -561,7 +561,7 @@ var WeSchemeEditor;
     // Shows an Image Picker enabling choosing an image from Google Drive to the 
     // Definitions console. The image chosen will be translated into a function
     // call in the form (bitmap/url <image_url>).
-    WeSchemeEditor.prototype.showPicker = function() {
+    WeSchemeEditor.prototype.showPicker = function(defnInFocus) {
 
 	// Create and render a Picker object for searching images.
 	var APP_ID = plt.config.APP_ID;
@@ -578,9 +578,8 @@ var WeSchemeEditor;
 	    picker.setVisible(true);
 	}
 
-	var editor = this.defn;
+	var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
 	var data;
-	
 
 	// Setting the image permissions for anyone having 
 	// the link.

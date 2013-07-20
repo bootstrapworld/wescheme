@@ -110,6 +110,8 @@ var initializeEditor;
 	var userName = attrs['userName'];
 	var pid = attrs['pid'];
 	var publicId = attrs['publicId'];
+  
+  var defnInFocus = true;
 
 
 	// Fixme: trigger file load if the pid has been provided.
@@ -141,13 +143,15 @@ var initializeEditor;
 			jQuery("#save").click(function() { myEditor.save(); });
 			jQuery("#share").click(function()  { myEditor.share(); });
 			jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
- 			jQuery("#images").click(function() { myEditor.showPicker() });
+ 			jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
 			jQuery("#logout").click(function() { 
                             if(confirm("You will be logged out of WeScheme and other Google services.")) {
                                 submitPost("/logout"); 
                             }
                         });
 			jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
+
+      jQuery("#definitions").click(function() { defnInFocus = true;});
 
 
 			var afterLoad1 = function() {
@@ -168,6 +172,7 @@ var initializeEditor;
 
 			    // Set up interactions afterwards.
 			    jQuery("#interactions").click(function(e) {
+        defnInFocus = false;
 				myEditor.interactions.focusOnPrompt();
 				e.stopPropagation();
 				e.preventDefault();
