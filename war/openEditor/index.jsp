@@ -5,7 +5,7 @@
 
     <title>WeScheme</title>
     <!-- Tags for on mobile -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black" />	
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-icon-precomposed" href="/css/images/BigLogo.png" />
 
@@ -30,7 +30,12 @@
     <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
 
+   <!-- The standard Google Loader script; use your own key. -->
+    <script src="http://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
+    <script type="text/javascript">
+      google.load('picker', '1');
 
+    </script>
 
     <!-- JQuery UI style sheet -->
     <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
@@ -50,7 +55,7 @@
     <script src="/js/jquery/jquery.createdomnodes-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.center-in-client-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.blockUI-min.js" type="text/javascript"></script>
-    
+
     <script src="/js/codemirror2/lib/codemirror-min.js" type="text/javascript"></script>
 
     <script src="/js/codemirror2/addon/edit/matchbrackets.js" type="text/javascript"></script>
@@ -72,7 +77,7 @@
     <script src="/widget/js/DRwidget.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="/widget/css/editor.css"></link>
 
-    
+
     <script src="/js/submitpost-min.js" type="text/javascript"></script>
 
 
@@ -83,18 +88,21 @@
     <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
 
 
+<!--    <script src="https://apis.google.com/js/client:plusone.js"></script>
+-->
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 
     <%
-       org.wescheme.user.Session userSession = 
-       (new org.wescheme.user.SessionManager()).authenticate(request, response); 
+       org.wescheme.user.Session userSession =
+       (new org.wescheme.user.SessionManager()).authenticate(request, response);
 
-       boolean isEmbedded = false;       
+       boolean isEmbedded = false;
        %>
 
 
     <script type="text/javascript">
       jQuery(document).ready(function() {
-          var userName, pid, publicId, 
+          var userName, pid, publicId,
               hideHeader, hideToolbar,
               hideProjectName,
               hideFooter, hideDefinitions, hideInteractions,
@@ -110,7 +118,7 @@
           warnOnExit = true;
           isEmbedded = false;
           noColorError = false;
-      
+
 
           userName = "<%= userSession != null? userSession.getName() : null %>";
 
@@ -155,13 +163,13 @@
           <% } %>
 
           <% if (request.getParameter("interactionsText") != null) { %>
-	     interactionsText = 
+	     interactionsText =
 	         decodeURIComponent("<%= java.net.URLEncoder.encode(
 					 request.getParameter("interactionsText"), "utf-8").replaceAll("\\+", "%20") %>");
           <% } %>
 
           <% if (request.getParameter("definitionsText") != null) { %>
-	     definitionsText = 
+	     definitionsText =
 	         decodeURIComponent("<%= java.net.URLEncoder.encode(
 					 request.getParameter("definitionsText"), "utf-8").replaceAll("\\+", "%20") %>");
           <% } %>
@@ -193,7 +201,7 @@
 
 
           initializeEditor({userName: userName,
-                            pid : pid, 
+                            pid : pid,
                             publicId: publicId,
 	                    hideHeader: hideHeader,
 	                    hideToolbar: hideToolbar,
@@ -208,15 +216,15 @@
                             noColorError: noColorError });
       });
     </script>
-	
-	<script> 		
+
+	<script>
         jQuery(function()
         {
         		var viewportWidth = jQuery(window).width();
 				var viewportHeight = jQuery(window).height();
-                var something = jQuery("#documentation").dialog({autoOpen: false, 
+                var something = jQuery("#documentation").dialog({autoOpen: false,
                 								title: "Documentation",
-                								position: "right", 
+                								position: "right",
                 								minWidth: viewportWidth / 4,
                 								minHeight: viewportHeight / 2,
                 								width: viewportWidth / 3,
@@ -228,21 +236,21 @@
               //something.dialog('close');
         });
 	</script>
-	
-	
+
+
   </head>
-  
-  
-  <body>  
-  	
-  
+
+
+  <body>
+
+
     <div id="editor">
-	      
-      
-        
-      
+
+
+
+
       <div class="top" id="top">
-	
+
 	<!-- The dialog div here will be used by jquery -->
 	<div id="dialog" style="display:none;"></div>
 
@@ -263,7 +271,7 @@
 
           <div class="section" id="design-recipe-examples">
             <div id="design-recipe-example1_wrapper">
-              <span class="spacer">(EXAMPLE </span> 
+              <span class="spacer">(EXAMPLE </span>
               <div class="indent-wrapper">
               	<textarea id="design-recipe-example1_header"></textarea>
               	<textarea id="design-recipe-example1_body"></textarea>
@@ -283,7 +291,7 @@
             <span class="error" id="design-recipe-example2_error"></span>
           </div>
 
-          
+
           <div class="section" id="design-recipe-definition">
             <div id="design-recipe-definition_wrapper">
               <span class="spacer">(define </span>
@@ -297,10 +305,10 @@
           </div>
 
 	  <div class="toolbar">
-            <input type="button" 
+            <input type="button"
                    id="design-recipe-insertCode"
-                   class="button" 
-                   value="Insert" 
+                   class="button"
+                   value="Insert"
                    style="float: right; color: black;"/>
 	    <input type="button" id="design-recipe-cancel" class="button" value="Cancel" style="float: left;" />
 	  </div>
@@ -314,7 +322,7 @@
 
 
 
-	
+
 	<div id="header">
 	  <h1>WeScheme</h1>
 	  <h2>
@@ -326,7 +334,8 @@
       </h2>
 	</div>
 
-	
+
+  <div id="result"></div>
 	<div id="toolbar">
 	  <ul>
 	    <li><a id="run"><span>Run</span></a></li>
@@ -334,6 +343,7 @@
 	    <% if (userSession != null) { %>
 	    <li><a id="save"><span>Save</span></a></li>
 	    <li><a id="share"><span>Share</span></a></li>
+	    <li><a id="images"><span>Images</span></a></li>
 	    <% } %>
         <li><a id="recipe"><span>Recipe</span></a></li>
 	  </ul>
@@ -357,7 +367,7 @@
 	  <!-- <input id="docButton" type="button" value="Click me to hide documentation"/> -->
 	  <input id="resetButton" type="image" src="/images/home.png"/>
           <iframe id="docFrame" style="width:97%; height:95%"></iframe>
-        </div> 
+        </div>
 
 
 
@@ -374,17 +384,17 @@
             <textarea id="defn">&#59;  Write your code here
 </textarea>
 	  </div>
-	  
+
 	  <div id="interactions" class="goog-splitpane-second-container">
 	    <div id="inter">
 	      <div style="width: 100%; height:100%"><span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span></div>
 	    </div>
 	  </div>
 
-	  <div class="goog-splitpane-handle"></div> 
+	  <div class="goog-splitpane-handle"></div>
 	</div>
       </div> <!-- End middle -->
-      
+
 
 
       <div id="bottom" class="bottom">
@@ -393,13 +403,13 @@
 	  <div id="statusbar" style="float: left; margin-left: 10px;" ></div>
 	  <div id="editorMode" style="float: right; margin-right: 10px;">
             <input type="button"
-		   id="bespinMode" 
+		   id="bespinMode"
 		   value="Bespin Editor Mode"
                    style="display:none;"/>
 	  </div>
 
 	  <!-- Temporarily commented out until we fix the css styles -->
-	  
+
 <!-- 	  <div style="text-align: right; margin-right: 10px;">	     -->
 <!-- 	    Editor Style:&nbsp; -->
 <!-- 	    <select onchange="switchStyle(this.value)"> -->
@@ -407,12 +417,12 @@
 <!-- 	      <option value="hacker.css">Hacker</option> -->
 <!-- 	      <option value="compact.css">Compact</option> -->
 <!-- 	      <option value="personal.css">Personal</option> -->
-	      
+
 <!-- 	    </select> -->
 <!-- 	  </div> -->
 
 	</div> <!-- end footer -->
-	
+
       </div> <!-- end bottom -->
 
     </div> <!-- end editor -->
@@ -431,7 +441,7 @@
 
     jQuery("#recipe").bind("click", function(e) { e.preventDefault(); e.stopPropagation(); widget.showWidget(); });
     });
-    
+
     <% if (isEmbedded) { %>
     // If we're in embedded mode, start up a socket for cross domain messaging support.
     var rpc = new easyXDM.Rpc({ local: "/js/easyXDM/name.html",
@@ -442,7 +452,7 @@
                                                 },
                                           requestBreak : function(onSuccess) {
                                                               myEditor.requestBreak();
-                                                              onSuccess(); 
+                                                              onSuccess();
                                                          },
                                           getDefinitionsText : function(onSuccess) {
                                                                    onSuccess(myEditor.getDefinitionsText());
