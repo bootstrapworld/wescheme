@@ -619,7 +619,7 @@ var WeSchemeEditor;
 		gapi.client.load('drive', 'v2', setPermissionsAndInsertCode.bind(this, fileId, body));
 	    }
 	    else {
-		console.log("There has been an error with the authorisation.");
+		// console.log("There has been an error with the authorisation.");
 	    }
 	}
 
