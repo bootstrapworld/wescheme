@@ -10869,6 +10869,7 @@ if (typeof(world) === 'undefined') {
         var that = this;
         this.animationHackImg = this.img.cloneNode(true);
         document.body.appendChild(this.animationHackImg);
+        this.animationHackImg.style.position = 'absolute';
         this.animationHackImg.style.top = '-2000px';
         if (this.animationHackImg.complete) {
             afterInit(that);
