@@ -27,13 +27,13 @@ goog.require('plt.wescheme.cookies');
     var BrowserDetect = plt.wescheme.BrowserDetect;
     var Cookies = plt.wescheme.cookies;
 
-    var fullySupportedVersions = [ {browser: 'Safari', greaterThanOrEqual: '5'},
+    var fullySupportedVersions = [ {browser: 'Safari', greaterThanOrEqual: '6'},
 				   {browser: 'Chrome', greaterThanOrEqual: '5'},
-				   {browser: 'Firefox', greaterThanOrEqual: '3.5.1'},
-                                   {browser: 'Explorer', greaterThanOrEqual: '8'}];
+				   {browser: 'Firefox', greaterThanOrEqual: '4'},
+                                   {browser: 'Explorer', greaterThanOrEqual: '9'}];
 
     var knownBadBrowsers = [ {browser: 'Explorer', lessThan: '8'},
-			     {browser: 'Safari', lessThan: '4'},
+			     {browser: 'Safari', lessThan: '5'},
 			     {browser: 'Firefox', lessThan: '3.6'} ];
 
 
