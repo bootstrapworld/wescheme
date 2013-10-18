@@ -27,10 +27,10 @@ goog.require('plt.wescheme.cookies');
     var BrowserDetect = plt.wescheme.BrowserDetect;
     var Cookies = plt.wescheme.cookies;
 
-    var fullySupportedVersions = [ {browser: 'Safari', greaterThanOrEqual: '6'},
-				   {browser: 'Chrome', greaterThanOrEqual: '5'},
-				   {browser: 'Firefox', greaterThanOrEqual: '4'},
-                                   {browser: 'Explorer', greaterThanOrEqual: '9'}];
+    var fullySupportedVersions = [{browser: 'Safari', greaterThanOrEqual: '6'},
+                                  {browser: 'Chrome', greaterThanOrEqual: '5'},
+                                  {browser: 'Firefox', greaterThanOrEqual: '4'},
+                                  {browser: 'Explorer', greaterThanOrEqual: '9'}];
 
     var knownBadBrowsers = [ {browser: 'Explorer', lessThan: '8'},
 			     {browser: 'Safari', lessThan: '5'},
@@ -66,14 +66,14 @@ goog.require('plt.wescheme.cookies');
 	    if (browserAlreadyChecked()) {
 		return;
 	    }
-	    var greaterThanOrEqual;
-	    for (var i = 0 ; i < fullySupportedVersions; i++) {
-		if (browser === fullySupportedVersions[i].browser) {
+	    var greaterThanOrEqual = 9;
+	    for (var i = 0 ; i < fullySupportedVersions.length; i++) {
+ 		if (browser === fullySupportedVersions[i].browser) {
 		    greaterThanOrEqual  = fullySupportedVersions[i].greaterThanOrEqual;
 		}
 	    }
 	    markBrowserChecked();
-	    warnBrowserPartiallySupported(browser, greaterThanOrEqual);
+	    warnBrowserPartiallySupported(browser, 9);
             return;
 	} 
 
@@ -126,7 +126,7 @@ goog.require('plt.wescheme.cookies');
     var isPartiallySupported = function(browser, versionString) {
 	if (isUnsupported(browser, versionString)) { return false; }
 	if (isFullySupported(browser, versionString)) { return false; }
-    	for (var i = 0; i < fullySupportedVersions.length; i++) {
+    for (var i = 0; i < fullySupportedVersions.length; i++) {
     	    if (browser === fullySupportedVersions[i].browser) {
 		return true;
 	    }
