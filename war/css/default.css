@@ -106,19 +106,22 @@ body {
     text-decoration: underline;
 }
 
-.header-minimized {
+#header.header-minimized {
     background: none !important;
     height: 20px !important;
+    padding-bottom: 0px;
 }
 
 .header-minimized h1 {
     margin-left: 5px;
-    font-size: 0.7em;
+    font-size: 1em;
+    display: inline-block;
 }
 
 .header-minimized h2 {
     margin-left: 5px;
-    font-size: 0.4em;
+    font-size: 1em;
+    display: inline-block;
 }
 
 h1{ font-size:	38px;	margin-left:	65px;}
