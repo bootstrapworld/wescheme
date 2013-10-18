@@ -122,13 +122,13 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
         };
 
         if (this.pid) {
-            dialogWindow.append(jQuery("<p/>").text("Do you wish to share with an \"Edit Source\" button?"));
-            dialogWindow.dialog({title: 'Sharing your program',
+            dialogWindow.append(jQuery("<p/>").text("Publishing will let your friends run this program. Would you like them to be able to see your code, too?"));
+            dialogWindow.dialog({title: 'Publish My Program',
                                  bgiframe : true,
                                  modal : true,
                                  overlay : {opacity: 0.5, background: 'black'},
-                                 buttons : { "Include \"Edit Source\" button" : shareWithSource,
-                                             "Omit \"Edit Source\" button" : shareWithoutSource }
+                                 buttons : { "Yes" : shareWithSource,
+                                             "No" : shareWithoutSource }
                                 });
             dialogWindow.dialog("open");
         } else {
