@@ -216,7 +216,17 @@
                             noColorError: noColorError });
       });
     </script>
-
+	<script>
+		jQuery(document).ready(function() {
+			jQuery('#headerToggle').toggle(function() {
+				jQuery('#header').addClass('header-minimized');
+				jQuery('#headerToggle').html('&raquo;');
+			}, function() {
+				jQuery('#header').removeClass('header-minimized');
+				jQuery('#headerToggle').html('&laquo;');
+			});
+		});
+	</script>
 	<script>
         jQuery(function()
         {
@@ -324,7 +334,7 @@
 
 
 	<div id="header">
-	  <h1>WeScheme</h1>
+	  <h1>WeScheme <span id="headerToggle">&laquo;</span></h1>
 	  <h2>
             <a id="docs">Documentation</a>
 	    <% if (userSession != null) { %>

@@ -102,6 +102,25 @@ body {
     padding-bottom: 4px;
 }
 
+#headerToggle:hover {
+    text-decoration: underline;
+}
+
+.header-minimized {
+    background: none !important;
+    height: 20px !important;
+}
+
+.header-minimized h1 {
+    margin-left: 5px;
+    font-size: 0.7em;
+}
+
+.header-minimized h2 {
+    margin-left: 5px;
+    font-size: 0.4em;
+}
+
 h1{ font-size:	38px;	margin-left:	65px;}
 h2{	font-size: 14px; margin-left:	65px;}
 
@@ -182,7 +201,6 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     color: white;
     cursor: pointer;
 }
-
 
 .clickableAnchor {
     color: white;
