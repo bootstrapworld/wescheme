@@ -67,7 +67,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
                 },
                 onAbort);
         } else {
-            dialogWindow.append(jQuery("<span>Please save the program first.</span>"));
+            dialogWindow.append(jQuery("<span>Please save the program first. You may need to go back and log in, if you haven't already.</span>"));
 	    dialogWindow.dialog({title: 'Notes',
 			         bgiframe : true,
 			         modal : true,
