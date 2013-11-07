@@ -44,7 +44,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
         // If sharing is completely successful, onSuccess will be called.
         // If at any point, something breaks, onFailure will be called.
         var doTheSharing = function(isPublic) {
-            plt.wescheme.WeSchemeIntentBus.notify("before-share", that);
+            plt.wescheme.WeSchemeIntentBus.notify("before-publish", that);
             
             that.actions.makeAClone(
                 that.pid, 
@@ -78,7 +78,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
                                             if (onShareSuccess) {onShareSuccess(sharedProgram);}
                                         }
                                        });
-                                   plt.wescheme.WeSchemeIntentBus.notify("after-share", that);
+                                   plt.wescheme.WeSchemeIntentBus.notify("after-publish", that);
                                    
                                    newDialog.append(jQuery("<p/>").text("Program has been shared: "));
                                    var publicId = sharedProgram.find("publicId").text();
