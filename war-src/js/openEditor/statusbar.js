@@ -25,23 +25,24 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
     var that = this;
     var handleNotifyIntent = function(action, category, data) {
 	    var editorNotifyCategoryMap = {
-        'before-save': 'Program is being saved',
-        'after-save': 'Program has been saved',
-        'before-clone': 'Program is being cloned',
-        'after-clone': 'Program has been cloned',
-        'before-load': 'Program is being loaded',
-        'after-load': 'Program has been loaded',
-        'before-publish': 'Program is being published',
+        'before-save': 'Saving your program (please wait...)',
+        'after-save': 'Your program has been saved',
+        'before-clone': 'Saving a copy of this program to your account',
+        'after-clone': 'You are now working on your own copy',
+        'before-load': 'Loading your program (please wait...)',
+        'after-load': 'Your program has been loaded',
+        'before-publish': 'Publishing your program (please wait...)',
         'after-publish': 'Program has been published',
-        'before-run': 'Program is being executed',
-        'after-run': 'Program has been executed',
-        'before-share': 'Program is being shared',
-        'after-share': 'Program has been shared',
+        'before-run': 'Running your program (please wait...)',
+        'after-run': 'Finished running your program',
         'before-editor-reload-on-save': 'Please wait; saving program...'
       };
-	    if (action === 'notify' &&
-          editorNotifyCategoryMap[category]) {
-          that.notify(editorNotifyCategoryMap[category]);
+      // a list of all notifications for which we'd like to have the message wait before being cleared
+      var waitingCategories = ['before-save', 'before-load', 'before-publish', 'before-run'];
+      var waitForNextMessage = (waitingCategories.indexOf(category) >-1);
+                                                      
+	    if (action === 'notify' && editorNotifyCategoryMap[category]) {
+          that.notify(editorNotifyCategoryMap[category], waitForNextMessage);
 	    } else if (action === 'notify' && category === 'exception') {
         var component = data[0];
         if (component instanceof WeSchemeEditor) {
@@ -90,8 +91,11 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
     };
 
 
-    WeSchemeStatusBar.prototype.notify = function(msg) {
+    WeSchemeStatusBar.prototype.notify = function(msg, waitForNextMessage) {
       var that = this;
+      var fadeOutFn = function() {
+        that.statusbar.fadeOut("fast", function () { that.statusbar.text(""); });
+      };
       
       if (this.fadeCallbackId) {
           clearTimeout(this.fadeCallbackId);
@@ -102,15 +106,13 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
         
       this.statusbar.text(msg);
       this.statusbar.fadeIn("fast");
-
-      this.fadeCallbackId = setTimeout(
-          function() {
-        that.statusbar.fadeOut("fast", function () { that.statusbar.text(""); });
-          }, 
-          this.delay_till_fade);
-      // FIXME: make transparent after a while.
-      // FIXME: use flapjax to guarantee that a message shows up for some period of time.
-      // FIXME: allow the user to see all the statusbar messages sent to us.
+      
+      if(!waitForNextMessage){
+        // FIXME: make transparent after a while.
+        // FIXME: use flapjax to guarantee that a message shows up for some period of time.
+        // FIXME: allow the user to see all the statusbar messages sent to us.
+        this.fadeCallbackId = setTimeout(fadeOutFn, this.delay_till_fade);
+      }
     };
 
     return WeSchemeStatusBar;
