@@ -16,13 +16,13 @@
 
 (define-runtime-path codemirror-dir (build-path "war" "js" "codemirror2"))
 
-
+(define appengine-version "1.8.8")
 (define appengine-url
-  "http://googleappengine.googlecode.com/files/appengine-java-sdk-1.7.3.zip")
+  (format "http://googleappengine.googlecode.com/files/appengine-java-sdk-~a.zip" appengine-version))
 (define appengine-zip-path
-  (build-path "externals" "appengine-java-sdk-1.7.3.zip"))
+  (build-path "externals" (format "appengine-java-sdk-~a.zip" appengine-version)))
 (define appengine-dir
-  (build-path "lib" "appengine-java-sdk-1.7.3"))
+  (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
 
 
 
