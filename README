@@ -1,7 +1,7 @@
 
 The source to WeScheme can be found at github:
 
-   https://github.com/dyoo/WeScheme
+   https://github.com/bootstrapworld/wescheme2012
 
 The user-level documentation for the project is maintained in:
 
@@ -23,7 +23,7 @@ Installing WeScheme for local development
 
 1.  First, check out the WeScheme repository from Github.
 
-   $ git clone git://github.com/dyoo/WeScheme.git
+   $ git clone git://github.com/bootstrapworld/wescheme2012
 
 Don't forget: we're using git submodules, so also make sure to:
 
