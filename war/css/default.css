@@ -104,6 +104,7 @@ body {
 
 #headerToggle:hover {
     text-decoration: underline;
+    cursor: pointer;
 }
 
 #header.header-minimized {
