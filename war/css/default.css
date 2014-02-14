@@ -225,7 +225,8 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     border-bottom:	solid 1px black;
 }
 
-
+#definitions>.CodeMirror {background: none;}
+#definitions .CodeMirror-lines {background: white;}
 
 #defn {
     clear:			both;
