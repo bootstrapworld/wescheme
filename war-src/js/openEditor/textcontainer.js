@@ -194,34 +194,43 @@ var WeSchemeTextContainer;
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false)
 
 				});
-            this.editor.on('change',
-                           function() {
-		               that.behaviorE.sendEvent(that.editor.getValue());
-			   });
+ 
+        this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
 
-            extendEditorWithIOSKeys(this.editor);
+        // capture all paste events, and remove curly quotes before inserting
+        // this solves the use-case where a teacher uses a rich text editor to write code
+        // (using bold/italic to emphasize parts), and then pastes it into WeScheme
+        this.editor.getWrapperElement().addEventListener("paste",
+          function(e){
+           var dirtyTxt = e.clipboardData? e.clipboardData.getData('text/plain') : window.clipboardData.getData('Text'),
+               cleanTxt = dirtyTxt.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+           that.editor.replaceSelection(cleanTxt, "end");
+           e.preventDefault(); }
+        );
 
-            // Under IE 7, some of these style settings appear to die.
-            try { this.editor.getWrapperElement().style.width = options.width || "100%"; } catch (e) {}
-            if (! (options.dynamicHeight)) {
-                // If dynamic height, we'll be doing something special below.
-		try { this.editor.getWrapperElement().style.height = options.height || "100%"; } catch(e) {}
-            }
+        extendEditorWithIOSKeys(this.editor);
 
-            try {
-		this.editor.getScrollerElement().style.width = "100%";
-            } catch (e) {}
+        // Under IE 7, some of these style settings appear to die.
+        try { this.editor.getWrapperElement().style.width = options.width || "100%"; } catch (e) {}
+        if (! (options.dynamicHeight)) {
+            // If dynamic height, we'll be doing something special below.
+            try { this.editor.getWrapperElement().style.height = options.height || "100%"; } catch(e) {}
+        }
 
-            // Setting overflow to visible to auto-resize the editor to fit
-            // its content.  It may be that IE doesn't support setting some
-            // of these attributes, so we are really crazy about putting
-            // exception handling around this.
-            if (options.dynamicHeight) {
-                try { this.editor.getScrollerElement().style.height = 'auto'; } catch(e) {}
-                try { this.editor.getScrollerElement().style.overflow = 'visible'; } catch(e) {}
-            } else {
- 		try { this.editor.getScrollerElement().style.height = "100%"; } catch(e) {}
-            }
+        try {
+          this.editor.getScrollerElement().style.width = "100%";
+        } catch (e) {}
+
+        // Setting overflow to visible to auto-resize the editor to fit
+        // its content.  It may be that IE doesn't support setting some
+        // of these attributes, so we are really crazy about putting
+        // exception handling around this.
+        if (options.dynamicHeight) {
+            try { this.editor.getScrollerElement().style.height = 'auto'; } catch(e) {}
+            try { this.editor.getScrollerElement().style.overflow = 'visible'; } catch(e) {}
+        } else {
+          try { this.editor.getScrollerElement().style.height = "100%"; } catch(e) {}
+        }
 	
 	    this.editor.refresh();
 	    onSuccess.call(that, that);
