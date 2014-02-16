@@ -16,6 +16,9 @@ also a dependency.  All these should be accessible from $PATH.
 Finally, our current build tools assume a Unix-like environment to run
 shell commands, including 'unzip' and 'git'.
 
+Note: Additionally, do not use python 3; use python 2. The file
+calcdeps.py is incompatible with python 3.
+
 ----------------------------------------------------------------------
 
 Installing WeScheme for local development
@@ -125,17 +128,7 @@ set to slightly slower than the "Fast" speed.
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
 ----------------------------------------------------------------------
-Other random notes from Summer 2012:
-
-
-
 Things still to change, from summer 2012:
-some read errors like 1/0 (first ') ````,,,, not highlighted
-#(1234)
-(cond [4 5])  -> if: expected a boolean value, but found: 4 Shouldn't say "if"
-Wording choices like "found" vs. "given" and "but got 4" vs "but found: 4"
-remove "other arguments were" piece?
-greens look weird, color space????
 (list (define x 5)) -> define: this variable is not defined should read "define: found a definition that is not at the top level"
 (x) -> x: this variable is not defined should read "this function is not defined"
 
