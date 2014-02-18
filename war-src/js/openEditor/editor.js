@@ -332,8 +332,8 @@ var WeSchemeEditor;
             if (success) { success(); }
         }
 	var whenSaveBreaks = function() {
-	    alert("Unable to save");
-            if (fail) { fail(); }
+    alert("Unable to save!\n\nYou may have been logged out of Google Services.\nRefresh the Program List to log back in.");
+    if (fail) { fail(); }
 	};
 
 	var onFirstSave = function() {
