@@ -109,13 +109,107 @@ goog.provide("plt.wescheme.RoundRobin");
     var tryServerN = function(n, countFailures, 
                               programName, code, 
                               onDone, onDoneError) {
-
+       // we test until there's a discrepancy
+       var TEST_LOCAL = true;
+ 
+       // try client-side parsing first
+       try{
+          var sexp, AST, ASTandPinfo, local_error = false,
+              lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0;
+          try { //////////////////// LEX ///////////////////
+            console.log("// LEXING: ///////////////////////////////////\nraw:");
+            var start = new Date().getTime(),
+                sexp = lex(code, programName),
+                end = new Date().getTime();
+            lexTime = Math.floor(end-start);
+            console.log(sexp);
+            console.log("Lexed in "+lexTime+"ms");
+          } catch(e) {
+            var end = new Date().getTime();
+                lexTime = Math.floor(end-start);
+            console.log("LEXING ERROR");
+            throw e;
+          }
+          try{ //////////////////// PARSE ///////////////////
+            console.log("// PARSING: //////////////////////////////////\nraw:");
+            var start = new Date().getTime(),
+                AST = parse(sexp);
+                end = new Date().getTime();
+            parseTime = Math.floor(end - start);
+            console.log(AST);
+            console.log("Parsed in "+parseTime+"ms");
+          } catch(e) {
+            var end = new Date().getTime();
+            parseTime = Math.floor(end - start);
+            console.log("PARSING ERROR");
+            throw e;
+          }
+          try { ////////////////// DESUGAR /////////////////////
+            console.log("// DESUGARING: //////////////////////////////\nraw");
+            var start = new Date().getTime(),
+                ASTandPinfo = desugar(AST),
+                program = ASTandPinfo[0],
+                pinfo = ASTandPinfo[1],
+                end = new Date().getTime();
+            desugarTime = Math.floor(end-start);
+            console.log(program);
+            console.log("Desugared in "+desugarTime+"ms");
+            console.log("pinfo:");
+            console.log(pinfo);
+          } catch (e) {
+            var end = new Date().getTime();
+            desugarTime = Math.floor(end-start);
+            console.log("DESUGARING ERROR");
+            throw e;
+          }
+          try {
+            console.log("// ANALYSIS: //////////////////////////////\n");
+            var start = new Date().getTime();
+            window.pinfo = analyze(program);
+            var end = new Date().getTime(),
+            analysisTime = Math.floor(end-start);
+            console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
+          } catch (e) {
+            var end = new Date().getTime(),
+            analysisTime = Math.floor(end-start);
+            console.log("ANALYSIS ERROR");
+            throw e;
+          }
+      } catch (e) {
+ // for now we merely parse and log the local error -- don't do anything with it (YET)!
+          local_error = e;
+//          onDoneError(local_error);
+      }
+ var localTime = lexTime+parseTime+desugarTime+analysisTime;
+ console.log("// SUMMARY: /////////////////////////////////\n"
+             + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
+             + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
+             + "TOTAL:      " + localTime +"ms");
+        // hit the server
+        var start = new Date().getTime();
         if (n < liveServers.length) {
             liveServers[n].xhr.compileProgram(
                 programName,
                 code,
-                onDone,
+//                onDone,
+                function(bytecode){
+                    var end = new Date().getTime(),
+                        serverTime = Math.floor(end-start),
+                        factor =  Math.ceil(100*serverTime/localTime)/100;
+                    console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
+                    if(TEST_LOCAL && local_error){
+                      TEST_LOCAL = false; // turn off local testing
+                      console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
+                      logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
+                    }
+                    console.log("OK: LOCAL AND SERVER BOTH PASSED");
+                    onDone(bytecode);
+                },
                 function(errorStruct) {
+                    var end = new Date().getTime(),
+                        serverTime = Math.floor(end-start),
+                        factor =  Math.ceil(100*serverTime/localTime)/100;
+                    console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                     // If we get a 503, just try again.
                     if (errorStruct.status == 503) {
                         tryServerN(n,
@@ -139,7 +233,19 @@ goog.provide("plt.wescheme.RoundRobin");
                                        onDone,
                                        onDoneError);
                         }
-                    } else {
+                    } else if(TEST_LOCAL){
+                        if(!local_error){
+                          TEST_LOCAL = false; // turn off local testing
+                          console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
+                          logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
+                        }
+                        // if the results are different, we should log them to the server
+                        if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
+                            TEST_LOCAL = false; // turn off local testing
+                            console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
+                            logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
+                        }
+                        console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
                         onDoneError(errorStruct.message);
                     }
                 });
@@ -147,7 +253,77 @@ goog.provide("plt.wescheme.RoundRobin");
             onAllCompilationServersFailing(onDoneError);
         }
     };
+ 
+    // sameResults : local server -> boolean
+    // if there's a difference, log a diff to the form and return false
+    // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+    function sameResults(x, y){
+      function alphabetizeObject(obj){
+        var fields = [], str="{", i;
+        for (i in obj) { if (obj.hasOwnProperty(i)) fields.push(i); }
+        fields.sort();
+        for (var i=0;i<fields.length; i++) { str+=fields[i]+":"+obj[fields[i]]+", "; }
+        return str+"}";
+      }
+ 
+      function saveDiffAndReturn(x, y){
+        var local = (x instanceof Object)? alphabetizeObject(x) : x.toString(),
+            server= (y instanceof Object)? alphabetizeObject(y) : y.toString();
+        document.getElementById('diffString').value = "LOCAL: "+local+"\nSERVER: "+server;
+        return false;
+      }
+ 
+      // if both x and y are null or undefined and exactly the same
+      if (x === y) return true;
 
+      // if they are not strictly equal, they both need to be Objects
+      if ( !(x instanceof Object) || !(y instanceof Object) ) return saveDiffAndReturn(x,y);
+ 
+      // if both are Locations, we only care about offset and span, so perform a weak comparison
+      if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
+          return ( (x.span === y.span) && (x.offset === y.offset) )? true : saveDiffAndReturn(x,y);
+      }
+ 
+      // does every property in x also exist in y?
+      for (var p in x) {
+
+          // empty fields can be safely removed
+          if(x[p] === ""){ delete x[p]; continue; }
+          // allows to compare x[ p ] and y[ p ] when set to undefined
+          if ( ! x.hasOwnProperty(p) ) return saveDiffAndReturn(p+":undefined",y[p]);
+          if ( ! y.hasOwnProperty(p) ) return saveDiffAndReturn(x[p],p+":undefined");
+          // Is this value actually an object? Objects and Arrays must be tested recursively
+          try{
+            var xObject = JSON.parse(x[p]), yObject = JSON.parse(y[p]);
+            if ( !sameResults(alphabetizeObject(xObject), alphabetizeObject(yObject)) ) return false;
+          } catch(e) {
+            // if they have the same strict value or identity then they are equal
+            if ( x[p] === y[p] ) continue;
+            // Numbers, Strings, Functions, Booleans must be strictly equal
+            if ( typeof(x[p]) !== "object" ) return saveDiffAndReturn(x,y);
+            if ( !sameResults(x[p],  y[p]) ) return false;
+          }
+      }
+       
+      for (p in y) {
+          // empty fields can be safely removed
+          if(y[p] === ""){ delete y[p]; continue; }
+ 
+          // allows x[ p ] to be set to undefined
+          if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ) return saveDiffAndReturn(p+":undefined",y[p]);
+      }
+      return true;
+    }
+ 
+    // logResults : code local server -> void
+    // send code, local error and server error to a Google spreadsheet
+    function logResults(code, local, server){
+      console.log('Error messages differed. Logging anonymized error message to GDocs');
+      document.getElementById('expr').value = code;
+      document.getElementById('local').value = local.replace(/\s+/,"").toLowerCase();
+      document.getElementById('server').value = server.replace(/\s+/,"").toLowerCase();
+      document.getElementById('errorLogForm').submit();
+    }
 
     // TODO: add a real LRU cache for compilations.
     // The following does a minor bit of caching for the very
@@ -155,7 +331,6 @@ goog.provide("plt.wescheme.RoundRobin");
     var lastCompiledName = null;
     var lastCompiledCode = null;
     var lastCompiledResult = null;
-
 
     // The name "round-robin" is historical: we really contact the
     // servers in order, starting from liveServers[0], liveServers[1], ...
@@ -171,7 +346,7 @@ goog.provide("plt.wescheme.RoundRobin");
 
                 return onDone.apply(null, arguments);
             };
-            
+            // run the cached bytecode from previous compilation
             if ((programName === lastCompiledName) &&
                 (code === lastCompiledCode)) {
                 return onDone.apply(null, lastCompiledResult);
@@ -185,8 +360,6 @@ goog.provide("plt.wescheme.RoundRobin");
                 onAllCompilationServersFailing(onDoneError);
             }
         };
-
-    
 
     //////////////////////////////////////////////////////////////////////
 
