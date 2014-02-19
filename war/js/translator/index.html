@@ -1,0 +1,21 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Repl 2.0</title>
+<script type="text/javascript" src="../mzscheme-vm/support.js"></script>
+<script type="text/javascript" src="structures.js"></script>
+<script type="text/javascript" src="compiler.js"></script>
+<script type="text/javascript" src="parser.js"></script>
+<script type="text/javascript" src="lex.js"></script>
+<script type="text/javascript" src="repl2.js"></script>
+<style type="text/css">
+  li.value {color:#0000B3}
+  li.error {color:#ff0000}
+  li.value, li.error {list-style-type:none}
+</style>
+</head>
+<body onload="repl2_setup()">
+<ul id="output-list">
+<li id="repl-input-li"><textarea cols="80" rows="20" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
+</ul>
+
+
+</body></html>
