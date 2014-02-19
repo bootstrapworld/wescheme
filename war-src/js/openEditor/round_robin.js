@@ -144,6 +144,7 @@ goog.provide("plt.wescheme.RoundRobin");
             console.log("PARSING ERROR");
             throw e;
           }
+/*
           try { ////////////////// DESUGAR /////////////////////
             console.log("// DESUGARING: //////////////////////////////\nraw");
             var start = new Date().getTime(),
@@ -175,23 +176,24 @@ goog.provide("plt.wescheme.RoundRobin");
             console.log("ANALYSIS ERROR");
             throw e;
           }
+ */
       } catch (e) {
- // for now we merely parse and log the local error -- don't do anything with it (YET)!
+          //  for now we merely parse and log the local error -- don't do anything with it (YET)!
           local_error = e;
-//          onDoneError(local_error);
+          // onDoneError(local_error);
       }
- var localTime = lexTime+parseTime+desugarTime+analysisTime;
- console.log("// SUMMARY: /////////////////////////////////\n"
-             + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
-             + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-             + "TOTAL:      " + localTime +"ms");
+      var localTime = lexTime+parseTime+desugarTime+analysisTime;
+      console.log("// SUMMARY: /////////////////////////////////\n"
+                  + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
+                  + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
+                  + "TOTAL:      " + localTime +"ms");
         // hit the server
         var start = new Date().getTime();
         if (n < liveServers.length) {
             liveServers[n].xhr.compileProgram(
                 programName,
                 code,
-//                onDone,
+                // wrap onDone() with a function to compare local and server output
                 function(bytecode){
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
@@ -205,6 +207,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     console.log("OK: LOCAL AND SERVER BOTH PASSED");
                     onDone(bytecode);
                 },
+                // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
