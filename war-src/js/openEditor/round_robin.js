@@ -243,12 +243,14 @@ goog.provide("plt.wescheme.RoundRobin");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
                         // if the results are different, we should log them to the server
-                        if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
+                        else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
                             TEST_LOCAL = false; // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         }
-                        console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
+                        else {
+                          console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
+                        }
                         onDoneError(errorStruct.message);
                     }
                 });
