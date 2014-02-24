@@ -21,6 +21,9 @@
 <link rel="stylesheet" type="text/css" href="/css/console.css" />
 <title>WeScheme</title>
 
+<!-- Refresh the page every 10min to preserve login credentials -->
+<meta http-equiv="refresh" content="600">
+
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
