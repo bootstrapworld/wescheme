@@ -200,7 +200,7 @@ goog.provide("plt.wescheme.RoundRobin");
                         factor =  Math.ceil(100*serverTime/localTime)/100;
                     console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                     if(TEST_LOCAL && local_error){
-                      TEST_LOCAL = false; // turn off local testing
+//                      TEST_LOCAL = false; // turn off local testing
                       console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
                       logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
                     }
@@ -238,13 +238,13 @@ goog.provide("plt.wescheme.RoundRobin");
                         }
                     } else if(TEST_LOCAL){
                         if(!local_error){
-                          TEST_LOCAL = false; // turn off local testing
+//                          TEST_LOCAL = false; // turn off local testing
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
                         // if the results are different, we should log them to the server
                         else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
-                            TEST_LOCAL = false; // turn off local testing
+//                            TEST_LOCAL = false; // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         }
