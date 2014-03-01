@@ -260,62 +260,82 @@ goog.provide("plt.wescheme.RoundRobin");
     };
  
     // sameResults : local server -> boolean
+    // compare entities using a 3-step process
+    // 1) Weak comparison on locations
+    // 2) Recursive comparison for objects
+    // 3) Strong comparison for literals
     // if there's a difference, log a diff to the form and return false
     // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
     function sameResults(x, y){
-      function alphabetizeObject(obj){
-        var fields = [], str="{", i;
-        for (i in obj) { if (obj.hasOwnProperty(i)) fields.push(i); }
+      // given an object, remove empty properties and reconstruct as an alphabetized JSON string
+      // then parse and return a canonicalized object
+      function canonicalizeObject(obj){
+        var fields = [], obj2={};
+        for (i in obj) { if (obj.hasOwnProperty(i) && obj[i] !== "") fields.push(i); }
         fields.sort();
-        for (var i=0;i<fields.length; i++) { str+=fields[i]+":"+obj[fields[i]]+", "; }
-        return str+"}";
+        for (var i=0;i<fields.length; i++) { obj2[fields[i]] = obj[fields[i]]; }
+        return obj2;
       }
  
       function saveDiffAndReturn(x, y){
-        var local = (x instanceof Object)? alphabetizeObject(x) : x.toString(),
-            server= (y instanceof Object)? alphabetizeObject(y) : y.toString();
+        var local = (x instanceof Object)? JSON.stringify(x) : x.toString(),
+            server= (y instanceof Object)? JSON.stringify(y) : y.toString();
+        local.replace(/\s/,"").replace("\\","");
+        server.replace(/\s/,"").replace("\\","");
         document.getElementById('diffString').value = "LOCAL: "+local+"\nSERVER: "+server;
         return false;
       }
  
-      // if both x and y are null or undefined and exactly the same
-      if (x === y) return true;
+      // if either one is a JSON string, convert it to an object
+      try{ var x = JSON.parse(x); }
+      catch(e) { /* if it doesn't parse correctly, proceed silently */ }
+      try{ var y = JSON.parse(y);}
+      catch(e) { /* if it doesn't parse correctly, proceed silently */ }
 
-      // if they are not strictly equal, they both need to be Objects
-      if ( !(x instanceof Object) || !(y instanceof Object) ) return saveDiffAndReturn(x,y);
- 
-      // if both are Locations, we only care about offset and span, so perform a weak comparison
+      // if either one is an object, canonicalize it
+      if(typeof(x) === "object") x = canonicalizeObject(x);
+      if(typeof(y) === "object") y = canonicalizeObject(y);
+
+      // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
       if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
-          return ( (x.span === y.span) && (x.offset === y.offset) )? true : saveDiffAndReturn(x,y);
-      }
- 
-      // does every property in x also exist in y?
-      for (var p in x) {
-
-          // empty fields can be safely removed
-          if(x[p] === ""){ delete x[p]; continue; }
-          // allows to compare x[ p ] and y[ p ] when set to undefined
-          if ( ! x.hasOwnProperty(p) ) return saveDiffAndReturn(p+":undefined",y[p]);
-          if ( ! y.hasOwnProperty(p) ) return saveDiffAndReturn(x[p],p+":undefined");
-          // Is this value actually an object? Objects and Arrays must be tested recursively
-          try{
-            var xObject = JSON.parse(x[p]), yObject = JSON.parse(y[p]);
-            if ( !sameResults(alphabetizeObject(xObject), alphabetizeObject(yObject)) ) return false;
-          } catch(e) {
-            // if they have the same strict value or identity then they are equal
-            if ( x[p] === y[p] ) continue;
-            // Numbers, Strings, Functions, Booleans must be strictly equal
-            if ( typeof(x[p]) !== "object" ) return saveDiffAndReturn(x,y);
-            if ( !sameResults(x[p],  y[p]) ) return false;
+        if( (x.span !== y.span) || (x.offset !== y.offset) ){
+          console.log('FAIL: locations are not equal');
+          return saveDiffAndReturn(x, y);
+        }
+      // 2) if they are both objects, compare each property
+      } else if(typeof(x)=="object" && typeof(x)=="object"){
+        // does every property in x also exist in y?
+        for (var p in x) {
+          // log error if a property is not defined
+          if ( ! x.hasOwnProperty(p) ){
+            console.log('FAIL: x doesn\'t have property '+p);
+            return saveDiffAndReturn(p+":undefined", y[p]);
           }
-      }
-       
-      for (p in y) {
-          // empty fields can be safely removed
-          if(y[p] === ""){ delete y[p]; continue; }
+          if ( ! y.hasOwnProperty(p) ){
+            console.log('FAIL: y doesn\'t have property '+p);
+            return saveDiffAndReturn(x[p],          p+":undefined");
+          }
  
-          // allows x[ p ] to be set to undefined
-          if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ) return saveDiffAndReturn(p+":undefined",y[p]);
+          // if they both have the property, compare it
+          if(sameResults(x[p],y[p])) continue;
+          // if there's a difference, return false
+          else return false;
+        }
+        // does every property in y also exist in x?
+        for (p in y) {
+          // log error if a property is not defined
+          if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){
+            console.log('FAIL: x doesn\'t have property '+p);
+            return saveDiffAndReturn(p+":undefined",y[p]);
+          }
+        }
+      // 3)if they are literals, they must be identical
+      } else {
+          // if both x and y are null or undefined and exactly the same
+          if (x !== y){
+            console.log('FAIL: literals are not the same: '+x+' and '+y);
+            return saveDiffAndReturn(x,y);
+          }
       }
       return true;
     }
@@ -325,8 +345,8 @@ goog.provide("plt.wescheme.RoundRobin");
     function logResults(code, local, server){
       console.log('Error messages differed. Logging anonymized error message to GDocs');
       document.getElementById('expr').value = code;
-      document.getElementById('local').value = local.replace(/\s+/,"").toLowerCase();
-      document.getElementById('server').value = server.replace(/\s+/,"").toLowerCase();
+      document.getElementById('local').value = local.replace(/\s+/g,"").toLowerCase();
+      document.getElementById('server').value = server.replace(/\s+/g,"").toLowerCase();
       document.getElementById('errorLogForm').submit();
     }
 

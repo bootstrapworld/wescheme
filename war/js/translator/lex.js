@@ -71,16 +71,16 @@
       this.start  = function(){ return new Location("", "", this.offset, 1); };
       this.end    = function(){ return new Location("", "", this.offset+this.span-1, 1); };
       this.toString = function(){
-        return "Loc("+this.sCol+", "+this.sLine+", "+this.offset+","+this.span+")";
+        return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
         return new vectorExpr([new numberExpr(this.sCol), new numberExpr(this.sLine)
                               ,new numberExpr(this.offset+1), new numberExpr(this.span)
-                              ,(this.source || source)]
+                              ,this.source]
                              ,new numberExpr(5));
       };
       this.toJSON = function(){
-        return {line: this.sLine.toString(), id: this.source || source, span: this.span.toString(),
+        return {line: this.sLine.toString(), id: this.source, span: this.span.toString(),
                offset: (this.offset+1).toString(), column: this.sCol.toString()};
       };
     };
@@ -272,7 +272,7 @@
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
-         throwError(msg, new Location(sCol, sLine, iStart, i-iStart));
+         throwError(msg, new Location(sCol, sLine, iStart, 1));
       }
       if(!matchingDelims(openingDelim, str.charAt(i))) {
          var msg = new types.Message(["read: expected a ",
@@ -357,13 +357,14 @@
       }
 
       if(i >= str.length) {
+        sCol++; // move forward to grab the starting quote
         throwError(new types.Message([source
                                       , ":"
                                       , sLine.toString()
                                       , ":"
-                                      , sCol.toString() // move forward to grab the starting quote
+                                      , sCol.toString()
                                       , ": read: expected a closing \'\"\'"])
-                   , new Location(sCol, sLine, iStart+1, 1)
+                   , new Location(sCol, sLine, iStart, 1)
                    , "Error-GenericReadError");
       }
       var strng = new stringExpr(datum);
@@ -416,7 +417,7 @@
                                                  , ":"
                                                  , (column-1).toString()
                                                  , ": read: bad syntax `#", p,"'"])
-                              , new Location(sCol, sLine, iStart, i-iStart)
+                              , new Location(sCol, sLine, iStart, (i-iStart)+1)
                               , "Error-GenericReadError");
          }
       } else {
