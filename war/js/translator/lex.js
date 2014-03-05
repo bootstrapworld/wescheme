@@ -388,7 +388,9 @@
         i = sexp.location.span;
         return datum;
       }
+                            console.log(1);
       if(i < str.length) {
+                            console.log('2a');
         var p = str.charAt(i);
         switch(p){
           case 't':  // test for both forms of true
@@ -421,9 +423,17 @@
                               , "Error-GenericReadError");
          }
       } else {
-        throwError(new types.Message(["read: Unexpected EOF when reading a pound-prefixed sexp: #", datum]),
-                   new Location(sCol, sLine, iStart, i-iStart));
+                            console.log('2b');
+          throwError(new types.Message([source
+                                       , ":"
+                                       , line.toString()
+                                       , ":"
+                                       , (column-1).toString()
+                                       , ": read: bad syntax `#'"])
+                    , new Location(sCol, sLine, iStart, i-iStart)
+                    , "Error-GenericReadError");
       }
+                            console.log(3);
       datum.location = new Location(sCol, sLine, iStart, i-iStart);
       return datum;
     }
@@ -539,7 +549,6 @@
       var sexp = readSExpByIndex(str, i+1),
           quotedSexp = [symbol, sexp],
           quotedSpan = (sexp.location.offset + sexp.location.span) - iStart;
-                            console.log(new Location(sCol, sLine, iStart, quotedSpan));
       
       quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
       return quotedSexp;
