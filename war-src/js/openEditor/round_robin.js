@@ -144,7 +144,7 @@ goog.provide("plt.wescheme.RoundRobin");
             console.log("PARSING ERROR");
             throw e;
           }
-/*
+
           try { ////////////////// DESUGAR /////////////////////
             console.log("// DESUGARING: //////////////////////////////\nraw");
             var start = new Date().getTime(),
@@ -176,11 +176,11 @@ goog.provide("plt.wescheme.RoundRobin");
             console.log("ANALYSIS ERROR");
             throw e;
           }
- */
+ 
       } catch (e) {
           //  for now we merely parse and log the local error -- don't do anything with it (YET)!
           local_error = e;
-          // onDoneError(local_error);
+          onDoneError(local_error);
       }
       var localTime = lexTime+parseTime+desugarTime+analysisTime;
       console.log("// SUMMARY: /////////////////////////////////\n"
