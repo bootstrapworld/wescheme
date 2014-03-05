@@ -541,7 +541,7 @@
     }
     var condLocs = [sexp[0].location, sexp.location.start(), sexp.location.end()];
  
-    function isElseClause(clause){ return isSymbol(couple[0]) && (isSymbolEqualTo(couple[0], "else");}
+    function isElseClause(clause){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
  
     function parseCondCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
@@ -614,7 +614,7 @@
                     sexp.location);
     }
                                                                   
-    function isElseClause(clause){ return isSymbol(couple[0]) && (isSymbolEqualTo(couple[0], "else");}
+    function isElseClause(clause){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
 
     function parseCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
