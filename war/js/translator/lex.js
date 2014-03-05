@@ -222,9 +222,9 @@
       sCol = column; sLine = line; var iStart = i;
       var p;
       p = str.charAt(i);
-
+                            console.log('first char is '+p);
       i = chewWhiteSpace(str, i);
-
+                            console.log('after chewing, i is '+i);
       if(i >= str.length) {
         throwError(new types.Message(["Unexpected EOF while reading a SExp"])
                                  ,new Location(sCol, sLine, iStart, i-iStart));
@@ -239,6 +239,7 @@
                  p === ';'                  ? readLineComment(str, i) :
                  quotes.test(p)             ? readQuote(str, i) :
                   /* else */                   readSymbolOrNumber(str, i);
+                            console.log(sexp);
        return sexp;
     }
 
@@ -526,16 +527,25 @@
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
     function readQuote(str, i) {
+                            console.log('reading quote');
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
                    "";
+      if(i+1 >= str.length) {
+          throwError(new types.Message([source
+                                        , ":"
+                                        , sLine.toString()
+                                        , ":"
+                                        , sCol.toString()
+                                        , ": read: expected an element for quoting "
+                                        , str.charAt(i)
+                                        , " (found end-of-file)"])
+                     , new Location(sCol, sLine, iStart, i-iStart+1)
+                     , "Error-GenericReadError");
+      }
       if(p == ',') {
-        if(i+1 >= str.length) {
-          throwError("read: Unexpected EOF when reading a quoted expression at "
-                     + new Location(sCol, sLine, iStart, i-iStart));
-        }
         if(str.charAt(i+1) == '@') {
           i++;
           symbol = new symbolExpr("unquote-splicing");
@@ -585,7 +595,7 @@
                                         , ":"
                                         , sLine.toString()
                                         , ":"
-                                        , sCol.toString() // move forward to grab the starting quote
+                                        , sCol.toString()
                                         , ": read: "+e.message])
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
