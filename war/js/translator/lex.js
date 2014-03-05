@@ -535,9 +535,13 @@
           symbol = new symbolExpr("unquote");
         }
       }
-      var sexp = readSExpByIndex(str, i+1);
-      var quotedSexp = [symbol, sexp];
-      quotedSexp.location = sexp.location;
+      // read what comes next, then extract it's offset and span to generate the quoted span
+      var sexp = readSExpByIndex(str, i+1),
+          quotedSexp = [symbol, sexp],
+          quotedSpan = (sexp.location.offset + sexp.location.span) - iStart;
+                            console.log(new Location(sCol, sLine, iStart, quotedSpan));
+      
+      quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
       return quotedSexp;
     }
                    
