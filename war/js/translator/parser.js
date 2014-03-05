@@ -541,6 +541,8 @@
     }
     var condLocs = [sexp[0].location, sexp.location.start(), sexp.location.end()];
  
+    function isElseClause(clause){ return isSymbol(couple[0]) && (isSymbolEqualTo(couple[0], "else");}
+ 
     function parseCondCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       // is it (cond ...<not-a-clause>..)?
@@ -582,7 +584,7 @@
     }
  
     return new condExpr(rest(sexp).reduceRight(function (rst, couple) {
-       if((isSymbol(couple[0])) && (isSymbolEqualTo(couple[0], "else")) && (rst.length > 0)){
+       if(isElseClause(couple) && (rst.length > 0)){
          throwError(new types.Message([new types.MultiPart(sexp[0].val, condLocs, true)
                                        , ": "
                                        , "found an "
@@ -611,7 +613,9 @@
                                       + " and an answer after the expression, but nothing's there"]),
                     sexp.location);
     }
- 
+                                                                  
+    function isElseClause(clause){ return isSymbol(couple[0]) && (isSymbolEqualTo(couple[0], "else");}
+
     function parseCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       if(!(clause instanceof Array)){
@@ -659,7 +663,7 @@
     }
  
     return new caseExpr(parseExpr(sexp[1]), sexp.slice(2).reduceRight(function (rst, couple) {
-               if((isSymbol(couple[0])) && (isSymbolEqualTo(couple[0], "else")) && (rst.length > 0)){
+               if(isElseClause(couple) && (rst.length > 0)){
                   throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
                                                 , "found an "
                                                 , new types.ColoredPart("else clause", couple.location)
