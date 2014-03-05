@@ -362,9 +362,9 @@
                                       , ":"
                                       , sLine.toString()
                                       , ":"
-                                      , sCol.toString()
+                                      , (sCol-1).toString()
                                       , ": read: expected a closing \'\"\'"])
-                   , new Location(sCol, sLine, iStart, 1)
+                   , new Location((sCol-1), sLine, iStart, 1)
                    , "Error-GenericReadError");
       }
       var strng = new stringExpr(datum);
@@ -389,9 +389,7 @@
         i = sexp.location.span;
         return datum;
       }
-                            console.log(1);
       if(i < str.length) {
-                            console.log('2a');
         var p = str.charAt(i);
         switch(p){
           case 't':  // test for both forms of true
@@ -413,7 +411,7 @@
           case 'o':
           case 'd':
           case 'x':  datum = readSymbolOrNumber(str, i-1);
-                    if(datum){ i+= datum.location.span; break;}
+                    if(datum){ i+= datum.location.span-1; break;}
           default: throwError(new types.Message([source
                                                  , ":"
                                                  , line.toString()
@@ -424,7 +422,6 @@
                               , "Error-GenericReadError");
          }
       } else {
-                            console.log('2b');
           throwError(new types.Message([source
                                        , ":"
                                        , line.toString()
