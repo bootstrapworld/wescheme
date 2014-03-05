@@ -368,7 +368,7 @@
                    , "Error-GenericReadError");
       }
       var strng = new stringExpr(datum);
-      i++; // move forward to include the ending quote
+      i++; column++; // move forward to include the ending quote
       strng.location = new Location(sCol, sLine, iStart, i-iStart);
       return strng;
     }
@@ -599,6 +599,7 @@
     // reads in a symbol which can be any character except for certain delimiters
     // as described in isValidSymbolCharP
     function readSymbol(str, i, datum) {
+                            console.log('reading symbol, and so far it\'s '+datum);
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
         // check for newlines
