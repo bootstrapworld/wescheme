@@ -229,7 +229,7 @@
         throwError(new types.Message(["Unexpected EOF while reading a SExp"])
                                  ,new Location(sCol, sLine, iStart, i-iStart));
       }
-       var sexp = rightListDelims.test(p) ?
+      var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
                                                 , new types.ColoredPart(p, new Location(sCol, sLine, iStart, 1))])
                               ,new Location(sCol, sLine, iStart, 1)) :
@@ -368,7 +368,8 @@
                    , "Error-GenericReadError");
       }
       var strng = new stringExpr(datum);
-      strng.location = new Location(sCol, sLine, iStart, i+1-iStart);
+      i++; // move forward to include the ending quote
+      strng.location = new Location(sCol, sLine, iStart, i-iStart);
       return strng;
     }
 
@@ -587,9 +588,9 @@
                                         , ":"
                                         , sLine.toString()
                                         , ":"
-                                        , (sCol-1).toString() // move forward to grab the starting quote
+                                        , sCol.toString() // move forward to grab the starting quote
                                         , ": read: "+e.message])
-                     , new Location(sCol-1, sLine, iStart, i-iStart)
+                     , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
       }
      }
