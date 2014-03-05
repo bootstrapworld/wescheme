@@ -599,12 +599,19 @@
     // reads in a symbol which can be any character except for certain delimiters
     // as described in isValidSymbolCharP
     function readSymbol(str, i, datum) {
-                            console.log('reading symbol, and so far it\'s '+datum);
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
+      // if we're escaping, move forward one character *no matter what*
+      if(datum === "\\") {
+          datum += str.charAt(++i);
+          column++;
+      }
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
-        // check for newlines
-        if(str.charAt(i) === "\n"){ line++; column = 0;}
-        if(str.charAt(i) === "|") {
+        // if there's an escape, read the escape *and* the next character
+        if(str.charAt(i) === "\\"){
+          datum += str.charAt(++i);
+          datum += str.charAt(++i);
+          column+=2;
+        } else if(str.charAt(i) === "|") {
           var sym = readVerbatimSymbol(str, i, datum);
           datum = sym.val;
           i = sym.location.i;
