@@ -203,8 +203,9 @@ goog.provide("plt.wescheme.RoundRobin");
 //                      TEST_LOCAL = false; // turn off local testing
                       console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
                       logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
+                    } else {
+                      console.log("OK: LOCAL AND SERVER BOTH PASSED");
                     }
-                    console.log("OK: LOCAL AND SERVER BOTH PASSED");
                     onDone(bytecode);
                 },
                 // wrap onDoneError() with a function to compare local and server output
@@ -247,8 +248,7 @@ goog.provide("plt.wescheme.RoundRobin");
 //                            TEST_LOCAL = false; // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
-                        }
-                        else {
+                        } else {
                           console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
                         }
                         onDoneError(errorStruct.message);
