@@ -304,6 +304,12 @@
     return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
  }
  defFunc.prototype.collectDefinitions = function(pinfo){
+    // is the name a keyword?
+    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
+        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
+                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
+                    this.name.location);
+    }
     var previousBinding = pinfo.definedNames.get(this.name.val);
     var envBinding      = pinfo.env.lookup(this.name.val);
     // was there a previous binding?
