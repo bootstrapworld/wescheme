@@ -222,9 +222,7 @@
       sCol = column; sLine = line; var iStart = i;
       var p;
       p = str.charAt(i);
-                            console.log('first char is '+p);
       i = chewWhiteSpace(str, i);
-                            console.log('after chewing, i is '+i);
       if(i >= str.length) {
         throwError(new types.Message(["Unexpected EOF while reading a SExp"])
                                  ,new Location(sCol, sLine, iStart, i-iStart));
@@ -239,7 +237,6 @@
                  p === ';'                  ? readLineComment(str, i) :
                  quotes.test(p)             ? readQuote(str, i) :
                   /* else */                   readSymbolOrNumber(str, i);
-                            console.log(sexp);
        return sexp;
     }
 
@@ -405,6 +402,8 @@
                      i+= datum.location.span-1; break;
           case '|':  datum = readMultiLineComment(str, i-1);
                      i+= datum.location.span; break;
+          // believe it or not, #' is a valid symbol
+          case '\'':
           // if it's a number
           case 'e':
           case 'i':
@@ -427,12 +426,11 @@
                                        , ":"
                                        , line.toString()
                                        , ":"
-                                       , (column-1).toString()
+                                       , column.toString()
                                        , ": read: bad syntax `#'"])
                     , new Location(sCol, sLine, iStart, i-iStart)
                     , "Error-GenericReadError");
       }
-                            console.log(3);
       datum.location = new Location(sCol, sLine, iStart, i-iStart);
       return datum;
     }
@@ -527,7 +525,6 @@
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
     function readQuote(str, i) {
-                            console.log('reading quote');
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
@@ -589,15 +586,15 @@
           var symbl = readSymbol(str,i,datum);
           return symbl;
         }
-      // if it's not a number
+      // if it's not a number OR a symbol
       } catch(e) {
           throwError(new types.Message([source
                                         , ":"
                                         , sLine.toString()
                                         , ":"
-                                        , sCol.toString()
+                                        , (sCol-1).toString()
                                         , ": read: "+e.message])
-                     , new Location(sCol, sLine, iStart, i-iStart)
+                     , new Location((sCol-1), sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
       }
      }
@@ -609,6 +606,9 @@
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
       // if we're escaping, move forward one character *no matter what*
       if(datum === "\\") {
+          if(i+1 >= str.length){
+            throw new Error("EOF following `\\' in symbol");
+          }
           datum += str.charAt(++i);
           column++;
       }
