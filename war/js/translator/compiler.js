@@ -1,7 +1,7 @@
 /*
  TODO
  - desugar Symbols
- - check for else base case for cond
+ - desugar defFunc into defVar?
  - tagApplicationOperator_Module
  - test cases get desugared into native calls (and thunks?)
  - implement bytecode structs
@@ -304,11 +304,37 @@
     return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
  }
  defFunc.prototype.collectDefinitions = function(pinfo){
-    var binding = bf(this.name.val, false, this.args.length, false, this.location);
+    var previousBinding = pinfo.definedNames.get(this.name.val);
+    // was there a previous binding?
+    if(previousBinding){
+        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
+                                      , ": this name has a "
+                                      , new types.ColoredPart("previous definition", previousBinding.loc)
+                                      , " and cannot be re-defined"]),
+                    this.name.location);
+    }
+    var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
     return pinfo.accumulateDefinedBinding(binding, pinfo, this.location);
  };
  defVar.prototype.collectDefinitions = function(pinfo){
-    var binding = new bindingConstant(this.name.val, false, [],this.location)
+    // is the name a keyword?
+    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
+        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
+                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
+                    this.name.location);
+    }
+    var previousBinding = pinfo.definedNames.get(this.name.val);
+    var envBinding      = pinfo.env.lookup(this.name.val);
+    // was there a previous binding?
+    if(previousBinding || envBinding){
+        var part = previousBinding? new types.ColoredPart("previous definition", previousBinding.loc) : "previous definition";
+        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
+                                      , ": this name has a "
+                                      , part
+                                      , " and cannot be re-defined"]),
+                    this.name.location);
+    }
+    var binding = new bindingConstant(this.name.val, false, [], this.name.location)
     return pinfo.accumulateDefinedBinding(binding, pinfo, this.location);
  };
  defVars.prototype.collectDefinitions = function(pinfo){
@@ -445,11 +471,6 @@
     return lambda.analyzeUses(pinfo);
  };
  defVar.prototype.analyzeUses = function(pinfo, env){
-    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
-        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
-                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
-                    this.name.location);
-    }
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo, env){
@@ -493,11 +514,6 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
-     if(compilerStructs.keywords.indexOf(this.val) > -1){
-        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
-                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
-                    this.location);
-     }
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
@@ -678,11 +694,11 @@
                               })
                              , pinfo);
     }
-    console.log("collecting definitions");
+//    console.log("collecting definitions");
     var pinfo1 = collectDefinitions(programs, pinfo);
-    console.log("collecting provides");
+//    console.log("collecting provides");
     var pinfo2 = collectProvides(programs, pinfo1);
-    console.log("analyzing uses");
+//    console.log("analyzing uses");
     return analyzeUses(programs, pinfo2);
  }
  
