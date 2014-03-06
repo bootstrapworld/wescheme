@@ -1,7 +1,7 @@
 /*
  TODO
  - desugar Symbols
- - desugar defFunc into defVar?
+ - desugar defFunc?
  - tagApplicationOperator_Module
  - test cases get desugared into native calls (and thunks?)
  - implement bytecode structs
@@ -305,11 +305,13 @@
  }
  defFunc.prototype.collectDefinitions = function(pinfo){
     var previousBinding = pinfo.definedNames.get(this.name.val);
+    var envBinding      = pinfo.env.lookup(this.name.val);
     // was there a previous binding?
-    if(previousBinding){
+    if(previousBinding || envBinding){
+        var part = previousBinding? new types.ColoredPart("previous definition", previousBinding.loc) : "previous definition";
         throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
                                       , ": this name has a "
-                                      , new types.ColoredPart("previous definition", previousBinding.loc)
+                                      , part
                                       , " and cannot be re-defined"]),
                     this.name.location);
     }
