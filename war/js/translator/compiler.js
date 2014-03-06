@@ -445,6 +445,11 @@
     return lambda.analyzeUses(pinfo);
  };
  defVar.prototype.analyzeUses = function(pinfo, env){
+    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
+        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
+                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
+                    this.name.location);
+    }
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo, env){
@@ -488,6 +493,11 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
+     if(compilerStructs.keywords.indexOf(this.val) > -1){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
+                    this.location);
+     }
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
