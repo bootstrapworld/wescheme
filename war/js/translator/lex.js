@@ -404,14 +404,21 @@
                      i+= datum.location.span; break;
           // believe it or not, #' is a valid symbol
           case '\'':
-          // if it's a number
-          case 'e':
-          case 'i':
-          case 'b':
-          case 'o':
-          case 'd':
-          case 'x':  datum = readSymbolOrNumber(str, i-1);
-                    if(datum){ i+= datum.location.span-1; break;}
+          // if it's a number...
+          case 'E':  // exact
+          case 'I':  // inexact
+          case 'B':  // binary
+          case 'O':  // octal
+          case 'D':  // decimal
+          case 'X':  // hexadecimal
+          case 'e':  // exact
+          case 'i':  // inexact
+          case 'b':  // binary
+          case 'o':  // octal
+          case 'd':  // decimal
+          case 'x':  // hexadecimals
+            datum = readSymbolOrNumber(str, i-1);
+            if(datum){ i+= datum.location.span-1; break;}
           default: throwError(new types.Message([source
                                                  , ":"
                                                  , line.toString()
