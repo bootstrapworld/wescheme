@@ -405,7 +405,7 @@
         var badRegExpMatch = new RegExp("(rx|px)", "g"),
             badRegExpTest = badRegExpMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
-        var badExtensionMatch = /(reader|lang[\s]{0,1})/,
+        var badExtensionMatch = /(!|reader|lang[\s]{0,1})/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Struct literals are not allowed
         var badStructMatch = new RegExp("s[\[\(\{]", "g"),
@@ -414,7 +414,7 @@
         var caseSensitiveMatch = new RegExp("(c|C)(i|I|s|S)", "g"),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
-        var vectorMatch = new RegExp("([0-9]*)[\[\(\{]", "g"),
+        var vectorMatch = new RegExp("^[0-9]*[\[\(\{]", "g"),
             vectorTest = vectorMatch.exec(str.slice(i));
         if(badVectorTest && badVectorTest[1].length > 0){
             throwUnsupportedError(": read-syntax: literal "+badVectorTest[1]+"vectors not allowed"
@@ -470,7 +470,6 @@
             case ';':  datum = readSExpComment(str, i+1);
                        i+= datum.location.span+1; break;
             // LINE COMMENTS
-            case '!': 
             case '!/': datum = readLineComment(str, i-1);
                        i+= datum.location.span; break;
             // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
@@ -543,6 +542,7 @@
                           datum === 'return'    ? '\r' :
                           datum === 'space'     ? '\u0020' :
                           datum === 'rubout'    ? '\u007F' :
+                          datum === ' '         ? '\u0020' :
                           datum.length === 1   ? datum :
                             throwError(new types.Message(["read: Unsupported character: #\\",datum]),
                                        new Location(sCol, sLine, iStart, i-iStart));
