@@ -1,6 +1,7 @@
 /* 
  
- Follows WeScheme's current implementation: http://docs.racket-lang.org/htdp-langs/advanced.html
+ Follows WeScheme's current implementation of Advanced Student
+ http://docs.racket-lang.org/htdp-langs/advanced.html
  NOT SUPPORTED BY WESCHEME:
   - define-datatype
   - begin0
@@ -14,14 +15,16 @@
   - check-range
   - (require planet)
   - byetstrings (#"Apple")
-  - regexps
-  - #hash
-  - #rx or #px
+  - regexps (#rx or #px)
+  - hashtables (#hash)
   - graphs (#1=100 #1# #1#)
+  - reader and language extensions (#reader and #lang)
  
  
  TODO
  - JSLint
+ - toLowerCase() in readPoundSExp?
+ - does WeScheme support fl and fx vector literals?
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -58,8 +61,8 @@
         hex8            = new RegExp("([0-9a-f]{1,8})", "i"),
         oct3            = new RegExp("([0-7]{1,3})", "i");
 
-    // the delimiters encountered so far, and line and column
-    var delims, line, column, sCol, sLine, source;
+    // the delimiters encountered so far, line and column, and case-sensitivity
+    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols = true;
 
     // the location struct
     var Location = function(sCol, sLine, offset, span, theSource){
@@ -355,14 +358,14 @@
       }
 
       if(i >= str.length) {
-        sCol++; // move forward to grab the starting quote
+//        sCol++; // move forward to grab the starting quote
         throwError(new types.Message([source
                                       , ":"
                                       , sLine.toString()
                                       , ":"
-                                      , (sCol-1).toString()
+                                      , sCol.toString()
                                       , ": read: expected a closing \'\"\'"])
-                   , new Location((sCol-1), sLine, iStart, 1)
+                   , new Location(sCol, sLine, iStart, 1)
                    , "Error-GenericReadError");
       }
       var strng = new stringExpr(datum);
@@ -372,74 +375,150 @@
     }
 
     // readPoundSExp : String Number -> SExp
-    // reads a sexp begining with a # sign.
+    // based on http://docs.racket-lang.org/reference/reader.html#%28part._default-readtable-dispatch%29
+    // NOTE: bytestrings, regexps, hashtables, graphs, reader and lang extensions are not supported
     function readPoundSExp(str, i) {
       var sCol = column, sLine = line, iStart = i, datum;
       i++; column++; // skip over the pound sign
-      // Check specially for vector literals, matching #n[...]
-      var vectorMatch = new RegExp("([0-9]*)[\[\(\{]", "g"),
-          vectorTest = vectorMatch.exec(str.slice(i));
-      if(vectorTest && vectorTest[1].length > 0){
-        var size = vectorTest[1],
-            sexp = readList(str, i+(size.length));
-        datum = new vectorExpr(sexp, size);
-        datum.location = sexp.location;
-        i = sexp.location.span;
+          
+      // construct an unsupported error string
+      var unsupportedError;
+                            
+      // throwUnsupportedError : ErrorString token -> Error
+      function throwUnsupportedError(errorStr, token){
+        throwError(new types.Message([source, ":", line.toString()
+                                           , ":", (column-1).toString()
+                                           , errorStr])
+                        , new Location(sCol, sLine, iStart, token.length+1)
+                        , "Error-GenericReadError");
+      }
+               
+      if(i < str.length) {
+        var p = str.charAt(i).toLowerCase();
+        // fl and fx Vector Literals are not allowed
+        var badVectorMatch = new RegExp("(fl|fx)", "g"),
+            badVectorTest = badVectorMatch.exec(str.slice(i));
+        // hashtable Literals are not allowed
+        var badHashMatch = new RegExp("hash", "g"),
+            badHashTest = badHashMatch.exec(str.slice(i));
+        // Regular Expressions are not allowed
+        var badRegExpMatch = new RegExp("(rx|px)", "g"),
+            badRegExpTest = badRegExpMatch.exec(str.slice(i));
+        // Reader or Language Extensions are not allowed
+        var badExtensionMatch = /(reader|lang[\s]{0,1})/,
+            badExtensionTest = badExtensionMatch.exec(str.slice(i));
+        // Struct literals are not allowed
+        var badStructMatch = new RegExp("s[\[\(\{]", "g"),
+            badStructTest = badStructMatch.exec(str.slice(i));
+        // Case sensitivity flags ARE allowed
+        var caseSensitiveMatch = new RegExp("(c|C)(i|I|s|S)", "g"),
+            caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
+        // Vector literals ARE allowed
+        var vectorMatch = new RegExp("([0-9]*)[\[\(\{]", "g"),
+            vectorTest = vectorMatch.exec(str.slice(i));
+        if(badVectorTest && badVectorTest[1].length > 0){
+            throwUnsupportedError(": read-syntax: literal "+badVectorTest[1]+"vectors not allowed"
+                                  , badVectorTest[1]);
+        } else if(badHashTest && badHashTest[0].length > 0){
+            throwUnsupportedError(": read-syntax: literal hashtables not allowed"
+                                  , badHashTest[0]);
+        } else if(badRegExpTest && badRegExpTest[0].length > 0){
+            throwUnsupportedError(": read-syntax: regular expressions not allowed"
+                                  , badRegExpTest[0]);
+        } else if(badExtensionTest && badExtensionTest[0].length > 0){
+            throwUnsupportedError(": read: #" + badExtensionTest[0].trim()
+                              + " not enabled in the current context"
+                                  , badExtensionTest[0]);
+        } else if(badStructTest && badStructTest[0].length > 0){
+            throwUnsupportedError(": read-syntax: structure literals not allowed"
+                                  , badStructTest[0]);
+        } else if(caseSensitiveTest && caseSensitiveTest[0].length > 0){
+            caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
+            return readSExpByIndex(str, i+2);
+        } else if(vectorTest && vectorTest[0].length > 0){
+          var size = (vectorTest[1])? parseInt(vectorTest[1]) : "";
+          var sexp = readList(str, i+(size.toString().length));
+          datum = new vectorExpr(sexp, size);
+          datum.location = sexp.location;
+          i = sexp.location.span;
+          return datum;
+        } else {
+          switch(p){
+            // BOOLEANS
+            case 't':  datum = new booleanExpr("true"); i++; break;
+            case 'f':  datum = new booleanExpr("false"); i++; break;
+            // CHARACTERS
+            case '\\': datum = readChar(str, i-1);
+                       i+= datum.location.span-1; break;
+            // BYTE-STRINGS (unsupported)
+            case '"': unsupportedError = ": byte strings are not supported in WeScheme";
+                      break;
+            // SYMBOLS
+            case '%': datum = readSymbol(str, i,"");
+                       i+= datum.location.span; break;
+            // KEYWORDS (unsupported)
+            case ':': unsupportedError = ": keyword internment is not supported in WeScheme";
+                      break;
+            // BOXES
+            case '&': sexp = readSExpByIndex(str, i+1);
+                      var datum = [new symbolExpr("box"), sexp];
+                      i+= sexp.location.span+1; break;
+            // BLOCK COMMENTS
+            case '|':  datum = readBlockComment(str, i-1);
+                       i+= datum.location.span; break;
+            // SEXP COMMENTS
+            case ';':  datum = readSExpComment(str, i+1);
+                       i+= datum.location.span+1; break;
+            // LINE COMMENTS
+            case '!': 
+            case '!/': datum = readLineComment(str, i-1);
+                       i+= datum.location.span; break;
+            // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
+            case '`':
+            case ',':
+            case '\'': datum = readQuote(str, i);
+                       i+= datum.location.span; break;
+            // STRINGS
+            case '<<': datum = readString(str, i-1);
+                       i+= datum.location.span; break;
+            // NUMBERS
+            case 'e':  // exact
+            case 'i':  // inexact
+            case 'b':  // binary
+            case 'o':  // octal
+            case 'd':  // decimal
+            case 'x':  // hexadecimal
+              datum = readSymbolOrNumber(str, i-1);
+              if(datum){ i+= datum.location.span-1; break;}
+            default: throwError(new types.Message([source, ":"
+                                                   , line.toString()
+                                                   , ":", (column-1).toString()
+                                                   , ": read: bad syntax `#", p,"'"])
+                                , new Location(sCol, sLine, iStart, (i-iStart)+1)
+                                , "Error-GenericReadError");
+           }
+        }
+      // # is the end of the string...
+      } else {
+        throwError(new types.Message([source, ":", line.toString()
+                                     , ":" , (column-1).toString()
+                                     , ": read: bad syntax `#'"])
+                  , new Location(sCol, sLine, iStart, i-iStart)
+                  , "Error-GenericReadError");
+      }
+                            
+      // if we saw an unsupported reader dispatch
+      if(unsupportedError){
+        throwError(new types.Message([source, ":", line.toString()
+                                           , ":", (column-1).toString()
+                                           , unsupportedError])
+                        , new Location(sCol, sLine, iStart, (i-iStart)+1)
+                        , "Error-GenericReadError");
+      // if we lexed a valid token
+      } else {
+        datum.location = new Location(sCol, sLine, iStart, i-iStart);
         return datum;
       }
-      if(i < str.length) {
-        var p = str.charAt(i);
-        switch(p){
-          case 't':  // test for both forms of true
-          case 'T':  datum = new booleanExpr("true"); i++; break;
-          case 'f':  // test for both forms of false
-          case 'F':  datum = new booleanExpr("false"); i++; break;
-          // for comments, start reading after the semicolon
-          case ';':  datum = readSExpComment(str, i+1);
-                     i+= datum.location.span+1; break;
-          // for all others, back up a character and keep reading
-          case '\\': datum = readChar(str, i-1);
-                     i+= datum.location.span-1; break;
-          case '|':  datum = readMultiLineComment(str, i-1);
-                     i+= datum.location.span; break;
-          // believe it or not, #' is a valid symbol
-          case '\'':
-          // if it's a number...
-          case 'E':  // exact
-          case 'I':  // inexact
-          case 'B':  // binary
-          case 'O':  // octal
-          case 'D':  // decimal
-          case 'X':  // hexadecimal
-          case 'e':  // exact
-          case 'i':  // inexact
-          case 'b':  // binary
-          case 'o':  // octal
-          case 'd':  // decimal
-          case 'x':  // hexadecimals
-            datum = readSymbolOrNumber(str, i-1);
-            if(datum){ i+= datum.location.span-1; break;}
-          default: throwError(new types.Message([source
-                                                 , ":"
-                                                 , line.toString()
-                                                 , ":"
-                                                 , (column-1).toString()
-                                                 , ": read: bad syntax `#", p,"'"])
-                              , new Location(sCol, sLine, iStart, (i-iStart)+1)
-                              , "Error-GenericReadError");
-         }
-      } else {
-          throwError(new types.Message([source
-                                       , ":"
-                                       , line.toString()
-                                       , ":"
-                                       , column.toString()
-                                       , ": read: bad syntax `#'"])
-                    , new Location(sCol, sLine, iStart, i-iStart)
-                    , "Error-GenericReadError");
-      }
-      datum.location = new Location(sCol, sLine, iStart, i-iStart);
-      return datum;
     }
 
     // readChar : String Number -> types.char
@@ -472,9 +551,9 @@
       return chr;
     }
 
-    // readMultiLineComment : String Number -> Atom
+    // readBlockComment : String Number -> Atom
     // reads a multiline comment
-    function readMultiLineComment(str, i) {
+    function readBlockComment(str, i) {
       var sCol = column, sLine = line, iStart = i;
       i+=2; // skip over the #|
       column+=2;
@@ -579,7 +658,6 @@
            datum += str.charAt(i++);
            column++;
       }
-
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error
       try{
@@ -599,9 +677,9 @@
                                         , ":"
                                         , sLine.toString()
                                         , ":"
-                                        , (sCol-1).toString()
+                                        , sCol.toString()
                                         , ": read: "+e.message])
-                     , new Location((sCol-1), sLine, iStart, i-iStart)
+                     , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
       }
      }
@@ -613,7 +691,7 @@
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
       // if we're escaping, move forward one character *no matter what*
       if(datum === "\\") {
-          if(i+1 >= str.length){
+          if(i >= str.length){
             throw new Error("EOF following `\\' in symbol");
           }
           datum += str.charAt(++i);
@@ -630,7 +708,7 @@
           datum = sym.val;
           i = sym.location.i;
         } else {
-          datum += str.charAt(++i);
+          datum += caseSensitiveSymbols? str.charAt(++i) : str.charAt(++i).toLowerCase();
           column++;
         }
       }
@@ -640,8 +718,14 @@
                   ,new Location(sCol, sLine, iStart, i-iStart));
       }
 
-      var p = str.charAt(i);
-
+      // if we're case-insensitive, make everything not between verbatim lowercase
+      if(!caseSensitiveSymbols){
+        var chunks = datum.split('\|');
+        for(var j=0; j<chunks.length; j+=2){
+          chunks[j] = chunks[j].toLowerCase();
+        }
+        datum = chunks.join("");
+      }
       symbl = (datum==="true" || datum==="false")? new booleanExpr(datum) : new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
       return symbl;
