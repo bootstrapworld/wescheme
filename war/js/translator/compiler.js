@@ -56,10 +56,11 @@
  // Program.prototype.desugar: pinfo -> [Program, pinfo]
  Program.prototype.desugar = function(pinfo){ return [this, pinfo]; };
  defFunc.prototype.desugar = function(pinfo){
-    checkDuplicateIdentifiers(this.args, this);
-    var bodyAndPinfo = this.body.desugar(pinfo);
-    this.body = bodyAndPinfo[0];
-    return [this, bodyAndPinfo[1]];
+    var lambdaExp = new lambdaExpr(this.args, this.body),
+        varExp =  new defVar(this.name, lambdaExp)
+    lambdaExp.location = this.location;
+    varExp.location = this.location;
+    return varExp.desugar(pinfo);
  };
  defVar.prototype.desugar = function(pinfo){
     var exprAndPinfo = this.expr.desugar(pinfo);
@@ -103,6 +104,7 @@
     return [this, exprsAndPinfo[1]];
  };
  lambdaExpr.prototype.desugar = function(pinfo){
+    checkDuplicateIdentifiers(this.args, this);
     var bodyAndPinfo = this.body.desugar(pinfo);
     this.body = bodyAndPinfo[0];
     return [this, bodyAndPinfo[1]];
@@ -303,27 +305,6 @@
  function bf(name, modulePath, arity, vararity, loc){
     return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
  }
- defFunc.prototype.collectDefinitions = function(pinfo){
-    // is the name a keyword?
-    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
-        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
-                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
-                    this.name.location);
-    }
-    var previousBinding = pinfo.definedNames.get(this.name.val);
-    var envBinding      = pinfo.env.lookup(this.name.val);
-    // was there a previous binding?
-    if(previousBinding || envBinding){
-        var part = previousBinding? new types.ColoredPart("previous definition", previousBinding.loc) : "previous definition";
-        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
-                                      , ": this name has a "
-                                      , part
-                                      , " and cannot be re-defined"]),
-                    this.name.location);
-    }
-    var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
-    return pinfo.accumulateDefinedBinding(binding, pinfo, this.location);
- };
  defVar.prototype.collectDefinitions = function(pinfo){
     // is the name a keyword?
     if(compilerStructs.keywords.indexOf(this.name.val) > -1){
@@ -342,7 +323,9 @@
                                       , " and cannot be re-defined"]),
                     this.name.location);
     }
-    var binding = new bindingConstant(this.name.val, false, [], this.name.location)
+    var binding = (this.expr instanceof lambdaExpr)?
+                    bf(this.name.val, false, this.expr.args.length, false, this.name.location)
+                  : new bindingConstant(this.name.val, false, [], this.name.location);
     return pinfo.accumulateDefinedBinding(binding, pinfo, this.location);
  };
  defVars.prototype.collectDefinitions = function(pinfo){
