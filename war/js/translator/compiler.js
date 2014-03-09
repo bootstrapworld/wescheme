@@ -455,13 +455,9 @@
  Program.prototype.analyzeUses = function(pinfo, env){
     return pinfo;
  };
- defFunc.prototype.analyzeUses = function(pinfo, env){
-    // extend the environment with the function, then analyze as a lambda
-    pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location));
-    var lambda = new lambdaExpr(this.args, this.body);
-    return lambda.analyzeUses(pinfo);
- };
  defVar.prototype.analyzeUses = function(pinfo, env){
+    // if it's a lambda, extend the environment with the function, then analyze as a lambda
+    if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location));
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo, env){
@@ -519,20 +515,6 @@
  // compile: pinfo -> [bytecode, pinfo]
  Program.prototype.compile = function(pinfo){
     return [this.val, pinfo];
- };
- 
- // override these functions for Programs that require it
- defFunc.prototype.compile = function(env, pinfo){
-  throw new unimplementedException("defFunc.compile");
-  /*    var compiledNameAndPinfo = compileExpression(this.name, env, pinfo),
-          compiledName = compiledNameAndPinfo[0],
-          pinfo = compiledNameAndPinfo[1];
-      var compiledLambdaAndPinfo = compileLambda(this.name, this.args, this.body, env, pinfo),
-          compiledLambda = compiledLambdaAndPinfo[0],
-          pinfo = compiledLambdaAndPinfo[1];
-      var bytecode = bcode:make-def-values([compiledName], compiledLambda);
-      return [bytecode, pinfo];
-   */
  };
  
  defVar.prototype.compile = function(env, pinfo){
