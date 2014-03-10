@@ -360,7 +360,7 @@
  // When we hit a require, we have to extend our environment to include the list of module
  // bindings provided by that module.
  requireExpr.prototype.collectDefinitions = function(pinfo){
-    throw "collecting definitions from require is not yet implemented (see compiler.js)";
+/*    throw "collecting definitions from require is not yet implemented (see compiler.js)";
     var errorMessage =  ["require", ": ", "moby-error-type:unknown-module: ", this.spec],
         moduleName = pinfo.modulePathResolver(this.spec, this.currentModulePath);
     // if it's an invalid moduleName, throw an error
@@ -375,6 +375,7 @@
  
     // if everything is okay, add the module bindings to this pinfo and return
     pinfo.accumulateModule(pinfo.accumulateModuleBindings(moduleBinding.bindings));
+ */
     return pinfo;
  };
  localExpr.prototype.collectDefinitions = function(pinfo){
@@ -452,12 +453,10 @@
 
  // extend the Program class to analyzing uses
  // Program.analyzeUses: pinfo -> pinfo
- Program.prototype.analyzeUses = function(pinfo, env){
-    return pinfo;
- };
+ Program.prototype.analyzeUses = function(pinfo, env){ return pinfo; };
  defVar.prototype.analyzeUses = function(pinfo, env){
     // if it's a lambda, extend the environment with the function, then analyze as a lambda
-    if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location));
+    if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.expr.args.length, false, this.location));
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo, env){
@@ -667,11 +666,11 @@
                               })
                              , pinfo);
     }
-//    console.log("collecting definitions");
+    console.log("collecting definitions");
     var pinfo1 = collectDefinitions(programs, pinfo);
-//    console.log("collecting provides");
+    console.log("collecting provides");
     var pinfo2 = collectProvides(programs, pinfo1);
-//    console.log("analyzing uses");
+    console.log("analyzing uses");
     return analyzeUses(programs, pinfo2);
  }
  
