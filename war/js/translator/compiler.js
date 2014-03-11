@@ -30,7 +30,7 @@
                                       , new quotedExpr(loc.toVector())
                                       , boolExpr
                                       , new quotedExpr(boolExpr.location.toVector())]);
-    runtimeCall.location = booleanExpr.location;
+    runtimeCall.location = boolExpr.location;
 //    tagApplicationOperator_Module(runtimeCall, 'moby/runtime/kernel/misc');
     return runtimeCall;
  }
@@ -80,7 +80,7 @@
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
         call = new callExpr(new primop(new symbolExpr('make-struct-type')),
                             [new symbolExpr(name),
-                             new booleanExpr("false"),
+                             new symbolExpr("false"),
                              new numberExpr(fields.length),
                              new numberExpr(0)]);
         call.location = this.location;
@@ -90,7 +90,7 @@
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
       var runtimeOp = new primop(new symbolExpr('make-struct-field-accessor')),
-          runtimeArgs = [new symbolExpr(name+'-ref'), new numberExpr(i), new booleanExpr("false")],
+          runtimeArgs = [new symbolExpr(name+'-ref'), new numberExpr(i), new symbolExpr("false")],
           runtimeCall = new callExpr(runtimeOp, runtimeArgs),
           defineVar = new defVar(new symbolExpr(name+'-'+f), runtimeCall);
       selectorStx.push(defineVar);
@@ -217,7 +217,7 @@
  andExpr.prototype.desugar = function(pinfo){
     var expr = this.exprs[this.exprs.length-1];
     for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
-      expr = new ifExpr(this.exprs[i], expr, new booleanExpr(new symbolExpr("false")));
+      expr = new ifExpr(this.exprs[i], expr, new symbolExpr(new symbolExpr("false")));
       expr.location = this.location;
     }
     return expr.desugar(pinfo);

@@ -315,15 +315,6 @@ function listExpr(val) {
 };
 listExpr.prototype = heir(Program.prototype);
 
-// boolean expression
-function booleanExpr(sym) {
-  Program.call(this);
-  sym = (sym instanceof symbolExpr)? sym.val : sym;
-  this.val = (sym === "true" || sym === "#t");
-  this.toString = function(){ return this.val? "#t" : "#f";};
-};
-booleanExpr.prototype = heir(Program.prototype);
-
 // quoted expression
 function quotedExpr(val) {
   Program.call(this);

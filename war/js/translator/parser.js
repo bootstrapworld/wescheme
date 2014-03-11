@@ -12,9 +12,6 @@
  
  TODO
  - JSLint
- - proper parsing/errors for
-    - quoted
-    - quasiquoted
  */
 
 (function () {
@@ -25,8 +22,7 @@
  function isNumber(x) { return x instanceof numberExpr; }
  function isSymbol(x) { return x instanceof symbolExpr; }
  function isChar(x)   { return x instanceof charExpr;   }
- function isVector(x) { return x instanceof vectorExpr;}
- function isBoolean(x){ return x instanceof booleanExpr;}
+ function isVector(x) { return x instanceof vectorExpr; }
  
  // isSymbolEqualTo : symbolExpr symbolExpr -> Boolean
  // are these all symbols of the same value?
@@ -691,7 +687,7 @@
   }
 
   function parseQuasiQuotedExpr(sexp, depth) {
-     // quasiquote must have exactly one argument
+    // quasiquote must have exactly one argument
     if(sexp.length < 2){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                     , ": expected a single argument, but did not find one "]),
@@ -768,7 +764,6 @@
   function parseExprSingleton(sexp) {
     var singleton = isString(sexp)  ? sexp :
                     isNumber(sexp)  ? sexp :
-                    isBoolean(sexp) ? sexp :
                     isChar(sexp)    ? sexp :
                     isVector(sexp)  ? parseVector(sexp) :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :

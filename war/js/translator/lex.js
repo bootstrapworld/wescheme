@@ -41,7 +41,6 @@
 // - numberExpr
 // - symbolExpr
 // - stringExpr
-// - booleanExpr
 // - charExpr
 // - vectorExpr
 
@@ -445,9 +444,6 @@
           return datum;
         } else {
           switch(p){
-            // BOOLEANS
-            case 't':  datum = new booleanExpr("true"); i++; break;
-            case 'f':  datum = new booleanExpr("false"); i++; break;
             // CHARACTERS
             case '\\': datum = readChar(str, i-1);
                        i+= datum.location.span-1; break;
@@ -479,6 +475,9 @@
             // STRINGS
             case '<<': datum = readString(str, i-1);
                        i+= datum.location.span; break;
+            // BOOLEANS
+            case 't':  // true
+            case 'f':  // false
             // NUMBERS
             case 'e':  // exact
             case 'i':  // inexact
@@ -718,7 +717,7 @@
         }
         datum = chunks.join("");
       }
-      symbl = (datum==="true" || datum==="false")? new booleanExpr(datum) : new symbolExpr(datum);
+      symbl = new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
       return symbl;
     }
@@ -742,7 +741,7 @@
       }
 
       i++; // skip over the closing |
-      symbl = (datum==="true" || datum==="false")? new booleanExpr(datum) : new symbolExpr(datum);
+      gsymbl = new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
       return symbl;
     }
