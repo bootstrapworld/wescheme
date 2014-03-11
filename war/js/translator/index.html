@@ -73,7 +73,7 @@ function loadSuite(json){
     var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
                difference = chunks[4], reason = chunks[6];
-    if(expr==="''") expr = "'";
+    expr = expr.replace(/^\'\'/,"'");
     tests.push({expr: expr, local: local, server: server, reason: reason});
   }
   console.log(document.getElementById('runTests'));
@@ -129,7 +129,7 @@ function runTests(){
 
 </head>
 <body onload="repl2_setup()">
-<textarea cols="80" rows="20" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
+<textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
 <input type="button" disabled="true" value="Run test-suite" id="runTests" onclick="runTests()"/>
 <br/>
