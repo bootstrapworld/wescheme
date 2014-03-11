@@ -171,7 +171,7 @@
     // datum
     function readProg(str, strSource) {
       var i = 0; sCol = column = 0; sLine = line = 1; // initialize all position indices
-      source = strSource || "<unknown>";
+      source = strSource || "<definitions>";
       var sexp,
           sexps = [];
       delims = [];
@@ -191,7 +191,7 @@
     // removes the first three lines of the string that contain DrScheme meta data
     function readSSFile(str, strSource) {
       var i = 0; sCol = column = 0; sline = line = 1; // initialize all position indices
-      source = strSource || "unknown";
+      source = strSource || "<definitions>";
       var crs = 0;
 
       while(i < str.length && crs < 3) {
@@ -405,7 +405,7 @@
         var badRegExpMatch = new RegExp("(rx|px)", "g"),
             badRegExpTest = badRegExpMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
-        var badExtensionMatch = /(!|reader|lang[\s]{0,1})/,
+        var badExtensionMatch = /!(?!\/)|reader|lang[\s]{0,1}/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Struct literals are not allowed
         var badStructMatch = new RegExp("s[\[\(\{]", "g"),
@@ -414,7 +414,7 @@
         var caseSensitiveMatch = new RegExp("(c|C)(i|I|s|S)", "g"),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
-        var vectorMatch = new RegExp("^[0-9]*[\[\(\{]", "g"),
+        var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
             vectorTest = vectorMatch.exec(str.slice(i));
         if(badVectorTest && badVectorTest[1].length > 0){
             throwUnsupportedError(": read-syntax: literal "+badVectorTest[1]+"vectors not allowed"
@@ -451,14 +451,12 @@
             case '\\': datum = readChar(str, i-1);
                        i+= datum.location.span-1; break;
             // BYTE-STRINGS (unsupported)
-            case '"': unsupportedError = ": byte strings are not supported in WeScheme";
-                      break;
+            case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
             case '%': datum = readSymbol(str, i,"");
                        i+= datum.location.span; break;
             // KEYWORDS (unsupported)
-            case ':': unsupportedError = ": keyword internment is not supported in WeScheme";
-                      break;
+            case ':': throwUnsupportedError(": keyword internment is not supported in WeScheme", "#\:");
             // BOXES
             case '&': sexp = readSExpByIndex(str, i+1);
                       var datum = [new symbolExpr("box"), sexp];
@@ -470,7 +468,7 @@
             case ';':  datum = readSExpComment(str, i+1);
                        i+= datum.location.span+1; break;
             // LINE COMMENTS
-            case '!/': datum = readLineComment(str, i-1);
+            case '!': datum = readLineComment(str, i-1);
                        i+= datum.location.span; break;
             // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
             case '`':
@@ -487,6 +485,7 @@
             case 'o':  // octal
             case 'd':  // decimal
             case 'x':  // hexadecimal
+              column--; //  back up the column one char
               datum = readSymbolOrNumber(str, i-1);
               if(datum){ i+= datum.location.span-1; break;}
             default: throwError(new types.Message([source, ":"
@@ -506,18 +505,8 @@
                   , "Error-GenericReadError");
       }
                             
-      // if we saw an unsupported reader dispatch
-      if(unsupportedError){
-        throwError(new types.Message([source, ":", line.toString()
-                                           , ":", (column-1).toString()
-                                           , unsupportedError])
-                        , new Location(sCol, sLine, iStart, (i-iStart)+1)
-                        , "Error-GenericReadError");
-      // if we lexed a valid token
-      } else {
-        datum.location = new Location(sCol, sLine, iStart, i-iStart);
-        return datum;
-      }
+      datum.location = new Location(sCol, sLine, iStart, i-iStart);
+      return datum;
     }
 
     // readChar : String Number -> types.char
