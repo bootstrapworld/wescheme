@@ -310,6 +310,7 @@
         else { column++; }
 
         if(chr === '\\') {
+          column++; // move the column forward to skip over the escape character
           chr = str.charAt(i++);
           switch(true){
              case /a/.test(chr)  : chr = '\u0007'; break;
