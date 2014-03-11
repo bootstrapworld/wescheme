@@ -500,6 +500,15 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
+    // is this 'else'?
+    if(this.val === "else"){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": not allowed "
+                                      , new types.ColoredPart("here", this.location)
+                                      , ", because this is not a question in a clause"]),
+                    this.location);
+    }
+
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
@@ -666,11 +675,11 @@
                               })
                              , pinfo);
     }
-    console.log("collecting definitions");
+//    console.log("collecting definitions");
     var pinfo1 = collectDefinitions(programs, pinfo);
-    console.log("collecting provides");
+//    console.log("collecting provides");
     var pinfo2 = collectProvides(programs, pinfo1);
-    console.log("analyzing uses");
+//    console.log("analyzing uses");
     return analyzeUses(programs, pinfo2);
  }
  
