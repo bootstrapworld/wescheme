@@ -6,16 +6,137 @@
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="lex.js"></script>
 <script type="text/javascript" src="repl2.js"></script>
-<style type="text/css">
-  li.value {color:#0000B3}
-  li.error {color:#ff0000}
-  li.value, li.error {list-style-type:none}
-</style>
+  
+<script>
+var rows = [];
+var tests = [];
+var passed = 0;
+
+// sameResults : local server -> boolean
+// compare entities using a 3-step process
+// 1) Weak comparison on locations
+// 2) Recursive comparison for objects
+// 3) Strong comparison for literals
+// if there's a difference, log a diff to the form and return false
+// credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+function sameResults(x, y){
+  // given an object, remove empty properties and reconstruct as an alphabetized JSON string
+  // then parse and return a canonicalized object
+  function canonicalizeObject(obj){
+    var fields = [], obj2={};
+    for (i in obj) { if (obj.hasOwnProperty(i) && obj[i] !== "") fields.push(i); }
+    fields.sort();
+    for (var i=0;i<fields.length; i++) { obj2[fields[i]] = obj[fields[i]]; }
+    return obj2;
+  }
+
+  // if either one is a JSON string, convert it to an object
+  try{ var x = JSON.parse(x); }
+  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
+  try{ var y = JSON.parse(y);}
+  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
+
+  // if either one is an object, canonicalize it
+  if(typeof(x) === "object") x = canonicalizeObject(x);
+  if(typeof(y) === "object") y = canonicalizeObject(y);
+
+  // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
+  if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
+    return ( (x.span == y.span) && (x.offset == y.offset) );
+  // 2) if they are both objects, compare each property
+  } else if(typeof(x)=="object" && typeof(x)=="object"){
+    // does every property in x also exist in y?
+    for (var p in x) {
+      // log error if a property is not defined
+      if ( ! x.hasOwnProperty(p) ){ return false; }
+      if ( ! y.hasOwnProperty(p) ){ return false; }
+      // if they both have the property, compare it
+      if(sameResults(x[p],y[p])) continue;
+      else return false;
+    }
+    // does every property in y also exist in x?
+    for (p in y) {
+      // log error if a property is not defined
+      if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){ return false; }
+    }
+  // 3)if they are literals, they must be identical
+  } else {
+      if (x !== y){ return false; }
+  }
+  return true;
+}
+
+
+function loadSuite(json){
+  for(var i=0; i<json.feed.entry.length; i++){
+    rows.push(json.feed.entry[i].content.$t);
+    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: /);
+    var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
+               difference = chunks[4], reason = chunks[6];
+    if(expr==="''") expr = "'";
+    tests.push({expr: expr, local: local, server: server, reason: reason});
+  }
+  console.log(document.getElementById('runTests'));
+  document.getElementById('runTests').disabled=false;
+  console.log('Test Suite data retrieved from Google Drive: '+tests.length+' tests loaded');
+}
+
+
+function runTests(){
+  function test(expr, expected){
+    console.log('expecting: '+expected);
+    try {
+      var sexp      = lex(expr,"<definitions>"), // lex
+          AST       = parse(sexp),              // parse
+          desugared = desugar(AST),             // desugar
+          program   = desugared[0],
+          pinfo     = desugared[1],
+          pinfo2    = analyze(program);         // analyze
+    } catch(e) {
+      console.log('recieved: '+e);
+      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
+      if(expected === "LOCAL IS BETTER") return true;
+      if(expected === "PASS") return false;
+      return sameResults(JSON.parse(e), JSON.parse(expected));
+    }
+    console.log('GOT PASS');
+    return (expected === "PASS" || expected === "LOCAL IS BETTER");
+  }
+  
+    console.log('running tests');
+    for(var i=0; i<tests.length; i++){
+      // run the test
+      console.log('///// TEST '+ (i+1) +' ////////////////');
+      console.log('testing :'+tests[i].expr);
+      var result = test(tests[i].expr, tests[i].server);
+      if(result) passed++;
+      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed';
+      // show the result
+      var table = document.getElementById('testResults'),
+          row = document.createElement('tr'),
+          expr  = document.createElement('td');
+      row.style.background = result? 'lightgreen' : 'pink';
+      expr.style.fontFamily = 'monospace';
+      expr.style.width = '500px';
+      row.appendChild(document.createTextNode((i+1)+') '));
+      row.appendChild(expr);
+      expr.innerHTML = tests[i].expr;
+      table.appendChild(row);
+      console.log(result);
+    }
+}
+</script>
+
 </head>
 <body onload="repl2_setup()">
-<ul id="output-list">
-<li id="repl-input-li"><textarea cols="80" rows="20" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
-</ul>
+<textarea cols="80" rows="20" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
+<hr>
+<input type="button" disabled="true" value="Run test-suite" id="runTests" onclick="runTests()"/>
+<br/>
+<span id="status"></span>
+<table id="testResults">
+</table>
+<script type="text/javascript" src="https://spreadsheets.google.com/feeds/list/0AjzMl1BJlJDkdDI2c0VUSHNZMnR6ZVR5S2hXZEdtd1E/1/public/basic?alt=json-in-script&callback=loadSuite"></script>
 
-
-</body></html>
+</body>
+</html>
