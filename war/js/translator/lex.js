@@ -232,8 +232,8 @@
       }
       var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
-                                                , new types.ColoredPart(p, new Location(sCol, sLine, iStart, 1))])
-                              ,new Location(sCol, sLine, iStart, 1)) :
+                                                , new types.ColoredPart(p, new Location(column, sLine, iStart, 1))])
+                              ,new Location(column, sLine, iStart, 1)) :
                  leftListDelims.test(p) ? readList(str, i) :
                  p === '"'                  ? readString(str, i) :
                  p === '#'                  ? readPoundSExp(str, i) :
@@ -601,6 +601,7 @@
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
     function readQuote(str, i) {
+                            console.log('quote began at '+i+', column is '+column);
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
@@ -618,16 +619,17 @@
                      , new Location(sCol, sLine, iStart, i-iStart+1)
                      , "Error-GenericReadError");
       }
+      i++; column++; // read forward one char
       if(p == ',') {
-        if(str.charAt(i+1) == '@') {
-          i++;
+        if(str.charAt(i) == '@') {
+          i++; column++; // read forward one char
           symbol = new symbolExpr("unquote-splicing");
         } else {
           symbol = new symbolExpr("unquote");
         }
       }
       // read what comes next, then extract it's offset and span to generate the quoted span
-      var sexp = readSExpByIndex(str, i+1),
+      var sexp = readSExpByIndex(str, i),
           quotedSexp = [symbol, sexp],
           quotedSpan = (sexp.location.offset + sexp.location.span) - iStart;
       
