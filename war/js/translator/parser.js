@@ -234,7 +234,17 @@
   // predicates and parsers for call, lambda, local, letrec, let, let*, if, and, or, quote and quasiquote exprs
   function parseExprList(sexp) {
     function parseFuncCall(sexp) {
-      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
+    if(isSymbolEqualTo(sexp[0], "unquote")){
+      throwError(new types.Message(["misuse of a comma or 'unquote, not under a quasiquoting backquote"])
+                 , sexp.location
+                 , "Error-GenericSyntacticError");
+    }
+    if(isSymbolEqualTo(sexp[0], "unquote-splicing")){
+      throwError(new types.Message(["misuse of a ,@ or unquote-splicing, not under a quasiquoting backquote"])
+                 , sexp.location
+                 , "Error-GenericSyntacticError");
+    }
+    return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
                           throwError(new types.Message(["function call sexp"]), sexp.location);
     }
     function parseLambdaExpr(sexp) {
@@ -721,6 +731,7 @@
         if(depth === 0){
           return new unquoteSplice(parseExpr(sexp[1]));
         }
+//        depth++;
       } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "unquote")){
         if((sexp.length !== 2)){
           throwError(new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
@@ -734,6 +745,7 @@
         if(depth === 0){
           return new unquotedExpr(parseExpr(sexp[1]));
         }
+//        depth++;
       } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "quasiquote")){
         if((sexp.length !== 2))
           throwError(new types.Message(["Inside an quasiquote, expected to find a single argument, but found "+(sexp.length-1)])
@@ -743,6 +755,7 @@
         if(depth === 0){
           return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
         }
+//        depth--;
       }
       // otherwise, parse using standard behavior
       if(isCons(sexp)) return sexp.map(parseQqListItem);
