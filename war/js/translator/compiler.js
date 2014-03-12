@@ -56,7 +56,8 @@
  // Program.prototype.desugar: pinfo -> [Program, pinfo]
  Program.prototype.desugar = function(pinfo){ return [this, pinfo]; };
  defFunc.prototype.desugar = function(pinfo){
-    checkDuplicateIdentifiers(this.args, "define", this.location);
+    // check for duplicate arguments
+    checkDuplicateIdentifiers([this.name].concat(this.args), this.stx[0], this.location);
     var lambdaExp = new lambdaExpr(this.args, this.body),
         varExp =  new defVar(this.name, lambdaExp)
     lambdaExp.location = this.location;
@@ -105,7 +106,8 @@
     return [this, exprsAndPinfo[1]];
  };
  lambdaExpr.prototype.desugar = function(pinfo){
-    checkDuplicateIdentifiers(this.args, "lambda", this.location);
+    // if this was parsed from raw syntax, check for duplicate arguments
+    if(this.stx) checkDuplicateIdentifiers(this.args, this.stx[0], this.location);
     var bodyAndPinfo = this.body.desugar(pinfo);
     this.body = bodyAndPinfo[0];
     return [this, bodyAndPinfo[1]];

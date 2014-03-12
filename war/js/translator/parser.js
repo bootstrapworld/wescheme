@@ -180,7 +180,7 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defFunc(parseIdExpr(sexp[1][0]), rest(sexp[1]).map(parseIdExpr), parseExpr(sexp[2]));
+          return new defFunc(parseIdExpr(sexp[1][0]), rest(sexp[1]).map(parseIdExpr), parseExpr(sexp[2]), sexp);
       }
       // If it's (define x ...)
       if(sexp[1] instanceof symbolExpr){
@@ -285,7 +285,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]));
+      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
     }
     function parseLocalExpr(sexp) {
       // is it just (local)?

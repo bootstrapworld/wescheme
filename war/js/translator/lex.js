@@ -625,7 +625,7 @@
           symbol = new symbolExpr("unquote");
         }
       }
-                            console.log('startiung to read quote at '+i);
+
       // read what comes next, then extract it's offset and span to generate the quoted span
       var sexp = readSExpByIndex(str, i),
           quotedSexp = [symbol, sexp],

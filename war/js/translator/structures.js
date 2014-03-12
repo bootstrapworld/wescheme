@@ -9,7 +9,7 @@ var unimplementedException = function(str){
 
 // checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
 // sort the array, and throw errors for non-symbols, keywords or duplicates
-function checkDuplicateIdentifiers(lst, caller, loc){
+function checkDuplicateIdentifiers(lst, stx, loc){
   var sorted_arr = lst.sort();
   var results = [];
   for (var i = 0; i < lst.length; i++) {
@@ -20,12 +20,12 @@ function checkDuplicateIdentifiers(lst, caller, loc){
                                 " : this is a reserved keyword and cannot be used as a variable or function name"])
                  , sorted_arr[i].location);
     } else if(results[sorted_arr[i]]) {
-      throwError(new types.Message([new types.ColoredPart(caller.toString(), loc),
+      throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
                                 ": found ",
                                 new types.ColoredPart("a variable", sorted_arr[i].location),
                                 " that is already used ",
                                 new types.ColoredPart("here", sorted_arr[i-1].location)])
-                 , loc);
+                 , sorted_arr[i].location);
     } else {
       results[sorted_arr[i]] = true;
     }
@@ -110,11 +110,12 @@ var Program = function() {
 };
 
 // Function definition
-function defFunc(name, args, body) {
+function defFunc(name, args, body, stx) {
   Program.call(this);
   this.name = name;
   this.args = args;
   this.body = body;
+  this.stx  = stx;
   this.toString = function(){
     return "(define ("+this.name.toString()+" "+this.args.join(" ")+")\n    "+this.body.toString()+")";
   };
@@ -166,10 +167,11 @@ function beginExpr(exprs) {
 beginExpr.prototype = heir(Program.prototype);
 
 // Lambda expression
-function lambdaExpr(args, body) {
+function lambdaExpr(args, body, stx) {
   Program.call(this);
   this.args = args;
   this.body = body;
+  this.stx  = stx;
   this.toString = function(){
     return "(lambda ("+this.args.join(" ")+") ("+this.body.toString()+"))";
   };
