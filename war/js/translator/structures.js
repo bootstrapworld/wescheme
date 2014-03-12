@@ -25,7 +25,7 @@ function checkDuplicateIdentifiers(lst, caller, loc){
                                 new types.ColoredPart("a variable", sorted_arr[i].location),
                                 " that is already used ",
                                 new types.ColoredPart("here", sorted_arr[i-1].location)])
-                 , sorted_arr[i].location);
+                 , loc);
     } else {
       results[sorted_arr[i]] = true;
     }
