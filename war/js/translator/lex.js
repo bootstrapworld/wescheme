@@ -358,7 +358,6 @@
       }
 
       if(i >= str.length) {
-//        sCol++; // move forward to grab the starting quote
         throwError(new types.Message([source
                                       , ":"
                                       , sLine.toString()
@@ -600,7 +599,6 @@
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
     function readQuote(str, i) {
-                            console.log('quote began at '+i+', column is '+column);
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
@@ -627,6 +625,7 @@
           symbol = new symbolExpr("unquote");
         }
       }
+                            console.log('startiung to read quote at '+i);
       // read what comes next, then extract it's offset and span to generate the quoted span
       var sexp = readSExpByIndex(str, i),
           quotedSexp = [symbol, sexp],
@@ -648,6 +647,16 @@
            if(str.charAt(i) === "\n"){ line++; column = 0;}
            datum += str.charAt(i++);
            column++;
+      }
+      // special-case for ".", which is not supported in WeScheme
+      if(datum === "."){
+        throwError(new types.Message([source, ":"
+                                    , sLine.toString(), ":"
+                                    , sCol.toString()
+                                    , ": read: '.' is not supported as a symbol WeScheme"])
+                     , new Location(sCol, sLine, iStart, i-iStart)
+                     , "Error-GenericReadError");
+                            
       }
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error

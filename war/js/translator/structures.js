@@ -9,23 +9,23 @@ var unimplementedException = function(str){
 
 // checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
 // sort the array, and throw errors for non-symbols, keywords or duplicates
-function checkDuplicateIdentifiers(lst, caller){
-  var sorted_arr = lst.sort(); // You can define the comparing function here.
+function checkDuplicateIdentifiers(lst, caller, loc){
+  var sorted_arr = lst.sort();
   var results = [];
   for (var i = 0; i < lst.length; i++) {
     if(!(sorted_arr[i] instanceof symbolExpr)){
       throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
     } else if(compilerStructs.keywords.indexOf(sorted_arr[i].val)>-1){
-      throwError(types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
-                                " : this is a reserved keyword and cannot be used as a variable or function name"]),
-                               sorted_arr[i].location);
+      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
+                                " : this is a reserved keyword and cannot be used as a variable or function name"])
+                 , sorted_arr[i].location);
     } else if(results[sorted_arr[i]]) {
-      throwError(types.Message([new types.ColoredPart(caller.toString(), caller.location),
+      throwError(new types.Message([new types.ColoredPart(caller.toString(), loc),
                                 ": found ",
                                 new types.ColoredPart("a variable", sorted_arr[i].location),
                                 " that is already used ",
-                                new types.ColoredPart("a here", sorted_arr[i-1].location)]),
-                               caller.location);
+                                new types.ColoredPart("here", sorted_arr[i-1].location)])
+                 , sorted_arr[i].location);
     } else {
       results[sorted_arr[i]] = true;
     }
@@ -70,7 +70,10 @@ function throwError(msg, loc, errorClass) {
                          (errorClass? [["span"
                                         , [["class", "Error.reason"]]
                                         , msg.toString()]
-                                      , ["span", [["class", ((errorClass || "message")+".locations")]]]]
+                                      , ["span", [["class", ((errorClass || "message")
+                                                            +((errorClass === "Error-GenericReadError")?
+                                                              ".locations"
+                                                              :".otherLocations"))]]]]
                                       : msg.args.map(function(x){return x.toString();})))
                       ,["br", [], ""]
                       ,["span"
@@ -965,7 +968,7 @@ function getTopLevelEnv(lang){
     // If true, the compiler emits calls to plt.Kernel.setLastLoc to maintain
     // source position during evaluation.
 
-    this.allowRedefinition = allowRedefinition || true;     // boolean
+    this.allowRedefinition = allowRedefinition || false;     // boolean
     // If true, redefinition of a value that's already defined will not raise an error.
  
     // For the module system.
@@ -1000,23 +1003,26 @@ function getTopLevelEnv(lang){
     // accumulateDefinedBinding: binding loc -> pinfo
     // Adds a new defined binding to a pinfo's set.
     this.accumulateDefinedBinding = function(binding, loc){
-      if(compilerStructs.keywords.indexOf(binding.id) > -1){
-        throwError(types.Message([new types.ColoredPart(binding.id, loc),
+      if(compilerStructs.keywords.indexOf(binding.name) > -1){
+        throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                   ": this is a reserved keyword and cannot be used"+
-                                  "as a variable or function name"]));
-      } else if(!this.allowRedefinition && isRedefinition(binding.id)){
-        var prevBinding = this.env.lookup(binding.id);
-        if(binding.loc){
-          throwError(types.Message([new types.ColoredPart(binding.id, binding.loc),
+                                  " as a variable or function name"])
+                   ,binding.loc);
+      } else if(!this.allowRedefinition && this.isRedefinition(binding.name)){
+        var prevBinding = this.env.lookup(binding.name);
+        if(prevBinding.loc){
+          throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                     ": this name has a ",
                                     new types.ColoredPart("previous definition", prevBinding.loc),
-                                    " and cannot be re-defined"]));
+                                    " and cannot be re-defined"])
+                     ,binding.loc);
  
         } else {
-          throwError(types.Message([new types.ColoredPart(binding.id, binding.loc),
+          throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                     ": this name has a ",
                                     "previous definition",
-                                    " and cannot be re-defined"]));
+                                    " and cannot be re-defined"])
+                     ,binding.loc);
 
         }
       } else {
@@ -1097,7 +1103,7 @@ function getTopLevelEnv(lang){
         if(this.definedNames.containsKey(provideBinding.stx)){
           binding = checkBindingCompatibility(binding, this.definedNames.get(provideBinding.stx));
         } else {
-          throwError(types.Message(["provided-name-not-defined: ", provideBinding.stx]));
+          throwError(new types.Message(["provided-name-not-defined: ", provideBinding.stx]));
         }
 
         // ref: symbol -> binding
@@ -1130,7 +1136,7 @@ function getTopLevelEnv(lang){
           if(exportedBinding instanceof structure){
             return exportedBinding;
           } else {
-            throwError(types.Message(["provided-structure-not-structure: ", exportedBinding.stx]));
+            throwError(new types.Message(["provided-structure-not-structure: ", exportedBinding.stx]));
           }
         } else {
           return exportedBinding;

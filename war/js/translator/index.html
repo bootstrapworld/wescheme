@@ -78,6 +78,7 @@ function loadSuite(json){
   }
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
+  document.getElementById('runTests').value="Run test-suite";
   console.log('Test Suite data retrieved from Google Drive: '+tests.length+' tests loaded');
 }
 
@@ -131,7 +132,7 @@ function runTests(){
 <body onload="repl2_setup()">
 <textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
-<input type="button" disabled="true" value="Run test-suite" id="runTests" onclick="runTests()"/>
+<input type="button" disabled="true" value="Loading test-suite" id="runTests" onclick="runTests()"/>
 <br/>
 <span id="status"></span>
 <table id="testResults">

@@ -727,11 +727,9 @@
                      , sexp.location);
         }
         // decrement depth no matter what. If, AFTER decrementing, we are at depth==0, return a real quasiquote
-        depth--;
-        if(depth === 0){
+        if((depth-1) === 0){
           return new unquoteSplice(parseExpr(sexp[1]));
         }
-//        depth++;
       } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "unquote")){
         if((sexp.length !== 2)){
           throwError(new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
@@ -740,12 +738,9 @@
           throwError(new types.Message(["misuse of a ,@ or 'unquote, not under a quasiquoting backquote"])
                      , sexp.location);
         }
-        // decrement depth no matter what. If, AFTER decrementing, we are at depth==0, return a real unquote-splicing
-        depth--;
-        if(depth === 0){
+        if((depth-1) === 0){
           return new unquotedExpr(parseExpr(sexp[1]));
         }
-//        depth++;
       } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "quasiquote")){
         if((sexp.length !== 2))
           throwError(new types.Message(["Inside an quasiquote, expected to find a single argument, but found "+(sexp.length-1)])
@@ -753,9 +748,9 @@
         // increment depth no matter what. If, AFTER incrementing, we are at depth==0, return a real quasiquote
         depth++;
         if(depth === 0){
-          return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
+          //return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
+          return parseQuasiQuotedExpr(sexp, depth);
         }
-//        depth--;
       }
       // otherwise, parse using standard behavior
       if(isCons(sexp)) return sexp.map(parseQqListItem);

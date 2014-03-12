@@ -56,6 +56,7 @@
  // Program.prototype.desugar: pinfo -> [Program, pinfo]
  Program.prototype.desugar = function(pinfo){ return [this, pinfo]; };
  defFunc.prototype.desugar = function(pinfo){
+    checkDuplicateIdentifiers(this.args, "define", this.location);
     var lambdaExp = new lambdaExpr(this.args, this.body),
         varExp =  new defVar(this.name, lambdaExp)
     lambdaExp.location = this.location;
@@ -104,7 +105,7 @@
     return [this, exprsAndPinfo[1]];
  };
  lambdaExpr.prototype.desugar = function(pinfo){
-    checkDuplicateIdentifiers(this.args, this);
+    checkDuplicateIdentifiers(this.args, "lambda", this.location);
     var bodyAndPinfo = this.body.desugar(pinfo);
     this.body = bodyAndPinfo[0];
     return [this, bodyAndPinfo[1]];
@@ -264,7 +265,7 @@
  };
 
  // go through each item in search of unquote or unquoteSplice
-  quasiquotedExpr.prototype.desugar = function(pinfo){
+ quasiquotedExpr.prototype.desugar = function(pinfo){
     function desugarQuasiQuotedElements(element) {
       if(element instanceof unquoteSplice){
         return element.val.desugar(pinfo)[0];
@@ -292,6 +293,17 @@
       return [new quotedExpr(this.val.toString()), pinfo];
     }
  };
+ symbolExpr.prototype.desugar = function(pinfo){
+    // is this 'else'?
+    if(this.val === "else"){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": not allowed "
+                                      , new types.ColoredPart("here", this.location)
+                                      , ", because this is not a question in a clause"]),
+                    this.location);
+    }
+    return [this, pinfo];
+ };
  
  //////////////////////////////////////////////////////////////////////////////
  // COLLECT DEFINITIONS ///////////////////////////////////////////////////////
@@ -306,33 +318,16 @@
     return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
  }
  defVar.prototype.collectDefinitions = function(pinfo){
-    // is the name a keyword?
-    if(compilerStructs.keywords.indexOf(this.name.val) > -1){
-        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
-                                      , ": this is a reserved keyword and cannot be used as a variable or function name"]),
-                    this.name.location);
-    }
-    var previousBinding = pinfo.definedNames.get(this.name.val);
-    var envBinding      = pinfo.env.lookup(this.name.val);
-    // was there a previous binding?
-    if(previousBinding || envBinding){
-        var part = previousBinding? new types.ColoredPart("previous definition", previousBinding.loc) : "previous definition";
-        throwError(new types.Message([new types.ColoredPart(this.name.val, this.name.location)
-                                      , ": this name has a "
-                                      , part
-                                      , " and cannot be re-defined"]),
-                    this.name.location);
-    }
     var binding = (this.expr instanceof lambdaExpr)?
                     bf(this.name.val, false, this.expr.args.length, false, this.name.location)
                   : new bindingConstant(this.name.val, false, [], this.name.location);
-    return pinfo.accumulateDefinedBinding(binding, pinfo, this.location);
+    return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVars.prototype.collectDefinitions = function(pinfo){
     var that = this;
     return this.names.reduce(function(pinfo, id){
       var binding = new bindingConstant(id.val, false, [], id.location);
-      return pinfo.accumulateDefinedBinding(binding, pinfo, that.location);
+      return pinfo.accumulateDefinedBinding(binding, that.location);
     }, pinfo);
  };
 /* THIS SHOULD BE DEAD CODE
@@ -354,7 +349,7 @@
         structure = new bindingStructure(id, false, fields, constructorId, predicateId
                                         , selectorIds, mutatorIds, loc),
         bindings = [structure, constructor, predicate].concat(selectors, mutators);
-    return pinfo.accumulateDefinedBindings(bindings, pinfo, this.location);
+    return pinfo.accumulateDefinedBindings(bindings, this.location);
  };
  */
  // When we hit a require, we have to extend our environment to include the list of module
@@ -500,15 +495,6 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
-    // is this 'else'?
-    if(this.val === "else"){
-        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
-                                      , ": not allowed "
-                                      , new types.ColoredPart("here", this.location)
-                                      , ", because this is not a question in a clause"]),
-                    this.location);
-    }
-
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
