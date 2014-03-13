@@ -100,7 +100,7 @@ function runTests(){
       if(expected === "PASS") return false;
       return sameResults(JSON.parse(e), JSON.parse(expected));
     }
-    console.log('GOT PASS');
+    console.log('recieved: PASS');
     return (expected === "PASS" || expected === "LOCAL IS BETTER");
   }
   
@@ -123,7 +123,6 @@ function runTests(){
       row.appendChild(expr);
       expr.innerHTML = tests[i].expr;
       table.appendChild(row);
-      console.log(result);
     }
 }
 </script>
