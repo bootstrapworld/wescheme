@@ -226,8 +226,14 @@
       p = str.charAt(i);
       i = chewWhiteSpace(str, i);
       if(i >= str.length) {
-        throwError(new types.Message(["Unexpected EOF while reading a SExp"])
-                                 ,new Location(sCol, sLine, iStart, i-iStart));
+        throwError(new types.Message([source
+                                      , ":"
+                                      , sLine.toString()
+                                      , ":"
+                                      , (sCol-1).toString()
+                                      , ": read: expected a commented-out element for `#;' (found end-of-file)"])
+                   ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
+                   ,"Error-GenericReadError");
       }
       var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
