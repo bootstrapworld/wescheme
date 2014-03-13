@@ -395,22 +395,22 @@
       if(i < str.length) {
         var p = str.charAt(i).toLowerCase();
         // fl and fx Vector Literals are not allowed
-        var badVectorMatch = new RegExp("(fl|fx)", "g"),
+        var badVectorMatch = new RegExp("^(fl|fx)", "g"),
             badVectorTest = badVectorMatch.exec(str.slice(i));
         // hashtable Literals are not allowed
-        var badHashMatch = new RegExp("hash", "g"),
+        var badHashMatch = new RegExp("^hash", "g"),
             badHashTest = badHashMatch.exec(str.slice(i));
         // Regular Expressions are not allowed
-        var badRegExpMatch = new RegExp("(rx|px)", "g"),
+        var badRegExpMatch = new RegExp("^(rx|px)", "g"),
             badRegExpTest = badRegExpMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
         var badExtensionMatch = /!(?!\/)|reader|lang[\s]{0,1}/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Struct literals are not allowed
-        var badStructMatch = new RegExp("s[\[\(\{]", "g"),
+        var badStructMatch = new RegExp("^s[\[\(\{]", "g"),
             badStructTest = badStructMatch.exec(str.slice(i));
         // Case sensitivity flags ARE allowed
-        var caseSensitiveMatch = new RegExp("(c|C)(i|I|s|S)", "g"),
+        var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)", "g"),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
         var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
