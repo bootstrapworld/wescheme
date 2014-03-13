@@ -631,7 +631,6 @@
           symbol = new symbolExpr("unquote");
         }
       }
-
       // read what comes next, then extract it's offset and span to generate the quoted span
       var sexp = readSExpByIndex(str, i),
           quotedSexp = [symbol, sexp],
@@ -651,8 +650,13 @@
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
            // check for newlines
            if(str.charAt(i) === "\n"){ line++; column = 0;}
-           datum += str.charAt(i++);
-           column++;
+           if(str.charAt(i) === "|") {
+              var sym = readVerbatimSymbol(str, i, datum);
+              i = sym.location.offset+sym.location.span; // move i ahead to the end of the symbol
+              datum = sym.val;
+          }
+          datum += str.charAt(i++);
+          column++;
       }
       // special-case for ".", which is not supported in WeScheme
       if(datum === "."){
@@ -711,8 +715,8 @@
           column+=2;
         } else if(str.charAt(i) === "|") {
           var sym = readVerbatimSymbol(str, i, datum);
+          i = sym.location.offset+sym.location.span; // move i ahead to the end of the symbol
           datum = sym.val;
-          i = sym.location.i;
         } else {
           datum += caseSensitiveSymbols? str.charAt(++i) : str.charAt(++i).toLowerCase();
           column++;
@@ -742,7 +746,7 @@
     // a |.  It ignores both the closing | and the opening |.
     function readVerbatimSymbol(str, i, datum) {
       var sCol = column-datum.length, sLine = line, iStart = i-datum;
-      i++; // skip over the opening |
+      i++; column++; // skip over the opening |
       while(i < str.length && str.charAt(i) !== "|") {
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
@@ -755,8 +759,8 @@
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
 
-      i++; // skip over the closing |
-      gsymbl = new symbolExpr(datum);
+      i++; column++; // skip over the closing |
+      var symbl = new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
       return symbl;
     }
