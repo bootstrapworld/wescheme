@@ -404,7 +404,7 @@
         var badRegExpMatch = new RegExp("^(rx|px)", "g"),
             badRegExpTest = badRegExpMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
-        var badExtensionMatch = /!(?!\/)|reader|lang[\s]{0,1}/,
+        var badExtensionMatch = /^(!(?!\/)|reader|lang[\s]{0,1})/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Struct literals are not allowed
         var badStructMatch = new RegExp("^s[\[\(\{]", "g"),
