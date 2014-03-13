@@ -296,7 +296,7 @@
     }
  };
  symbolExpr.prototype.desugar = function(pinfo){
-    // is this 'else'?
+/*    // is this 'else'?
     if(this.val === "else"){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": not allowed "
@@ -304,7 +304,7 @@
                                       , ", because this is not a question in a clause"]),
                     this.location);
     }
-    return [this, pinfo];
+*/    return [this, pinfo];
  };
  
  //////////////////////////////////////////////////////////////////////////////
