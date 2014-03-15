@@ -210,6 +210,7 @@ goog.provide("plt.wescheme.RoundRobin");
                 },
                 // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
+                                              console.log(errorStruct.message);
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
                         factor =  Math.ceil(100*serverTime/localTime)/100;
