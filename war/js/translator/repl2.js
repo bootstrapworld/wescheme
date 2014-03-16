@@ -94,6 +94,7 @@ function readFromRepl(event) {
       console.log("pinfo:");
       console.log(pinfo);
     } catch (e) {
+      console.log(e);
       if(e instanceof unimplementedException){ throw e.str + " NOT IMPLEMENTED";}
       console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
       throw Error("DESUGARING ERROR\n"+e);

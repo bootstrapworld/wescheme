@@ -496,7 +496,7 @@
                                                                                        sexp[1].location)]),
                     sexp.location);
       }
-      return new orExpr(rest(sexp.map(parseExpr)));
+      return new orExpr(rest(sexp).map(parseExpr));
     }
     function parseQuotedExpr(sexp) {
       // quote must have exactly one argument

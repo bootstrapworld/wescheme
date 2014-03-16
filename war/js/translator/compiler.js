@@ -130,6 +130,10 @@
                                         this.consequence,
                                         this.alternative],
                                        pinfo);
+    // preserve location information -- esp for the predicate!
+    exprsAndPinfo[0][0].location = this.predicate.location;
+    exprsAndPinfo[0][1].location = this.consequence.location;
+    exprsAndPinfo[0][2].location = this.alternative.location;
     this.predicate = forceBooleanContext("if", this.location, exprsAndPinfo[0][0]);
     this.consequence = exprsAndPinfo[0][1];
     this.alternative = exprsAndPinfo[0][2];
@@ -247,8 +251,8 @@
       let_exp.location = exprLoc;
       return [let_exp, restAndPinfo[1]];
     }
-    var exprsAndPinfo = this.exprs.reduceRight(convertToNestedIf, [expr, pinfo]),
-        desugared = exprsAndPinfo[0].desugar(exprsAndPinfo[1]);
+    var exprsAndPinfo = this.exprs.reduceRight(convertToNestedIf, [expr, pinfo]);
+    var desugared = exprsAndPinfo[0].desugar(exprsAndPinfo[1]);
     return [desugared[0], exprsAndPinfo[1]];
  };
  
