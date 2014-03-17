@@ -583,7 +583,8 @@
                     clause.location);
       }
       if(sexpIsCouple(clause)){
-        var cpl = new couple(parseExpr(clause[0]), parseExpr(clause[1]));
+        var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
+        test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
       }
@@ -664,7 +665,8 @@
                    sexp.location);
       }
       if(sexpIsCouple(clause)){
-        var cpl = new couple(parseExpr(clause[0]), parseExpr(clause[1]));
+        var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
+        test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
       }

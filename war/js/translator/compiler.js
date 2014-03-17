@@ -300,15 +300,15 @@
     }
  };
  symbolExpr.prototype.desugar = function(pinfo){
-/*    // is this 'else'?
-    if(this.val === "else"){
+    // if we're not in a clause, we'd better not see an "else"...
+    if(!this.isClause && this.val === "else"){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": not allowed "
                                       , new types.ColoredPart("here", this.location)
                                       , ", because this is not a question in a clause"]),
                     this.location);
     }
-*/    return [this, pinfo];
+    return [this, pinfo];
  };
  
  //////////////////////////////////////////////////////////////////////////////
