@@ -758,8 +758,6 @@
         throwError(new types.Message(["Unexpected EOF while reading a verbatim symbol: ", datum])
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
-
-      i++; column++; // skip over the closing |
       var symbl = new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
       return symbl;
