@@ -23,6 +23,7 @@
  function isSymbol(x) { return x instanceof symbolExpr; }
  function isChar(x)   { return x instanceof charExpr;   }
  function isVector(x) { return x instanceof vectorExpr; }
+ function isKeyword(x){ return x instanceof keywordIntern;}
  
  // isSymbolEqualTo : symbolExpr symbolExpr -> Boolean
  // are these all symbols of the same value?
@@ -775,10 +776,12 @@
     var singleton = isString(sexp)  ? sexp :
                     isNumber(sexp)  ? sexp :
                     isChar(sexp)    ? sexp :
+                    isSymbol(sexp)  ? sexp :
+                    isKeyword(sexp) ? sexp :
+                    isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :
                     isSymbolEqualTo("empty", sexp) ? new callExpr(new primop("list"), []) :
-                    isSymbol(sexp) ? sexpIsPrimop(sexp) ? new primop(sexp) : sexp :
       throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
                                     , ": expected a function, but nothing's there"])
                  , sexp.location);
@@ -799,7 +802,7 @@
     return ((isCons(sexp)) && ((sexp.length === 2)));
   }
 
-  function sexpIsPrimop(sexp) {
+  function isPrimop(sexp) {
        return primitive.getPrimitive(sexp);
   }
 

@@ -457,8 +457,11 @@
             // SYMBOLS
             case '%': datum = readSymbol(str, i,"");
                        i+= datum.location.span; break;
-            // KEYWORDS (unsupported)
-            case ':': throwUnsupportedError(": keyword internment is not supported in WeScheme", "#\:");
+            // KEYWORDS (lex to a symbol, then strip out the contents)
+            case ':': datum = readSymbolOrNumber(str, i-1);
+                      datum = new keywordIntern(datum.val);
+                      i+= datum.val.length-1;
+                      break;
             // BOXES
             case '&': sexp = readSExpByIndex(str, i+1);
                       var datum = [new symbolExpr("box"), sexp];

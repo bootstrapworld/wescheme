@@ -381,6 +381,15 @@ function provideStatement(clauses) {
 };
 provideStatement.prototype = heir(Program.prototype);
 
+// keyword internment (ONLY FOR PARSER)
+function keywordIntern(val) {
+  Program.call(this);
+  this.val = val;
+  this.toString = function(){ return this.val.toString() };
+};
+keywordIntern.prototype = heir(Program.prototype);
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // STRUCTURES NEEDED BY THE COMPILER ////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
