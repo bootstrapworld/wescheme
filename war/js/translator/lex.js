@@ -23,8 +23,6 @@
  
  TODO
  - JSLint
- - toLowerCase() in readPoundSExp?
- - does WeScheme support fl and fx vector literals?
  */
 
 //////////////////////////////////////////////////////////////////////////////

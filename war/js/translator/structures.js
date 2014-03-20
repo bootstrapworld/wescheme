@@ -2,47 +2,15 @@
 /////////////////// COMMON FUNCTIONS AND STRUCTURES //////////////////////////
 //////////////// used by multiple phases of the compiler/////////////////////
 
-
 var unimplementedException = function(str){
   this.str = str;
 }
 
-// checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
-// sort the array, and throw errors for non-symbols, keywords or duplicates
-function checkDuplicateIdentifiers(lst, stx, loc){
-  var sorted_arr = lst.sort();
-  var results = [];
-  for (var i = 0; i < lst.length; i++) {
-    if(!(sorted_arr[i] instanceof symbolExpr)){
-      throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
-    } else if(compilerStructs.keywords.indexOf(sorted_arr[i].val)>-1){
-      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
-                                " : this is a reserved keyword and cannot be used as a variable or function name"])
-                 , sorted_arr[i].location);
-    } else if(results[sorted_arr[i]]) {
-      throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
-                                ": found ",
-                                new types.ColoredPart("a variable", sorted_arr[i].location),
-                                " that is already used ",
-                                new types.ColoredPart("here", sorted_arr[i-1].location)])
-                 , sorted_arr[i].location);
-    } else {
-      results[sorted_arr[i]] = true;
-    }
-  }
-}
-
-// couples = pair
-function couple(first, second) {
-  this.first = first;
-  this.second = second;
-  this.toString = function(){
-    return "("+this.first.toString() +" "+this.second.toString()+")";
-  };
-};
-function coupleFirst(x) { return x.first; };
-function coupleSecond(x) { return x.second; };
-
+/**************************************************************************
+ *
+ *    CONVERT LOCAL COMPILER ERRORS INTO WESCHEME ERRORS
+ *
+ **************************************************************************/
 // encode the msg and location as a JSON error
 function throwError(msg, loc, errorClass) {
   loc.source = loc.source || "<definitions>"; // FIXME -- we should have the source populated
@@ -93,6 +61,43 @@ function throwError(msg, loc, errorClass) {
   };
   throw JSON.stringify(json);
 }
+
+
+// checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
+// sort the array, and throw errors for non-symbols, keywords or duplicates
+function checkDuplicateIdentifiers(lst, stx, loc){
+  var sorted_arr = lst.sort();
+  var results = [];
+  for (var i = 0; i < lst.length; i++) {
+    if(!(sorted_arr[i] instanceof symbolExpr)){
+      throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
+    } else if(compilerStructs.keywords.indexOf(sorted_arr[i].val)>-1){
+      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
+                                " : this is a reserved keyword and cannot be used as a variable or function name"])
+                 , sorted_arr[i].location);
+    } else if(results[sorted_arr[i]]) {
+      throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
+                                ": found ",
+                                new types.ColoredPart("a variable", sorted_arr[i].location),
+                                " that is already used ",
+                                new types.ColoredPart("here", sorted_arr[i-1].location)])
+                 , sorted_arr[i].location);
+    } else {
+      results[sorted_arr[i]] = true;
+    }
+  }
+}
+
+// couples = pair
+function couple(first, second) {
+  this.first = first;
+  this.second = second;
+  this.toString = function(){
+    return "("+this.first.toString() +" "+this.second.toString()+")";
+  };
+};
+function coupleFirst(x) { return x.first; };
+function coupleSecond(x) { return x.second; };
 
 // OBJECT HIERARCHY//////////////////////////////////////////
 // Inheritance from pg 168: Javascript, the Definitive Guide.
