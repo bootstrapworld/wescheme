@@ -614,11 +614,8 @@
                    p == "`" ? new symbolExpr("quasiquote") :
                    "";
       if(i+1 >= str.length) {
-          throwError(new types.Message([source
-                                        , ":"
-                                        , sLine.toString()
-                                        , ":"
-                                        , sCol.toString()
+          throwError(new types.Message([source, ":", sLine.toString()
+                                        , ":", sCol.toString()
                                         , ": read: expected an element for quoting "
                                         , str.charAt(i)
                                         , " (found end-of-file)"])
@@ -648,18 +645,20 @@
     function readSymbolOrNumber(str, i) {
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i), datum = "";
-
       // snip off the next token, and let's analyze it...
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
            // check for newlines
            if(str.charAt(i) === "\n"){ line++; column = 0;}
+           // if it's a verbatim symbol, add those characters as-is
            if(str.charAt(i) === "|") {
               var sym = readVerbatimSymbol(str, i, datum);
-              i = sym.location.offset+sym.location.span; // move i ahead to the end of the symbol
+              i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
               datum = sym.val;
-          }
-          datum += str.charAt(i++);
-          column++;
+           // otherwise add the character, taking case-sensitivity into account
+           } else {
+              datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
+              column++;
+           }
       }
       // special-case for ".", which is not supported in WeScheme
       if(datum === "."){
@@ -686,11 +685,8 @@
         }
       // if it's not a number OR a symbol
       } catch(e) {
-          throwError(new types.Message([source
-                                        , ":"
-                                        , sLine.toString()
-                                        , ":"
-                                        , sCol.toString()
+          throwError(new types.Message([source, ":", sLine.toString()
+                                        , ":" , sCol.toString()
                                         , ": read: "+e.message])
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
@@ -716,28 +712,20 @@
           datum += str.charAt(++i);
           datum += str.charAt(++i);
           column+=2;
+        // if it's a verbatim symbol, add those characters as-is
         } else if(str.charAt(i) === "|") {
           var sym = readVerbatimSymbol(str, i, datum);
-          i = sym.location.offset+sym.location.span; // move i ahead to the end of the symbol
+          i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
           datum = sym.val;
+        // otherwise add the character, taking case-sensitivity into account
         } else {
           datum += caseSensitiveSymbols? str.charAt(++i) : str.charAt(++i).toLowerCase();
           column++;
         }
       }
-
       if((i >= str.length) && (datum === "")) {
         throwError(new types.Message(["read: Unexpected EOF while reading a symbol"])
                   ,new Location(sCol, sLine, iStart, i-iStart));
-      }
-
-      // if we're case-insensitive, make everything not between verbatim lowercase
-      if(!caseSensitiveSymbols){
-        var chunks = datum.split('\|');
-        for(var j=0; j<chunks.length; j+=2){
-          chunks[j] = chunks[j].toLowerCase();
-        }
-        datum = chunks.join("");
       }
       symbl = new symbolExpr(datum);
       symbl.location = new Location(sCol, sLine, iStart, i-iStart);
@@ -748,7 +736,7 @@
     // reads the next couple characters as is without any restraint until it reads
     // a |.  It ignores both the closing | and the opening |.
     function readVerbatimSymbol(str, i, datum) {
-      var sCol = column-datum.length, sLine = line, iStart = i-datum;
+      var sCol = column-datum.length, sLine = line, iStart = i-datum.length;
       i++; column++; // skip over the opening |
       while(i < str.length && str.charAt(i) !== "|") {
         // check for newlines
@@ -756,7 +744,7 @@
         datum += str.charAt(i++);
         column++;
       }
-
+      column++; // skip over the closing |
       if(i >= str.length) {
         throwError(new types.Message(["Unexpected EOF while reading a verbatim symbol: ", datum])
                    ,new Location(sCol, sLine, iStart, i-iStart));
