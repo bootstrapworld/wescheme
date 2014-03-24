@@ -271,9 +271,13 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     position: absolute;
 }
 
+/* everything in the interactions window should have a small
+   amount of left-padding, with each replOutput element
+   separated by a single pixel */
 #inter > * {padding-left: 5px;}
-
-#inter input{
+.replOutput{margin-bottom: 1px;}
+ 
+ #inter input{
     width:              90%;
     height:             100%;
     font-size:		12px; 
