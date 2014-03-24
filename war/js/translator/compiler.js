@@ -311,7 +311,7 @@
     return [this, pinfo];
  };
  
- keywordIntern.prototype.desugar = function(pinfo){
+ unsupportedExpr.prototype.desugar = function(pinfo){
     throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                   , ": Keyword internment is not supported in WeScheme"])
                , this.location

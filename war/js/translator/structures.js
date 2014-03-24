@@ -386,13 +386,13 @@ function provideStatement(clauses) {
 };
 provideStatement.prototype = heir(Program.prototype);
 
-// keyword internment (ONLY FOR PARSER)
-function keywordIntern(val) {
+// Unsupported structure (allows us to generate parser errors ahead of "unsupported" errors)
+function unsupportedExpr(val) {
   Program.call(this);
   this.val = val;
   this.toString = function(){ return this.val.toString() };
 };
-keywordIntern.prototype = heir(Program.prototype);
+unsupportedExpr.prototype = heir(Program.prototype);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

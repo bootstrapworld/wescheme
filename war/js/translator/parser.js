@@ -23,7 +23,7 @@
  function isSymbol(x) { return x instanceof symbolExpr; }
  function isChar(x)   { return x instanceof charExpr;   }
  function isVector(x) { return x instanceof vectorExpr; }
- function isKeyword(x){ return x instanceof keywordIntern;}
+ function isUnsupported(x){ return x instanceof unsupportedExpr;}
  
  // isSymbolEqualTo : symbolExpr symbolExpr -> Boolean
  // are these all symbols of the same value?
@@ -777,7 +777,7 @@
                     isNumber(sexp)  ? sexp :
                     isChar(sexp)    ? sexp :
                     isSymbol(sexp)  ? sexp :
-                    isKeyword(sexp) ? sexp :
+                    isUnsupported(sexp) ? sexp :
                     isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :

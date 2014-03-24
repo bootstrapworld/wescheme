@@ -457,7 +457,7 @@
                        i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
-                      datum = new keywordIntern(datum.val);
+                      datum = new unsupportedExpr(datum.val);
                       i+= datum.val.length-1;
                       break;
             // BOXES
