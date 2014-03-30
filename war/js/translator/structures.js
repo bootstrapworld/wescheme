@@ -387,9 +387,11 @@ function provideStatement(clauses) {
 provideStatement.prototype = heir(Program.prototype);
 
 // Unsupported structure (allows us to generate parser errors ahead of "unsupported" errors)
-function unsupportedExpr(val) {
+function unsupportedExpr(val, errorMsg, errorSpan) {
   Program.call(this);
   this.val = val;
+  this.errorMsg = errorMsg;
+  this.errorSpan = errorSpan; // when throwing an error, we use a different span from the actual sexp span
   this.toString = function(){ return this.val.toString() };
 };
 unsupportedExpr.prototype = heir(Program.prototype);

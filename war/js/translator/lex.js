@@ -398,43 +398,41 @@
                
       if(i < str.length) {
         var p = str.charAt(i).toLowerCase();
-        // fl and fx Vector Literals are not allowed
-        var badVectorMatch = new RegExp("^(fl|fx)", "g"),
-            badVectorTest = badVectorMatch.exec(str.slice(i));
-        // hashtable Literals are not allowed
-        var badHashMatch = new RegExp("^hash", "g"),
-            badHashTest = badHashMatch.exec(str.slice(i));
-        // Regular Expressions are not allowed
-        var badRegExpMatch = new RegExp("^(rx|px)", "g"),
-            badRegExpTest = badRegExpMatch.exec(str.slice(i));
+        // fl and fx Vectors, structs, and hashtables are not supported
+        var unsupportedMatch = new RegExp("^((fl|fx|s|hash|hasheq)[\[\(\{])|((rx|px)\#{0,1}\")", "g"),
+            unsupportedTest = unsupportedMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
         var badExtensionMatch = /^(!(?!\/)|reader|lang[\s]{0,1})/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
-        // Struct literals are not allowed
-        var badStructMatch = new RegExp("^s[\[\(\{]", "g"),
-            badStructTest = badStructMatch.exec(str.slice(i));
         // Case sensitivity flags ARE allowed
         var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)", "g"),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
         var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
             vectorTest = vectorMatch.exec(str.slice(i));
-        if(badVectorTest && badVectorTest[1].length > 0){
-            throwUnsupportedError(": read-syntax: literal "+badVectorTest[1]+"vectors not allowed"
-                                  , badVectorTest[1]);
-        } else if(badHashTest && badHashTest[0].length > 0){
-            throwUnsupportedError(": read-syntax: literal hashtables not allowed"
-                                  , badHashTest[0]);
-        } else if(badRegExpTest && badRegExpTest[0].length > 0){
-            throwUnsupportedError(": read-syntax: regular expressions not allowed"
-                                  , badRegExpTest[0]);
+        if(unsupportedTest && unsupportedTest[0].length > 0){
+            var sexp = readSExpByIndex(str, i+unsupportedTest[0].length-1),
+                literal, span = unsupportedTest[0].length, // save different error strings and spans
+                base = unsupportedTest[0].replace(/[\(\[\{\"|#\"]/g, '');
+            switch(base){
+              case "fl":    literal = "flvectors"; break;
+              case "fx":    literal = "fxvectors"; break;
+              case "s":     literal = "structs";   break;
+              case "hash":
+              case "hasheq":literal = "hashtables"; break;
+              case "px":
+              case "rx":    literal = "regular expressions"; break;
+              default: throw "IMPOSSIBLE: unsupportedMatch captured something it shouldn't: "+base;
+            }
+            var error = new types.Message([source, ":", line.toString(), ":", "0"
+                                           , ": read-syntax: literal "+ literal + " not allowed"]);
+            datum = new unsupportedExpr(sexp, error, span);
+            datum.location = new Location(sCol, sLine, iStart, unsupportedTest[0].length+sexp.location.span);
+            return datum;
         } else if(badExtensionTest && badExtensionTest[0].length > 0){
             throwUnsupportedError(": read: #" + badExtensionTest[0].trim()
                               + " not enabled in the current context"
                                   , badExtensionTest[0]);
-        } else if(badStructTest && badStructTest[0].length > 0){
-            throwUnsupportedError(": read-syntax: structure literals not allowed"
-                                  , badStructTest[0]);
         } else if(caseSensitiveTest && caseSensitiveTest[0].length > 0){
             caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
             return readSExpByIndex(str, i+2);
@@ -457,7 +455,7 @@
                        i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
-                      datum = new unsupportedExpr(datum.val);
+                      datum = new unsupportedExpr(datum.val, "Keyword internment is not supported in WeScheme");
                       i+= datum.val.length-1;
                       break;
             // BOXES

@@ -312,10 +312,8 @@
  };
  
  unsupportedExpr.prototype.desugar = function(pinfo){
-    throwError(new types.Message([new types.ColoredPart(this.val, this.location)
-                                  , ": Keyword internment is not supported in WeScheme"])
-               , this.location
-               , "Error-GenericReadError");
+    this.location.span = this.errorSpan;
+    throwError(this.errorMsg, this.location, "Error-GenericReadError");
  }
  
  //////////////////////////////////////////////////////////////////////////////
