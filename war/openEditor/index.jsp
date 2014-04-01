@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
 
     <title>WeScheme</title>
     <!-- Tags for on mobile -->
@@ -15,9 +15,6 @@
 
     <!-- Google analytics support -->
     <jsp:include page="/google-analytics.jsp"/>
-
-
-
 
     <link rel="stylesheet" type="text/css" href="/css/default.css" id="style" />
     <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" id="style" />
@@ -86,6 +83,9 @@
     <script src="/js/mzscheme-vm/evaluator-min.js" type="text/javascript"></script>
 
     <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
+
+    <!-- Local compiler files -->
+    <jsp:include page="/js/translator/local.jsp"/>
 
 
 <!--    <script src="https://apis.google.com/js/client:plusone.js"></script>
@@ -437,6 +437,21 @@
 
     </div> <!-- end editor -->
 
+  <!-- invisible form for error logging from the local processor -->
+<iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+<form method="post"
+      action="https://docs.google.com/a/bootstrapworld.org/forms/d/1qd7swEkFgVBsudpAFsEJnrjDDCQOMPTICQ2NgraVrOw/formResponse"
+      name="theForm" 
+      id="errorLogForm" 
+      target="hidden_iframe" 
+      id="GoogleForm"
+      style="display:none;">
+<textarea name="entry.1936827156" id="expr"/>default_code</textarea>
+<textarea name="entry.1976503423" id="local">default_localError</textarea>
+<textarea name="entry.224419714" id="server">default_serverError</textarea>
+<textarea name="entry.234335861" id="diffString"></textarea>
+<input type="button" value="Submit" class="submit"/>
+</form>
 
   </body>
 
