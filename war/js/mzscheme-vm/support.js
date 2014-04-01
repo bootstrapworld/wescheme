@@ -6846,11 +6846,14 @@ if (typeof(exports) !== 'undefined') {
 
 
 
+    function temporaryAccuracyLosingWorkAroundForBigNums(fname) {
+      return function () { return this.toInexact()[fname]() }
+    }
 
-    
     // sqrt: -> scheme-number
     // http://en.wikipedia.org/wiki/Newton's_method#Square_root_of_a_number
     // Produce the square root.
+    BigInteger.prototype.sqrt = temporaryAccuracyLosingWorkAroundForBigNums("sqrt");
 
     // floor: -> scheme-number
     // Produce the floor.
@@ -6866,25 +6869,43 @@ if (typeof(exports) !== 'undefined') {
 
     // conjugate: -> scheme-number
     // Produce the conjugate.
+    BigInteger.prototype.conjugate = temporaryAccuracyLosingWorkAroundForBigNums("conjugate");
 
     // magnitude: -> scheme-number
     // Produce the magnitude.
+    BigInteger.prototype.magnitude = temporaryAccuracyLosingWorkAroundForBigNums("magnitude");
 
     // log: -> scheme-number
     // Produce the log.
+    BigInteger.prototype.log = temporaryAccuracyLosingWorkAroundForBigNums("log");
 
     // angle: -> scheme-number
     // Produce the angle.
+    BigInteger.prototype.angle = temporaryAccuracyLosingWorkAroundForBigNums("angle");
 
     // atan: -> scheme-number
     // Produce the arc tangent.
+    BigInteger.prototype.atan = temporaryAccuracyLosingWorkAroundForBigNums("atan");
+
+    // acos: -> scheme-number
+    // Produce the tangent.
+    BigInteger.prototype.acos = temporaryAccuracyLosingWorkAroundForBigNums("acos");
+
+    // asin: -> scheme-number
+    // Produce the tangent.
+    BigInteger.prototype.asin = temporaryAccuracyLosingWorkAroundForBigNums("asin");
+
+    // tan: -> scheme-number
+    // Produce the tangent.
+    BigInteger.prototype.tan = temporaryAccuracyLosingWorkAroundForBigNums("tan");
 
     // cos: -> scheme-number
     // Produce the cosine.
+    BigInteger.prototype.cos = temporaryAccuracyLosingWorkAroundForBigNums("cos");
 
     // sin: -> scheme-number
     // Produce the sine.
-
+    BigInteger.prototype.sin = temporaryAccuracyLosingWorkAroundForBigNums("sin");
 
     // expt: scheme-number -> scheme-number
     // Produce the power to the input.
