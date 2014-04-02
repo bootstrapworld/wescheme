@@ -455,7 +455,9 @@
                        i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
-                      datum = new unsupportedExpr(datum.val, "Keyword internment is not supported in WeScheme");
+                      var error = new types.Message([source, ":", line.toString(), ":", "0"
+                                                   , ": read-syntax: Keyword internment is not supported in WeScheme"]);
+                      datum = new unsupportedExpr(datum.val, error, datum.location.span);
                       i+= datum.val.length-1;
                       break;
             // BOXES
