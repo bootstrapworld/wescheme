@@ -102,6 +102,24 @@ goog.provide("plt.wescheme.RoundRobin");
                 "  Please try again later."));
     };
 
+    function writeLocalCompilerCookie(using) {
+      var date = new Date();
+      date.setTime(date.getTime()+(1*60*60*1000)); // expire in one hour
+      var expires = "; expires="+date.toGMTString();
+      document.cookie = 'use_local_compiler'+"="+using+expires+"; path=/";
+      return using;
+    };
+
+    function readLocalCompilerCookie() {
+      var nameEQ = 'use_local_compiler' + "=";
+      var ca = document.cookie.split(';');
+      for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+      }
+      return null;
+    };
 
     // Try using server n to compile the expression.  If network
     // failure occurs, try the next one in round-robin order, up
@@ -109,9 +127,12 @@ goog.provide("plt.wescheme.RoundRobin");
     var tryServerN = function(n, countFailures, 
                               programName, code, 
                               onDone, onDoneError) {
-       // we test until there's a discrepancy
-       var TEST_LOCAL = true;
+       // if no cookie exists, set it for one hour
+       if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
+       var TEST_LOCAL = readLocalCompilerCookie()=="true";
+       console.log('for this compilation request, TEST_LOCAL is '+(TEST_LOCAL=="true"));
  
+ if(TEST_LOCAL){
        // try client-side parsing first
        try{
           var sexp, AST, ASTandPinfo, local_error = false,
@@ -187,6 +208,7 @@ goog.provide("plt.wescheme.RoundRobin");
                   + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                   + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
                   + "TOTAL:      " + localTime +"ms");
+ }
         // hit the server
         var start = new Date().getTime();
         if (n < liveServers.length) {
@@ -198,23 +220,23 @@ goog.provide("plt.wescheme.RoundRobin");
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
                         factor =  Math.ceil(100*serverTime/localTime)/100;
-                    console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
-                    if(TEST_LOCAL && local_error){
-                      TEST_LOCAL = false; // turn off local testing
-                      console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
-                      logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
-                    } else {
-                      console.log("OK: LOCAL AND SERVER BOTH PASSED");
+                    if(TEST_LOCAL){
+                       console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
+                       if(local_error){
+                         TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
+                         console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
+                         logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
+                       } else {
+                         console.log("OK: LOCAL AND SERVER BOTH PASSED");
+                       }
                     }
                     onDone(bytecode);
                 },
                 // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
-                                              console.log(errorStruct.message);
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
                         factor =  Math.ceil(100*serverTime/localTime)/100;
-                    console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                     // If we get a 503, just try again.
                     if (errorStruct.status == 503) {
                         tryServerN(n,
@@ -239,21 +261,22 @@ goog.provide("plt.wescheme.RoundRobin");
                                        onDoneError);
                         }
                     } else if(TEST_LOCAL){
+                        console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                         if(!local_error){
-                          TEST_LOCAL = false; // turn off local testing
+                          TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
                         // if the results are different, we should log them to the server
                         else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
-                            TEST_LOCAL = false; // turn off local testing
+                            TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         } else {
                           console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
                         }
-                        onDoneError(errorStruct.message);
                     }
+                    onDoneError(errorStruct.message);
                 });
         } else {
             onAllCompilationServersFailing(onDoneError);
