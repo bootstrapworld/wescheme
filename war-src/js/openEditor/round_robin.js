@@ -129,8 +129,8 @@ goog.provide("plt.wescheme.RoundRobin");
                               onDone, onDoneError) {
        // if no cookie exists, set it for one hour
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
-       var TEST_LOCAL = readLocalCompilerCookie()=="true";
-       console.log('for this compilation request, TEST_LOCAL is '+(TEST_LOCAL=="true"));
+       var TEST_LOCAL = readLocalCompilerCookie() === "true";
+       console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL);
  
  if(TEST_LOCAL){
        // try client-side parsing first
