@@ -133,6 +133,9 @@ goog.provide("plt.wescheme.RoundRobin");
        console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL);
  
  if(TEST_LOCAL){
+       // Be conservative, and shut off the local compiler for future requests
+       // This allows us to gracefully recover from a browser-hanging bug
+       writeLocalCompilerCookie("false");
        // try client-side parsing first
        try{
           var sexp, AST, ASTandPinfo, local_error = false,
@@ -203,6 +206,8 @@ goog.provide("plt.wescheme.RoundRobin");
 // ignore local errors for now
 //          onDoneError(local_error);
       }
+      // We made it safely! Okay, let's turn the local compiler!
+      writeLocalCompilerCookie("true");
       var localTime = lexTime+parseTime+desugarTime+analysisTime;
       console.log("// SUMMARY: /////////////////////////////////\n"
                   + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
