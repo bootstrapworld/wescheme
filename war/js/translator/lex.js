@@ -60,7 +60,9 @@
 
     // the delimiters encountered so far, line and column, and case-sensitivity
     var delims, line, column, sCol, sLine, source, caseSensitiveSymbols = true;
-
+    // UGLY HACK to track index if an error occurs. We should remove this if we can make i entirely stateful
+    var errorIndex;
+                            
     // the location struct
     var Location = function(sCol, sLine, offset, span, theSource){
       this.sCol   = sCol;   // starting index into the line
@@ -249,26 +251,30 @@
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
     function readList(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var sCol = column, sLine = line, iStart = i, innerError;
       var openingDelim = str.charAt(i++);
       column++; // count the openingDelim
       var sexp, list = [];
       delims.push(openingDelim);
                    
-      i = chewWhiteSpace(str, i);
-
-      while (i < str.length && !rightListDelims.test(str.charAt(i))) {
-        // check for newlines
-        if(str.charAt(i) === "\n"){ line++; column = 0;}
-        sexp = readSExpByIndex(str, i);
-
-        if(!(sexp instanceof Comment)) {
-          list.push(sexp);
+      var lastKnownGoodIndex = i = chewWhiteSpace(str, i);
+      try{
+        while (i < str.length && !rightListDelims.test(str.charAt(i))) {
+          // check for newlines
+          if(str.charAt(i) === "\n"){ line++; column = 0;}
+          // read the next s-exp
+          sexp = readSExpByIndex(str, i);
+          // ignore comments
+          if(!(sexp instanceof Comment)) { list.push(sexp); }
+          // move reader to the next token
+          lastKnownGoodIndex = i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
         }
-
-        i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
+      } catch (e){
+        var innerError = e; // store the error
+        i = errorIndex;     // keep reading from the char after the error to see if we match delimeters
       }
-
+      var errorOnCharOfOpenDelim = new Location(sCol, sLine, iStart, 1),
+          errorOnCharAfterDelim  = new Location(lastKnownGoodIndex, sLine, lastKnownGoodIndex, 1);
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -276,8 +282,10 @@
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
-         throwError(msg, new Location(sCol, sLine, iStart, 1));
+         throwError(msg, (innerError? errorOnCharAfterDelim : errorOnCharOfOpenDelim));
       }
+      // if the parens match, but an error occured within the list, throw it
+      if(innerError) throw innerError;
       if(!matchingDelims(openingDelim, str.charAt(i))) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -362,6 +370,7 @@
       }
 
       if(i >= str.length) {
+        errorIndex = i; // HACK
         throwError(new types.Message([source
                                       , ":"
                                       , sLine.toString()
