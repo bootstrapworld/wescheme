@@ -301,7 +301,7 @@
  };
  symbolExpr.prototype.desugar = function(pinfo){
     // and, or, cond and define cannot be seen here
-    if(["and", "or", "cond", "define"].indexOf(this.val) > -1){
+    if(compilerStructs.keywords.indexOf(this.val) > -1){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val
