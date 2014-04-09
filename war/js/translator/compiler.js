@@ -300,14 +300,6 @@
     }
  };
  symbolExpr.prototype.desugar = function(pinfo){
-    // and, or, cond and define cannot be seen here
-    if(compilerStructs.keywords.indexOf(this.val) > -1){
-        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
-                                      , ": expected an open parenthesis before "
-                                      , this.val
-                                      , ", but found none"]),
-                    this.location);
-    }
     // if we're not in a clause, we'd better not see an "else"...
     if(!this.isClause && this.val === "else"){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
@@ -514,7 +506,15 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
-    if(env.lookup_context(this.val)){
+   // and, or, cond and define cannot be seen here
+   if(compilerStructs.keywords.indexOf(this.val) > -1){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": expected an open parenthesis before "
+                                      , this.val
+                                      , ", but found none"]),
+                    this.location);
+   }
+   if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
