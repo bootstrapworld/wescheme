@@ -257,7 +257,8 @@
       var sexp, list = [];
       delims.push(openingDelim);
                    
-      var lastKnownGoodIndex = i = chewWhiteSpace(str, i);
+      i = chewWhiteSpace(str, i);
+      var lastKnownGoodLocation = new Location(column, line, i, 1);
       try{
         while (i < str.length && !rightListDelims.test(str.charAt(i))) {
           // check for newlines
@@ -266,15 +267,14 @@
           sexp = readSExpByIndex(str, i);
           // ignore comments
           if(!(sexp instanceof Comment)) { list.push(sexp); }
-          // move reader to the next token
-          lastKnownGoodIndex = i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
+          // move reader to the next token, and cache the last known "clean" location
+          i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
+          lastKnownGoodLocation = new Location(column, line, i, 1);
         }
       } catch (e){
         var innerError = e; // store the error
         i = errorIndex;     // keep reading from the char after the error to see if we match delimeters
       }
-      var errorOnCharOfOpenDelim = new Location(sCol, sLine, iStart, 1),
-          errorOnCharAfterDelim  = new Location(lastKnownGoodIndex, sLine, lastKnownGoodIndex, 1);
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -282,7 +282,7 @@
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
-         throwError(msg, (innerError? errorOnCharAfterDelim : errorOnCharOfOpenDelim));
+         throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
       // if the parens match, but an error occured within the list, throw it
       if(innerError) throw innerError;
@@ -460,8 +460,8 @@
             // BYTE-STRINGS (unsupported)
             case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
-            case '%': datum = readSymbol(str, i,"");
-                       i+= datum.location.span; break;
+            case '%': datum = readSymbol(str, i, "");
+                      i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
                       var error = new types.Message([source, ":", line.toString(), ":", "0"
@@ -511,7 +511,7 @@
                                 , "Error-GenericReadError");
            }
         }
-      // # is the end of the string...
+      // only reached if # is the end of the string...
       } else {
         throwError(new types.Message([source, ":", line.toString()
                                      , ":" , (column-1).toString()
@@ -672,7 +672,7 @@
         throwError(new types.Message([source, ":"
                                     , sLine.toString(), ":"
                                     , sCol.toString()
-                                    , ": read: '.' is not supported as a symbol WeScheme"])
+                                    , ": read: '.' is not supported as a symbol in WeScheme"])
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
                             
