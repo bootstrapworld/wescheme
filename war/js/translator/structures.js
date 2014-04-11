@@ -818,7 +818,6 @@ function getTopLevelEnv(lang){
                       ,["color-alpha", 1, false]
                       ,["empty-scene", 2, false]
                       ,["circle", 3, false]
-                      ,["circle", 3, false]
                       ,["triangle", 3, false]
                       ,["triangle/sas", 5, false]
                       ,["triangle/sss", 5, false]
@@ -835,6 +834,7 @@ function getTopLevelEnv(lang){
                       ,["ellipse", 4, false]
                       ,["rhombus", 4, false]
                       ,["regular-polygon", 4, false]
+                      ,["star", 3, false]
                       ,["star-polygon", 5, false]
                       ,["overlay", 2, true]
                       ,["overlay/xy", 4, false]
@@ -995,20 +995,20 @@ function getTopLevelEnv(lang){
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
  
   // These modules are hardcoded.
-  var knownModules = ["world-module"
-                                  ,"world-stub-module"
-                                  ,"location-module"
-                                  ,"tilt-module"
-                                  ,"net-module"
-                                  ,"parser-module"
-                                  ,"bootstrap-teachpack"
-                                  ,"function-teachpack"
-                                  ,"cage-teachpack"
-                                  ,"telephony-module"
-                                  ,"moby-module-binding"
-                                    
-                                  ,"foreign-module"
-                                  ,"kernel-misc-module"];
+  var knownModules =  ["world-module"
+                      ,"world-stub-module"
+                      ,"location-module"
+                      ,"tilt-module"
+                      ,"net-module"
+                      ,"parser-module"
+                      ,"bootstrap-teachpack"
+                      ,"function-teachpack"
+                      ,"cage-teachpack"
+                      ,"telephony-module"
+                      ,"moby-module-binding"
+                        
+                      ,"foreign-module"
+                      ,"kernel-misc-module"];
  
   var defaultCurrentModulePath = "";
  
