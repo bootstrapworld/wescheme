@@ -453,6 +453,11 @@
           i = sexp.location.span;
           return datum;
         } else {
+          // snip off the first set of word characters
+          var chunk = /^(hasheq|hash|fl|fx|\d+|\w|\<\<|[\\\"\%\:\&\|\;\!\`\,\']|)/.exec(str.slice(i))[0],
+              nextChar = str.slice(i+chunk.length).charAt(0);
+          var p = chunk.charAt(0).toLowerCase();
+          console.log('valid chunk is '+chunk+', firstInvalid is '+nextChar);
           switch(p){
             // CHARACTERS
             case '\\': datum = readChar(str, i-1);
@@ -503,12 +508,14 @@
               column--; //  back up the column one char
               datum = readSymbolOrNumber(str, i-1);
               if(datum){ i+= datum.location.span-1; break;}
-            default: throwError(new types.Message([source, ":"
-                                                   , line.toString()
-                                                   , ":", (column-1).toString()
-                                                   , ": read: bad syntax `#", p,"'"])
-                                , new Location(sCol, sLine, iStart, (i-iStart)+1)
-                                , "Error-GenericReadError");
+            default:
+              console.log(chunk+' didn\'t match anything valid, so throw an error for '+(chunk+nextChar));
+              throwError(new types.Message([source, ":"
+                                           , line.toString()
+                                           , ":", (column-1).toString()
+                                           , ": read: bad syntax `#", (chunk+nextChar),"'"])
+                        , new Location(sCol, sLine, iStart, (chunk+nextChar).length+1)
+                        , "Error-GenericReadError");
            }
         }
       // only reached if # is the end of the string...
