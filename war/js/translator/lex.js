@@ -453,9 +453,11 @@
           i = sexp.location.span;
           return datum;
         } else {
-          // snip off the first set of word characters
-          var chunk = /^(hasheq|hash|fl|fx|\d+|\w|\<\<|[\\\"\%\:\&\|\;\!\`\,\']|)/.exec(str.slice(i))[0],
-              nextChar = str.slice(i+chunk.length).charAt(0);
+          // match everything valid (or *almost-valid*) sequence of characters, or the empty string
+          var chunk = /^(hasheq|hash|fl|fx|\d+|[tfeibdox]|\<\<|[\\\"\%\:\&\|\;\!\`\,\']|)/i.exec(str.slice(i))[0],
+          // match the next character
+              nextChar = str.charAt(i+chunk.length);
+          // grab the first non-whitespace character
           var p = chunk.charAt(0).toLowerCase();
           console.log('valid chunk is '+chunk+', firstInvalid is '+nextChar);
           switch(p){
@@ -505,9 +507,12 @@
             case 'o':  // octal
             case 'd':  // decimal
             case 'x':  // hexadecimal
-              column--; //  back up the column one char
-              datum = readSymbolOrNumber(str, i-1);
-              if(datum){ i+= datum.location.span-1; break;}
+              if(!/[a-zA-Z]/.exec(nextChar)){ // make sure there's no alpha chars after this
+                console.log('matched '+(/[a-zA-Z]/.exec(chunk.charAt(1))));
+                column--; //  back up the column one char
+                datum = readSymbolOrNumber(str, i-1);
+                if(datum){ i+= datum.location.span-1; break;}
+              }
             default:
               console.log(chunk+' didn\'t match anything valid, so throw an error for '+(chunk+nextChar));
               throwError(new types.Message([source, ":"
