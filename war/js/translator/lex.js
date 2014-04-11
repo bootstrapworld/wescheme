@@ -272,16 +272,20 @@
           lastKnownGoodLocation = new Location(column, line, i, 1);
         }
       } catch (e){
+        // UGLY HACK: if the error *looks like a brace error*, throw it.
+        if(/expected a .+ to close/.exec(e)){ throw e; }
         var innerError = e; // store the error
         i = errorIndex;     // keep reading from the char after the error to see if we match delimeters
       }
       if(i >= str.length) {
+                            console.log('throwing an error for an unmatched paren, starting at column '+sCol);
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
                                       " to close ",
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
+         // throw an error
          throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
       // if the parens match, but an error occured within the list, throw it
