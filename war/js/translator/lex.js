@@ -278,7 +278,6 @@
         i = errorIndex;     // keep reading from the char after the error to see if we match delimeters
       }
       if(i >= str.length) {
-                            console.log('throwing an error for an unmatched paren, starting at column '+sCol);
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
                                       " to close ",
@@ -463,7 +462,6 @@
               nextChar = str.charAt(i+chunk.length);
           // grab the first non-whitespace character
           var p = chunk.charAt(0).toLowerCase();
-          console.log('valid chunk is '+chunk+', firstInvalid is '+nextChar);
           switch(p){
             // CHARACTERS
             case '\\': datum = readChar(str, i-1);
@@ -512,13 +510,11 @@
             case 'd':  // decimal
             case 'x':  // hexadecimal
               if(!/[a-zA-Z]/.exec(nextChar)){ // make sure there's no alpha chars after this
-                console.log('matched '+(/[a-zA-Z]/.exec(chunk.charAt(1))));
                 column--; //  back up the column one char
                 datum = readSymbolOrNumber(str, i-1);
                 if(datum){ i+= datum.location.span-1; break;}
               }
             default:
-              console.log(chunk+' didn\'t match anything valid, so throw an error for '+(chunk+nextChar));
               throwError(new types.Message([source, ":"
                                            , line.toString()
                                            , ":", (column-1).toString()
