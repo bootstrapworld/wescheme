@@ -272,10 +272,13 @@
           lastKnownGoodLocation = new Location(column, line, i, 1);
         }
       } catch (e){
-        // UGLY HACK: if the error *looks like a brace error*, throw it.
-        if(/expected a .+ to close/.exec(e)){ throw e; }
-        var innerError = e; // store the error
-        i = errorIndex;     // keep reading from the char after the error to see if we match delimeters
+        // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
+        if(/expected a .+ to close/.exec(e)){
+          throw e;
+        } else {
+          innerError = e; // store the error
+          i = errorIndex; // keep reading from the char after the error to see if we match delimeters
+        }
       }
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
@@ -373,7 +376,7 @@
       }
 
       if(i >= str.length) {
-        errorIndex = i; // HACK
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source
                                       , ":"
                                       , sLine.toString()
@@ -672,7 +675,7 @@
            if(str.charAt(i) === "|") {
               var sym = readVerbatimSymbol(str, i, datum);
               i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
-              datum = sym.val;
+              return sym;
            // otherwise add the character, taking case-sensitivity into account
            } else {
               datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
@@ -699,6 +702,7 @@
           return sexp;
         } else {
           // if it was never a number (or turned out not to be), return the Symbol
+          console.log('about to call readSymbol with '+datum);
           var symbl = readSymbol(str,i,datum);
           return symbl;
         }
@@ -716,20 +720,14 @@
     // reads in a symbol which can be any character except for certain delimiters
     // as described in isValidSymbolCharP
     function readSymbol(str, i, datum) {
+      i-=datum.length; column-=datum.length; datum="";
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
-      // if we're escaping, move forward one character *no matter what*
-      if(datum === "\\") {
-          if(i >= str.length){
-            throw new Error("EOF following `\\' in symbol");
-          }
-          datum += str.charAt(++i);
-          column++;
-      }
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
         // if there's an escape, read the escape *and* the next character
         if(str.charAt(i) === "\\"){
-          datum += str.charAt(++i);
-          datum += str.charAt(++i);
+          datum += str.charAt(i++);
+          if(i >= str.length){ throw new Error("EOF following `\\' in symbol"); }
+          datum += str.charAt(i++);
           column+=2;
         // if it's a verbatim symbol, add those characters as-is
         } else if(str.charAt(i) === "|") {
@@ -738,7 +736,7 @@
           datum = sym.val;
         // otherwise add the character, taking case-sensitivity into account
         } else {
-          datum += caseSensitiveSymbols? str.charAt(++i) : str.charAt(++i).toLowerCase();
+          datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
           column++;
         }
       }
@@ -769,7 +767,7 @@
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
       var symbl = new symbolExpr(datum);
-      symbl.location = new Location(sCol, sLine, iStart, i-iStart);
+      symbl.location = new Location(sCol, sLine, iStart, (i-iStart)+1); // add 1 to span for the closing |
       return symbl;
     }
 
