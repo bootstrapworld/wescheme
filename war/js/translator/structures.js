@@ -75,7 +75,7 @@ function checkDuplicateIdentifiers(lst, stx, loc){
       throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
                                 " : this is a reserved keyword and cannot be used as a variable or function name"])
                  , sorted_arr[i].location);
-    } else if(results[sorted_arr[i]]) {
+    } else if(results.indexOf(sorted_arr[i]) > -1) {
       throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
                                 ": found ",
                                 new types.ColoredPart("a variable", sorted_arr[i].location),
