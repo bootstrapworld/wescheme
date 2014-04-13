@@ -506,8 +506,8 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
-   // and, or, cond and define cannot be seen here
-   if(compilerStructs.keywords.indexOf(this.val) > -1){
+   // any keyword (except else) should generate an error
+   if((this.val !== "else") && (compilerStructs.keywords.indexOf(this.val) > -1)){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val

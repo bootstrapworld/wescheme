@@ -702,7 +702,6 @@
           return sexp;
         } else {
           // if it was never a number (or turned out not to be), return the Symbol
-          console.log('about to call readSymbol with '+datum);
           var symbl = readSymbol(str,i,datum);
           return symbl;
         }
