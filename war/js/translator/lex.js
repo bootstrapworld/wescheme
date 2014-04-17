@@ -226,15 +226,14 @@
       p = str.charAt(i);
       i = chewWhiteSpace(str, i);
       if(i >= str.length) {
-        throwError(new types.Message([source
-                                      , ":"
-                                      , sLine.toString()
-                                      , ":"
+        throwError(new types.Message([source , ":"
+                                      , sLine.toString(), ":"
                                       , (sCol-1).toString()
                                       , ": read: expected a commented-out element for `#;' (found end-of-file)"])
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
+//                            console.log('after chewing whitespace, starting to read at '+i+', which is '+str.charAt(i));
       var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
                                                 , new types.ColoredPart(p, new Location(column, sLine, iStart, 1))])
@@ -245,6 +244,7 @@
                  p === ';'                  ? readLineComment(str, i) :
                  quotes.test(p)             ? readQuote(str, i) :
                   /* else */                   readSymbolOrNumber(str, i);
+//                            console.log('read '+sexp);
        return sexp;
     }
 
@@ -314,6 +314,7 @@
     // reads a string encoded in this string with the leftmost quotation mark
     // at index i
     function readString(str, i) {
+//                            console.log('reading string');
       var sCol = column, sLine = line, iStart = i;
       i++; // skip over the opening quotation mark and char
       column++;
@@ -398,7 +399,7 @@
     function readPoundSExp(str, i) {
       var sCol = column, sLine = line, iStart = i, datum;
       i++; column++; // skip over the pound sign
-          
+                            console.log('reading poundSexp');
       // construct an unsupported error string
       var unsupportedError;
                             
@@ -414,7 +415,7 @@
       if(i < str.length) {
         var p = str.charAt(i).toLowerCase();
         // fl and fx Vectors, structs, and hashtables are not supported
-        var unsupportedMatch = new RegExp("^((fl|fx|s|hash|hasheq)[\[\(\{])|((rx|px)\#{0,1}\")", "g"),
+        var unsupportedMatch = new RegExp("^(((fl|fx|s|hash|hasheq)[\[\(\{])|((rx|px)\#{0,1}\"))", "g"),
             unsupportedTest = unsupportedMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
         var badExtensionMatch = /^(!(?!\/)|reader|lang[\s]{0,1})/,
@@ -426,6 +427,7 @@
         var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
             vectorTest = vectorMatch.exec(str.slice(i));
         if(unsupportedTest && unsupportedTest[0].length > 0){
+                            console.log(unsupportedTest[0]);
             var sexp = readSExpByIndex(str, i+unsupportedTest[0].length-1),
                 literal, span = unsupportedTest[0].length, // save different error strings and spans
                 base = unsupportedTest[0].replace(/[\(\[\{\"|#\"]/g, '');
@@ -632,6 +634,7 @@
     function readQuote(str, i) {
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
+//      console.log('saw an unquote at '+i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
                    "";
@@ -653,10 +656,10 @@
           symbol = new symbolExpr("unquote");
         }
       }
-      // read what comes next, then extract it's offset and span to generate the quoted span
-      var sexp = readSExpByIndex(str, i),
-          quotedSexp = [symbol, sexp],
-          quotedSpan = (sexp.location.offset + sexp.location.span) - iStart;
+      // read what comes next, then extract its offset and span to generate the quoted span
+      var next = readSExpByIndex(str, i),
+          quotedSexp = [symbol, next],
+          quotedSpan = (next.location.offset + next.location.span) - iStart;
       
       quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
       return quotedSexp;
