@@ -204,7 +204,13 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+/*          if(compilerStructs.keywords.indexOf(sexp[1].val)>-1){
+            throwError(new types.Message([new types.ColoredPart(sexp[1].val, sexp[1].location),
+                                          ": this is a reserved keyword and cannot be used as a variable or function name"])
+                       , sexp[1].location);
+ 
+          }
+ */         return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -235,18 +241,18 @@
   // predicates and parsers for call, lambda, local, letrec, let, let*, if, and, or, quote and quasiquote exprs
   function parseExprList(sexp) {
     function parseFuncCall(sexp) {
-    if(isSymbolEqualTo(sexp[0], "unquote")){
-      throwError(new types.Message(["misuse of a comma or 'unquote, not under a quasiquoting backquote"])
-                 , sexp.location
-                 , "Error-GenericSyntacticError");
-    }
-    if(isSymbolEqualTo(sexp[0], "unquote-splicing")){
-      throwError(new types.Message(["misuse of a ,@ or unquote-splicing, not under a quasiquoting backquote"])
-                 , sexp.location
-                 , "Error-GenericSyntacticError");
-    }
-    return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
-                          throwError(new types.Message(["function call sexp"]), sexp.location);
+      if(isSymbolEqualTo(sexp[0], "unquote")){
+        throwError(new types.Message(["misuse of a comma or 'unquote, not under a quasiquoting backquote"])
+                   , sexp.location
+                   , "Error-GenericSyntacticError");
+      }
+      if(isSymbolEqualTo(sexp[0], "unquote-splicing")){
+        throwError(new types.Message(["misuse of a ,@ or unquote-splicing, not under a quasiquoting backquote"])
+                   , sexp.location
+                   , "Error-GenericSyntacticError");
+      }
+      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
+                            throwError(new types.Message(["function call sexp"]), sexp.location);
     }
     function parseLambdaExpr(sexp) {
       // is it just (lambda)?
@@ -517,8 +523,8 @@
     }
 
     return (function () {
-        var peek = sexp[0],
-            expr = !(isSymbol(peek)) ? parseFuncCall(sexp) :
+        var peek = sexp[0];
+        var expr = !(isSymbol(peek)) ? parseFuncCall(sexp) :
                     isSymbolEqualTo("λ", peek)       ? parseLambdaExpr(sexp) :
                     isSymbolEqualTo("lambda", peek)  ? parseLambdaExpr(sexp) :
                     isSymbolEqualTo("local", peek)   ? parseLocalExpr(sexp) :
@@ -772,11 +778,26 @@
     return new callExpr(new symbolExpr("vector"), sexp.vals);
   }
  
+  // any keyword (except else) should generate an error
+  function checkIfSymbolIsKeyword(sexp){
+    if(!isSymbolEqualTo("else", sexp)
+       && !isSymbolEqualTo("define", sexp)
+       && (compilerStructs.keywords.indexOf(sexp.val) > -1)){
+      throwError(new types.Message([new types.ColoredPart(sexp.val, sexp.location)
+                                    , ": expected an open parenthesis before "
+                                    , sexp.val
+                                    , ", but found none"]),
+                  sexp.location);
+    } else {
+      return sexp;
+    }
+  }
+ 
   function parseExprSingleton(sexp) {
     var singleton = isString(sexp)  ? sexp :
                     isNumber(sexp)  ? sexp :
                     isChar(sexp)    ? sexp :
-                    isSymbol(sexp)  ? sexp :
+                    isSymbol(sexp)  ? checkIfSymbolIsKeyword(sexp) :
                     isUnsupported(sexp) ? sexp :
                     isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :
