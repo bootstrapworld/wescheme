@@ -37,3 +37,96 @@ if(!Array.indexOf){
 try {
     document.execCommand("BackgroundImageCache", false, true);
 } catch(err) {}
+
+
+// add Array.map
+// taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Map#Polyfill
+if (!Array.prototype.map){
+  Array.prototype.map = function(fun /*, thisArg */)
+  {
+    "use strict";
+    
+    if (this === void 0 || this === null)
+      throw new TypeError();
+    
+    var t = Object(this);
+    var len = t.length >>> 0;
+    if (typeof fun !== "function")
+      throw new TypeError();
+    
+    var res = new Array(len);
+    var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+    for (var i = 0; i < len; i++)
+    {
+      // NOTE: Absolute correctness would demand Object.defineProperty
+      //       be used.  But this method is fairly new, and failure is
+      //       possible only if Object.prototype or Array.prototype
+      //       has a property |i| (very unlikely), so use a less-correct
+      //       but more portable alternative.
+      if (i in t)
+        res[i] = fun.call(thisArg, t[i], i, t);
+    }
+    
+    return res;
+  };
+}
+
+// add Array.map
+// taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Polyfill
+if ( 'function' !== typeof Array.prototype.reduce ) {
+  Array.prototype.reduce = function( callback /*, initialValue*/ ) {
+    'use strict';
+    if ( null === this || 'undefined' === typeof this ) {
+      throw new TypeError(
+                          'Array.prototype.reduce called on null or undefined' );
+    }
+    if ( 'function' !== typeof callback ) {
+      throw new TypeError( callback + ' is not a function' );
+    }
+    var t = Object( this ), len = t.length >>> 0, k = 0, value;
+    if ( arguments.length >= 2 ) {
+      value = arguments[1];
+    } else {
+      while ( k < len && ! k in t ) k++;
+      if ( k >= len )
+        throw new TypeError('Reduce of empty array with no initial value');
+      value = t[ k++ ];
+    }
+    for ( ; k < len ; k++ ) {
+      if ( k in t ) {
+        value = callback( value, t[k], k, t );
+      }
+    }
+    return value;
+  };
+}
+
+// add Array.map
+// taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Polyfill
+if ( 'function' !== typeof Array.prototype.reduceRight ) {
+  Array.prototype.reduceRight = function( callback /*, initialValue*/ ) {
+    'use strict';
+    if ( null === this || 'undefined' === typeof this ) {
+      throw new TypeError(
+                          'Array.prototype.reduce called on null or undefined' );
+    }
+    if ( 'function' !== typeof callback ) {
+      throw new TypeError( callback + ' is not a function' );
+    }
+    var t = Object( this ), len = t.length >>> 0, k = len - 1, value;
+    if ( arguments.length >= 2 ) {
+      value = arguments[1];
+    } else {
+      while ( k >= 0 && ! k in t ) k--;
+      if ( k < 0 )
+        throw new TypeError('Reduce of empty array with no initial value');
+      value = t[ k-- ];
+    }
+    for ( ; k >= 0 ; k-- ) {
+      if ( k in t ) {
+        value = callback( value, t[k], k, t );
+      }
+    }
+    return value;
+  };
+}
