@@ -222,18 +222,17 @@
     // it to a SExp datum
     function readSExpByIndex(str, i) {
       sCol = column; sLine = line; var iStart = i;
-      var p;
-      p = str.charAt(i);
       i = chewWhiteSpace(str, i);
+      var p = str.charAt(i);
       if(i >= str.length) {
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":"
                                       , sLine.toString(), ":"
                                       , (sCol-1).toString()
-                                      , ": read: expected a commented-out element for `#;' (found end-of-file)"])
+                                      , ": read: (found end-of-file)"])
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
-//                            console.log('after chewing whitespace, starting to read at '+i+', which is '+str.charAt(i));
       var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
                                                 , new types.ColoredPart(p, new Location(column, sLine, iStart, 1))])
@@ -244,7 +243,6 @@
                  p === ';'                  ? readLineComment(str, i) :
                  quotes.test(p)             ? readQuote(str, i) :
                   /* else */                   readSymbolOrNumber(str, i);
-//                            console.log('read '+sexp);
        return sexp;
     }
 
@@ -314,7 +312,6 @@
     // reads a string encoded in this string with the leftmost quotation mark
     // at index i
     function readString(str, i) {
-//                            console.log('reading string');
       var sCol = column, sLine = line, iStart = i;
       i++; // skip over the opening quotation mark and char
       column++;
@@ -400,7 +397,6 @@
     function readPoundSExp(str, i) {
       var sCol = column, sLine = line, iStart = i, datum;
       i++; column++; // skip over the pound sign
-                            console.log('reading poundSexp');
       // construct an unsupported error string
       var unsupportedError;
                             
@@ -428,7 +424,6 @@
         var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
             vectorTest = vectorMatch.exec(str.slice(i));
         if(unsupportedTest && unsupportedTest[0].length > 0){
-                            console.log(unsupportedTest[0]);
             var sexp = readSExpByIndex(str, i+unsupportedTest[0].length-1),
                 literal, span = unsupportedTest[0].length, // save different error strings and spans
                 base = unsupportedTest[0].replace(/[\(\[\{\"|#\"]/g, '');
@@ -599,6 +594,15 @@
     // reads exactly one SExp and ignores it entirely
     function readSExpComment(str, i) {
       var sCol = column, sLine = line;
+      if(i+1 >= str.length) {
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+        throwError(new types.Message([source , ":"
+                                      , sLine.toString(), ":"
+                                      , (sCol-1).toString()
+                                      , ": read: expected a commented-out element for `#;' (found end-of-file)"])
+                   ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
+                   ,"Error-GenericReadError");
+      }
       var ignore = readSExpByIndex(str, i); // we only read this to extract location
       i =+ ignore.location.span;
       var atom = new Comment();
@@ -620,6 +624,7 @@
         i++;
       }
       if(i > str.length) {
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message(["read: Unexpected EOF when reading a line comment"]),
                    new Location(sCol, sLine, iStart, i-iStart));
       }
@@ -635,11 +640,11 @@
     function readQuote(str, i) {
       var sCol = column, sLine = line, iStart = i;
       var p = str.charAt(i);
-//      console.log('saw an unquote at '+i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
                    "";
       if(i+1 >= str.length) {
+          errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
           throwError(new types.Message([source, ":", sLine.toString()
                                         , ":", sCol.toString()
                                         , ": read: expected an element for quoting "
