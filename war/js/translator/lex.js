@@ -370,7 +370,8 @@
                                       , ":"
                                       , sCol.toString()
                                       , ": read: unknown escape sequence \\" +chr+" in string"])
-                   , new Location(sCol, sLine, iStart, i-iStart));
+                   , new Location(sCol, sLine, iStart, i-iStart)
+                   , "Error-GenericReadError");
           }
         }
         datum += chr;
