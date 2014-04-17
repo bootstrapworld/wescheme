@@ -204,13 +204,7 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-/*          if(compilerStructs.keywords.indexOf(sexp[1].val)>-1){
-            throwError(new types.Message([new types.ColoredPart(sexp[1].val, sexp[1].location),
-                                          ": this is a reserved keyword and cannot be used as a variable or function name"])
-                       , sexp[1].location);
- 
-          }
- */         return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
