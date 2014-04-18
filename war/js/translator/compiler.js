@@ -366,14 +366,19 @@
  // When we hit a require, we have to extend our environment to include the list of module
  // bindings provided by that module.
  requireExpr.prototype.collectDefinitions = function(pinfo){
-/*    throw "collecting definitions from require is not yet implemented (see compiler.js)";
-    var errorMessage =  ["require", ": ", "moby-error-type:unknown-module: ", this.spec],
-        moduleName = pinfo.modulePathResolver(this.spec, this.currentModulePath);
+    var errorMessage =  ["require", ": ", "moby-error-type:Unknown-Module: ", this.spec],
+        moduleName = pinfo.modulePathResolver(this.spec.val, this.currentModulePath);
+ 
     // if it's an invalid moduleName, throw an error
     if(!moduleName){
-      throwError(errorMessage, this.location);
+      throwError(new types.Message(["Found require of the module "
+                                    , this.spec
+                                    , ", but this module is unknown."])
+                 , this.spec.location
+                 ,"Error-UnknownModule");
     }
-    var moduleBinding = pinfo.moduleResolver(moduleName);
+
+/*    var moduleBinding = pinfo.moduleResolver(moduleName);
     // if it's an invalid moduleBinding, throw an error
     if(!moduleBinding){
       throwError(errorMessage, this.location);
@@ -506,14 +511,6 @@
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
-   // any keyword (except else) should generate an error
-   if((this.val !== "else") && (compilerStructs.keywords.indexOf(this.val) > -1)){
-        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
-                                      , ": expected an open parenthesis before "
-                                      , this.val
-                                      , ", but found none"]),
-                    this.location);
-   }
    if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {

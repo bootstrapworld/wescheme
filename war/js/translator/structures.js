@@ -18,6 +18,9 @@ function throwError(msg, loc, errorClass) {
   function rewritePart(part){
     if(typeof(part) === 'string'){
       return part;
+    } else if(part instanceof symbolExpr){
+//      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
+      return part.val;
     } else if(part.location !== undefined){
       return {text: part.text, type: 'ColoredPart', loc: part.location.toJSON()
             , toString: function(){return part.text;}};
@@ -993,22 +996,37 @@ function getTopLevelEnv(lang){
   }
  
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
+  var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"];
  
   // These modules are hardcoded.
-  var knownModules =  ["world-module"
-                      ,"world-stub-module"
-                      ,"location-module"
-                      ,"tilt-module"
-                      ,"net-module"
-                      ,"parser-module"
-                      ,"bootstrap-teachpack"
-                      ,"function-teachpack"
-                      ,"cage-teachpack"
-                      ,"telephony-module"
-                      ,"moby-module-binding"
+  var knownModules =  [ "world-module"
+                       ,"world-stub-module"
+                       ,"location-module"
+                       ,"tilt-module"
+                       ,"net-module"
+                       ,"parser-module"
                        
-                      ,"foreign-module"
-                      ,"kernel-misc-module"];
+                       ,"autos"
+                       ,"bootstrap-gtp-teachpack"
+                       ,"bootstrap-teachpack-translated"
+                       ,"cage-teachpack-translated"
+                       ,"compass-teachpack-translated"
+                       ,"function-teachpack-translated"
+                       ,"cage-teachpack"
+                       ,"bootstrap-common"
+                       ,"bootstrap-teachpack"
+                       ,"cage-teachpack"
+                       ,"function-teachpack"
+                       ,"bootstrap-tilt-teachpack"
+                       
+                       ,"google-maps"
+                       ,"phonegap"
+                       
+                       ,"telephony-module"
+                       ,"moby-module-binding"
+                       
+                       ,"foreign-module"
+                       ,"kernel-misc-module"];
  
   var defaultCurrentModulePath = "";
  
@@ -1024,14 +1042,13 @@ function getTopLevelEnv(lang){
   // default-module-path-resolver: module-path module-path -> module-name
   // Provides a default module resolver.
   compilerStructs.defaultModulePathResolver = function(path, parentPath){
-    for(var i=0; i< knownModules.length; i++){
-      if(modulePathEqual(modulePathJoin(parentPath, path)
-                         , moduleBindingSource(knownModules[i]))){
-//      return moduleBindingName(knownModules[i]);
-      }
-    }
-    if(path instanceof symbolExpr) return path;
-    else if(path instanceof stringExpr) return modulePathJoin(parentPath, path);
+    // anything of the form wescheme/w+, or that has a known collection AND module
+    var parts = path.split("/"),
+        collectionName = parts[0],
+        moduleName = parts.slice(1).join();
+    return ((knownCollections.indexOf(collectionName) > -1)
+            && (knownModules.indexOf(moduleName) > -1))
+          || /^wescheme\/\w+$/.exec(path);
   }
  
 
