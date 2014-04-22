@@ -501,7 +501,12 @@
  };
  callExpr.prototype.analyzeUses = function(pinfo, env){
     return [this.func].concat(this.args).reduce(function(p, arg){
-                            return arg.analyzeUses(p, env);
+                            return (arg instanceof Array)?
+                                    // if arg is an array, reduce THAT
+                                    arg.reduce((function(pinfo, p){return p.analyzeUses(pinfo, pinfo.env);})
+                                               , pinfo)
+                                    // otherwise analyze and return
+                                    : arg.analyzeUses(p, env);
                             }, pinfo);
  }
  ifExpr.prototype.analyzeUses = function(pinfo, env){
