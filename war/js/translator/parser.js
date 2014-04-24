@@ -590,23 +590,24 @@
         return cpl;
       }
     }
-    var numClauses = rest(sexp).length;
-    return new condExpr(rest(sexp).reduce(function (rst, couple) {
-       // if we see an else and we haven't seen all other clauses first
-       // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-       if(isElseClause(couple) && (rst.length < (numClauses-1))){
-         throwError(new types.Message([new types.MultiPart("cond", condLocs, true)
-                                       , ": "
-                                       , "found an "
-                                       , new types.ColoredPart("else clause", couple.location)
-                                       , " that isn't the last clause in its cond expression; there is "
-                                       , new types.ColoredPart("another clause", sexp[rst.length+2].location)
-                                       , " after it"]),
-            couple.location);
-       } else {
-         return rst.concat([parseCondCouple(couple)]);
-       }
-     }, []));
+    var numClauses = rest(sexp).length,
+        parsedClauses = rest(sexp).reduce(function (rst, couple) {
+                                            return rst.concat([parseCondCouple(couple)]);
+                                          }, []);
+    // if we see an else and we haven't seen all other clauses first
+    // throw an error that points to the next clause (rst + the one we're looking at + "cond")
+    rest(sexp).reduce(function(rst, couple){
+     if(isElseClause(couple) && (rst.length < (numClauses-1))){
+       throwError(new types.Message([new types.MultiPart("cond", condLocs, true)
+                                     , ": ", "found an "
+                                     , new types.ColoredPart("else clause", couple.location)
+                                     , " that isn't the last clause in its cond expression; there is "
+                                     , new types.ColoredPart("another clause", sexp[rst.length+2].location)
+                                     , " after it"]),
+                  couple.location);
+      }
+    }, []);
+    return new condExpr(parsedClauses);
   }
 
    function parseCaseExpr(sexp) {
@@ -672,23 +673,24 @@
         return cpl;
       }
     }
- 
-    var numClauses = sexp.slice(2).length;
-    return new caseExpr(parseExpr(sexp[1]), sexp.slice(2).reduce(function (rst, couple) {
-       // if we see an else and we haven't seen all other clauses first
-       // throw an error that points to the next clause (rst + the one we're looking at + "case" + val)
-       if(isElseClause(couple) && (rst.length < (numClauses-1))){
+    var numClauses = sexp.slice(2).length,
+        parsedClauses = sexp.slice(2).reduce(function (rst, couple) {
+                                            return rst.concat([parseCaseCouple(couple)]);
+                                          }, []);
+    // if we see an else and we haven't seen all other clauses first
+    // throw an error that points to the next clause (rst + the one we're looking at + "cond")
+    sexp.slice(2).reduce(function(rst, couple){
+     if(isElseClause(couple) && (rst.length < (numClauses-1))){
             throwError(new types.Message([new types.MultiPart("case", caseLocs, true)
-                                          , "found an "
+                                          , ": found an "
                                           , new types.ColoredPart("else clause", couple.location)
                                           , "that isn't the last clause in its case expression; there is "
                                           , new types.ColoredPart("another clause", sexp[rst.length+3].location)
                                           , " after it"]),
                        sexp.location);
-         } else {
-           return rst.concat([parseCaseCouple(couple)]);
-         }
-       }, []));
+      }
+    }, []);
+    return new caseExpr(parseExpr(sexp[1]), parsedClauses);
   }
  
   function parseBinding(sexp) {
