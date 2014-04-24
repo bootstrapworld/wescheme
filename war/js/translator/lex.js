@@ -645,9 +645,13 @@
                    "";
       if(i+1 >= str.length) {
           errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
+          
+          var action = p == "'" ? " quoting " :
+                       p == "`" ? " quasiquoting " :
+                       p == "," ? " unquoting " : "";
           throwError(new types.Message([source, ":", sLine.toString()
                                         , ":", sCol.toString()
-                                        , ": read: expected an element for quoting "
+                                        , ": read: expected an element for" + action
                                         , str.charAt(i)
                                         , " (found end-of-file)"])
                      , new Location(sCol, sLine, iStart, i-iStart+1)
