@@ -48,6 +48,17 @@ function popElementFromHistory(dir, current) {
   return current;
 }
 
+function getError(e){
+  try{
+    var err =  JSON.parse(e),
+    structuredErr = JSON.parse(err['structured-error']);
+    return structuredErr.message;
+  } catch (JSONerror){
+    console.log('!!!!!!!!!!!! FATAL ERROR !!!!!!!!!!!!!!!');
+    throw(e);
+  }
+}
+
 function readFromRepl(event) {
   var key = event.keyCode;
 
@@ -65,8 +76,8 @@ function readFromRepl(event) {
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       console.log(e);
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("LEXING ERROR\n"+e.toString());
+      console.log(getError(e));
+      throw Error("LEXING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// PARSING: //////////////////////////////////\nraw:");
@@ -78,8 +89,8 @@ function readFromRepl(event) {
       console.log("Parsed in "+parseTime+"ms. Parsed as:\n"+AST.join("\n"));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("PARSING ERROR\n"+e);
+      console.log(getError(e));
+      throw Error("PARSING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// DESUGARING: //////////////////////////////\nraw");
@@ -96,8 +107,8 @@ function readFromRepl(event) {
     } catch (e) {
       console.log(e);
       if(e instanceof unimplementedException){ throw e.str + " NOT IMPLEMENTED";}
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("DESUGARING ERROR\n"+e);
+      console.log(getError(e));
+      throw Error("DESUGARING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// ANALYSIS: //////////////////////////////\n");
@@ -108,7 +119,7 @@ function readFromRepl(event) {
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("ANALYSIS ERROR\n"+e);
+      throw Error("ANALYSIS ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// COMPILATION: //////////////////////////////\n");
@@ -119,7 +130,7 @@ function readFromRepl(event) {
       console.log("Compiled in "+compileTime+"ms");
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("COMPILATION ERROR\n"+e);
+      throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
