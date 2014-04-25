@@ -120,6 +120,18 @@ goog.provide("plt.wescheme.RoundRobin");
       }
       return null;
     };
+ 
+     // check to make sure it's JSON parseable before returning it.
+     function getError(e){
+      try{
+        var err =  JSON.parse(e),
+        structuredErr = JSON.parse(err['structured-error']);
+        return e;
+      } catch (JSONerror){
+        return '!! FATAL ERROR !!\n'+e.toString();
+      }
+    }
+
 
     // Try using server n to compile the expression.  If network
     // failure occurs, try the next one in round-robin order, up
@@ -202,7 +214,7 @@ goog.provide("plt.wescheme.RoundRobin");
           }
 
       } catch (e) {
-          local_error = e;
+          local_error = getError(e).toString();
 // ignore local errors for now
 //          onDoneError(local_error);
       }
@@ -228,7 +240,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     if(TEST_LOCAL){
                        console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                        if(local_error){
-                         TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
+//                         TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                          console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
                          logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
                        } else {
@@ -268,13 +280,13 @@ goog.provide("plt.wescheme.RoundRobin");
                     } else if(TEST_LOCAL){
                         console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                         if(!local_error){
-                          TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
+//                          TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
                         // if the results are different, we should log them to the server
                         else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
-                            TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
+//                            TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         } else {
