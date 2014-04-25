@@ -596,17 +596,17 @@
                                           }, []);
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-    rest(sexp).reduce(function(rst, couple){
-     if(isElseClause(couple) && (rst.length < (numClauses-1))){
+    rest(sexp).forEach(function(couple, idx){
+     if(isElseClause(couple) && (idx < (numClauses-1))){
        throwError(new types.Message([new types.MultiPart("cond", condLocs, true)
                                      , ": ", "found an "
                                      , new types.ColoredPart("else clause", couple.location)
                                      , " that isn't the last clause in its cond expression; there is "
-                                     , new types.ColoredPart("another clause", sexp[rst.length+2].location)
+                                     , new types.ColoredPart("another clause", sexp[idx+2].location)
                                      , " after it"]),
                   couple.location);
       }
-    }, []);
+    });
     return new condExpr(parsedClauses);
   }
 
@@ -679,17 +679,17 @@
                                           }, []);
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-    sexp.slice(2).reduce(function(rst, couple){
-     if(isElseClause(couple) && (rst.length < (numClauses-1))){
+    sexp.slice(2).forEach(function(couple, idx){
+     if(isElseClause(couple) && (idx < (numClauses-1))){
             throwError(new types.Message([new types.MultiPart("case", caseLocs, true)
                                           , ": found an "
                                           , new types.ColoredPart("else clause", couple.location)
                                           , "that isn't the last clause in its case expression; there is "
-                                          , new types.ColoredPart("another clause", sexp[rst.length+3].location)
+                                          , new types.ColoredPart("another clause", sexp[idx+2].location)
                                           , " after it"]),
                        sexp.location);
       }
-    }, []);
+    });
     return new caseExpr(parseExpr(sexp[1]), parsedClauses);
   }
  
