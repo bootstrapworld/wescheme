@@ -53,10 +53,10 @@
     var leftListDelims  = /[(\u005B\u007B]/,
         rightListDelims = /[)\u005D\u007D]/,
         quotes          = /[\'`,]/,
-        hex2            = new RegExp("([0-9a-f]{1,2})", "i"),
-        hex4            = new RegExp("([0-9a-f]{1,4})", "i"),
-        hex8            = new RegExp("([0-9a-f]{1,8})", "i"),
-        oct3            = new RegExp("([0-7]{1,3})", "i");
+        hex2            = new RegExp("^([0-9a-f]{1,2})", "i"),
+        hex4            = new RegExp("^([0-9a-f]{1,4})", "i"),
+        hex8            = new RegExp("^([0-9a-f]{1,8})", "i"),
+        oct3            = new RegExp("^([0-7]{1,3})", "i");
 
     // the delimiters encountered so far, line and column, and case-sensitivity
     var delims, line, column, sCol, sLine, source, caseSensitiveSymbols = true;
