@@ -19,7 +19,7 @@ function throwError(msg, loc, errorClass) {
     if(typeof(part) === 'string'){
       return part;
     } else if(part instanceof symbolExpr){
-//      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
+      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
       return part.val;
     } else if(part.location !== undefined){
       return {text: part.text, type: 'ColoredPart', loc: part.location.toJSON()
