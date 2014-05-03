@@ -261,8 +261,9 @@
         while (i < str.length && !rightListDelims.test(str.charAt(i))) {
           // check for newlines
           if(str.charAt(i) === "\n"){ line++; column = 0;}
-          // read the next s-exp
+          // read the next s-exp and set this list as it's parent
           sexp = readSExpByIndex(str, i);
+          sexp.parent = list;
           // ignore comments
           if(!(sexp instanceof Comment)) { list.push(sexp); }
           // move reader to the next token, and cache the last known "clean" location
