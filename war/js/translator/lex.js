@@ -276,6 +276,7 @@
           throw e;
         } else {
           innerError = e; // store the error
+                            console.log('caught an innerError, resuming from '+errorIndex);
           i = errorIndex; // keep reading from the char after the error to see if we match delimeters
         }
       }
@@ -362,10 +363,8 @@
                 i += match.length-1; column += match.length-1;
                 break;
              default   :
-        throwError(new types.Message([source
-                                      , ":"
-                                      , sLine.toString()
-                                      , ":"
+        throwError(new types.Message([source, ":"
+                                      , sLine.toString(), ":"
                                       , sCol.toString()
                                       , ": read: unknown escape sequence \\" +chr+" in string"])
                    , new Location(sCol, sLine, iStart, i-iStart)
@@ -377,10 +376,8 @@
 
       if(i >= str.length) {
         errorIndex = i; // HACK - remember where we are, so readList can pick up reading
-        throwError(new types.Message([source
-                                      , ":"
-                                      , sLine.toString()
-                                      , ":"
+        throwError(new types.Message([source, ":"
+                                      , sLine.toString(), ":"
                                       , sCol.toString()
                                       , ": read: expected a closing \'\"\'"])
                    , new Location(sCol, sLine, iStart, 1)
@@ -517,6 +514,7 @@
                 if(datum){ i+= datum.location.span-1; break;}
               }
             default:
+              errorIndex = i; // HACK - remember where we are, so readList can pick up reading
               throwError(new types.Message([source, ":"
                                            , line.toString()
                                            , ":", (column-1).toString()
