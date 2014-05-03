@@ -312,12 +312,12 @@
  symbolExpr.prototype.desugar = function(pinfo){
     // if we're not in a clause, we'd better not see an "else"...
     if(!this.isClause && this.val === "else"){
-        var loc = this.parent? this.parent.location : this.location;
+        var loc = (this.parent && this.parent[0] === this)? this.parent.location : this.location;
         throwError(new types.Message([new types.ColoredPart(this.val, loc)
                                       , ": not allowed "
                                       , new types.ColoredPart("here", loc)
                                       , ", because this is not a question in a clause"]),
-                    loc);
+                   loc);
     }
     return [this, pinfo];
  };
