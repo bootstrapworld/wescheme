@@ -156,13 +156,7 @@
                                       , new types.ColoredPart("something else", sexp[1][0].location)])
                        , sexp.location);
           }
-/*          // is it a symbol that happens to be a keyword?
-          if(compilerStructs.keywords.indexOf(sexp[1][0].val)>-1){
-            throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sexp[1].location),
-                                ": this is a reserved keyword and cannot be used as a variable or function name"])
-                 , sexp[1].location);
-          }
-*/          // is the next element a list of not-all-symbols?
+          // is the next element a list of not-all-symbols?
           sexp[1].forEach(function(arg){
             if (!(arg instanceof symbolExpr)){
               throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -210,13 +204,7 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-/*          // is it a symbol that happens to be a keyword?
-          if(compilerStructs.keywords.indexOf(sexp[1].val)>-1){
-            throwError(new types.Message([new types.ColoredPart(sexp[1].val, sexp[1].location),
-                                ": this is a reserved keyword and cannot be used as a variable or function name"])
-                 , sexp[1].location);
-          }
-*/          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -784,22 +772,7 @@
     }
     return new callExpr(new symbolExpr("vector"), sexp.vals);
   }
- 
-  // DEAD CODE: any keyword (except else) should generate an error
-  function checkIfSymbolIsKeyword(sexp){
-    if(!isSymbolEqualTo("else", sexp)
-       && !isSymbolEqualTo("define", sexp)
-       && (compilerStructs.keywords.indexOf(sexp.val) > -1)){
-      throwError(new types.Message([new types.ColoredPart(sexp.val, sexp.location)
-                                    , ": expected an open parenthesis before "
-                                    , sexp.val
-                                    , ", but found none"]),
-                  sexp.location);
-    } else {
-      return sexp;
-    }
-  }
- 
+  
   function parseExprSingleton(sexp) {
     var singleton = isString(sexp)  ? sexp :
                     isNumber(sexp)  ? sexp :
