@@ -363,6 +363,7 @@
                 i += match.length-1; column += match.length-1;
                 break;
              default   :
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
                                       , sLine.toString(), ":"
                                       , sCol.toString()
