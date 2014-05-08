@@ -4472,7 +4472,11 @@ if (typeof(exports) !== 'undefined') {
 
 	if (d === undefined) { d = 1; }
 
-	if (_integerLessThan(d, 0)) {
+	if (_integerIsZero(d)) {
+	    throwRuntimeError("division by zero: "+n+"/"+d);
+	}
+
+  if (_integerLessThan(d, 0)) {
 	    n = negate(n);
 	    d = negate(d);
 	}
@@ -5281,9 +5285,27 @@ if (typeof(exports) !== 'undefined') {
     function rationalRegexp(digits) { return new RegExp("^([+-]?["+digits+"]+)/(["+digits+"]+)$"); }
     function complexRegexp(digits) { return new RegExp("^([+-]?["+digits+"\\w/\\.]*)([+-])(["+digits+"\\w/\\.]*)i$"); }
     function digitRegexp(digits) { return new RegExp("^[+-]?["+digits+"]+$"); }
-    function flonumRegexp(digits) { return new RegExp("^([+-]?["+digits+"]*)\\.(["+digits+"]*)$"); }
-    function scientificPattern(digits, exp_mark)
-	{ return new RegExp("^([+-]?["+digits+"]*\\.?["+digits+"]*)["+exp_mark+"](\\+?["+digits+"]+)$"); }
+    /**
+    /* NB: !!!! flonum regexp only matches "X.", ".X", or "X.X", NOT "X", this
+    /* must be separately checked with digitRegexp.
+    /* I know this seems dumb, but the alternative would be that this regexp
+    /* returns six matches, which also seems dumb.
+    /***/
+    function flonumRegexp(digits) {
+	var decimalNumOnRight = "(["+digits+"]*)\\.(["+digits+"]+)"
+	var decimalNumOnLeft = "(["+digits+"]+)\\.(["+digits+"]*)"
+	return new RegExp("^(?:([+-]?)" +
+                          decimalNumOnRight+"|"+decimalNumOnLeft +
+                          ")$");
+    }
+    function scientificPattern(digits, exp_mark) {
+	var noDecimal = "["+digits+"]"
+	var decimalNumOnRight = "["+digits+"]*\\.["+digits+"]+"
+	var decimalNumOnLeft = "["+digits+"]+\\.["+digits+"]*"
+	return new RegExp("^(?:([+-]?" +
+			  "(?:"+noDecimal+"|"+decimalNumOnRight+"|"+decimalNumOnLeft+")" +
+			  ")["+exp_mark+"](\\+?["+digits+"]+))$");
+    }
 
     function digitsForRadix(radix) {
 	return radix === 2  ? "01" :
@@ -5306,9 +5328,9 @@ if (typeof(exports) !== 'undefined') {
 	// unimplemented
 	var exactp = false
 
-	var hMatch = x.match(hashModifiersRegexp)
+	var hMatch = x.toLowerCase().match(hashModifiersRegexp)
 	if (hMatch) {
-	    var modifierString = hMatch[1];
+	    var modifierString = hMatch[1].toLowerCase();
 
 	    var exactFlag = modifierString.match(new RegExp("(#[ei])"))
 	    var radixFlag = modifierString.match(new RegExp("(#[bodx])"))
@@ -5316,16 +5338,16 @@ if (typeof(exports) !== 'undefined') {
 	    if (exactFlag) {
 		var f = exactFlag[1].charAt(1)
 		exactp = f === 'e' ? true :
-			 f === 'i' ? false :
+             f === 'i' ? false :
 			 // this case is unreachable
 			 throwRuntimeError("invalid exactness flag", this, r)
 	    }
 	    if (radixFlag) {
 		var f = radixFlag[1].charAt(1)
 		radix = f === 'b' ? 2 :
-			f === 'o' ? 8 :
-			f === 'd' ? 10 :
-			f === 'x' ? 16 :
+            f === 'o' ? 8 :
+            f === 'd' ? 10 :
+            f === 'x' ? 16 :
 			 // this case is unreachable
 			throwRuntimeError("invalid radix flag", this, r)
 	    }
@@ -5378,7 +5400,9 @@ if (typeof(exports) !== 'undefined') {
 
 	var fMatch = x.match(flonumRegexp(digitsForRadix(radix)))
 	if (fMatch) {
-	    return parseFloat(fMatch[1], fMatch[2], radix)
+	    var integralPart = fMatch[2] !== undefined ? fMatch[2] : fMatch[4];
+	    var fractionalPart = fMatch[3] !== undefined ? fMatch[3] : fMatch[5];
+	    return parseFloat(fMatch[1], integralPart, fractionalPart, radix)
 	}
 
 	var sMatch = x.match(scientificPattern( digitsForRadix(radix)
@@ -5399,7 +5423,9 @@ if (typeof(exports) !== 'undefined') {
 		return n;
 	    }
 	} else if (mustBeANumberp) {
-	    throwRuntimeError("cannot parse " + x + " as an " +
+      if(x.length===0) throwRuntimeError("no digits");
+//	    else
+            throwRuntimeError("cannot parse " + x + " as an " +
                               (exactp ? "exact" : "inexact") +
                               " base " + radix + " number",
                               this);
@@ -5408,14 +5434,17 @@ if (typeof(exports) !== 'undefined') {
 	}
     };
 
-    function parseFloat(integralPart, fractionalPart, radix) {
-	var integralPartValue = parseInt(integralPart, radix)
+    function parseFloat(sign, integralPart, fractionalPart, radix) {
+	var sign = (sign == "-" ? -1 : 1);
+	var integralPartValue = integralPart === ""  ? 0  :
+                                parseInt(integralPart, radix)
 
 	var fractionalNumerator = parseInt(fractionalPart, radix)
-        var fractionalDenominator = Math.pow(radix, fractionalPart.length)
-	var fractionalPartValue = fractionalNumerator / fractionalDenominator
+	var fractionalDenominator = Math.pow(radix, fractionalPart.length)
+	var fractionalPartValue = fractionalPart === "" ? 0 :
+				  fractionalNumerator / fractionalDenominator
 
-	return FloatPoint.makeInstance(integralPartValue + fractionalPartValue);
+	return FloatPoint.makeInstance(sign * (integralPartValue + fractionalPartValue));
     }
 
 
@@ -5978,7 +6007,7 @@ if (typeof(exports) !== 'undefined') {
     BigInteger.prototype.divRemTo = bnpDivRemTo;
     BigInteger.prototype.invDigit = bnpInvDigit;
     BigInteger.prototype.isEven = bnpIsEven;
-    BigInteger.prototype.exp = bnpExp;
+    BigInteger.prototype.bnpExp = bnpExp;
 
     // public
     BigInteger.prototype.toString = bnToString;
@@ -6329,7 +6358,7 @@ if (typeof(exports) !== 'undefined') {
     NullExp.prototype.sqrTo = nSqrTo;
 
     // (public) this^e
-    function bnPow(e) { return this.exp(e,new NullExp()); }
+    function bnPow(e) { return this.bnpExp(e,new NullExp()); }
 
     // (protected) r = lower n words of "this * a", a.t <= n
     // "this" should be the larger one if appropriate.
@@ -6632,6 +6661,7 @@ if (typeof(exports) !== 'undefined') {
     BigInteger.prototype.modPow = bnModPow;
     BigInteger.prototype.modInverse = bnModInverse;
     BigInteger.prototype.pow = bnPow;
+    BigInteger.prototype.expt = bnPow;
     BigInteger.prototype.gcd = bnGCD;
     BigInteger.prototype.isProbablePrime = bnIsProbablePrime;
 
@@ -6815,6 +6845,9 @@ if (typeof(exports) !== 'undefined') {
     })();
 
 
+    // sqrt: -> scheme-number
+    // http://en.wikipedia.org/wiki/Newton's_method#Square_root_of_a_number
+    // Produce the square root.
     (function() {	
 	// Get an approximation using integerSqrt, and then start another
 	// Newton-Ralphson search if necessary.
@@ -6838,14 +6871,6 @@ if (typeof(exports) !== 'undefined') {
 	};
     })();
 
-
-
-
-    
-    // sqrt: -> scheme-number
-    // http://en.wikipedia.org/wiki/Newton's_method#Square_root_of_a_number
-    // Produce the square root.
-
     // floor: -> scheme-number
     // Produce the floor.
     BigInteger.prototype.floor = function() {
@@ -6858,44 +6883,60 @@ if (typeof(exports) !== 'undefined') {
         return this;
     }
 
+
+    // Until we have a feature-complete Big Number implementation, we'll
+    // convert BigInteger objects into FloatPoint objects and perform
+    // unsupported operations there.
+    function temporaryAccuracyLosingWorkAroundForBigNums(function_name) {
+      return function () {
+	var inexact = this.toInexact();
+	return inexact[function_name].apply(inexact, arguments);
+      }
+    }
+
     // conjugate: -> scheme-number
     // Produce the conjugate.
+    BigInteger.prototype.conjugate = temporaryAccuracyLosingWorkAroundForBigNums("conjugate");
 
     // magnitude: -> scheme-number
     // Produce the magnitude.
+    BigInteger.prototype.magnitude = temporaryAccuracyLosingWorkAroundForBigNums("magnitude");
 
     // log: -> scheme-number
     // Produce the log.
+    BigInteger.prototype.log = temporaryAccuracyLosingWorkAroundForBigNums("log");
 
     // angle: -> scheme-number
     // Produce the angle.
+    BigInteger.prototype.angle = temporaryAccuracyLosingWorkAroundForBigNums("angle");
 
     // atan: -> scheme-number
     // Produce the arc tangent.
-
-    // cos: -> scheme-number
-    // Produce the cosine.
-
-    // sin: -> scheme-number
-    // Produce the sine.
-
-
-    // expt: scheme-number -> scheme-number
-    // Produce the power to the input.
-    BigInteger.prototype.expt = function(n) {
-	return bnPow.call(this, n);
-    };
-
-
-
-    // exp: -> scheme-number
-    // Produce e raised to the given power.
+    BigInteger.prototype.atan = temporaryAccuracyLosingWorkAroundForBigNums("atan");
 
     // acos: -> scheme-number
     // Produce the arc cosine.
+    BigInteger.prototype.acos = temporaryAccuracyLosingWorkAroundForBigNums("acos");
 
     // asin: -> scheme-number
     // Produce the arc sine.
+    BigInteger.prototype.asin = temporaryAccuracyLosingWorkAroundForBigNums("asin");
+
+    // tan: -> scheme-number
+    // Produce the tangent.
+    BigInteger.prototype.tan = temporaryAccuracyLosingWorkAroundForBigNums("tan");
+
+    // cos: -> scheme-number
+    // Produce the cosine.
+    BigInteger.prototype.cos = temporaryAccuracyLosingWorkAroundForBigNums("cos");
+
+    // sin: -> scheme-number
+    // Produce the sine.
+    BigInteger.prototype.sin = temporaryAccuracyLosingWorkAroundForBigNums("sin");
+
+    // exp: -> scheme-number
+    // Produce e raised to the given power.
+    BigInteger.prototype.exp = temporaryAccuracyLosingWorkAroundForBigNums("exp");
 
     BigInteger.prototype.imaginaryPart = function() {
 	    return 0;
@@ -6906,6 +6947,9 @@ if (typeof(exports) !== 'undefined') {
 
     // round: -> scheme-number
     // Round to the nearest integer.
+    BigInteger.prototype.round = function() {
+	    return this;
+    }
 
 
 
