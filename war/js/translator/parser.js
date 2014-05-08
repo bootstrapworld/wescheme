@@ -156,7 +156,13 @@
                                       , new types.ColoredPart("something else", sexp[1][0].location)])
                        , sexp.location);
           }
-          // is the next element a list of not-all-symbols?
+/*          // is it a symbol that happens to be a keyword?
+          if(compilerStructs.keywords.indexOf(sexp[1][0].val)>-1){
+            throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sexp[1].location),
+                                ": this is a reserved keyword and cannot be used as a variable or function name"])
+                 , sexp[1].location);
+          }
+*/          // is the next element a list of not-all-symbols?
           sexp[1].forEach(function(arg){
             if (!(arg instanceof symbolExpr)){
               throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -204,7 +210,13 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+/*          // is it a symbol that happens to be a keyword?
+          if(compilerStructs.keywords.indexOf(sexp[1].val)>-1){
+            throwError(new types.Message([new types.ColoredPart(sexp[1].val, sexp[1].location),
+                                ": this is a reserved keyword and cannot be used as a variable or function name"])
+                 , sexp[1].location);
+          }
+*/          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -753,7 +765,6 @@
         // increment depth no matter what. If, AFTER incrementing, we are at depth==0, return a real quasiquote
         depth++;
         if(depth === 0){
-          //return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
           return parseQuasiQuotedExpr(sexp, depth);
         }
       }
@@ -774,7 +785,7 @@
     return new callExpr(new symbolExpr("vector"), sexp.vals);
   }
  
-  // any keyword (except else) should generate an error
+  // DEAD CODE: any keyword (except else) should generate an error
   function checkIfSymbolIsKeyword(sexp){
     if(!isSymbolEqualTo("else", sexp)
        && !isSymbolEqualTo("define", sexp)
@@ -793,7 +804,7 @@
     var singleton = isString(sexp)  ? sexp :
                     isNumber(sexp)  ? sexp :
                     isChar(sexp)    ? sexp :
-                    isSymbol(sexp)  ? checkIfSymbolIsKeyword(sexp) :
+                    isSymbol(sexp)  ? sexp :
                     isUnsupported(sexp) ? sexp :
                     isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :

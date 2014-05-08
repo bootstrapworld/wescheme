@@ -56,6 +56,9 @@
  // Program.prototype.desugar: pinfo -> [Program, pinfo]
  Program.prototype.desugar = function(pinfo){ return [this, pinfo]; };
  defFunc.prototype.desugar = function(pinfo){
+    // check for duplicate arguments
+    checkDuplicateIdentifiers([this.name].concat(this.args), this.stx[0], this.location);
+
     // check for non-symbol arguments
     this.args.forEach(function(arg){
        if(!(arg instanceof symbolExpr)){
@@ -66,8 +69,6 @@
       }
     });
  
-    // check for duplicate arguments
-    checkDuplicateIdentifiers([this.name].concat(this.args), this.stx[0], this.location);
     var lambdaExp = new lambdaExpr(this.args, this.body),
         varExp =  new defVar(this.name, lambdaExp)
     lambdaExp.location = this.location;
@@ -311,13 +312,21 @@
  };
  symbolExpr.prototype.desugar = function(pinfo){
     // if we're not in a clause, we'd better not see an "else"...
-    if(!this.isClause && this.val === "else"){
+    if(!this.isClause && (this.val === "else")){
         var loc = (this.parent && this.parent[0] === this)? this.parent.location : this.location;
         throwError(new types.Message([new types.ColoredPart(this.val, loc)
                                       , ": not allowed "
                                       , new types.ColoredPart("here", loc)
                                       , ", because this is not a question in a clause"]),
                    loc);
+    }
+    // if this is a 'define'...
+    if((compilerStructs.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": expected an open parenthesis before "
+                                      , this.val
+                                      , ", but found none"]),
+                    this.location);
     }
     return [this, pinfo];
  };
