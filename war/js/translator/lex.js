@@ -52,6 +52,7 @@
     // a collection of common RegExps
     var leftListDelims  = /[(\u005B\u007B]/,
         rightListDelims = /[)\u005D\u007D]/,
+        matchUntilDelim = /^[^(\u005B\u007B)\u005D\u007D\s]+/,
         quotes          = /[\'`,]/,
         hex2            = new RegExp("^([0-9a-f]{1,2})", "i"),
         hex4            = new RegExp("^([0-9a-f]{1,4})", "i"),
@@ -499,9 +500,6 @@
             // STRINGS
             case '<<': datum = readString(str, i-1);
                        i+= datum.location.span; break;
-            // BOOLEANS
-            case 't':  // true
-            case 'f':  // false
             // NUMBERS
             case 'e':  // exact
             case 'i':  // inexact
@@ -509,11 +507,17 @@
             case 'o':  // octal
             case 'd':  // decimal
             case 'x':  // hexadecimal
-              if(!/[a-zA-Z]/.exec(nextChar)){ // make sure there's no alpha chars after this
                 column--; //  back up the column one char
                 datum = readSymbolOrNumber(str, i-1);
-                if(datum){ i+= datum.location.span-1; break;}
-              }
+                i+= datum.location.span-1; break;
+            // BOOLEANS
+            case 't':  // true
+            case 'f':  // false
+                if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
+                  datum = readSymbol(p, 0, "");      // create a symbol based solely on the character
+                  i+= datum.location.span;
+                  break;
+                }
             default:
               errorIndex = i; // HACK - remember where we are, so readList can pick up reading
               throwError(new types.Message([source, ":"
@@ -720,6 +724,7 @@
         }
       // if it's not a number OR a symbol
       } catch(e) {
+          errorIndex = i; // HACK - remember where we are, so readList can pick up reading
           throwError(new types.Message([source, ":", sLine.toString()
                                         , ":" , sCol.toString()
                                         , ": read: "+e.message])
