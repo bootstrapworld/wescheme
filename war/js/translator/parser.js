@@ -204,7 +204,7 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]), sexp);
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -368,7 +368,6 @@
                      sexp.location);
       }
       return new letrecExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
-
     }
     function parseLetExpr(sexp) {
       // is it just (let)?
