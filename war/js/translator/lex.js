@@ -23,6 +23,7 @@
  
  TODO
  - JSLint
+ - have every read function set i, then scattered remove i-setting logic?
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -179,9 +180,7 @@
       i = chewWhiteSpace(str, 0);
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        if(!(sexp instanceof Comment)) {
-          sexps.push(sexp);
-        }
+        if(!(sexp instanceof Comment)) { sexps.push(sexp); }
         i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
       }
       return sexps;
@@ -202,9 +201,7 @@
       delims = [];
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        if(!(sexp instanceof Comment)) {
-          sexps.push(sexp);
-        }
+        if(!(sexp instanceof Comment)) { sexps.push(sexp); }
         i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
       }
       return sexps;
@@ -258,28 +255,27 @@
                    
       i = chewWhiteSpace(str, i);
       var lastKnownGoodLocation = new Location(column, line, i, 1);
-      try{
-        while (i < str.length && !rightListDelims.test(str.charAt(i))) {
-          // check for newlines
-          if(str.charAt(i) === "\n"){ line++; column = 0;}
-          // read the next s-exp and set this list as it's parent
-          sexp = readSExpByIndex(str, i);
-          sexp.parent = list;
-          // ignore comments
-          if(!(sexp instanceof Comment)) { list.push(sexp); }
-          // move reader to the next token, and cache the last known "clean" location
-          i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
-          lastKnownGoodLocation = new Location(column, line, i, 1);
+      while (i < str.length && !rightListDelims.test(str.charAt(i))) {
+        // check for newlines
+        if(str.charAt(i) === "\n"){ line++; column = 0;}
+        try{
+          sexp = readSExpByIndex(str, i);      // try to read the next s-exp
+          if(sexp instanceof Comment) continue;  // ignore comments
+          sexp.parent = list; list.push(sexp);  // set this list as it's parent and add the sexp
+          i = sexp.location.end().offset+1; // move i to the character at the end of the sexp
+        } catch (e){
+          // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
+          if( /expected a .+ to (close|open)/.exec(e) || /unknown escape sequence/.exec(e)){
+            throw e;
+          } else {
+            innerError = e; // store the error
+            console.log('caught an innerError:\n'+e+'\nresuming from '+errorIndex);
+            i = errorIndex; // keep reading from the char after the error to see if we match delimeters
+          }
         }
-      } catch (e){
-        // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
-        if(/expected a .+ to close/.exec(e)){
-          throw e;
-        } else {
-          innerError = e; // store the error
-                            console.log('caught an innerError, resuming from '+errorIndex);
-          i = errorIndex; // keep reading from the char after the error to see if we match delimeters
-        }
+        // move reader to the next token, and cache the last known "clean" location
+        i = chewWhiteSpace(str, i);
+        lastKnownGoodLocation = new Location(column-1, line, i-1, 1);
       }
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
@@ -432,7 +428,7 @@
               case "fx":    literal = "fxvectors"; break;
               case "s":     literal = "structs";   break;
               case "hash":
-              case "hasheq":literal = "hashtables"; break;
+              case "hasheq": literal = "hashtables"; break;
               case "px":
               case "rx":    literal = "regular expressions"; break;
               default: throw "IMPOSSIBLE: unsupportedMatch captured something it shouldn't: "+base;
@@ -520,8 +516,7 @@
                 }
             default:
               errorIndex = i; // HACK - remember where we are, so readList can pick up reading
-              throwError(new types.Message([source, ":"
-                                           , line.toString()
+              throwError(new types.Message([source, ":", line.toString()
                                            , ":", (column-1).toString()
                                            , ": read: bad syntax `#", (chunk+nextChar),"'"])
                         , new Location(sCol, sLine, iStart, (chunk+nextChar).length+1)
@@ -576,8 +571,7 @@
     // reads a multiline comment
     function readBlockComment(str, i) {
       var sCol = column, sLine = line, iStart = i;
-      i+=2; // skip over the #|
-      column+=2;
+      i+=2; column+=2; // skip over the #|
       var txt = "";
       while(i+1 < str.length && !(str.charAt(i) === '|' && str.charAt(i+1) === '#')) {
         // check for newlines
@@ -618,14 +612,11 @@
     // reads a single line comment
     function readLineComment(str, i) {
       var sCol = column, sLine = line, iStart = i;
-      i++; // skip over the ;
-      column++;
+      i++; column++; // skip over the ;
       var txt = "";
       while(i < str.length && str.charAt(i) !== '\n') {
         // track column values while we scan
-        column++;
-        txt+=str.charAt(i);
-        i++;
+        txt+=str.charAt(i); column++; i++;
       }
       if(i > str.length) {
         errorIndex = i; // HACK - remember where we are, so readList can pick up reading
@@ -642,25 +633,26 @@
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
     function readQuote(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var sCol = column, sLine = line, iStart = i, nextSExp;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
                    "";
-      if(i+1 >= str.length) {
-          errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
-          
-          var action = p == "'" ? " quoting " :
-                       p == "`" ? " quasiquoting " :
-                       p == "," ? " unquoting " : "";
-          throwError(new types.Message([source, ":", sLine.toString()
-                                        , ":", sCol.toString()
-                                        , ": read: expected an element for" + action
-                                        , str.charAt(i)
-                                        , " (found end-of-file)"])
-                     , new Location(sCol, sLine, iStart, i-iStart+1)
-                     , "Error-GenericReadError");
+      function eofError(i){
+        errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
+        var action = p == "'" ? " quoting " :
+                     p == "`" ? " quasiquoting " :
+                     p == "," ? " unquoting " : "";
+        throwError(new types.Message([source, ":", sLine.toString()
+                                      , ":", sCol.toString()
+                                      , ": read: expected an element for" + action
+                                      , str.charAt(i)
+                                      , " (found end-of-file)"])
+                   , new Location(sCol, sLine, iStart, i-iStart+1)
+                   , "Error-GenericReadError");
+
       }
+      if(i+1 >= str.length) { eofError(i); }
       i++; column++; // read forward one char
       if(p == ',') {
         if(str.charAt(i) == '@') {
@@ -670,10 +662,13 @@
           symbol = new symbolExpr("unquote");
         }
       }
-      // read what comes next, then extract its offset and span to generate the quoted span
-      var next = readSExpByIndex(str, i),
-          quotedSexp = [symbol, next],
-          quotedSpan = (next.location.offset + next.location.span) - iStart;
+      // read the next non-comment sexp
+      while(!nextSExp || (nextSExp instanceof Comment)){
+        nextSExp = readSExpByIndex(str, i);
+        i = nextSExp.location.offset+nextSExp.location.span;
+      }
+      var quotedSexp = [symbol, nextSExp],
+          quotedSpan = (nextSExp.location.offset + nextSExp.location.span) - iStart;
       
       quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
       return quotedSexp;
@@ -686,18 +681,18 @@
       var p = str.charAt(i), datum = "";
       // snip off the next token, and let's analyze it...
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
-           // check for newlines
-           if(str.charAt(i) === "\n"){ line++; column = 0;}
-           // if it's a verbatim symbol, add those characters as-is
-           if(str.charAt(i) === "|") {
-              var sym = readVerbatimSymbol(str, i, datum);
-              i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
-              return sym;
-           // otherwise add the character, taking case-sensitivity into account
-           } else {
-              datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
-              column++;
-           }
+         // check for newlines
+         if(str.charAt(i) === "\n"){ line++; column = 0;}
+         // if it's a verbatim symbol, add those characters as-is
+         if(str.charAt(i) === "|") {
+            var sym = readVerbatimSymbol(str, i, datum);
+            i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
+            return sym;
+         // otherwise add the character, taking case-sensitivity into account
+         } else {
+            datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
+            column++;
+         }
       }
       // special-case for ".", which is not supported in WeScheme
       if(datum === "."){
@@ -731,7 +726,7 @@
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
       }
-     }
+    }
 
     // readSymbol : String Number String -> symbolExpr
     // reads in a symbol which can be any character except for certain delimiters
@@ -767,7 +762,7 @@
     }
 
     // readVerbatimSymbol : String Number String -> symbolExpr
-    // reads the next couple characters as is without any restraint until it reads
+    // reads the next couple characters as-is until it reads
     // a |.  It ignores both the closing | and the opening |.
     function readVerbatimSymbol(str, i, datum) {
       var sCol = column-datum.length, sLine = line, iStart = i-datum.length;
