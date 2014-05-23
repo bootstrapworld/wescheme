@@ -247,15 +247,15 @@
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
     function readList(str, i) {
-      var sCol = column, sLine = line, iStart = i, innerError;
+      var sCol = column, sLine = line, iStart = i, innerError, lastKnownGoodLocation;
       var openingDelim = str.charAt(i++);
       column++; // count the openingDelim
       var sexp, list = [];
       delims.push(openingDelim);
                    
       i = chewWhiteSpace(str, i);
-      var lastKnownGoodLocation = new Location(column, line, i, 1);
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
+        lastKnownGoodLocation = new Location(column, line, i, 1);
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
@@ -274,7 +274,6 @@
           }
         }
         // move reader to the next token, and cache the last known "clean" location
-        lastKnownGoodLocation = new Location(column-1, line, i-1, 1);
         i = chewWhiteSpace(str, i);
       }
       if(i >= str.length) {
@@ -531,7 +530,6 @@
                   , new Location(sCol, sLine, iStart, i-iStart)
                   , "Error-GenericReadError");
       }
-                            
       datum.location = new Location(sCol, sLine, iStart, i-iStart);
       return datum;
     }
@@ -577,14 +575,14 @@
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         txt+=str.charAt(i);
-        i++; column++;
+        i++; column++;  // hop over the '|'
       }
       if(i+1 >= str.length) {
         throwError(new types.Message(["read: Unexpected EOF when reading a multiline comment"])
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
       var atom = new Comment(txt);
-      atom.location = new Location(sCol, sLine, iStart, i+2-iStart);
+      atom.location = new Location(sCol, sLine, iStart, i+1-iStart); // hop over the '#'
       return atom;
     }
 
