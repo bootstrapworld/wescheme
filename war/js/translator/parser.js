@@ -549,7 +549,7 @@
  
     function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else"); }
  
-    function parseCondCouple(clause) {
+    function checkCondCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       // is it (cond ...<not-a-clause>..)?
       if(!(clause instanceof Array)){
@@ -582,13 +582,18 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     clause.location);
       }
-      if(sexpIsCouple(clause)){
+    }
+ 
+ 
+    function parseCondCouple(clause) {
         var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
-      }
     }
+
+    // first check the couples, then parse if there's no problem
+    rest(sexp).forEach(checkCondCouple);
     var numClauses = rest(sexp).length,
         parsedClauses = rest(sexp).reduce(function (rst, couple) {
                                             return rst.concat([parseCondCouple(couple)]);
@@ -626,7 +631,7 @@
                                                                   
     function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
 
-    function parseCaseCouple(clause) {
+    function checkCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       if(!(clause instanceof Array)){
         throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
@@ -665,13 +670,17 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                    sexp.location);
       }
-      if(sexpIsCouple(clause)){
+    }
+ 
+    function parseCaseCouple(clause) {
         var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
-      }
     }
+ 
+    // first check the couples, then parse if there's no problem
+    sexp.slice(2).forEach(checkCaseCouple);
     var numClauses = sexp.slice(2).length,
         parsedClauses = sexp.slice(2).reduce(function (rst, couple) {
                                             return rst.concat([parseCaseCouple(couple)]);
