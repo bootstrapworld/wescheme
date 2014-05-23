@@ -268,14 +268,14 @@
           if( /expected a .+ to (close|open)/.exec(e) || /unknown escape sequence/.exec(e)){
             throw e;
           } else {
-            innerError = e; // store the error
+            var innerError = e; // store the error
             console.log('caught an innerError:\n'+e+'\nresuming from '+errorIndex);
-            i = errorIndex; // keep reading from the char after the error to see if we match delimeters
+            i = errorIndex+1; // keep reading from the char after the error to see if we match delimeters
           }
         }
         // move reader to the next token, and cache the last known "clean" location
-        i = chewWhiteSpace(str, i);
         lastKnownGoodLocation = new Location(column-1, line, i-1, 1);
+        i = chewWhiteSpace(str, i);
       }
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
