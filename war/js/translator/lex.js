@@ -260,9 +260,9 @@
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
           sexp = readSExpByIndex(str, i);      // try to read the next s-exp
+          i = sexp.location.end().offset+1;    // move i to the character at the end of the sexp
           if(sexp instanceof Comment) continue;  // ignore comments
           sexp.parent = list; list.push(sexp);  // set this list as it's parent and add the sexp
-          i = sexp.location.end().offset+1; // move i to the character at the end of the sexp
         } catch (e){
           // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
           if( /expected a .+ to (close|open)/.exec(e) || /unknown escape sequence/.exec(e)){
