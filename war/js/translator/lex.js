@@ -255,6 +255,7 @@
                    
       i = chewWhiteSpace(str, i);
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
+                            console.log('reading list from i='+i+', next char is '+str.charAt(i));
         lastKnownGoodLocation = new Location(column, line, i, 1);
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
@@ -272,7 +273,8 @@
           } else {
             var innerError = e; // store the error
             console.log('caught an innerError:\n'+e+'\nresuming from '+errorIndex);
-            i = errorIndex+1; // keep reading from the char after the error to see if we match delimeters
+            var errorLoc = JSON.parse(JSON.parse(innerError)["structured-error"]).location;
+            i = errorIndex; // keep reading from the char after the error to see if we match delimeters
           }
         }
         // move reader to the next token
@@ -286,7 +288,7 @@
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
          // throw an error
-         throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
+         throwError(msg, (innerError? lastKnownGoodLocation : errorLoc));
       }
       // if the parens match, but an error occured within the list, throw it
       if(innerError) throw innerError;
@@ -577,14 +579,15 @@
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         txt+=str.charAt(i);
-        i++; column++;  // hop over the '|'
+        i++; column++;  // move ahead
       }
       if(i+1 >= str.length) {
         throwError(new types.Message(["read: Unexpected EOF when reading a multiline comment"])
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
+      i+=2; column+=2; // hop over '|#'
       var atom = new Comment(txt);
-      atom.location = new Location(sCol, sLine, iStart, i+1-iStart); // hop over the '#'
+      atom.location = new Location(sCol, sLine, iStart, i-iStart);
       return atom;
     }
 
@@ -648,7 +651,7 @@
                                       , ": read: expected an element for" + action
                                       , p
                                       , " (found end-of-file)"])
-                   , new Location(sCol, sLine, iStart, i-iStart+1)
+                   , new Location(sCol, sLine, iStart, 1)
                    , "Error-GenericReadError");
 
       }
