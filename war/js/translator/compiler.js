@@ -269,11 +269,12 @@
  
  quotedExpr.prototype.desugar = function(pinfo){
     function desugarQuotedItem(sexp){
-      if(sexp instanceof Array) return sexp.map(desugarQuotedItem);
-      else return new callExpr(new primop('list'), [new quotedExpr(sexp.toString())]);
+      if(sexp instanceof Array) return new callExpr(new primop('list'), sexp.map(desugarQuotedItem));
+      if(sexp instanceof symbolExpr) return new quotedExpr(sexp.val);
+      else return sexp;
     }
     if(this.val instanceof Array){
-      var call_exp = new callExpr(new primop('append'), this.val.map(desugarQuotedItem));
+      var call_exp = new callExpr(new primop('list'), this.val.map(desugarQuotedItem));
       call_exp.location = this.location;
       return [call_exp, pinfo];
     } else {
