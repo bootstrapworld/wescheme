@@ -6,7 +6,6 @@
  - test cases get desugared into native calls (and thunks?)
  - implement bytecode structs
  - how to add struct binding when define-struct is desugared away?
- - compilation
 */
 (function () {
  'use strict';
@@ -70,7 +69,7 @@
     });
  
     var lambdaExp = new lambdaExpr(this.args, this.body),
-        varExp =  new defVar(this.name, lambdaExp)
+        varExp    =  new defVar(this.name, lambdaExp)
     lambdaExp.location = this.location;
     varExp.location = this.location;
     return varExp.desugar(pinfo);
@@ -253,7 +252,7 @@
           exprLoc = expr.location,
           tmpSym = pinfoAndTempSym[1],
           expr = forceBooleanContext("or", exprLoc, expr), // force a boolean context on the value
-          tmpBinding = new couple(tmpSym, expr); // (let (tmpBinding) (if tmpSym tmpSym (...))
+          tmpBinding = new couple(tmpSym, expr);           // (let (tmpBinding) (if tmpSym tmpSym (...))
       tmpSym.location = exprLoc;
       tmpBinding.location = exprLoc;
       var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0]),
@@ -321,7 +320,7 @@
                                       , ", because this is not a question in a clause"]),
                    loc);
     }
-    // if this is a 'define'...
+    // if this is a keyword...
     if((compilerStructs.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
@@ -659,6 +658,7 @@
  primop.prototype.compile = function(env, pinfo){}
  requireExpr.prototype.compile = function(pinfo){};
  provideStatement.prototype.compile = function(env, pinfo){};
+ 
  quasiquotedExpr.prototype.compile = function(env, pinfo){ throw "IMPOSSIBLE: quasiqoutedExpr should have been desugared"; }
  defStruct.prototype.compile = function(env, pinfo){ throw "IMPOSSIBLE: define-struct should have been desugared"; };
  letStarExpr.prototype.compile = function(env, pinfo){ throw "IMPOSSIBLE: letrec should have been desugared"; };
