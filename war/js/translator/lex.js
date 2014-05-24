@@ -261,8 +261,10 @@
         try{
           sexp = readSExpByIndex(str, i);      // try to read the next s-exp
           i = sexp.location.end().offset+1;    // move i to the character at the end of the sexp
-          if(sexp instanceof Comment) continue;  // ignore comments
-          sexp.parent = list; list.push(sexp);  // set this list as it's parent and add the sexp
+          if(!(sexp instanceof Comment)){       // if it's not a comment...
+            sexp.parent = list;                // set this list as it's parent
+            list.push(sexp);                   // and add the sexp to the list
+          }
         } catch (e){
           // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
           if( /expected a .+ to (close|open)/.exec(e) || /unknown escape sequence/.exec(e)){
@@ -273,7 +275,7 @@
             i = errorIndex+1; // keep reading from the char after the error to see if we match delimeters
           }
         }
-        // move reader to the next token, and cache the last known "clean" location
+        // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
       if(i >= str.length) {
@@ -644,7 +646,7 @@
         throwError(new types.Message([source, ":", sLine.toString()
                                       , ":", sCol.toString()
                                       , ": read: expected an element for" + action
-                                      , str.charAt(i)
+                                      , p
                                       , " (found end-of-file)"])
                    , new Location(sCol, sLine, iStart, i-iStart+1)
                    , "Error-GenericReadError");
@@ -662,7 +664,11 @@
       }
       // read the next non-comment sexp
       while(!nextSExp || (nextSExp instanceof Comment)){
-        nextSExp = readSExpByIndex(str, i);
+        try{nextSExp = readSExpByIndex(str, i);}
+        catch(e){
+          if(/end-of-file/.exec(e)) eofError(i);
+          else throw e;
+        }
         i = nextSExp.location.offset+nextSExp.location.span;
       }
       var quotedSexp = [symbol, nextSExp],
