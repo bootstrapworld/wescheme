@@ -132,10 +132,11 @@ defFunc.prototype = heir(Program.prototype);
 
 
 // Variable definition
-function defVar(name, expr) {
+function defVar(name, expr, stx) {
   Program.call(this);
   this.name = name;
   this.expr = expr;
+  this.stx  = stx;
   this.toString = function(){
     return "(define "+this.name.toString()+" "+this.expr.toString()+")";
   };
@@ -897,7 +898,7 @@ function getTopLevelEnv(lang){
 
 
 (function (){
-   var compilerStructs = {};
+  var compilerStructs = {};
 
   var makeHash = types.makeLowLevelEqHash;
   compilerStructs.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",

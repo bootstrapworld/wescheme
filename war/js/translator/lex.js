@@ -268,18 +268,21 @@
           }
         } catch (e){
           // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
-          if( /expected a .+ to (close|open)/.exec(e) || /unknown escape sequence/.exec(e)){
+          if(  /expected a .+ to (close|open)/.exec(e)
+            || /unknown escape sequence/.exec(e)
+            || /unexpected/.exec(e)){
             throw e;
           } else {
             var innerError = e; // store the error
-            console.log('caught an innerError:\n'+e+'\nresuming from '+errorIndex);
             var errorLoc = JSON.parse(JSON.parse(innerError)["structured-error"]).location;
             i = errorIndex; // keep reading from the char after the error to see if we match delimeters
+            console.log('caught an innerError:\n'+e+'\nresuming from '+i);
           }
         }
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
+                            console.log('finished reading a list just before closing token. i='+i+', and the next char is'+str.charAt(i));
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -288,10 +291,8 @@
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
          // throw an error
-         throwError(msg, (innerError? lastKnownGoodLocation : errorLoc));
+         throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
-      // if the parens match, but an error occured within the list, throw it
-      if(innerError) throw innerError;
       if(!matchingDelims(openingDelim, str.charAt(i))) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -304,9 +305,11 @@
                                       ]);
          throwError(msg, new Location(column, line, i, 1));
       }
+      // if an error occured within the list, throw it
+      if(innerError) throw innerError;
       // add 1 to span to count the closing delimeter
-      column++;
-      list.location = new Location(sCol, sLine, iStart, i-iStart+1);
+      column++; i++;
+      list.location = new Location(sCol, sLine, iStart, i-iStart);
       return list;
     }
 
@@ -669,8 +672,18 @@
       while(!nextSExp || (nextSExp instanceof Comment)){
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
+                                                                window.err = e;
           if(/end-of-file/.exec(e)) eofError(i);
-          else throw e;
+          var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
+          if(unexpected){
+            errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
+            throwError(new types.Message([source, ":", sLine.toString()
+                                          , ":", column.toString()
+                                          , ": read: unexpected `" + unexpected[1] + "'"])
+                       , new Location(column, line, i, 1)
+                       , "Error-GenericReadError");
+          }
+          throw e;
         }
         i = nextSExp.location.offset+nextSExp.location.span;
       }
