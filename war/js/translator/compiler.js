@@ -320,8 +320,8 @@
                                       , ", because this is not a question in a clause"]),
                    loc);
     }
-    // if this is a keyword...
-    if((compilerStructs.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
+    // if this is a keyword without a parent
+    if(!this.parent && (compilerStructs.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val
