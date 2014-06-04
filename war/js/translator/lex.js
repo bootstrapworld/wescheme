@@ -247,15 +247,15 @@
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
     function readList(str, i) {
-      var sCol = column, sLine = line, iStart = i, innerError, lastKnownGoodLocation;
+      var sCol = column, sLine = line, iStart = i, innerError=false, lastKnownGoodLocation;
       var openingDelim = str.charAt(i++);
       column++; // count the openingDelim
       var sexp, list = [];
       delims.push(openingDelim);
-                   
+//                            console.log('starting new list');
       i = chewWhiteSpace(str, i);
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
-                            console.log('reading list from i='+i+', next char is '+str.charAt(i));
+//                            console.log('reading list from i='+i+', next char is '+str.charAt(i));
         lastKnownGoodLocation = new Location(column, line, i, 1);
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
@@ -276,13 +276,13 @@
             var innerError = e; // store the error
             var errorLoc = JSON.parse(JSON.parse(innerError)["structured-error"]).location;
             i = errorIndex; // keep reading from the char after the error to see if we match delimeters
-            console.log('caught an innerError:\n'+e+'\nresuming from '+i);
+//            console.log('caught an innerError:\n'+e+'\nresuming from '+i);
           }
         }
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
-                            console.log('finished reading a list just before closing token. i='+i+', and the next char is'+str.charAt(i));
+//                            console.log('finished reading a list just before closing token. i='+i+', and the next char is'+str.charAt(i));
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -290,8 +290,8 @@
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
-                            console.log('first successful parse afyer open paren is ');
-                            console.log(list[0]);
+//                            console.log('first successful parse after open paren is ');
+//                            console.log(list[0]);
          // throw an error
          throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
@@ -312,8 +312,8 @@
       // add 1 to span to count the closing delimeter
       column++; i++;
       list.location = new Location(sCol, sLine, iStart, i-iStart);
-                            console.log('finished parsing this list: ');
-                            console.log(list);
+//                            console.log('finished parsing this list: ');
+//                            console.log(list);
       return list;
     }
 
