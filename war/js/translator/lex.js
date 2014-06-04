@@ -290,6 +290,8 @@
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
+                            console.log('first successful parse afyer open paren is ');
+                            console.log(list[0]);
          // throw an error
          throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
@@ -310,6 +312,8 @@
       // add 1 to span to count the closing delimeter
       column++; i++;
       list.location = new Location(sCol, sLine, iStart, i-iStart);
+                            console.log('finished parsing this list: ');
+                            console.log(list);
       return list;
     }
 
@@ -757,10 +761,10 @@
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
         // if there's an escape, read the escape *and* the next character
         if(str.charAt(i) === "\\"){
-          datum += str.charAt(i++);
+          datum += str.charAt(i); i++; column++; // read the backslash and adjust i and column counters
           if(i >= str.length){ throw new Error("EOF following `\\' in symbol"); }
-          datum += str.charAt(i++);
-          column+=2;
+          if(str.charAt(i) === "\n"){ line++; column = 0;}
+          datum += str.charAt(i); i++; column++; // read the next char and adjust i and column counters
         // if it's a verbatim symbol, add those characters as-is
         } else if(str.charAt(i) === "|") {
           var sym = readVerbatimSymbol(str, i, datum);
