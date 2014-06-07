@@ -10,7 +10,7 @@ function formatOutput(x) {
   var res = [];
 
   for(var i = 0; i < x.length; i++) {
-    res[i] = sexpToString(x[i]);
+    res[i] = plt.compiler.sexpToString(x[i]);
   }
   return res;
 }
@@ -51,7 +51,7 @@ function popElementFromHistory(dir, current) {
 function getError(e){
   try{
     var err =  JSON.parse(e),
-    structuredErr = JSON.parse(err['structured-error']);
+        structuredErr = JSON.parse(err['structured-error']);
     return structuredErr.message;
   } catch (JSONerror){
     console.log('!!!!!!!!!!!! FATAL ERROR !!!!!!!!!!!!!!!');
@@ -68,11 +68,11 @@ function readFromRepl(event) {
     try {
       console.log("// LEXING: ///////////////////////////////////\nraw:");
       var start = new Date().getTime(),
-          sexp = lex(aSource),
+          sexp = plt.compiler.lex(aSource),
           end = new Date().getTime(),
           lexTime = Math.floor(end-start);
       console.log(sexp);
-      console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+sexpToString(sexp));
+      console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+plt.compiler.sexpToString(sexp));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       console.log(e);
@@ -82,7 +82,7 @@ function readFromRepl(event) {
     try {
       console.log("// PARSING: //////////////////////////////////\nraw:");
       var start = new Date().getTime(),
-          AST = parse(sexp);
+          AST = plt.compiler.parse(sexp);
           end = new Date().getTime(),
           parseTime = Math.floor(end-start);
       console.log(AST);
@@ -95,7 +95,7 @@ function readFromRepl(event) {
     try {
       console.log("// DESUGARING: //////////////////////////////\nraw");
       var start = new Date().getTime(),
-          ASTandPinfo = desugar(AST),
+          ASTandPinfo = plt.compiler.desugar(AST),
           program = ASTandPinfo[0],
           pinfo = ASTandPinfo[1],
           end = new Date().getTime(),
@@ -113,7 +113,7 @@ function readFromRepl(event) {
     try {
       console.log("// ANALYSIS: //////////////////////////////\n");
       var start = new Date().getTime();
-      window.pinfo = analyze(program);
+      window.pinfo = plt.compiler.analyze(program);
       var end = new Date().getTime(),
       analysisTime = Math.floor(end-start);
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
@@ -124,7 +124,7 @@ function readFromRepl(event) {
     try {
       console.log("// COMPILATION: //////////////////////////////\n");
       var start = new Date().getTime();
-      window.pinfo = compile(program, pinfo);
+      window.pinfo = plt.compiler.compile(program, pinfo);
       var end = new Date().getTime(),
       compileTime = Math.floor(end-start);
       console.log("Compiled in "+compileTime+"ms");
@@ -138,13 +138,6 @@ function readFromRepl(event) {
                 + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime)+"ms");
     
     
-/*    try {
-      var program = compile(AST);
-    } catch (e) {
-      console.log("COMPILE ERROR:\n");
-      console.log(e);
-    }
-*/
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there

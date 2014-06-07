@@ -1,3 +1,8 @@
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////// COMMON FUNCTIONS AND STRUCTURES //////////////////////////
 //////////////// used by multiple phases of the compiler/////////////////////
@@ -74,7 +79,7 @@ function checkDuplicateIdentifiers(lst, stx, loc){
   for (var i = 0; i < lst.length; i++) {
     if(!(sorted_arr[i] instanceof symbolExpr)){
       throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
-    } else if(compilerStructs.keywords.indexOf(sorted_arr[i].val)>-1){
+    } else if(plt.compiler.keywords.indexOf(sorted_arr[i].val)>-1){
       throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
                                 " : this is a reserved keyword and cannot be used as a variable or function name"])
                  , sorted_arr[i].location);
@@ -452,7 +457,7 @@ function getTopLevelEnv(lang){
                          , "false", "eof", "pi", "e","js-undefined"
                          , "js-null"].reduce(function(env, id){
                                              return env.extendConstant(id.toString(), "moby/toplevel", false)
-                                             }, compilerStructs.emptyEnv());
+                                             }, plt.compiler.emptyEnv());
 
   // Registers a new toplevel function, munging the name
   var r = function(env, name, arity, vararity){
@@ -898,10 +903,8 @@ function getTopLevelEnv(lang){
 
 
 (function (){
-  var compilerStructs = {};
-
   var makeHash = types.makeLowLevelEqHash;
-  compilerStructs.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",
+  plt.compiler.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",
                               "quasiquote", "unquote","unquote-splicing","local","begin",
                               "if","or","and","when","unless","lambda","λ","define",
                               "define-struct", "define-values"];
@@ -966,7 +969,7 @@ function getTopLevelEnv(lang){
   function emptyEnv(){ return new env(types.makeLowLevelEqHash());}
  
  // export
- compilerStructs.env = env;
+ plt.compiler.env = env;
 
  // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
   function stackReference(){}
@@ -1033,7 +1036,7 @@ function getTopLevelEnv(lang){
  
   // default-module-resolver: symbol -> (module-binding | false)
   // loop through known modules and see if we know this name
-  compilerStructs.defaultModuleResolver = function(name){
+  plt.compiler.defaultModuleResolver = function(name){
     for(var i=0; i< knownModules.length; i++){
 //      if(moduleBindingName(knownModules[i]) === name.val) return knownModules[i];
     }
@@ -1042,7 +1045,7 @@ function getTopLevelEnv(lang){
  
   // default-module-path-resolver: module-path module-path -> module-name
   // Provides a default module resolver.
-  compilerStructs.defaultModulePathResolver = function(path, parentPath){
+  plt.compiler.defaultModulePathResolver = function(path, parentPath){
     // anything of the form wescheme/w+, or that has a known collection AND module
     var parts = path.split("/"),
         collectionName = parts[0],
@@ -1082,9 +1085,9 @@ function getTopLevelEnv(lang){
  
     // For the module system.
     // (module-name -> (module-binding | false))
-    this.moduleResolver = moduleResolver || compilerStructs.defaultModuleResolver;
+    this.moduleResolver = moduleResolver || plt.compiler.defaultModuleResolver;
     // (string module-path -> module-name)
-    this.modulePathResolver = modulePathResolver || compilerStructs.defaultModulePathResolver;
+    this.modulePathResolver = modulePathResolver || plt.compiler.defaultModulePathResolver;
     // module-path
     this.currentModulePath = currentModulePath || defaultCurrentModulePath;
  
@@ -1112,7 +1115,7 @@ function getTopLevelEnv(lang){
     // accumulateDefinedBinding: binding loc -> pinfo
     // Adds a new defined binding to a pinfo's set.
     this.accumulateDefinedBinding = function(binding, loc){
-      if(compilerStructs.keywords.indexOf(binding.name) > -1){
+      if(plt.compiler.keywords.indexOf(binding.name) > -1){
         throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                   ": this is a reserved keyword and cannot be used"+
                                   " as a variable or function name"])
@@ -1279,7 +1282,7 @@ function getTopLevelEnv(lang){
  // 'base
  // 'moby
  function getBasePinfo(language){
-    var pinfo = new compilerStructs.pinfo();
+    var pinfo = new plt.compiler.pinfo();
     if(language === "moby"){
       pinfo.env = extendEnv_moduleBinding(getTopLevelEnv(language),
                                           mobyModuleBinding);
@@ -1290,9 +1293,7 @@ function getTopLevelEnv(lang){
  }
  
 
- compilerStructs.emptyEnv = emptyEnv;
- compilerStructs.getBasePinfo = getBasePinfo;
- compilerStructs.pinfo = pinfo;
- // EXPORT ALL THE STRUCTS NEEDED BY THE COMPILER
- window.compilerStructs = compilerStructs;
- })();
+ plt.compiler.emptyEnv = emptyEnv;
+ plt.compiler.getBasePinfo = getBasePinfo;
+ plt.compiler.pinfo = pinfo;
+})();

@@ -87,12 +87,12 @@ function runTests(){
   function test(expr, expected){
     console.log('expecting: '+expected);
     try {
-      var sexp      = lex(expr,"<definitions>"), // lex
-          AST       = parse(sexp),              // parse
-          desugared = desugar(AST),             // desugar
+      var sexp      = plt.compiler.lex(expr,"<definitions>"),
+          AST       = plt.compiler.parse(sexp),
+          desugared = plt.compiler.desugar(AST),
           program   = desugared[0],
           pinfo     = desugared[1],
-          pinfo2    = analyze(program);         // analyze
+          pinfo2    = plt.compiler.analyze(program);
     } catch(e) {
       console.log('recieved: '+e);
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}

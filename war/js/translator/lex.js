@@ -26,6 +26,10 @@
  - have every read function set i, then scattered remove i-setting logic?
  */
 
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// LEXER OBJECT //////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -810,10 +814,9 @@
     /////////////////////
     /* Export Bindings */
     /////////////////////
-
-    window.readFile = readSSFile;
-    window.lex = readProg;
-    window.sexpToString = sexpToString;
-    window.read = readSExp;
+//    plt.compiler.readFile = readSSFile;
+    plt.compiler.lex = readProg;
+    plt.compiler.sexpToString = sexpToString;
+//    plt.compiler.read = readSExp;
 
 })();

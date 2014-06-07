@@ -1,5 +1,8 @@
-/* 
- 
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
+/*
  
  //////////////////////////////////////////////////////////////////////////////
  ///////////////////////////////// PARSER OBJECT //////////////////////////////
@@ -898,5 +901,5 @@
   /////////////////////
   /* Export Bindings */
   /////////////////////
- window.parse = parse;
+ plt.compiler.parse = parse;
 })();

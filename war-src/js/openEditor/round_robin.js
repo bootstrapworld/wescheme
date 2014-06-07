@@ -155,7 +155,7 @@ goog.provide("plt.wescheme.RoundRobin");
           try { //////////////////// LEX ///////////////////
             console.log("// LEXING: ///////////////////////////////////\nraw:");
             var start = new Date().getTime(),
-                sexp = lex(code, programName),
+                sexp = plt.compiler.lex(code, programName),
                 end = new Date().getTime();
             lexTime = Math.floor(end-start);
             console.log(sexp);
@@ -169,7 +169,7 @@ goog.provide("plt.wescheme.RoundRobin");
           try{ //////////////////// PARSE ///////////////////
             console.log("// PARSING: //////////////////////////////////\nraw:");
             var start = new Date().getTime(),
-                AST = parse(sexp);
+                AST = plt.compiler.parse(sexp);
                 end = new Date().getTime();
             parseTime = Math.floor(end - start);
             console.log(AST);
@@ -184,7 +184,7 @@ goog.provide("plt.wescheme.RoundRobin");
           try { ////////////////// DESUGAR /////////////////////
             console.log("// DESUGARING: //////////////////////////////\nraw");
             var start = new Date().getTime(),
-                ASTandPinfo = desugar(AST),
+                ASTandPinfo = plt.compiler.desugar(AST),
                 program = ASTandPinfo[0],
                 pinfo = ASTandPinfo[1],
                 end = new Date().getTime();
@@ -202,7 +202,7 @@ goog.provide("plt.wescheme.RoundRobin");
           try {
             console.log("// ANALYSIS: //////////////////////////////\n");
             var start = new Date().getTime();
-            window.pinfo = analyze(program);
+            window.pinfo = plt.compiler.analyze(program);
             var end = new Date().getTime(),
             analysisTime = Math.floor(end-start);
             console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
@@ -216,7 +216,7 @@ goog.provide("plt.wescheme.RoundRobin");
       } catch (e) {
           local_error = getError(e).toString();
 // ignore local errors for now
-//          onDoneError(local_error);
+          onDoneError(local_error);
       }
       // We made it safely! Okay, let's turn the local compiler!
       writeLocalCompilerCookie("true");

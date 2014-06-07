@@ -1,3 +1,7 @@
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
 /*
  TODO
  - desugar Symbols
@@ -7,6 +11,7 @@
  - implement bytecode structs
  - how to add struct binding when define-struct is desugared away?
 */
+
 (function () {
  'use strict';
  
@@ -16,7 +21,7 @@
     var func = call_exp.func,
         operands = call_exp.args,
         module = defaultModuleResolver(moduleName),
-        env = compilerStructs.emptyEnv().extendEnv_moduleBinding(module);
+        env = plt.compiler.emptyEnv().extendEnv_moduleBinding(module);
     call_exp.context = env;
     return call_exp;
  }
@@ -40,7 +45,7 @@
  // desugarProgram : Listof Programs null/pinfo -> [Listof Programs, pinfo]
  // desugar each program, appending those that desugar to multiple programs
  function desugarProgram(programs, pinfo){
-      var acc = [ [], (pinfo || new compilerStructs.pinfo())];
+      var acc = [ [], (pinfo || new plt.compiler.pinfo())];
       return programs.reduce((function(acc, p){
             var desugaredAndPinfo = p.desugar(acc[1]);
             if(desugaredAndPinfo[0].length){
@@ -321,7 +326,7 @@
                    loc);
     }
     // if this is a keyword without a parent
-    if(!this.parent && (compilerStructs.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
+    if(!this.parent && (plt.compiler.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val
@@ -670,7 +675,7 @@
 
 /////////////////////////////////////////////////////////////
  function analyze(programs){
-    return programAnalyzeWithPinfo(programs, compilerStructs.getBasePinfo("base"));
+    return programAnalyzeWithPinfo(programs, plt.compiler.getBasePinfo("base"));
  }
  
  // programAnalyzerWithPinfo : [listof Programs], pinfo -> pinfo
@@ -753,7 +758,7 @@
  /////////////////////
  /* Export Bindings */
  /////////////////////
- window.analyze = analyze;
- window.compile = compile;
- window.desugar = desugarProgram;
+ plt.compiler.desugar = desugarProgram;
+ plt.compiler.analyze = analyze;
+ plt.compiler.compile = compile;
 })();
