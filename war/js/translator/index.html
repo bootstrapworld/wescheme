@@ -79,13 +79,14 @@ function loadSuite(json){
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
   document.getElementById('runTests').value="Run test-suite";
+  document.getElementById('memoryTest').disabled=false;
   console.log('Test Suite data retrieved from Google Drive: '+tests.length+' tests loaded');
 }
 
 
-function runTests(){
+function runTests(verbose){
   function test(expr, expected){
-    console.log('expecting: '+expected);
+    if(verbose) console.log('expecting: '+expected);
     try {
       var sexp      = plt.compiler.lex(expr,"<definitions>"),
           AST       = plt.compiler.parse(sexp),
@@ -94,36 +95,44 @@ function runTests(){
           pinfo     = desugared[1],
           pinfo2    = plt.compiler.analyze(program);
     } catch(e) {
-      console.log('recieved: '+e);
+      if(verbose) console.log('recieved: '+e);
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       if(expected === "LOCAL IS BETTER") return true;
       if(expected === "PASS") return false;
       return sameResults(JSON.parse(e), JSON.parse(expected));
     }
-    console.log('recieved: PASS');
+    if(verbose) console.log('recieved: PASS');
     return (expected === "PASS" || expected === "LOCAL IS BETTER");
   }
   
-    console.log('running tests');
+    if(verbose) console.log('running tests');
     for(var i=0; i<tests.length; i++){
       // run the test
-      console.log('///// TEST '+ (i+1) +' ////////////////');
-      console.log('testing :'+tests[i].expr);
+      if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
+      if(verbose) console.log('testing :'+tests[i].expr);
       var result = test(tests[i].expr, tests[i].server);
       if(result) passed++;
       document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed';
-      // show the result
-      var table = document.getElementById('testResults'),
-          row = document.createElement('tr'),
-          expr  = document.createElement('td');
-      row.style.background = result? 'lightgreen' : 'pink';
-      expr.style.fontFamily = 'monospace';
-      expr.style.width = '500px';
-      row.appendChild(document.createTextNode((i+1)+') '));
-      row.appendChild(expr);
-      expr.innerHTML = tests[i].expr;
-      table.appendChild(row);
+      if(verbose) {
+        // show the result
+        var table = document.getElementById('testResults'),
+            row = document.createElement('tr'),
+            expr  = document.createElement('td');
+        row.style.background = result? 'lightgreen' : 'pink';
+        expr.style.fontFamily = 'monospace';
+        expr.style.width = '500px';
+        row.appendChild(document.createTextNode((i+1)+') '));
+        row.appendChild(expr);
+        expr.innerHTML = tests[i].expr;
+        table.appendChild(row);
+      }
     }
+}
+                        
+function runMemoryTest(runs){
+  alert('Running test library '+runs+' times. This could take a while, and your computer may become unresponsive.');
+  for(i=0; i<runs; i++) runTests(false);
+  console.log('Memory test complete');
 }
 </script>
 
@@ -131,7 +140,8 @@ function runTests(){
 <body onload="repl2_setup()">
 <textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
-<input type="button" disabled="true" value="Loading test-suite" id="runTests" onclick="runTests()"/>
+<input type="button" disabled="true" value="Loading test-suite" id="runTests" onclick="runTests(true)"/>
+<input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest(20)"/>
 <br/>
 <span id="status"></span>
 <table id="testResults">
