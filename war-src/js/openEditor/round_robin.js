@@ -154,10 +154,10 @@ goog.provide("plt.wescheme.RoundRobin");
               lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0;
           try { //////////////////// LEX ///////////////////
             console.log("// LEXING: ///////////////////////////////////\nraw:");
-            var start = new Date().getTime(),
-                sexp = plt.compiler.lex(code, programName),
-                end = new Date().getTime();
-            lexTime = Math.floor(end-start);
+            var start     = new Date().getTime(),
+                sexp      = plt.compiler.lex(code, programName),
+                end       = new Date().getTime();
+            lexTime       = Math.floor(end-start);
             console.log(sexp);
             console.log("Lexed in "+lexTime+"ms");
           } catch(e) {
@@ -168,10 +168,10 @@ goog.provide("plt.wescheme.RoundRobin");
           }
           try{ //////////////////// PARSE ///////////////////
             console.log("// PARSING: //////////////////////////////////\nraw:");
-            var start = new Date().getTime(),
-                AST = plt.compiler.parse(sexp);
-                end = new Date().getTime();
-            parseTime = Math.floor(end - start);
+            var start     = new Date().getTime(),
+                AST       = plt.compiler.parse(sexp);
+                end       = new Date().getTime();
+            parseTime     = Math.floor(end - start);
             console.log(AST);
             console.log("Parsed in "+parseTime+"ms");
           } catch(e) {
@@ -183,12 +183,12 @@ goog.provide("plt.wescheme.RoundRobin");
 
           try { ////////////////// DESUGAR /////////////////////
             console.log("// DESUGARING: //////////////////////////////\nraw");
-            var start = new Date().getTime(),
+            var start       = new Date().getTime(),
                 ASTandPinfo = plt.compiler.desugar(AST),
-                program = ASTandPinfo[0],
-                pinfo = ASTandPinfo[1],
-                end = new Date().getTime();
-            desugarTime = Math.floor(end-start);
+                program     = ASTandPinfo[0],
+                pinfo       = ASTandPinfo[1],
+                end         = new Date().getTime();
+                desugarTime = Math.floor(end-start);
             console.log(program);
             console.log("Desugared in "+desugarTime+"ms");
             console.log("pinfo:");
@@ -201,10 +201,10 @@ goog.provide("plt.wescheme.RoundRobin");
           }
           try {
             console.log("// ANALYSIS: //////////////////////////////\n");
-            var start = new Date().getTime();
-            window.pinfo = plt.compiler.analyze(program);
-            var end = new Date().getTime(),
-            analysisTime = Math.floor(end-start);
+            var start       = new Date().getTime();
+            window.pinfo    = plt.compiler.analyze(program);
+            var end         = new Date().getTime(),
+            analysisTime    = Math.floor(end-start);
             console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
           } catch (e) {
             var end = new Date().getTime(),

@@ -67,10 +67,10 @@ function readFromRepl(event) {
     var progres;
     try {
       console.log("// LEXING: ///////////////////////////////////\nraw:");
-      var start = new Date().getTime(),
-          sexp = plt.compiler.lex(aSource),
-          end = new Date().getTime(),
-          lexTime = Math.floor(end-start);
+      var start     = new Date().getTime(),
+          sexp      = plt.compiler.lex(aSource),
+          end       = new Date().getTime(),
+          lexTime   = Math.floor(end-start);
       console.log(sexp);
       console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+plt.compiler.sexpToString(sexp));
     } catch (e) {
@@ -81,9 +81,9 @@ function readFromRepl(event) {
     }
     try {
       console.log("// PARSING: //////////////////////////////////\nraw:");
-      var start = new Date().getTime(),
-          AST = plt.compiler.parse(sexp);
-          end = new Date().getTime(),
+      var start     = new Date().getTime(),
+          AST       = plt.compiler.parse(sexp);
+          end       = new Date().getTime(),
           parseTime = Math.floor(end-start);
       console.log(AST);
       console.log("Parsed in "+parseTime+"ms. Parsed as:\n"+AST.join("\n"));
@@ -94,11 +94,11 @@ function readFromRepl(event) {
     }
     try {
       console.log("// DESUGARING: //////////////////////////////\nraw");
-      var start = new Date().getTime(),
+      var start       = new Date().getTime(),
           ASTandPinfo = plt.compiler.desugar(AST),
-          program = ASTandPinfo[0],
-          pinfo = ASTandPinfo[1],
-          end = new Date().getTime(),
+          program     = ASTandPinfo[0],
+          pinfo       = ASTandPinfo[1],
+          end         = new Date().getTime(),
           desugarTime = Math.floor(end-start);
       console.log(program);
       console.log("Desugared in "+desugarTime+"ms. Desugared to:\n"+program.join("\n"));
@@ -112,10 +112,10 @@ function readFromRepl(event) {
     }
     try {
       console.log("// ANALYSIS: //////////////////////////////\n");
-      var start = new Date().getTime();
-      window.pinfo = plt.compiler.analyze(program);
-      var end = new Date().getTime(),
-      analysisTime = Math.floor(end-start);
+      var start       = new Date().getTime();
+      window.pinfo    = plt.compiler.analyze(program);
+      var end         = new Date().getTime(),
+      analysisTime    = Math.floor(end-start);
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
@@ -123,10 +123,10 @@ function readFromRepl(event) {
     }
     try {
       console.log("// COMPILATION: //////////////////////////////\n");
-      var start = new Date().getTime();
-      window.pinfo = plt.compiler.compile(program, pinfo);
-      var end = new Date().getTime(),
-      compileTime = Math.floor(end-start);
+      var start       = new Date().getTime();
+      window.pinfo    = plt.compiler.compile(program, pinfo);
+      var end         = new Date().getTime(),
+      compileTime     = Math.floor(end-start);
       console.log("Compiled in "+compileTime+"ms");
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
