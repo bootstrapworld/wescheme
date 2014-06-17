@@ -70,12 +70,14 @@ function sameResults(x, y){
 function loadSuite(json){
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
-    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: /);
+    console.log(rows[i]);
+    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
-               difference = chunks[4], reason = chunks[6];
+               difference = chunks[4], reason = chunks[5], desugar = chunks[6];
     expr = expr.replace(/^\'\'/,"'");
-    tests.push({expr: expr, local: local, server: server, reason: reason});
+    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar});
   }
+                        console.log(tests[0]);
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
   document.getElementById('runTests').value="Run test-suite";
