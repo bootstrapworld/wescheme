@@ -267,7 +267,7 @@ function callExpr(func, args) {
   this.func = func;
   this.args = args;
   this.toString = function(){
-    return "("+this.func.toString()+" "+this.args.join(" ")+")";
+    return "("+[this.func].concat(this.args).join(" ")+")";
   };
 };
 callExpr.prototype = heir(Program.prototype);
