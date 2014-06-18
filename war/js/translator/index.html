@@ -1,5 +1,9 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Repl 2.0</title>
+
+<style>
+  td {min-width: 10px; max-width: 300px; overflow: hidden;}
+</style>
 <script type="text/javascript" src="../mzscheme-vm/support.js"></script>
 <script type="text/javascript" src="structures.js"></script>
 <script type="text/javascript" src="compiler.js"></script>
@@ -70,14 +74,12 @@ function sameResults(x, y){
 function loadSuite(json){
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
-    console.log(rows[i]);
     var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
                difference = chunks[4], reason = chunks[5], desugar = chunks[6];
     expr = expr.replace(/^\'\'/,"'");
     tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar});
   }
-                        console.log(tests[0]);
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
   document.getElementById('runTests').value="Run test-suite";
@@ -87,47 +89,82 @@ function loadSuite(json){
 
 
 function runTests(verbose){
-  function test(expr, expected){
-    if(verbose) console.log('expecting: '+expected);
-    try {
-      var sexp      = plt.compiler.lex(expr,"<definitions>"),
-          AST       = plt.compiler.parse(sexp),
-          desugared = plt.compiler.desugar(AST),
-          program   = desugared[0],
-          pinfo     = desugared[1],
-          pinfo2    = plt.compiler.analyze(program);
-    } catch(e) {
-      if(verbose) console.log('recieved: '+e);
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      if(expected === "LOCAL IS BETTER") return true;
-      if(expected === "PASS") return false;
-      return sameResults(JSON.parse(e), JSON.parse(expected));
+  function test(expr, expected, desugar){
+      console.log('expecting: '+expected);
+      // show the result
+      var row   = document.createElement('tr'),
+          num   = document.createElement('td'),
+          test  = document.createElement('td'),
+          lex   = document.createElement('td'),
+          parse = document.createElement('td'),
+          desugar=document.createElement('td');
+      num.innerHTML  = (i+1)+')'; // make test nums 1-aligned, instead of 0-aligned
+      test.innerHTML = expr;      // show which expr we're testing
+      row.appendChild(num);
+      row.appendChild(test);
+      row.appendChild(lex);
+      row.appendChild(parse);
+      row.appendChild(desugar);
+      table.appendChild(row);
+      row.style.background = 'lightgreen';
+                        
+      // LEX: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      lex.innerHTML = 'lex';
+      try{
+        var sexp = plt.compiler.lex(expr,"<definitions>");
+      } catch (e) {
+        if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
+        else if(sameResults(JSON.parse(e), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+        else{ row.style.background = 'pink'; return false; }
+      }
+      lex.style.background = 'lightgreen';
+                      
+      // PARSE: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      parse.innerHTML = 'parse';
+      try{
+        var AST = plt.compiler.parse(sexp);
+      } catch (e) {
+        if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
+        else if(sameResults(JSON.parse(e), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
+        else{ row.style.background = 'pink'; return false; }
+      }
+      parse.style.background = 'lightgreen';
+                      
+      // DESUGAR AND ANALYZE: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      desugar.innerHTML = 'desugar';
+      try{
+        var desugared = plt.compiler.desugar(AST);
+            program   = desugared[0],
+            pinfo     = desugared[1],
+            pinfo2    = plt.compiler.analyze(program);
+        if(expected !== "PASS") { row.style.background = 'pink'; return false; }
+      } catch (e) {
+        if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
+        else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
+        else{ row.style.background = 'pink'; return false; }
+      }
+      desugar.style.background = 'lightgreen';
+      return true;
     }
-    if(verbose) console.log('recieved: PASS');
-    return (expected === "PASS" || expected === "LOCAL IS BETTER");
-  }
   
     if(verbose) console.log('running tests');
+    var table = document.getElementById('testResults');
     for(var i=0; i<tests.length; i++){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar);
       if(result) passed++;
       document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed';
-      if(verbose) {
-        // show the result
-        var table = document.getElementById('testResults'),
-            row = document.createElement('tr'),
-            expr  = document.createElement('td');
-        row.style.background = result? 'lightgreen' : 'pink';
-        expr.style.fontFamily = 'monospace';
-        expr.style.width = '500px';
-        row.appendChild(document.createTextNode((i+1)+') '));
-        row.appendChild(expr);
-        expr.innerHTML = tests[i].expr;
-        table.appendChild(row);
-      }
     }
 }
                         
@@ -146,7 +183,7 @@ function runMemoryTest(runs){
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest(20)"/>
 <br/>
 <span id="status"></span>
-<table id="testResults">
+<table id="testResults" style="font-family:monospace;">
 </table>
 <script type="text/javascript" src="https://spreadsheets.google.com/feeds/list/0AjzMl1BJlJDkdDI2c0VUSHNZMnR6ZVR5S2hXZEdtd1E/1/public/basic?alt=json-in-script&callback=loadSuite"></script>
 
