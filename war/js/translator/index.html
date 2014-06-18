@@ -89,7 +89,7 @@ function loadSuite(json){
 
 
 function runTests(verbose){
-  function test(expr, expected, desugar){
+  function test(expr, expected, desugarRef){
       console.log('expecting: '+expected);
       // show the result
       var row   = document.createElement('tr'),
@@ -146,12 +146,14 @@ function runTests(verbose){
             program   = desugared[0],
             pinfo     = desugared[1],
             pinfo2    = plt.compiler.analyze(program);
-        if(expected !== "PASS") { row.style.background = 'pink'; return false; }
       } catch (e) {
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
         else{ row.style.background = 'pink'; return false; }
       }
+      console.log('server desugar is '+desugarRef+', and local desugar is '+program.toString()+'\n');
+      if(desugarRef === undefined) desugarRef = "";
+      if(desugarRef !== program.toString()) { row.style.background = 'pink'; return false; }
       desugar.style.background = 'lightgreen';
       return true;
     }
