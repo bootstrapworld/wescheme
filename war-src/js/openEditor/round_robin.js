@@ -216,7 +216,7 @@ goog.provide("plt.wescheme.RoundRobin");
       } catch (e) {
           local_error = getError(e).toString();
 // ignore local errors for now
-          onDoneError(local_error);
+//          onDoneError(local_error);
       }
       // We made it safely! Okay, let's turn the local compiler!
       writeLocalCompilerCookie("true");
@@ -247,6 +247,10 @@ goog.provide("plt.wescheme.RoundRobin");
                          console.log("OK: LOCAL AND SERVER BOTH PASSED");
                        }
                     }
+                    console.log('Server compilation completed successfully. Bytecode was:\n');
+                    window.response = JSON.parse(bytecode);
+                    window.bytecode = (0,eval)('(' + window.response.bytecode + ')');
+                    console.log(JSON.stringify(window.bytecode, null, 4));
                     onDone(bytecode);
                 },
                 // wrap onDoneError() with a function to compare local and server output
