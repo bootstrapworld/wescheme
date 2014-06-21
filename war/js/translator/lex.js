@@ -82,7 +82,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
-        return new types.vector([new numberExpr(this.sCol), new numberExpr(this.sLine)
+        return new vectorExpr([new numberExpr(this.sCol), new numberExpr(this.sLine)
                               ,new numberExpr(this.offset+1), new numberExpr(this.span)
                               ,this.source]
                              ,new numberExpr(5));
