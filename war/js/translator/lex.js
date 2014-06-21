@@ -1,4 +1,8 @@
-/* 
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
+/*
  
  Follows WeScheme's current implementation of Advanced Student
  http://docs.racket-lang.org/htdp-langs/advanced.html
@@ -23,12 +27,8 @@
  
  TODO
  - JSLint
- - have every read function set i, then scattered remove i-setting logic?
+ - have every read function set i, then remove i-setting logic?
  */
-
-// if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 //////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// LEXER OBJECT //////////////////////////////
@@ -82,7 +82,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
-        return new vectorExpr([new numberExpr(this.sCol), new numberExpr(this.sLine)
+        return new types.vector([new numberExpr(this.sCol), new numberExpr(this.sLine)
                               ,new numberExpr(this.offset+1), new numberExpr(this.span)
                               ,this.source]
                              ,new numberExpr(5));
@@ -481,6 +481,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
             case '%': datum = readSymbol(str, i, "");
+                      datum.val = '%'+datum.val;
                       i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
@@ -525,6 +526,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case 'f':  // false
                 if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
                   datum = readSymbol(p, 0, "");      // create a symbol based solely on the character
+                  datum.val = '#'+datum.val;
                   i+= datum.location.span;
                   break;
                 }
@@ -680,7 +682,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       while(!nextSExp || (nextSExp instanceof Comment)){
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
-                                                                window.err = e;
+          console.log('found error at '+i);
           if(/end-of-file/.exec(e)) eofError(i);
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
