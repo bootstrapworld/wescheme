@@ -6,6 +6,7 @@
 </style>
 <script type="text/javascript" src="../mzscheme-vm/support.js"></script>
 <script type="text/javascript" src="structures.js"></script>
+<script type="text/javascript" src="bytecodes.js"></script>
 <script type="text/javascript" src="compiler.js"></script>
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="lex.js"></script>
@@ -151,8 +152,10 @@ function runTests(verbose){
         else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
         else{ row.style.background = 'pink'; return false; }
       }
-      console.log('server desugar is '+desugarRef+', and local desugar is '+program.toString()+'\n');
-      if(desugarRef === undefined) desugarRef = "";
+      if(desugarRef === undefined) desugarRef = "";   // make sure desugar reference is a string
+      desugarRef = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
+      program = program.toString().replace(/\s*/g,"");// remove whitespace from test output
+      console.log('server desugar is \n\n'+desugarRef+'\n\n and local desugar is \n\n'+program+'\n');
       if(desugarRef !== program.toString()) { row.style.background = 'pink'; return false; }
       desugar.style.background = 'lightgreen';
       return true;
