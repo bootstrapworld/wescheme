@@ -15,6 +15,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  TODO
  - JSLint
+ - parse define-values
  */
 
 (function () {
@@ -133,7 +134,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording2, extraLocs, false)])
                      , sexp.location);
       }
-      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr));
+      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr), sexp[0]);
     }
     function parseDef(sexp) {
       // is it just (define)?
@@ -248,7 +249,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    , sexp.location
                    , "Error-GenericSyntacticError");
       }
-      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
+      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr), sexp[0]) :
                             throwError(new types.Message(["function call sexp"]), sexp.location);
     }
     function parseLambdaExpr(sexp) {
@@ -330,7 +331,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new localExpr(sexp[1].map(parseDefinition), parseExpr(sexp[2]));
+      return new localExpr(sexp[1].map(parseDefinition), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLetrecExpr(sexp) {
       // is it just (letrec)?
@@ -370,7 +371,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new letrecExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
+      return new letrecExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLetExpr(sexp) {
       // is it just (let)?
@@ -410,7 +411,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
+      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLetStarExpr(sexp) {
       // is it just (let*)?
@@ -450,7 +451,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new letStarExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
+      return new letStarExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
     }
     function parseIfExpr(sexp) {
       // Does it have too few parts?
@@ -468,7 +469,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart("more than three of these", extraLocs, false)]),
                     sexp.location);
       }
-      return new ifExpr(parseExpr(sexp[1]), parseExpr(sexp[2]), parseExpr(sexp[3]));
+      return new ifExpr(parseExpr(sexp[1]), parseExpr(sexp[2]), parseExpr(sexp[3]), sexp[0]);
     }
     function parseBeginExpr(sexp) {
       // is it just (begin)?
@@ -477,7 +478,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , ": Inside a begin, expected to find a body, but nothing was found."]),
                     sexp.location);
       }
-      return new beginExpr(rest(sexp).map(parseExpr));
+      return new beginExpr(rest(sexp).map(parseExpr), sexp[0]);
     }
     function parseAndExpr(sexp) {
       // and must have 2+ arguments
@@ -488,7 +489,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                                                        sexp[1].location)]),
                     sexp.location);
       }
-      return new andExpr(rest(sexp).map(parseExpr));
+      return new andExpr(rest(sexp).map(parseExpr), sexp[0]);
     }
     function parseOrExpr(sexp) {
       // or must have 2+ arguments
@@ -499,7 +500,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                                                        sexp[1].location)]),
                     sexp.location);
       }
-      return new orExpr(rest(sexp).map(parseExpr));
+      var orEx = new orExpr(rest(sexp).map(parseExpr), sexp[0]);
+      return orEx;
     }
     function parseQuotedExpr(sexp) {
       // quote must have exactly one argument
@@ -614,7 +616,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                   couple.location);
       }
     });
-    return new condExpr(parsedClauses);
+    return new condExpr(parsedClauses, sexp[0]);
   }
 
    function parseCaseExpr(sexp) {
@@ -701,7 +703,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                        sexp.location);
       }
     });
-    return new caseExpr(parseExpr(sexp[1]), parsedClauses);
+    return new caseExpr(parseExpr(sexp[1]), parsedClauses, sexp[0]);
   }
  
   function parseBinding(sexp) {
@@ -868,7 +870,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                     , new types.ColoredPart("something else", sexp[1].location)]),
                  sexp.location);
     }
-    var req = new requireExpr(sexp[1]);
+    var req = new requireExpr(sexp[1], sexp[0]);
     req.location = sexp.location;
     return req;
   }
@@ -893,7 +895,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                     , new types.ColoredPart("clause", p.location)]),
                  sexp.location);
     });
-    var provide = new provideStatement(clauses);
+    var provide = new provideStatement(clauses, sexp[0]);
     provide.location = sexp.location;
     return provide;
   }
@@ -902,4 +904,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   /* Export Bindings */
   /////////////////////
  plt.compiler.parse = parse;
+ plt.compiler.isDefinition = isDefinition;
+ plt.compiler.isExpr = isExpr;
 })();
