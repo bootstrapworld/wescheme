@@ -82,7 +82,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
-        return new vectorExpr([this.source
+        return new vectorExpr(['"'+this.source+'"' // add quotes to the source, since it's a str (not a symbol)
                              ,new numberExpr(this.offset+1)
                              ,new numberExpr(this.sLine)
                              ,new numberExpr(this.sCol)
