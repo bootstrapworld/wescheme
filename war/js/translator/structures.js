@@ -18,7 +18,7 @@ var unimplementedException = function(str){
  **************************************************************************/
 // encode the msg and location as a JSON error
 function throwError(msg, loc, errorClass) {
-  loc.source = loc.source || "<definitions>"; // FIXME -- we should have the source populated
+  loc.source = loc.source || "<unknown>"; // FIXME -- we should have the source populated
   // rewrite a ColoredPart to match the format expected by the runtime
   function rewritePart(part){
     if(typeof(part) === 'string'){
@@ -107,7 +107,12 @@ function couple(first, second) {
 function coupleFirst(x) { return x.first; };
 function coupleSecond(x) { return x.second; };
 
-// OBJECT HIERARCHY//////////////////////////////////////////
+/**************************************************************************
+ *
+ *    AST Nodes
+ *
+ **************************************************************************/
+
 // Inheritance from pg 168: Javascript, the Definitive Guide.
 var heir = function(p) {
   var f = function() {};
@@ -149,10 +154,11 @@ function defVar(name, expr, stx) {
 defVar.prototype = heir(Program.prototype);
 
 // Multi-Variable definition
-function defVars(names, expr) {
+function defVars(names, expr, stx) {
   Program.call(this);
-  this.names = names;
-  this.expr = expr;
+  this.names  = names;
+  this.expr   = expr;
+  this.stx    = stx;
   this.toString = function(){
     return "(define ("+this.names.join(" ")+") "+this.expr.toString()+")";
   };
@@ -160,10 +166,11 @@ function defVars(names, expr) {
 defVars.prototype = heir(Program.prototype);
 
 // Structure definition
-function defStruct(name, fields) {
+function defStruct(name, fields, stx) {
   Program.call(this);
-  this.name = name;
+  this.name   = name;
   this.fields = fields;
+  this.stx    = stx;
   this.toString = function(){
     return "(define-struct "+this.name.toString()+" ("+this.fields.toString()+"))";
   };
@@ -171,9 +178,10 @@ function defStruct(name, fields) {
 defStruct.prototype = heir(Program.prototype);
 
 // Begin expression
-function beginExpr(exprs) {
+function beginExpr(exprs, stx) {
   Program.call(this);
-  this.exprs = exprs;
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){
     return "(begin "+this.exprs.join(" ")+")";
   };
@@ -187,16 +195,17 @@ function lambdaExpr(args, body, stx) {
   this.body = body;
   this.stx  = stx;
   this.toString = function(){
-    return "(lambda ("+this.args.join(" ")+") ("+this.body.toString()+"))";
+    return "(lambda ("+this.args.join(" ")+") "+this.body.toString()+")";
   };
 };
 lambdaExpr.prototype = heir(Program.prototype);
 
 // Local expression
-function localExpr(defs, body) {
+function localExpr(defs, body, stx) {
   Program.call(this);
   this.defs = defs;
   this.body = body;
+  this.stx  = stx;
   this.toString = function(){
     return "(local ("+this.defs.toString()+") ("+this.body.toString()+"))";
   };
@@ -204,45 +213,50 @@ function localExpr(defs, body) {
 localExpr.prototype = heir(Program.prototype);
 
 // Letrec expression
-function letrecExpr(bindings, body) {
+function letrecExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(letrec ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // Let expression
-function letExpr(bindings, body) {
+function letExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(let ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // Let* expressions
-function letStarExpr(bindings, body) {
+function letStarExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(let* ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // cond expression
-function condExpr(clauses) {
-  this.clauses = clauses;
+function condExpr(clauses, stx) {
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){
     return "(cond\n    "+this.clauses.join("\n    ")+")";
   };
 };
 
 // Case expression
-function caseExpr(expr, clauses) {
+function caseExpr(expr, clauses, stx) {
   Program.call(this);
-  this.expr = expr;
-  this.clauses = clauses;
+  this.expr     = expr;
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){
     return "(case "+this.expr.toString()+"\n    "+this.clauses.join("\n    ")+")";
   };
@@ -250,22 +264,25 @@ function caseExpr(expr, clauses) {
 caseExpr.prototype = heir(Program.prototype);
 
 // and expression
-function andExpr(exprs) {
-  this.exprs = exprs;
+function andExpr(exprs, stx) {
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){ return "(and "+this.exprs.join(" ")+")"; };
 };
 
 // or expression
-function orExpr(exprs) {
-  this.exprs = exprs;
+function orExpr(exprs, stx) {
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){ return "(or "+this.exprs.toString()+")"; };
 };
 
 // application expression
-function callExpr(func, args) {
+function callExpr(func, args, stx) {
   Program.call(this);
-  this.func = func;
-  this.args = args;
+  this.func   = func;
+  this.args   = args;
+  this.stx    = stx;
   this.toString = function(){
     return "("+[this.func].concat(this.args).join(" ")+")";
   };
@@ -273,11 +290,12 @@ function callExpr(func, args) {
 callExpr.prototype = heir(Program.prototype);
 
 // if expression
-function ifExpr(predicate, consequence, alternative) {
+function ifExpr(predicate, consequence, alternative, stx) {
   Program.call(this);
   this.predicate = predicate;
   this.consequence = consequence;
   this.alternative = alternative;
+  this.stx = stx;
   this.toString = function(){
     return "(if "+this.predicate.toString()+" "+this.consequence.toString()+" "+this.alternative.toString()+")";
   };
@@ -313,7 +331,7 @@ function vectorExpr(vals, size) {
   this.size = size;
   this.toString = function(){
     var strVals = this.vals.map(function(v){return v.toString();});
-    return "#"+this.size.toString()+"("+strVals.join(" ")+")" ;
+    return "#("+strVals.join(" ")+")" ;
   };
 };
 vectorExpr.prototype = heir(Program.prototype);
@@ -380,17 +398,19 @@ function primop(val) {
 primop.prototype = heir(Program.prototype);
 
 // require expression
-function requireExpr(spec) {
+function requireExpr(spec, stx) {
   Program.call(this);
   this.spec = spec;
+  this.stx  = stx;
   this.toString = function(){ return "(require "+this.spec.toString()+")"; };
 };
 requireExpr.prototype = heir(Program.prototype);
 
 // provide expression
-function provideStatement(clauses) {
+function provideStatement(clauses, stx) {
   Program.call(this);
-  this.clauses = clauses;
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){ return "(provide "+this.clauses.toString()+")" };
 };
 provideStatement.prototype = heir(Program.prototype);
@@ -406,9 +426,11 @@ function unsupportedExpr(val, errorMsg, errorSpan) {
 unsupportedExpr.prototype = heir(Program.prototype);
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// STRUCTURES NEEDED BY THE COMPILER ////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
+/**************************************************************************
+ *
+ *    STRUCTURES NEEDED BY THE COMPILER
+ *
+ **************************************************************************/
 
 // bindingConstant: records an id and its associated Java implementation.
 function bindingConstant(name, moduleSource, permissions, loc){
@@ -1186,8 +1208,7 @@ function getTopLevelEnv(lang){
     // gensym: symbol -> [pinfo, symbol]
     // Generates a unique symbol.
     this.gensym = function(label){
-      this.gensymCounter++;
-      return [this, new symbolExpr(label+this.gensymCounter)];
+      return [this, new symbolExpr(label+this.gensymCounter++)];
     };
  
     // permissions: -> (listof permission)
@@ -1293,7 +1314,6 @@ function getTopLevelEnv(lang){
     return pinfo;
  }
  
-
  plt.compiler.emptyEnv = emptyEnv;
  plt.compiler.getBasePinfo = getBasePinfo;
  plt.compiler.pinfo = pinfo;

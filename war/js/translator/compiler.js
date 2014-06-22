@@ -26,11 +26,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return call_exp;
  }
 
-// forceBooleanContext: str, loc, bool -> stx
+// forceBooleanContext: stx, loc, bool -> stx
 // Force a boolean runtime test on the given expression.
- function forceBooleanContext(str, loc, boolExpr){
+ function forceBooleanContext(stx, loc, boolExpr){
+    stx = '"'+stx+'"'; // add quotes to the stx
     var runtimeCall = new callExpr(new symbolExpr("verify-boolean-branch-value")
-                                   , [new quotedExpr(new symbolExpr(str))
+                                   , [new quotedExpr(new symbolExpr(stx))
                                       , new quotedExpr(loc.toVector())
                                       , boolExpr
                                       , new quotedExpr(boolExpr.location.toVector())]);
@@ -72,6 +73,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    , sexp.location);
       }
     });
+ 
+//    var bodyAndPinfo = this.body.desugar(pinfo);
+//    this.body = bodyAndPinfo[0];
+//    return [this, bodyAndPinfo[1]];
  
     var lambdaExp = new lambdaExpr(this.args, this.body),
         varExp    =  new defVar(this.name, lambdaExp)
@@ -149,7 +154,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     exprsAndPinfo[0][0].location = this.predicate.location;
     exprsAndPinfo[0][1].location = this.consequence.location;
     exprsAndPinfo[0][2].location = this.alternative.location;
-    this.predicate = forceBooleanContext("if", this.location, exprsAndPinfo[0][0]);
+    this.predicate = forceBooleanContext(this.stx, this.stx.location, exprsAndPinfo[0][0]);
     this.consequence = exprsAndPinfo[0][1];
     this.alternative = exprsAndPinfo[0][2];
     return [this, exprsAndPinfo[1]];
@@ -182,10 +187,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // conds become nested ifs
  condExpr.prototype.desugar = function(pinfo){
     // base case is all-false
-    var expr = new callExpr(new symbolExpr('make-cond-exhausted-expression')
-                            , new quotedExpr(this.location.toVector()));
+    var expr = new callExpr(new symbolExpr('throw-cond-exhausted-error')
+                            , [new quotedExpr(this.location.toVector())]);
     for(var i=this.clauses.length-1; i>-1; i--){
-      expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr);
+      expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
       expr.location = this.location;
     }
     return expr.desugar(pinfo);
@@ -213,13 +218,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                           [xStx, valStx]));
 
     var stxs = [valStx, xStx, predicateStx]; // track all the syntax we've created
- 
+    var that = this;
     // generate (if (ormap <predicate> (quote clause.first)) clause.second base)
     function processClause(base, clause){
       var ormapStx = new primop('ormap'),
           quoteStx = new quotedExpr(clause.first),
           callStx = new callExpr(ormapStx, [predicateStx, quoteStx]),
           ifStx = new ifExpr(callStx, clause.second, base);
+      ifStx = that.stx;
       stxs = stxs.concat([ormapStx, callStx, quoteStx, ifStx]);
       return ifStx;
     }
@@ -247,7 +253,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // ors become nested lets-with-if-bodies
  orExpr.prototype.desugar = function(pinfo){
     // grab the last expr, and remove it from the list and desugar
-    var expr = forceBooleanContext("or", this.location, this.exprs.pop()),
+    var expr = forceBooleanContext(this.stx, this.stx.location, this.exprs.pop()),
         that = this;
  
     // given a desugared chain, add this expr to the chain
@@ -256,12 +262,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var pinfoAndTempSym = pinfo.gensym('tmp'),
           exprLoc = expr.location,
           tmpSym = pinfoAndTempSym[1],
-          expr = forceBooleanContext("or", exprLoc, expr), // force a boolean context on the value
+          orSym = new symbolExpr("or"),
+          expr = forceBooleanContext("or", that.stx.location, expr), // force a boolean context on the value
           tmpBinding = new couple(tmpSym, expr);           // (let (tmpBinding) (if tmpSym tmpSym (...))
-      tmpSym.location = exprLoc;
+      tmpSym.location = that.location;
       tmpBinding.location = exprLoc;
-      var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0]),
+      var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0], new symbolExpr("if")),
           let_exp = new letExpr([tmpBinding], if_exp);
+      if_exp.stx.location = that.location;
       if_exp.location = exprLoc;
       let_exp.location = exprLoc;
       return [let_exp, restAndPinfo[1]];
@@ -282,7 +290,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       call_exp.location = this.location;
       return [call_exp, pinfo];
     } else {
-      return [new symbolExpr(this.val), pinfo];
+      return [this, pinfo];
     }
  };
 
@@ -326,13 +334,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    loc);
     }
     // if this is a keyword without a parent
-    if(!this.parent && (plt.compiler.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
+    if(!this.parent && // || plt.compiler.isDefinition(this.parent) &&
+       (plt.compiler.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val
                                       , ", but found none"]),
                     this.location);
     }
+    // desugar 'true' and 'false' to #t and #f
+    if(this.val === 'true') this.val = '#t';
+    if(this.val === 'false') this.val = '#f';
     return [this, pinfo];
  };
  
