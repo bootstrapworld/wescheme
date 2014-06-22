@@ -82,9 +82,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
-        return new vectorExpr([new numberExpr(this.sCol), new numberExpr(this.sLine)
-                              ,new numberExpr(this.offset+1), new numberExpr(this.span)
-                              ,this.source]
+        return new vectorExpr([this.source
+                             ,new numberExpr(this.offset+1)
+                             ,new numberExpr(this.sLine)
+                             ,new numberExpr(this.sCol)
+                             ,new numberExpr(this.span)]
                              ,new numberExpr(5));
       };
       this.toJSON = function(){
@@ -256,10 +258,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       column++; // count the openingDelim
       var sexp, list = [];
       delims.push(openingDelim);
-//                            console.log('starting new list');
       i = chewWhiteSpace(str, i);
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
-//                            console.log('reading list from i='+i+', next char is '+str.charAt(i));
         lastKnownGoodLocation = new Location(column, line, i, 1);
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
@@ -280,13 +280,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             var innerError = e; // store the error
             var errorLoc = JSON.parse(JSON.parse(innerError)["structured-error"]).location;
             i = errorIndex; // keep reading from the char after the error to see if we match delimeters
-//            console.log('caught an innerError:\n'+e+'\nresuming from '+i);
           }
         }
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
-//                            console.log('finished reading a list just before closing token. i='+i+', and the next char is'+str.charAt(i));
+
       if(i >= str.length) {
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
@@ -294,8 +293,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
-//                            console.log('first successful parse after open paren is ');
-//                            console.log(list[0]);
          // throw an error
          throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
       }
@@ -316,8 +313,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // add 1 to span to count the closing delimeter
       column++; i++;
       list.location = new Location(sCol, sLine, iStart, i-iStart);
-//                            console.log('finished parsing this list: ');
-//                            console.log(list);
       return list;
     }
 
@@ -481,7 +476,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
             case '%': datum = readSymbol(str, i, "");
-                      datum.val = '%'+datum.val;
+                      datum.val = '#'+datum.val;
                       i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
             case ':': datum = readSymbolOrNumber(str, i-1);
@@ -682,7 +677,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       while(!nextSExp || (nextSExp instanceof Comment)){
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
-          console.log('found error at '+i);
           if(/end-of-file/.exec(e)) eofError(i);
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
@@ -712,9 +706,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // snip off the next token, and let's analyze it...
       while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
          // check for newlines
-         if(str.charAt(i) === "\n"){ line++; column = 0;}
+         if(str.charAt(i) === '\n'){ line++; column = 0;}
          // if it's a verbatim symbol, add those characters as-is
-         if(str.charAt(i) === "|") {
+         if(str.charAt(i) === '|') {
             var sym = readVerbatimSymbol(str, i, datum);
             i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
             return sym;
