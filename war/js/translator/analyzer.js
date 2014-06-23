@@ -5,10 +5,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
  - desugar Symbols
- - desugar defFunc?
  - tagApplicationOperator_Module
  - test cases get desugared into native calls (and thunks?)
- - implement bytecode structs
  - how to add struct binding when define-struct is desugared away?
 */
 
@@ -438,7 +436,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // collectProvidesFromClause : pinfo clause -> pinfo
     function collectProvidesFromClause(pinfo, clause){
       // if it's a symbol, make sure it's defined (otherwise error)
-// console.log('collecting from '+clause.toString());
       if (clause instanceof symbolExpr){
         if(pinfo.definedNames.containsKey(clause.val)){
           pinfo.providedNames.put(clause.val, new provideBindingId(clause));
@@ -452,7 +449,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // if it's an array, make sure the struct is defined (otherwise error)
       // NOTE: ONLY (struct-out id) IS SUPPORTED AT THIS TIME
       } else if(clause instanceof Array){
-// console.log(pinfo.definedNames.get(clause[1].val));
           if(pinfo.definedNames.containsKey(clause[1].val) &&
              (pinfo.definedNames.get(clause[1].val) instanceof bindingStructure)){
               // add the entire bindingStructure to the provided binding, so we
@@ -553,7 +549,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
      // FIXME: this does not yet say anything if a definition is introduced twice
      // in the same lexical scope.  We must do this error check!
      return programs.reduce((function(pinfo, p){
-//                             console.log('collecting definitions for '+p);
                              return p.collectDefinitions(pinfo);
                              })
                             , pinfo);
@@ -574,11 +569,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                               })
                              , pinfo);
     }
-//    console.log("collecting definitions");
     var pinfo1 = collectDefinitions(programs, pinfo);
-//    console.log("collecting provides");
     var pinfo2 = collectProvides(programs, pinfo1);
-//    console.log("analyzing uses");
     return analyzeUses(programs, pinfo2);
  }
  
