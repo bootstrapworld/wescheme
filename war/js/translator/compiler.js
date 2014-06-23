@@ -74,15 +74,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       }
     });
  
-//    var bodyAndPinfo = this.body.desugar(pinfo);
-//    this.body = bodyAndPinfo[0];
-//    return [this, bodyAndPinfo[1]];
- 
-    var lambdaExp = new lambdaExpr(this.args, this.body),
-        varExp    =  new defVar(this.name, lambdaExp)
-    lambdaExp.location = this.location;
-    varExp.location = this.location;
-    return varExp.desugar(pinfo);
+    var bodyAndPinfo = this.body.desugar(pinfo);
+    this.body = bodyAndPinfo[0];
+    return [this, bodyAndPinfo[1]];
  };
  defVar.prototype.desugar = function(pinfo){
     var exprAndPinfo = this.expr.desugar(pinfo);
@@ -366,6 +360,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  function bf(name, modulePath, arity, vararity, loc){
     return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
  }
+ defFunc.prototype.collectDefinitions = function(pinfo){
+    var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
+    return pinfo.accumulateDefinedBinding(binding, this.location);
+ };
  defVar.prototype.collectDefinitions = function(pinfo){
     var binding = (this.expr instanceof lambdaExpr)?
                     bf(this.name.val, false, this.expr.args.length, false, this.name.location)
