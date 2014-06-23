@@ -160,7 +160,7 @@ function defVars(names, expr, stx) {
   this.expr   = expr;
   this.stx    = stx;
   this.toString = function(){
-    return "(define ("+this.names.join(" ")+") "+this.expr.toString()+")";
+    return "(define-values ("+this.names.join(" ")+") "+this.expr.toString()+")";
   };
 };
 defVars.prototype = heir(Program.prototype);
