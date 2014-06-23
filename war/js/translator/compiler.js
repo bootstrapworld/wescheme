@@ -197,35 +197,36 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  // case become nested ifs, with ormap as the predicate
  caseExpr.prototype.desugar = function(pinfo){
+    var that = this,
+        caseStx = new symbolExpr("if"); // The server returns "if" here, but I am almost certain it's a bug
+    caseStx.location = this.location;
+
     var pinfoAndValSym = pinfo.gensym('val'),      // create a symbol 'val'
         updatedPinfo1 = pinfoAndValSym[0],        // generate pinfo containing 'val'
         valStx = pinfoAndValSym[1];               // remember the symbolExpr for 'val'
     var pinfoAndXSym = updatedPinfo1.gensym('x'), // create another symbol 'x' using pinfo1
         updatedPinfo2 = pinfoAndXSym[0],          // generate pinfo containing 'x'
         xStx = pinfoAndXSym[1];                   // remember the symbolExpr for 'x'
- 
+
     // if there's an 'else', pop off the clause and use the result as the base
     var expr, clauses = this.clauses, lastClause = clauses[this.clauses.length-1];
     if((lastClause.first instanceof symbolExpr) && (lastClause.first.val === 'else')){
       expr = lastClause.second;
       clauses.pop();
     } else {
-      expr = new symbolExpr('void');
+      expr = new callExpr(new symbolExpr('void'),[]);
     }
-
+ 
     // This is predicate we'll be applying using ormap: (lambda (x) (equal? x val))
     var predicateStx = new lambdaExpr([xStx], new callExpr(new symbolExpr('equal?'),
                                                           [xStx, valStx]));
-
     var stxs = [valStx, xStx, predicateStx]; // track all the syntax we've created
-    var that = this;
     // generate (if (ormap <predicate> (quote clause.first)) clause.second base)
     function processClause(base, clause){
       var ormapStx = new primop('ormap'),
           quoteStx = new quotedExpr(clause.first),
           callStx = new callExpr(ormapStx, [predicateStx, quoteStx]),
-          ifStx = new ifExpr(callStx, clause.second, base);
-      ifStx = that.stx;
+          ifStx = new ifExpr(callStx, clause.second, base, caseStx);
       stxs = stxs.concat([ormapStx, callStx, quoteStx, ifStx]);
       return ifStx;
     }
@@ -234,7 +235,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     var binding = new couple(valStx, this.expr),
         body = clauses.reduceRight(processClause, expr),
         letExp = new letExpr([binding], body);
-    stxs = stxs.concat([binding, body,letExp]);
+    stxs = stxs.concat([binding, body, letExp]);
 
     // assign location to every stx element
     var loc = this.location;
