@@ -92,11 +92,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     var name = this.name.toString(),
         fields = this.fields.map(function(f){return f.toString();}),
         mutatorIds = fields.map(function(field){return name+'-'+field+'-set!';}),
-        ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'].concat(mutatorIds),
+        ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'], //.concat(mutatorIds),
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
         call = new callExpr(new primop(new symbolExpr('make-struct-type')),
-                            [new symbolExpr(name),
-                             new symbolExpr("false"),
+                            [new quotedExpr(new symbolExpr(name)),
+                             new symbolExpr("#f"),
                              new numberExpr(fields.length),
                              new numberExpr(0)]);
         call.location = this.location;
@@ -106,7 +106,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
       var runtimeOp = new primop(new symbolExpr('make-struct-field-accessor')),
-          runtimeArgs = [new symbolExpr(name+'-ref'), new numberExpr(i), new symbolExpr("false")],
+          runtimeArgs = [new symbolExpr(name+'-ref'), new numberExpr(i), new quotedExpr(new symbolExpr(f))],
           runtimeCall = new callExpr(runtimeOp, runtimeArgs),
           defineVar = new defVar(new symbolExpr(name+'-'+f), runtimeCall);
       selectorStx.push(defineVar);
