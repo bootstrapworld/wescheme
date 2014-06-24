@@ -6,8 +6,8 @@
 </style>
 <script type="text/javascript" src="../mzscheme-vm/support.js"></script>
 <script type="text/javascript" src="structures.js"></script>
-<script type="text/javascript" src="bytecodes.js"></script>
 <script type="text/javascript" src="compiler.js"></script>
+<script type="text/javascript" src="analyzer.js"></script>
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="lex.js"></script>
 <script type="text/javascript" src="repl2.js"></script>
@@ -152,11 +152,15 @@ function runTests(verbose){
         else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
         else{ row.style.background = 'pink'; return false; }
       }
-      if(desugarRef === undefined) desugarRef = "";   // make sure desugar reference is a string
+      // if we don't have a desugarRef for this test, call it a questinonable pass move on
+      if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       desugarRef = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
       program = program.toString().replace(/\s*/g,"");// remove whitespace from test output
-      console.log('server desugar is \n\n'+desugarRef+'\n\n and local desugar is \n\n'+program+'\n');
-      if(desugarRef !== program.toString()) { row.style.background = 'pink'; return false; }
+      if(desugarRef !== program.toString()) {
+        console.log('DESUGARING ERROR: server desugar is \n'+desugarRef+'\n and local desugar is \n\n'+program+'\n');
+        row.style.background = 'pink';
+        return false;
+      }
       desugar.style.background = 'lightgreen';
       return true;
     }
