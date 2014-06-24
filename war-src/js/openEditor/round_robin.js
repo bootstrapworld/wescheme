@@ -247,10 +247,14 @@ goog.provide("plt.wescheme.RoundRobin");
                          console.log("OK: LOCAL AND SERVER BOTH PASSED");
                        }
                     }
-                    console.log('Server compilation completed successfully. Bytecode was:\n');
-                    window.response = JSON.parse(bytecode);
-                    window.bytecode = (0,eval)('(' + window.response.bytecode + ')');
-                    console.log(JSON.stringify(window.bytecode, null, 4));
+                    try{
+                      console.log('Server compilation completed successfully. Bytecode was:\n');
+                      window.response = JSON.parse(bytecode);
+                      window.bytecode = (0,eval)('(' + window.response.bytecode + ')');
+                      console.log(JSON.stringify(window.bytecode, null, 4));
+                    } catch (e){
+                      console.log('ERROR parsing bytecode: '+e);
+                    }
                     onDone(bytecode);
                 },
                 // wrap onDoneError() with a function to compare local and server output
