@@ -105,15 +105,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     compilationTop.prototype = heir(Bytecode.prototype);
 
     // provided
-    function provided(name, src, srcName, nomSrc, srcPhase, protected, insp) {
+    function provided(name, src, srcName, nomSrc, srcPhase, isProtected, insp) {
       Bytecode.call(this);
       this.name     = name;      // symbol
       this.src      = src;       // false or modulePathIndex
       this.srcName  = srcName;   // symbol
       this.nomSrc   = nomSrc;    // false or modulePathIndex
       this.srcPhase = srcPhase;  // 0/1
-      this.protected= protected; // boolean
       this.insp     = insp;      // boolean or void
+      this.isProtected=isProtected; // boolean
     };
     provided.prototype = heir(Bytecode.prototype);
 
