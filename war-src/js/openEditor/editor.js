@@ -562,6 +562,7 @@ var WeSchemeEditor;
     // Definitions console. The image chosen will be translated into a function
     // call in the form (bitmap/url <image_url>).
     WeSchemeEditor.prototype.showPicker = function(defnInFocus) {
+ console.log(this);
 
 	// Create and render a Picker object for searching images.
 	var APP_ID = plt.config.APP_ID;
