@@ -61,7 +61,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  defFunc.prototype.desugar = function(pinfo){
     // check for duplicate arguments
     checkDuplicateIdentifiers([this.name].concat(this.args), this.stx[0], this.location);
-
     // check for non-symbol arguments
     this.args.forEach(function(arg){
        if(!(arg instanceof symbolExpr)){
@@ -71,7 +70,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    , sexp.location);
       }
     });
- 
     var bodyAndPinfo = this.body.desugar(pinfo);
     this.body = bodyAndPinfo[0];
     return [this, bodyAndPinfo[1]];
@@ -236,9 +234,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  // ands become nested ifs
  andExpr.prototype.desugar = function(pinfo){
+ console.log(1);
     var expr = this.exprs[this.exprs.length-1];
     for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
-      expr = new ifExpr(this.exprs[i], expr, new symbolExpr(new symbolExpr("false")));
+      expr = new ifExpr(this.exprs[i], expr, new symbolExpr("false"), this.stx);
       expr.location = this.location;
     }
     return expr.desugar(pinfo);
