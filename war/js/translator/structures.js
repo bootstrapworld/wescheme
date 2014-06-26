@@ -79,10 +79,10 @@ function checkDuplicateIdentifiers(lst, stx, loc){
   for (var i = 0; i < lst.length; i++) {
     if(!(sorted_arr[i] instanceof symbolExpr)){
       throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
-    } else if(plt.compiler.keywords.indexOf(sorted_arr[i].val)>-1){
-      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
-                                " : this is a reserved keyword and cannot be used as a variable or function name"])
-                 , sorted_arr[i].location);
+//    } else if(plt.compiler.keywords.indexOf(sorted_arr[i].val)>-1){
+//      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
+//                                " : this is a reserved keyword and cannot be used as a variable or function name"])
+//                 , sorted_arr[i].location);
     } else if(results.indexOf(sorted_arr[i].toString()) > -1) {
       throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
                                 ": found ",
@@ -990,6 +990,10 @@ function getTopLevelEnv(lang){
   }
 
   function emptyEnv(){ return new env(types.makeLowLevelEqHash());}
+  function localEnv(name, boxed, parent){ this.name=name; this.boxed=boxed; this.parent=parent;}
+  function globalEnv(names, boxed, parent){ this.names=names; this.boxed=boxed; this.parent=parent;}
+  function unnamedEnv(parent){ this.parent=parent;}
+
  
  // export
  plt.compiler.env = env;
@@ -1315,6 +1319,9 @@ function getTopLevelEnv(lang){
  }
  
  plt.compiler.emptyEnv = emptyEnv;
+ plt.compiler.localEnv = localEnv;
+ plt.compiler.globalEnv = globalEnv;
+ plt.compiler.unnamedEnv = unnamedEnv;
  plt.compiler.getBasePinfo = getBasePinfo;
  plt.compiler.pinfo = pinfo;
 })();
