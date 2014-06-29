@@ -905,5 +905,5 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   /////////////////////
  plt.compiler.parse = parse;
  plt.compiler.isDefinition = isDefinition;
- plt.compiler.isExpr = isExpr;
+ plt.compiler.isExpression = isExpr;
 })();
