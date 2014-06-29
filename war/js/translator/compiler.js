@@ -2,29 +2,62 @@
 if(typeof(plt) === "undefined")          plt = {};
 if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
+/*
+ TODO
+ - toJSON method for each bytecode struct
+ - toJSON for number literals
+ - figure out desugaring/compilation of identifiers
+ - figure out desugaring/compilation of primops
+ - figure out desugaring/compilation of quoted expressions
+ - compiled-indirects
+ */
+
 
 (function (){
 
+    numberExpr.prototype.toJSON = function(){
+      return {"$": 'constant', "value" : this.val};
+    };
+    stringExpr.prototype.toJSON = function(){
+      return {"$": 'constant', "value" : this.val};
+    };
+    symbolExpr.prototype.toJSON = function(){
+      return "types.symbol("+this.val+")";
+    };
+ 
     /**************************************************************************
      *
      *    BYTECODE STRUCTS -
      *    (see https://github.com/bootstrapworld/wescheme-compiler2012/blob/master/js-runtime/src/bytecode-structs.ss)
      *
      **************************************************************************/
-
+ 
+ 
     // all Programs, by default, print out their values and have no location
-    // anything that behaves differently must provide their own toString() function
+    // anything that behaves differently must provide their own toJSON() function
     var Bytecode = function() {
-      // -> String
-      this.toString = function(){ return this.val.toString(); };
+      // -> JSON
+      this.toJSON = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toJSON method was called on"; };
     };
 
+    // for mapping JSON conversion over an array
+    function convertToJSON(bc){ return (bc instanceof Bytecode)? bc.toJSON() : bc.toString(); }
+ 
+    // literal
+    function literal(val) {
+      Bytecode.call(this);
+      this.val = val;  // could be a numberExpr, vectorExpr, stringExpr
+      this.toJSON = function(){
+        return {"$": 'constant', "value" : this.val.toJSON()};
+      };
+    };
+    literal.prototype = heir(Bytecode.prototype);
 
     // Global bucket
     function globalBucket(name) {
       Bytecode.call(this);
-      this.$    = 'global-bucket';
       this.name = name;  // symbol
+      this.toJSON = function(){return {"$":'global-bucket', "value": this.name.toString()};};
     };
     globalBucket.prototype = heir(Bytecode.prototype);
 
@@ -36,6 +69,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.sym    = sym;    // symbol
       this.pos    = pos;    // exact integer
       this.phase  = phase;  // 1/0 - direct access to exported id
+      this.toJSON = function(){
+        return {"$":'module-variable', "modidx": this.modix.toJSON(), "sym" : this.sym.toJSON(),
+                "pos" : this.pos.toJSON(), "phase" : this.phase.toJSON()};
+      };
     };
     moduleVariable.prototype = heir(Bytecode.prototype);
 
@@ -62,12 +99,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     stx.prototype = heir(Bytecode.prototype);
 
     // prefix
-    function prefix(numLifts, toplevels, stxs) {
+    function prefix(numLifts, topLevels, stxs) {
       Bytecode.call(this);
-      this.$    = 'prefix';
       this.numLifts   = numLifts;  // exact, non-negative integer
-      this.toplevels  = toplevels; // list of (false, symbol, globalBucket or moduleVariable)
+      this.topLevels  = topLevels; // list of (false, symbol, globalBucket or moduleVariable)
       this.stxs       = stxs;      // list of stxs
+      this.toJSON = function(){
+        return {"$":'prefix', "num-lifts": this.numLifts, "toplevels" : this.topLevels.map(convertToJSON),
+                "stxs" : this.stxs.map(convertToJSON)};
+      };
     };
     prefix.prototype = heir(Bytecode.prototype);
 
@@ -86,20 +126,22 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // Indirect
     function indirect(v) {
       Bytecode.call(this);
-      this.$  = 'indirect';
       this.v  = v; // ??
+      this.toJSON = function(){
+        return {"$":'indirect', "v": this.v.toJSON()};
+      };
     };
     indirect.prototype = heir(Bytecode.prototype);
 
     // compilationTop
     function compilationTop(maxLetDepth, prefix, code) {
       Bytecode.call(this);
-      this.$          = 'compilation-top';
       this.maxLetDepth= maxLetDepth;  // exact non-negative integer
       this.prefix     = prefix;       // prefix
       this.code       = code;         // form, indirect, or any
-      this.serialize  = function(){
-        return "";
+      this.toJSON = function(){
+        return {"$":'compilation-top', "max-let-depth": this.maxLetDepth, "prefix" : this.prefix.toJSON(),
+              "compiled-indirects" : [], "code" : this.code.toJSON()};
       };
     };
     compilationTop.prototype = heir(Bytecode.prototype);
@@ -117,31 +159,39 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
     provided.prototype = heir(Bytecode.prototype);
 
-    // toplevel
-    function toplevel(depth, pos, constant, ready, loc) {
+    // topLevel
+    function topLevel(depth, pos, constant, ready, loc) {
       Bytecode.call(this);
-      this.$        = 'toplevel';
       this.depth    = depth;    // exact, non-negative integer
       this.pos      = pos;      // exact, non-negative integer
       this.constant = constant; // boolean
       this.ready    = ready;    // boolean
       this.loc      = loc;      // false or Location
+      this.toJSON = function(){
+        return {"$":'toplevel', "depth": this.depth.toString(), "pos" : this.pos.toString(),
+               "const?" : this.constant, "ready?" : this.ready, "loc" : this.loc && this.loc.toVector().toJSON()};
+      };
     };
-    toplevel.prototype = heir(Bytecode.prototype);
+    topLevel.prototype = heir(Bytecode.prototype);
 
     // seq
     function seq(forms) {
       Bytecode.call(this);
-      this.$        = 'seq';
       this.forms    = forms;  // list of form, indirect, any
+      this.toJSON = function(){
+        return {"$":'seq', "forms": this.forms.map(convertToJSON)};
+      };
     };
     seq.prototype = heir(Bytecode.prototype);
 
     // defValues
     function defValues(ids, rhs) {
+      Bytecode.call(this);
       this.ids  = ids;  // list of toplevel or symbol
       this.rhs  = rhs;  // expr, indirect, seq, any
-      Bytecode.call(this);
+      this.toJSON = function(){
+        return {"$":'def-values', "ids": this.ids.map(convertToJSON), "body" : this.rhs.toJSON()};
+      };
     };
     defValues.prototype = heir(Bytecode.prototype);
 
@@ -153,6 +203,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.rhs        = rhs;      // expr, indirect, seq, any
       this.prefix     = prefix;   // prefix
       this.maxLetDepth= maxLetDepth; // exact, non-negative integer
+      this.toJSON = function(){
+        return {"$":'def-values', "ids": this.ids.toJSON(), "rhs" : this.rhs.toJSON(),
+               "prefix" : this.prefix.toJSON(), "max-let-depth" : this.maxLetDepth.toJSON()};
+      };
     };
     defSyntaxes.prototype = heir(Bytecode.prototype);
 
@@ -171,7 +225,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                  syntaxBody, unexported, maxLetDepth, dummy, langInfo,
                  internalContext) {
       Bytecode.call(this);
-      this.$          = 'mod';
       this.name       = name;         // exact, non-negative integer
       this.selfModidx = selfModidx;   // exact, non-negative integer
       this.prefix     = prefix;       // boolean
@@ -184,6 +237,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.dummy      = dummy;        // false or Location
       this.langInfo   = langInfo;     // false or (vector modulePath symbol any)
       this.internalContext = internalContext;
+      this.toJSON = function(){
+        return {"$":'mod', "name": this.name.toJSON(), "self-modidx" : this.selfModidx.toJSON(),
+               "prefix" : this.prefix.toJSON(), "provides" : this.provides.toJSON(),
+               "requires" : this.requires && this.requires.toVector().toJSON(), "body" : this.body.toJSON(),
+               "stx-body" : this.syntaxBody.toJSON(), "max-let-depth" : this.maxLetDepth.toJSON()};
+      };
     };
     mod.prototype = heir(Bytecode.prototype);
 
@@ -191,7 +250,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function lam(name, operatorAndRandLocs, flags, numParams, paramTypes,
                  rest, closureMap, closureTypes, maxLetDepth, body) {
       Bytecode.call(this);
-      this.$          = 'lam';
       this.name       = name;         // symbol, vector, empty
       this.flags      = flags;        // (list of ('preserves-marks 'is-method 'single-result))
       this.numParams  = numParams;    // exact, non-negative integer
@@ -205,6 +263,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // operator+rand-locs includes a list of vectors corresponding to the location
       // of the operator, operands, etc if we can pick them out.  If we can't get
       // this information, it's false
+      this.toJSON = function(){
+        return {"$":'lam', "name": this.name, "locs" : this.operatorAndRandLocs.map(convertToJSON),
+               "flags" : this.flags.map(convertToJSON),
+               "num-params" : this.numParams, "param-types" : this.paramTypes.map(convertToJSON),
+               "rest?" : this.rest, "closure-map" : this.closureMap.map(convertToJSON),
+               "closure-types" : this.closureTypes.map(convertToJSON), "max-let-depth" : this.maxLetDepth,
+               "body" : this.body.toJSON()
+               };
+      };
     };
     lam.prototype = heir(Bytecode.prototype);
 
@@ -212,80 +279,102 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // closure: a static closure (nothing to close over)
     function closure(code, genId) {
       Bytecode.call(this);
-      this.$        = 'closure';
       this.code     = code;  // lam
       this.genId    = genId; // symbol
+      this.toJSON = function(){
+        return {"$":'closure', "code": this.code.toJSON(), "gen-id" : this.genId.toJSON()};
+      };
     };
     closure.prototype = heir(Bytecode.prototype);
 
     // caseLam: each clause is a lam (added indirect)
     function caseLam(name, clauses) {
       Bytecode.call(this);
-      this.$        = 'case-lam';
       this.name     = name;  // symbol, vector, empty
       this.clauses  = clauses; // list of (lambda or indirect)
+      this.toJSON = function(){
+        return {"$":'case-lam', "name": this.name.toJSON(), "clauses" : this.clauses.toJSON()};
+      };
     };
     caseLam.prototype = heir(Bytecode.prototype);
 
     // letOne
     function letOne(rhs, body, flonum) {
       Bytecode.call(this);
-      this.$       = 'let-one';
       this.rhs     = rhs;   // expr, seq, indirect, any
       this.body    = body;  // expr, seq, indirect, any
       this.flonum  = flonum;// boolean
+      this.toJSON = function(){
+        return {"$":'let-one', "rhs": this.rhs.toJSON(), "body" : this.body.toJSON(),
+               "flonum" : this.flonum.toJSON()};
+      };
     };
     letOne.prototype = heir(Bytecode.prototype);
 
     // letVoid
     function letVoid(count, boxes, body) {
       Bytecode.call(this);
-      this.$       = 'let-voide';
       this.count   = count;   // exact, non-negative integer
       this.boxes   = boxes;   // boolean
       this.body    = body;    // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'let-void', "count": this.count.toJSON(), "boxes" : this.boxes.toJSON(),
+               "body" : this.body.toJSON()};
+      };
     };
     letVoid.prototype = heir(Bytecode.prototype);
 
     // letRec: put `letrec'-bound closures into existing stack slots
     function letRec(procs, body) {
       Bytecode.call(this);
-      this.$       = 'let-rec';
       this.procs   = procs;   // list of lambdas
       this.body    = body;    // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'let-rec', "procs": this.procs.toJSON(),"body" : this.body.toJSON()};
+      };
     };
     letRec.prototype = heir(Bytecode.prototype);
 
     // installValue
     function installValue(count, pos, boxes, rhs, body) {
       Bytecode.call(this);
-      this.$       = 'install-value';
       this.count   = count;   // exact, non-negative integer
       this.pos     = pos;     // exact, non-negative integer
       this.boxes   = boxes;   // boolean
       this.rhs     = rhs;     // expr, seq, indirect, any
       this.body    = body;    // expr, seq, indirect, any -- set existing stack slot(s)
+      this.toJSON = function(){
+        return {"$":'install-value', "count": this.count.toJSON(), "pos" : this.pos.toJSON(),
+               "boxes" : this.boxes.toJSON(), "rhs" : this.rhs.toJSON(),
+               "body" : this.body.toJSON()};
+      };
     };
     installValue.prototype = heir(Bytecode.prototype);
 
     // boxEnv: box existing stack element
     function boxEnv(pos, body) {
       Bytecode.call(this);
-      this.$       = 'boxenv';
       this.pos     = pos;     // exact, non-negative integer
       this.body    = body;    // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'boxenv', "pos": this.pos.toJSON(), "body" : this.body.toJSON()};
+      };
     };
     boxEnv.prototype = heir(Bytecode.prototype);
 
     // localRef: access local via stack
     function localRef(unbox, pos, clear, otherClears, flonum) {
       Bytecode.call(this);
-      this.$       = 'localref';
       this.unbox   = unbox;   // boolean
       this.pos     = pos;     // exact, non-negative integer
       this.clear   = clear;   // boolean
       this.flonum  = flonum;  // boolean
       this.otherClears= otherClears; // boolean
+      this.toJSON = function(){
+        return {"$":'localref', "unbox?": this.unbox, "pos" : this.pos,
+               "clear" : this.clear, "other-clears" : this.otherClears,
+               "flonum?" : this.flonum};
+      };
     };
     localRef.prototype = heir(Bytecode.prototype);
 
@@ -301,19 +390,24 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // application: function call
     function application(rator, rands) {
       Bytecode.call(this);
-      this.$       = 'application';
       this.rator   = rator;   // expr, seq, indirect, any
       this.rands   = rands;   // list of (expr, seq, indirect, any)
+      this.toJSON = function(){
+        return {"$":'application', "rator": this.rator.toJSON(), "rands" : this.rands.toJSON()};
+      };
     };
     application.prototype = heir(Bytecode.prototype);
 
     // branch
     function branch(testExpr, thenExpr, elseExpr) {
       Bytecode.call(this);
-      this.$        = 'branch';
       this.testExpr = testExpr;   // expr, seq, indirect, any
       this.thenExpr = thenExpr;   // expr, seq, indirect, any
       this.elseExpr = elseExpr;   // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'branch', "test": this.test.toJSON(), "then" : this.thenExpr.toJSON(),
+               "else" : this.elseExpr.toJSON()};
+      };
     };
     branch.prototype = heir(Bytecode.prototype);
 
@@ -324,57 +418,66 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.key  = key;   // expr, seq, indirect, any
       this.val  = val;   // expr, seq, indirect, any
       this.body = body;  // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'with-cont-mark', "key": this.key.toJSON(), "val" : this.val.toJSON(),
+               "body" : this.body.toJSON()};
+      };
     };
     withContMark.prototype = heir(Bytecode.prototype);
 
     // beg0: begin0
     function beg0(seq) {
       Bytecode.call(this);
-      this.$    = 'beg0';
       this.seq  = seq;   // list  of (expr, seq, indirect, any)
+      this.toJSON = function(){ return {"$":'beg0', "seq": this.seq.toJSON()};  };
     };
     beg0.prototype = heir(Bytecode.prototype);
 
     // splice: top-level 'begin'
     function splice(forms) {
       Bytecode.call(this);
-      this.$      = 'splice';
       this.forms  = forms;   // list  of (expr, seq, indirect, any)
+      this.toJSON = function(){ return {"$":'splice', "forms": this.forms.toJSON()};  };
     };
     splice.prototype = heir(Bytecode.prototype);
 
     // varRef: `#%variable-reference'
     function varRef(topLevel) {
       Bytecode.call(this);
-      this.$        = 'varref';
       this.topLevel  = topLevel;   // topLevel
+      this.toJSON = function(){ return {"$":'varref', "top-level": this.topLevel.toJSON()};  };
     };
     varRef.prototype = heir(Bytecode.prototype);
 
     // assign: top-level or module-level set!
     function assign(id, rhs, undefOk) {
       Bytecode.call(this);
-      this.$       = 'assign';
       this.id      = id;      // topLevel
       this.rhs     = rhs;     // expr, seq, indirect, any
       this.undefOk = undefOk; // boolean
+      this.toJSON = function(){
+        return {"$":'assign', "id": this.id.toJSON(), "rhs" : this.rhs.toJSON(),
+               "undef-ok" : this.undefOk.toJSON()};
+      };
     };
     assign.prototype = heir(Bytecode.prototype);
 
     // applyValues: `(call-with-values (lambda () ,args-expr) ,proc)
     function applyValues(proc, args) {
       Bytecode.call(this);
-      this.$       = 'apply-values';
       this.proc    = proc;    // expr, seq, indirect, any
       this.args    = args;    // expr, seq, indirect, any
+      this.toJSON = function(){
+        return {"$":'apply-values', "proc": this.proc.toJSON(), "args" : this.args.toJSON()};
+      };
     };
     applyValues.prototype = heir(Bytecode.prototype);
 
     // primVal: direct preference to a kernel primitive
     function primVal(id) {
       Bytecode.call(this);
-      this.$       = 'primval';
       this.id      = id;    // exact, non-negative integer
+      this.toJSON = function(){ return {"$":'primval', "id": this.id.toJSON()};  };
     };
     primVal.prototype = heir(Bytecode.prototype);
 
@@ -384,6 +487,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.$        = 'req';
       this.reqs    = reqs;    // syntax
       this.dummy   = dummy;   // toplevel
+      this.toJSON = function(){ return {"$":'req', "reqs": this.reqs.toJSON(), "dummy" : this.dummy.toJSON()};  };
     };
     req.prototype = heir(Bytecode.prototype);
 
@@ -421,11 +525,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
     // allFromModule
     function allFromModule(path, phase, srcPhase, exceptions, prefix) {
-      this.path     = path;     // modulePathIndex
-      this.phase    = phase;    // false or exact integer
-      this.srcPhase = srcPhase; // any
-      this.prefix   = prefix;    // false or symbol
-      this.exceptions=exceptions;  // list of symbols
+      this.path     = path;       // modulePathIndex
+      this.phase    = phase;      // false or exact integer
+      this.srcPhase = srcPhase;   // any
+      this.prefix   = prefix;     // false or symbol
+      this.exceptions=exceptions; // list of symbols
       Bytecode.call(this);
     };
     allFromModule.prototype = heir(Bytecode.prototype);
@@ -503,42 +607,84 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
     };
     ModuleRename.prototype = heir(Bytecode.prototype);
-   
-   
-   //////////////////////////////////////////////////////////////////////////////
-   // COMPILATION ///////////////////////////////////////////////////////////////
-   
+ 
+  Program.prototype.freeVariables   = function(env, acc){ return acc; }
+  ifExpr.prototype.freeVariables    = function(env, acc){
+    return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(env, acc)));
+  };
+  beginExpr.prototype.freeVariables = function(env, acc){
+    return this.exprs.reduceRight(function(expr, acc){return expr.freeVariables(env, acc);}, acc);
+  };
+  symbolExpr.prototype.freeVariables= function(env, acc){
+    return (env.lookup(this.val, 0) instanceof plt.compiler.unboundStackReference)? acc.concat([this.val]) : acc;
+  };
+  localExpr.prototype.freeVariables = function(env, acc){ return acc; };
+  andExpr.prototype.freeVariables   = function(env, acc){ return acc; };
+  lambdaExpr.prototype.freeVariables= function(env, acc){ return acc; };
+  quotedExpr.prototype.freeVariables= function(env, acc){ return acc; };
+  primop.prototype.freeVariables    = function(env, acc){ return acc; };
+  ifExpr.prototype.freeVariables    = function(env, acc){ return acc; };
+ 
+  /**************************************************************************
+   *
+   *    COMPILATION -
+   *    (see https://github.com/bootstrapworld/wescheme-compiler2012/blob/master/js-runtime/src/mzscheme-vm.ss)
+   *
+   **************************************************************************/
+ 
+   // sort-and-unique: (listof X) (X X -> boolean) (X X -> boolean) -> (listof X)
+   function sortAndUnique(elts, lessThan, equalTo) {
+      function unique(elts){
+        return (elts.length <= 1)? elts
+               :  equalTo(elts[0], elts[1])? unique(elts.slice(1))
+               :  [elts[0]].concat(unique(elts.slice(1)));
+      }
+      return unique(elts.sort(lessThan));
+   }
+ 
+   // [bytecodes, env, pinfo], Program -> [bytecodes, pinfo, env]
+   // compile the program, then add the bytecodes and pinfo information to the acc
+   function compilePrograms(acc, p){
+    var bytecodes = acc[0],
+        pinfo     = acc[1],
+        env       = acc[2],
+        compiledProgramAndPinfo = p.compile(env, pinfo),
+        compiledProgram = compiledProgramAndPinfo[0],
+        pinfo     = compiledProgramAndPinfo[1];
+    return [[compiledProgram].concat(bytecodes), pinfo, env];
+   }
+ 
    // extend the Program class to include compilation
    // compile: pinfo -> [bytecode, pinfo]
-   Program.prototype.compile = function(pinfo){
-      return [this.val, pinfo];
+   Program.prototype.compile = function(env, pinfo){
+      return [new literal(this), pinfo];
    };
    
    defFunc.prototype.compile = function(env, pinfo){
-      var compiledFunNameAndPinfo = compileExpression(this.name, env, pinfo),
-          compiledFunName = compiledExpressionAndPinfo[0],
-          pinfo = compiledExpressionAndPinfo[1];
+      var compiledFunNameAndPinfo = this.name.compile(env, pinfo),
+          compiledFunName = compiledFunNameAndPinfo[0],
+          pinfo = compiledFunNameAndPinfo[1];
       var lambda = new lambdaExpr(this.args, this.body),
-          compiledLambdaAndPinfo = lambda.compile(env, pinfo),
-          compiledLambda = compiledBodyAndPinfo[0],
-          pinfo = compiledBodyAndPinfo[1];
+          compiledLambdaAndPinfo = lambda.compile(env, pinfo, false, this.name),
+          compiledLambda = compiledLambdaAndPinfo[0],
+          pinfo = compiledLambdaAndPinfo[1];
       var bytecode = new defValues([compiledFunName], compiledLambda);
       return [bytecode, pinfo];
    };
 
    defVar.prototype.compile = function(env, pinfo){
-      var compiledIdAndPinfo = compileExpression(this.name, env, pinfo),
-          compiledId = compiledExpressionAndPinfo[0],
-          pinfo = compiledExpressionAndPinfo[1];
-      var compiledBodyAndPinfo = this.body.compile(env, pinfo),
-          compiledBody = compiledBodyAndPinfo[0],
-          pinfo = compiledBodyAndPinfo[1];
-      var bytecode = new defValues([compiledId], compiledBody);
+      var compiledIdAndPinfo = this.name.compile(env, pinfo),
+          compiledId = compiledIdAndPinfo[0],
+          pinfo = compiledIdAndPinfo[1];
+      var compiledExprAndPinfo = this.expr.compile(env, pinfo),
+          compiledExpr = compiledExprAndPinfo[0],
+          pinfo = compiledExprAndPinfo[1];
+      var bytecode = new defValues([compiledId], compiledExpr);
       return [bytecode, pinfo];
    };
 
    defVars.prototype.compile = function(env, pinfo){
-        var compiledIdsAndPinfo = compileExpression(this.names, env, pinfo),
+        var compiledIdsAndPinfo = this.name.compile(env, pinfo),
             compiledIds = compiledIdsAndPinfo[0],
             pinfo = compiledIdsAndPinfo[1];
         var compiledBodyAndPinfo = this.body.compile(env, pinfo),
@@ -549,76 +695,146 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
    
    beginExpr.prototype.compile = function(env, pinfo){
-      var compiledExpressionsAndPinfo = compileExpressions(this.exprs, env, pinfo),
+      var compiledExpressionsAndPinfo = this.exprs.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledExpressions = compiledExpressionsAndPinfo[0],
           pinfo1 = compiledExpressionsAndPinfo[1];
       var bytecode = new seq(compiledExpressions);
       return [bytecode, pinfo1];
    };
-   
+
    // Compile a lambda expression.  The lambda must close its free variables over the
    // environment.
-   lambdaExpr.prototype.compile = function(env, pinfo){
-    throw new unimplementedException("lambdaExpr.compile");
-    /*    var freeVars = freeVariables(this.body,
-                                 foldl( (function(variable env){return env.push(variable)})
-                                       , emptyEnv
-                                       lambdaExpr.args));
-        var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
-            closureVector = closureVectorAndEnv[0],
-            extendedEnv = closureVectorAndEnv[1];
-        var compiledBodyAndPinfo = compileExpressionAndPinfo(this.body, extendedEnv, pinfo),
-            compiledBody = compiledBodyAndPinfo[0],
-            pinfo = compiledBodyAndPinfo[1];
-        var lambdaArgs = new Array(this.args.length),
-            closureArgs = new Array(closureVector.length);
-        var bytecode = bcode:make-lam(null, [], lambdaExpr.args.length
-                                      ,lambdaArgs.map((function(){return new symbolExpr("val");}))
-                                      ,false
-                                      ,closureVector
-                                      ,closureArgs.map((function(){return new symbolExpr("val/ref");}))
-                                      ,0
-                                      ,compiledBody);
-     */
+   lambdaExpr.prototype.compile = function(env, pinfo, isUnnamedLambda, name){
+      // maskUnusedGlobals : (listof symbol?) (listof symbol?) -> (listof symbol or false)
+      function maskUnusedGlobals(listOfNames, namesToKeep){
+        listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
+      }
+ 
+      function pushLocal(env, n){ return new plt.compiler.localEnv(n.val, false, env); }
+      function pushLocalBoxed(env, n){ return new plt.compiler.localEnv(n.val, true, env); }
+ 
+      // getClosureVectorAndEnv : (list of Symbols) (list of Symbols) env -> [(Vector of number), env]
+      function getClosureVectorAndEnv(args, freeVariables, originalEnv){
+        var freeVariableRefs = freeVariables.map(function(v){return originalEnv.lookup(v, 0);}),
+ 
+            // some utility functions
+            ormap = function(f, l){return (l.length===0)? false : f(l[0])? l[0] : ormap(f, l.slice(1));},
+            isLocalStackRef   = function(r){return r instanceof plt.compiler.localStackReference;},
+            isGlobalStackRef  = function(r){return r instanceof plt.compiler.globalStackReference;},
+            isUnboundStackRef = function(r){return r instanceof plt.compiler.unboundStackReference;},
+            getDepthFromRef   = function(r){ return r.depth;},
+ 
+            // this will either be #f, or the first unboundStackRef
+            anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
+ 
+        if(anyUnboundStackRefs){
+          throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + "is bound.";
+        } else {
+          var localStackRefs = freeVariableRefs.filter(isLocalStackRef),
+              lexicalFreeRefs = sortAndUnique(localStackRefs,
+                                              function(x,y){return x.depth < y.depth;},
+                                              function(x,y){return x.depth === y.depth;}),
+              lexicalFreeDepths = lexicalFreeRefs.map(getDepthFromRef),
+              globalRefs        = freeVariableRefs.filter(isGlobalStackRef),
+              globalDepths      = sortAndUnique(globalRefs.map(getDepthFromRef),
+                                                function(x,y){return x<y;},
+                                                function(x,y){return x===y;});
+          // Function Arguments
+          var env1 = args.reverse().reduce(pushLocal, originalEnv);
+ 
+          // The lexical free variables
+          var env2 = lexicalFreeRefs.reverse().reduce(function(ref, env){
+                      return ref.boxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
+                    }, env1);
+ 
+          // The global free variables
+          var env3 = globalDepths.reverse().reduce(function(depth, env){
+                       var refsAtDepth = globalRefs.filter(function(ref){return ref.depth=depth;}, env2),
+                           usedGlobalNames = refsAtDepth.map(function(ref){ref.name});
+                       return env.pushGlobals(maskUnusedGlobals(originalEnv.peek(depth).names,
+                                                                usedGlobalNames));
+                     }, env2);
+          return [globalDepths.concat(lexicalFreeDepths), env3];
+        }
+      }
+ 
+      var envWithArgs = this.args.reduce(pushLocal, new plt.compiler.emptyEnv());
+          freeVars = this.body.freeVariables(envWithArgs, []);
+      var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
+          closureVector = closureVectorAndEnv[0],
+          extendedEnv = closureVectorAndEnv[1];
+      var compiledBodyAndPinfo = this.body.compile(extendedEnv, pinfo),
+          compiledBody = compiledBodyAndPinfo[0],
+          pinfo = compiledBodyAndPinfo[1];
+      var lambdaArgs = new Array(this.args.length),
+          closureArgs = new Array(closureVector.length);
+ 
+      var valSymbols = [], valRefSymbols = [];
+      for(var i=0; i < this.args.length; i++)     { valSymbols.push(new symbolExpr("val"));        }
+      for(var j=0; j < closureVector.length; j++) { valRefSymbols.push(new symbolExpr("val/ref")); }
+ 
+      // emit the bytecode
+      var bytecode = new lam(isUnnamedLambda? [] : name,
+                             [name].concat(this.args).map(function(id){return id.location;}),
+                             [],
+                             this.args.length,
+                             valSymbols,
+                             false,
+                             closureVector,
+                             valRefSymbols,
+                             0,
+                             compiledBody);
       return [bytecode, pinfo];
    };
-   
+
    localExpr.prototype.compile = function(env, pinfo){
-    throw new unimplementedException("localExpr.compile");
+      throw new unimplementedException("localExpr.compile");
    };
    
    callExpr.prototype.compile = function(env, pinfo){
-    throw new unimplementedException("callExpr.compile");
+      // add space to the stack for each argument
+      var makeSpace = function(operand, env){return new plt.compiler.unnamedEnv(env);},
+          extendedEnv = this.args.reduce(makeSpace),
+          compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
+          compiledOperator = compiledOperatorAndPinfo[0],
+          pinfo1 = compiledOperatorAndPinfo[1],
+          compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, env]),
+          compiledOperands = compiledOperatorAndPinfo[0],
+          pinfo2 = compiledOperatorAndPinfo[1];
+          return [new application(compiledOperator, compiledOperands), pinfo2];
    };
    
    ifExpr.prototype.compile = function(env, pinfo){
       var compiledPredicateAndPinfo = this.predicate.compile(env, pinfo),
           compiledPredicate = compiledPredicateAndPinfo[0],
-          pinfo = compiledPredicateAndPinfo[1];
+          pinfo1 = compiledPredicateAndPinfo[1];
       var compiledConsequenceAndPinfo = this.consequence.compile(env, pinfo),
           compiledConsequence = compiledConsequenceAndPinfo[0],
-          pinfo = compiledConsequenceAndPinfo[1];
+          pinfo2 = compiledConsequenceAndPinfo[1];
       var compiledAlternateAndPinfo = this.alternative.compile(env, pinfo),
           compiledAlternate = compiledAlternateAndPinfo[0],
-          pinfo = compiledAlternateAndPinfo[1];
+          pinfo3 = compiledAlternateAndPinfo[1];
       var bytecode = new branch(compiledPredicate, compiledConsequence, compiledAlternate);
-      return [bytecode, pinfo];
+      return [bytecode, pinfo3];
    };
    
    symbolExpr.prototype.compile = function(env, pinfo){
-     var stackReference = envLookup(env, expr.val), bytecode;
-      if(stackReference instanceof localStackRef){
-        bytecode = new localRef(localStackRef.boxed, localStackRef.depth, false, false, false);
-      } else if(stackReference instanceof globalStackRef){
-        bytecode = new topLevel(globalStackRef.depth, globalStackRef.pos, false, false);
-      } else if(stackReference instanceof unboundStackRef){
-        throw "Couldn't find "+expr.val+" in the environment";
+     var stackReference = env.lookup(this.val, 0), bytecode;
+      if(stackReference instanceof plt.compiler.localStackReference){
+        bytecode = new localRef(stackReference.boxed, stackReference.depth, false, false, false);
+      } else if(stackReference instanceof plt.compiler.globalStackReference){
+        bytecode = new topLevel(stackReference.depth, stackReference.pos, false, false, this.location);
+      } else if(stackReference instanceof plt.compiler.unboundStackReference){
+        throw "Couldn't find '"+this.val+"' in the environment";
+      } else {
+        throw "ANALYSIS FAILURE: env.lookup failed for '"+this.val+"'! A reference should be added to the environment!";
       }
       return [bytecode, pinfo];
    };
-   
-   listExpr.prototype.compile = function(env, pinfo){}
-   quotedExpr.prototype.compile = function(env, pinfo){}
+ 
+   quotedExpr.prototype.compile = function(env, pinfo){
+      return [this.val, pinfo];
+   };
    primop.prototype.compile = function(env, pinfo){}
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(pinfo){
@@ -626,9 +842,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
 
    // compile-compilation-top: program pinfo -> bytecode
-   function compile(program, pinfo){
-      throw new unimplementedException("top-level compile");
- 
+   function compileCompilationTop(program, pinfo){
       // makeModulePrefixAndEnv : pinfo -> [prefix, env]
       // collect all the free names being defined and used at toplevel
       // Create a prefix that refers to those values
@@ -642,7 +856,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
             allModuleBindings = requiredModuleBindings.concat(moduleOrTopLevelDefinedBindings),
 
-        // utility functions for making globalBuckets and moduleVariables
+            // utility functions for making globalBuckets and moduleVariables
             makeGlobalBucket = function(name){ return new globalBucket(name);},
             makeModuleVariablefromBinding = function(b){
               return new moduleVariable(modulePathIndexJoin(b.moduleSource,
@@ -651,15 +865,16 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                         , -1
                                         , 0);
             };
-        var topLevels = [false,
-                          ,pinfo.freeVariables.map(makeGlobalBucket)
-                          ,pinfo.definedNames.map(makeGlobalBucket)
-                          ,allModuleBindings.map(makeModuleVariablefromBinding)];
+        var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
+                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)
+                                      ,allModuleBindings.map(makeModuleVariablefromBinding)),
+            globals = [false].concat(pinfo.freeVariables,
+                                         pinfo.definedNames.values(),
+                                         allModuleBindings),
+            globalNames = globals.map(function(b){return b.name;});
  
         return [new prefix(0, topLevels ,[])
-               , new plt.compiler.globalEnv([false].concat(pinfo.freeVariables, pinfo.definedNames, allModuleBindings.map(getBindingId)),
-                                             false,
-                                             new plt.compiler.emptyEnv())];
+               , new plt.compiler.globalEnv(globalNames, false, new plt.compiler.emptyEnv())];
       };
  
       // The toplevel is going to include all of the defined identifiers in the pinfo
@@ -673,37 +888,30 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           requires = program.filter((function(p){return (p instanceof requireExpr);})),
           provides = program.filter((function(p){return (p instanceof provideStatement);})),
           exprs    = program.filter(plt.compiler.isExpression);
- 
-      // [bytecodes, pinfo, env?] Program -> [bytecodes, pinfo]
-      // compile the program, then add the bytecodes and pinfo information to the acc
-      function compileAndCollect(acc, p){
-        var compiledProgramAndPinfo = p.compile(acc[1]),
-            compiledProgram = compiledProgramAndPinfo[0],
-            pinfo = compiledProgramAndPinfo[1];
-        return [[compiledProgram].concat(acc[0]), pinfo];
-      }
- 
       console.log('compiling requires...');
-      var compiledRequiresAndPinfo = requires.reduce(compileAndCollect, [[], pinfo]),
+      var compiledRequiresAndPinfo = requires.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledRequires = compiledRequiresAndPinfo[0],
           pinfo = compiledRequiresAndPinfo[1];
       console.log('compiling definitions...');
-      var compiledDefinitionsAndPinfo = defns.reduce(compileAndCollect, [[], pinfo]),
+      var compiledDefinitionsAndPinfo = defns.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledDefinitions = compiledDefinitionsAndPinfo[0],
           pinfo = compiledDefinitionsAndPinfo[1];
       console.log('compiling expressions...');
-      var compiledExpressionsAndPinfo = exprs.reduce(compileAndCollect, [[], pinfo]),
+      var compiledExpressionsAndPinfo = exprs.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledExpressions = compiledExpressionsAndPinfo[0],
           pinfo = compiledExpressionsAndPinfo[1];
-   
       // generate the bytecode for the program and return it, along with the program info
-      var bytecode = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions));
-      return [new compilationTop(0, toplevelPrefix, bytecode), pinfo];
+      var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
+          bytecode = new compilationTop(0, toplevelPrefix, forms),
+          response = {"permissions" : pinfo.permissions(),
+                      "bytecode" : "/* runtime-version: clientside-summer-2014 */n" + JSON.stringify(bytecode.toJSON()),
+                      "provides" : pinfo.providedNames.keys()};
+          return response;
    }
  
  
   /////////////////////
   /* Export Bindings */
   /////////////////////
- plt.compiler.compile = compile;
+ plt.compiler.compile = compileCompilationTop;
  })();
