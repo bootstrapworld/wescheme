@@ -904,6 +904,4 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   /* Export Bindings */
   /////////////////////
  plt.compiler.parse = parse;
- plt.compiler.isDefinition = isDefinition;
- plt.compiler.isExpression = isExpr;
 })();

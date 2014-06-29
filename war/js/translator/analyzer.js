@@ -5,7 +5,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
  - desugar Symbols
- - tagApplicationOperator_Module
+ - fix and uncomment uses of 'tagApplicationOperator_Module'
  - test cases get desugared into native calls (and thunks?)
  - how to add struct binding when define-struct is desugared away?
 */
@@ -19,7 +19,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     var func = call_exp.func,
         operands = call_exp.args,
         module = defaultModuleResolver(moduleName),
-        env = plt.compiler.emptyEnv().extendEnv_moduleBinding(module);
+        env = new plt.compiler.emptyEnv().extendEnv_moduleBinding(module);
     call_exp.context = env;
     return call_exp;
  }
@@ -43,10 +43,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
  // desugarProgram : Listof Programs null/pinfo -> [Listof Programs, pinfo]
  // desugar each program, appending those that desugar to multiple programs
- function desugarProgram(programs, pinfo){
+ function desugarProgram(programs, pinfo, isTopLevelExpr){
       var acc = [ [], (pinfo || new plt.compiler.pinfo())];
       return programs.reduce((function(acc, p){
             var desugaredAndPinfo = p.desugar(acc[1]);
+            // if it's an expression, insert a print-values call so it shows up in the repl
+            if(plt.compiler.isExpression(p) && isTopLevelExpr){
+              var runtimeCall = new callExpr(new symbolExpr("print-values"), desugaredAndPinfo[0]);
+              runtimeCall.location = p.location;
+              desugaredAndPinfo[0] = runtimeCall;
+//              tagApplicationOperator_Module(runtimeCall,'moby/runtime/kernel/misc');
+            }
             if(desugaredAndPinfo[0].length){
               acc[0] = acc[0].concat(desugaredAndPinfo[0]);
             } else {
@@ -177,7 +184,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // conds become nested ifs
  condExpr.prototype.desugar = function(pinfo){
     // base case is all-false
-    var expr = new callExpr(new symbolExpr('throw-cond-exhausted-error')
+    var expr = new callExpr(new symbolExpr("throw-cond-exhausted-error")
                             , [new quotedExpr(this.location.toVector())]);
     for(var i=this.clauses.length-1; i>-1; i--){
       expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
@@ -234,7 +241,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  // ands become nested ifs
  andExpr.prototype.desugar = function(pinfo){
- console.log(1);
     var expr = this.exprs[this.exprs.length-1];
     for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
       expr = new ifExpr(this.exprs[i], expr, new symbolExpr("false"), this.stx);
@@ -576,6 +582,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  /////////////////////
  /* Export Bindings */
  /////////////////////
- plt.compiler.desugar = desugarProgram;
+ plt.compiler.desugar = function(p, pinfo){return desugarProgram(p, pinfo, true)};
  plt.compiler.analyze = analyze;
 })();

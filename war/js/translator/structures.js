@@ -426,6 +426,22 @@ function unsupportedExpr(val, errorMsg, errorSpan) {
 unsupportedExpr.prototype = heir(Program.prototype);
 
 
+function isExpression(node){
+  return !(   (node instanceof defVar)
+           || (node instanceof defVars)
+           || (node instanceof defStruct)
+           || (node instanceof defFunc)
+           || (node instanceof provideStatement)
+           || (node instanceof unsupportedExpr));
+}
+
+function isDefinition(node){
+  return (node instanceof defVar)
+      || (node instanceof defVars)
+      || (node instanceof defStruct)
+      || (node instanceof defFunc);
+}
+
 /**************************************************************************
  *
  *    STRUCTURES NEEDED BY THE COMPILER
@@ -479,7 +495,7 @@ function getTopLevelEnv(lang){
                          , "false", "eof", "pi", "e","js-undefined"
                          , "js-null"].reduce(function(env, id){
                                              return env.extendConstant(id.toString(), "moby/toplevel", false)
-                                             }, plt.compiler.emptyEnv());
+                                             }, new plt.compiler.emptyEnv());
 
   // Registers a new toplevel function, munging the name
   var r = function(env, name, arity, vararity){
@@ -772,6 +788,10 @@ function getTopLevelEnv(lang){
                      ,["hash-map", 2]
                      ,["hash-for-each", 2]
                      ,["hash?", 1]
+                      
+                     // runtime functions
+                     ,["verify-boolean-branch-value", 0]
+                     ,["throw-cond-exhausted-error", 0]
                      
                      // Exception raising
                      ,["raise", 1]
@@ -936,7 +956,7 @@ function getTopLevelEnv(lang){
   // Representation of the stack environment of the mzscheme vm, so we know where
   // things live.
   function env(bindings){
-    this.bindings = bindings;
+    this.bindings = bindings || types.makeLowLevelEqHash();
  
     // lookup : Symbol -> (or/c binding false)
     this.lookup = function(id){
@@ -988,17 +1008,8 @@ function getTopLevelEnv(lang){
         return s+"\n  |---"+b.name;}, "");
     };
   }
-
-  function emptyEnv(){ return new env(types.makeLowLevelEqHash());}
-  function localEnv(name, boxed, parent){ this.name=name; this.boxed=boxed; this.parent=parent;}
-  function globalEnv(names, boxed, parent){ this.names=names; this.boxed=boxed; this.parent=parent;}
-  function unnamedEnv(parent){ this.parent=parent;}
-
  
- // export
- plt.compiler.env = env;
-
- // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
+   // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
   function stackReference(){}
   function localStackReference(name, isBoxed, depth){
     stackReference.call(this);
@@ -1019,6 +1030,46 @@ function getTopLevelEnv(lang){
     this.name = name;
   }
   unboundStackReference.prototype = heir(stackReference.prototype);
+
+ 
+  // sub-classes of env
+  function emptyEnv(){
+    env.call(this);
+  this.lookup = function(name, depth){ return new unboundStackReference(name); };
+  }
+  emptyEnv.prototype = heir(env.prototype);
+ 
+  function unnamedEnv(parent){
+    env.call(this);
+    this.parent = parent;
+    this.lookup = function(name, depth){ return this.parent.lookup(name, depth+1); };
+  }
+  unnamedEnv.prototype = heir(env.prototype);
+ 
+  function localEnv(name, boxed, parent){
+    env.call(this);
+    this.name   = name;
+    this.boxed  = boxed;
+    this.parent = parent;
+    this.lookup = function(name, depth){
+      return (name===this.name)? new localStackReference(name, this.boxed, depth)
+                              : this.parent.lookup(name, depth+1);
+    };
+  }
+  localEnv.prototype = heir(env.prototype);
+ 
+  function globalEnv(names, boxed, parent){
+    env.call(this);
+    this.names  = names;
+    this.boxed  = boxed;
+    this.parent = parent;
+    this.lookup = function(name, depth){
+      var pos = position(name, this.names); // index or false
+      return pos? new globalStackReference(name, depth, pos)
+                : this.parent.lookup(name, depth+1);
+    };
+  }
+  globalEnv.prototype = heir(env.prototype);
 
   // position: symbol (listof symbol) -> (number || #f)
   // Find position of element in list; return false if we can't find the element.
@@ -1318,10 +1369,16 @@ function getTopLevelEnv(lang){
     return pinfo;
  }
  
- plt.compiler.emptyEnv = emptyEnv;
- plt.compiler.localEnv = localEnv;
- plt.compiler.globalEnv = globalEnv;
- plt.compiler.unnamedEnv = unnamedEnv;
- plt.compiler.getBasePinfo = getBasePinfo;
- plt.compiler.pinfo = pinfo;
+ plt.compiler.env         = env;
+ plt.compiler.emptyEnv    = emptyEnv;
+ plt.compiler.localEnv    = localEnv;
+ plt.compiler.globalEnv   = globalEnv;
+ plt.compiler.unnamedEnv  = unnamedEnv;
+ plt.compiler.pinfo       = pinfo;
+ plt.compiler.getBasePinfo= getBasePinfo;
+ plt.compiler.isExpression= isExpression;
+ plt.compiler.isDefinition= isDefinition;
+ plt.compiler.localStackReference = localStackReference;
+ plt.compiler.globalStackReference = globalStackReference;
+ plt.compiler.unboundStackReference = unboundStackReference;
 })();
