@@ -23,17 +23,6 @@ function repl2_setup(__nenv, __venv) {
   __history_back = [];
 }
 
-// adds an element to the history
-function addToHistory(val) {
-  while(__history_back.length > 0) {
-    var temp = __history_back.pop();
-
-    if(temp != "")
-      __history_front.push(temp);
-  }
-  __history_front.push(val);
-}
-
 // returns the element in the history at the current index.
 // Dir is the direction. 1 for up, -1 for down
 // current is the currently viewed element
@@ -112,8 +101,8 @@ function readFromRepl(event) {
     }
     try {
       console.log("// ANALYSIS: //////////////////////////////\n");
-      var start       = new Date().getTime();
-      window.pinfo    = plt.compiler.analyze(program);
+      var start       = new Date().getTime(),
+          pinfo       = plt.compiler.analyze(program);
       var end         = new Date().getTime(),
       analysisTime    = Math.floor(end-start);
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
@@ -122,27 +111,29 @@ function readFromRepl(event) {
       throw Error("ANALYSIS ERROR\n"+getError(e).toString());
     }
     try {
+//      console.log('after analyzing, pinfo is\n'+pinfo.toString());
       console.log("// COMPILATION: //////////////////////////////\n");
-      var start       = new Date().getTime();
-      window.pinfo    = plt.compiler.compile(program, pinfo);
-      var end         = new Date().getTime(),
+      var start       = new Date().getTime(),
+          response    = plt.compiler.compile(program, pinfo),
+          end         = new Date().getTime(),
       compileTime     = Math.floor(end-start);
       console.log("Compiled in "+compileTime+"ms");
+      console.log("response:");
+      console.log(JSON.stringify(response));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
+ 
+ 
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                 + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
                 + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime)+"ms");
     
-    
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
-    output_list.insertBefore(temp, repl_input_li);
-    addToHistory(aSource);
 
   } else if(key === 38) {
     repl_input.value = popElementFromHistory(1, repl_input.value);
