@@ -49,7 +49,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             var desugaredAndPinfo = p.desugar(acc[1]);
             // if it's an expression, insert a print-values call so it shows up in the repl
             if(plt.compiler.isExpression(p) && isTopLevelExpr){
-              var runtimeCall = new callExpr(new symbolExpr("print-values"), desugaredAndPinfo[0]);
+              var runtimeCall = new callExpr(new symbolExpr("print-values"), [desugaredAndPinfo[0]]);
               runtimeCall.location = p.location;
               desugaredAndPinfo[0] = runtimeCall;
 //              tagApplicationOperator_Module(runtimeCall,'moby/runtime/kernel/misc');
