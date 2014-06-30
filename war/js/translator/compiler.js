@@ -6,7 +6,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  TODO
  - toJSON method for each bytecode struct
  - toJSON for number literals
- - figure out desugaring/compilation of identifiers
  - figure out desugaring/compilation of primops
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
@@ -22,7 +21,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return {"$": 'constant', "value" : this.val};
     };
     symbolExpr.prototype.toJSON = function(){
-      return "types.symbol("+this.val+")";
+      return "new types.symbol(\""+this.val+"\")";
     };
  
     /**************************************************************************
@@ -41,7 +40,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
 
     // for mapping JSON conversion over an array
-    function convertToJSON(bc){ return (bc instanceof Bytecode)? bc.toJSON() : bc.toString(); }
+ function convertToJSON(bc){ return (bc instanceof Bytecode)? bc.toJSON() : bc.toString(); }
  
     // literal
     function literal(val) {
@@ -70,8 +69,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.pos    = pos;    // exact integer
       this.phase  = phase;  // 1/0 - direct access to exported id
       this.toJSON = function(){
-        return {"$":'module-variable', "modidx": this.modix.toJSON(), "sym" : this.sym.toJSON(),
-                "pos" : this.pos.toJSON(), "phase" : this.phase.toJSON()};
+        return {"$":'module-variable', "sym" : new symbolExpr(this.sym).toJSON(), "modidx": this.modidx.toJSON(),
+                "pos" : this.pos, "phase" : this.phase};
       };
     };
     moduleVariable.prototype = heir(Bytecode.prototype);
@@ -608,23 +607,34 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
     ModuleRename.prototype = heir(Bytecode.prototype);
  
-  Program.prototype.freeVariables   = function(env, acc){ return acc; }
-  ifExpr.prototype.freeVariables    = function(env, acc){
-    return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(env, acc)));
-  };
-  beginExpr.prototype.freeVariables = function(env, acc){
-    return this.exprs.reduceRight(function(expr, acc){return expr.freeVariables(env, acc);}, acc);
-  };
-  symbolExpr.prototype.freeVariables= function(env, acc){
-    return (env.lookup(this.val, 0) instanceof plt.compiler.unboundStackReference)? acc.concat([this.val]) : acc;
-  };
-  localExpr.prototype.freeVariables = function(env, acc){ return acc; };
-  andExpr.prototype.freeVariables   = function(env, acc){ return acc; };
-  lambdaExpr.prototype.freeVariables= function(env, acc){ return acc; };
-  quotedExpr.prototype.freeVariables= function(env, acc){ return acc; };
-  primop.prototype.freeVariables    = function(env, acc){ return acc; };
-  ifExpr.prototype.freeVariables    = function(env, acc){ return acc; };
+    // HACK: module-path
+    function modulePath(path, base){
+      this.path = path;
+      this.base = base;
+      Bytecode.call(this);
+      this.toJSON = function(){
+        return {"$": 'module-path', "path": this.path, "base": convertToJSON(this.base) };
+      };
+    };
+    modulePath.prototype = heir(Bytecode.prototype);
  
+    Program.prototype.freeVariables   = function(env, acc){ return acc; }
+    ifExpr.prototype.freeVariables    = function(env, acc){
+      return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(env, acc)));
+    };
+    beginExpr.prototype.freeVariables = function(env, acc){
+      return this.exprs.reduceRight(function(expr, acc){return expr.freeVariables(env, acc);}, acc);
+    };
+    symbolExpr.prototype.freeVariables= function(env, acc){
+      return (env.lookup(this.val, 0) instanceof plt.compiler.unboundStackReference)? acc.concat([this.val]) : acc;
+    };
+    localExpr.prototype.freeVariables = function(env, acc){ return acc; };
+    andExpr.prototype.freeVariables   = function(env, acc){ return acc; };
+    lambdaExpr.prototype.freeVariables= function(env, acc){ return acc; };
+    quotedExpr.prototype.freeVariables= function(env, acc){ return acc; };
+    primop.prototype.freeVariables    = function(env, acc){ return acc; };
+    ifExpr.prototype.freeVariables    = function(env, acc){ return acc; };
+   
   /**************************************************************************
    *
    *    COMPILATION -
@@ -793,8 +803,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    
    callExpr.prototype.compile = function(env, pinfo){
       // add space to the stack for each argument
-      var makeSpace = function(operand, env){return new plt.compiler.unnamedEnv(env);},
-          extendedEnv = this.args.reduce(makeSpace),
+      var makeSpace = function(env, operand){return new plt.compiler.unnamedEnv(env);},
+          extendedEnv = this.args.reduce(makeSpace, env),
           compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
           compiledOperator = compiledOperatorAndPinfo[0],
           pinfo1 = compiledOperatorAndPinfo[1],
@@ -858,10 +868,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
             // utility functions for making globalBuckets and moduleVariables
             makeGlobalBucket = function(name){ return new globalBucket(name);},
+            modulePathIndexJoin = function(path, base){return new modulePath(path, base);},
             makeModuleVariablefromBinding = function(b){
               return new moduleVariable(modulePathIndexJoin(b.moduleSource,
                                                             modulePathIndexJoin(false, false))
-                                        , getBindingId(b)
+                                        , b.name
                                         , -1
                                         , 0);
             };
@@ -913,5 +924,5 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   /////////////////////
   /* Export Bindings */
   /////////////////////
- plt.compiler.compile = compileCompilationTop;
+  plt.compiler.compile     = compileCompilationTop;
  })();

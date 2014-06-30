@@ -1,7 +1,11 @@
 // if not defined, declare the compiler object as part of plt
 if(typeof(plt) === "undefined")          plt = {};
 if(typeof(plt.compiler) === "undefined") plt.compiler = {};
-
+/*
+ TODO
+ - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
+ - add seperate module (with bindings) for moby/kernel/runtime/misc
+ */
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////// COMMON FUNCTIONS AND STRUCTURES //////////////////////////
@@ -503,6 +507,11 @@ function getTopLevelEnv(lang){
     return e;
   };
   
+  // runtime symbols
+  var runtimeBindings = [["verify-boolean-branch-value", 0]
+                         ,["throw-cond-exhausted-error", 0]
+                         ,["print-values", 0]];
+  
   // core defined symbols
   var coreBindings = [["<", 2, true] // Numerics
                      ,["<=", 2, true]
@@ -788,10 +797,6 @@ function getTopLevelEnv(lang){
                      ,["hash-map", 2]
                      ,["hash-for-each", 2]
                      ,["hash?", 1]
-                      
-                     // runtime functions
-                     ,["verify-boolean-branch-value", 0]
-                     ,["throw-cond-exhausted-error", 0]
                      
                      // Exception raising
                      ,["raise", 1]
@@ -934,7 +939,8 @@ function getTopLevelEnv(lang){
                       ];
                        
   // The core environment includes bindings to Javascript-written functions.
-  var coreEnv = coreBindings.reduce(function (env, nameAndArity){
+  // FIXME: do not concat runtimeBindings!!!
+  var coreEnv = coreBindings.concat(runtimeBindings).reduce(function (env, nameAndArity){
                    if(nameAndArity.length === 2 ){
                       return r(env, nameAndArity[0], nameAndArity[1], false);
                    } else if(nameAndArity.length === 3 ){
@@ -974,7 +980,7 @@ function getTopLevelEnv(lang){
     // extend: binding -> env
     this.extend = function(binding){
       this.bindings.put(binding.name, binding);
-      return new env(this.bindings);
+      return new plt.compiler.env(this.bindings);
     };
  
     // extendFunction : symbol (or/c string false) number boolean? Loc -> env
@@ -1009,29 +1015,6 @@ function getTopLevelEnv(lang){
     };
   }
  
-   // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
-  function stackReference(){}
-  function localStackReference(name, isBoxed, depth){
-    stackReference.call(this);
-    this.name = name;
-    this.isBoxed = isBoxed;
-    this.depth = depth;
-  }
-  localStackReference.prototype = heir(stackReference.prototype);
-  function globalStackReference(name, depth, pos){
-    stackReference.call(this);
-    this.name = name;
-    this.pos = pos;
-    this.depth = depth;
-  }
-  globalStackReference.prototype = heir(stackReference.prototype);
-  function unboundStackReference(name){
-    stackReference.call(this);
-    this.name = name;
-  }
-  unboundStackReference.prototype = heir(stackReference.prototype);
-
- 
   // sub-classes of env
   function emptyEnv(){
     env.call(this);
@@ -1063,6 +1046,10 @@ function getTopLevelEnv(lang){
     this.names  = names;
     this.boxed  = boxed;
     this.parent = parent;
+    // Find position of element in list; return false if we can't find the element.
+    function position(x, lst){
+      return (lst.indexOf(x) > -1)? lst.indexOf(x) : false;
+    }
     this.lookup = function(name, depth){
       var pos = position(name, this.names); // index or false
       return pos? new globalStackReference(name, depth, pos)
@@ -1070,12 +1057,29 @@ function getTopLevelEnv(lang){
     };
   }
   globalEnv.prototype = heir(env.prototype);
-
-  // position: symbol (listof symbol) -> (number || #f)
-  // Find position of element in list; return false if we can't find the element.
-  function position(x, lst){
-    return (lst.indexOf(x) > -1)? lst.indexOf(x) : false;
+ 
+   // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
+  function stackReference(){}
+  function localStackReference(name, isBoxed, depth){
+    stackReference.call(this);
+    this.name = name;
+    this.isBoxed = isBoxed;
+    this.depth = depth;
   }
+  localStackReference.prototype = heir(stackReference.prototype);
+  function globalStackReference(name, depth, pos){
+    stackReference.call(this);
+    this.name = name;
+    this.pos = pos;
+    this.depth = depth;
+  }
+  globalStackReference.prototype = heir(stackReference.prototype);
+  function unboundStackReference(name){
+    stackReference.call(this);
+    this.name = name;
+  }
+  unboundStackReference.prototype = heir(stackReference.prototype);
+
  
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
   var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"];
@@ -1148,7 +1152,7 @@ function getTopLevelEnv(lang){
     this.freeVariables = freeVariables || [];               // (listof symbol)
     this.gensymCounter = gensymCounter || 0;                // number
     this.providedNames = providedNames || makeHash();       // (hashof symbol provide-binding)
-    this.definedNames = definedNames || makeHash();         // (hashof symbol binding)
+    this.definedNames  = definedNames  || makeHash();       // (hashof symbol binding)
  
     this.sharedExpressions = sharedExpressions || makeHash();// (hashof expression labeled-translation)
     // Maintains a mapping between expressions and a labeled translation.  Acts
@@ -1180,7 +1184,7 @@ function getTopLevelEnv(lang){
     this.usedBindings =  this.usedBindingsHash.values;
  
     this.accumulateDeclaredPermission = function(name, permission){
-      this.declaredPermissions = [[name, position]].concat(this.declaredPermissions);
+      this.declaredPermissions = [[name, permission]].concat(this.declaredPermissions);
       return this;
     };
  
@@ -1275,9 +1279,9 @@ function getTopLevelEnv(lang){
         else if(lst.slice(1).indexOf(lst[0]) > -1) return unique.slice(1)
         else return [lst[0]].concat(unique.slice(1));
       }
-      function reducePermissions(permissions, binding){
-        if(binding.isFunction) return binding.functionPermissions.concat(permissions);
-        else if(binding.isConstant) return binding.constantPermissions.concat(permissions);
+      function reducePermissions(permissions, b){
+        if((b instanceof bindingFunction)
+        || (b instanceof bindingConstant)) return permissions.concat(b.permissions);
       }
       return unique(this.usedBindings().reduce(reducePermissions, []));
     }
@@ -1369,15 +1373,15 @@ function getTopLevelEnv(lang){
     return pinfo;
  }
  
+ plt.compiler.pinfo       = pinfo;
+ plt.compiler.getBasePinfo= getBasePinfo;
+ plt.compiler.isExpression= isExpression;
+ plt.compiler.isDefinition= isDefinition;
  plt.compiler.env         = env;
  plt.compiler.emptyEnv    = emptyEnv;
  plt.compiler.localEnv    = localEnv;
  plt.compiler.globalEnv   = globalEnv;
  plt.compiler.unnamedEnv  = unnamedEnv;
- plt.compiler.pinfo       = pinfo;
- plt.compiler.getBasePinfo= getBasePinfo;
- plt.compiler.isExpression= isExpression;
- plt.compiler.isDefinition= isDefinition;
  plt.compiler.localStackReference = localStackReference;
  plt.compiler.globalStackReference = globalStackReference;
  plt.compiler.unboundStackReference = unboundStackReference;
