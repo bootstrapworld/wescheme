@@ -285,8 +285,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
-
       if(i >= str.length) {
+                            console.log(innerError);
+                            console.log((innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
          var msg = new types.Message(["read: expected a ",
                                       otherDelim(openingDelim),
                                       " to close ",
@@ -294,7 +295,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
          // throw an error
-         throwError(msg, (innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
+         throwError(msg, (innerError? lastKnownGoodLocation : new Location(column-1, sLine, i-1, 1)));
       }
       if(!matchingDelims(openingDelim, str.charAt(i))) {
          var msg = new types.Message(["read: expected a ",
@@ -475,7 +476,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             // BYTE-STRINGS (unsupported)
             case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
-            case '%': datum = readSymbol(str, i, "");
+            case '%': datum = readSymbolOrNumber(str, i, "");
                       datum.val = '#'+datum.val;
                       i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
@@ -520,8 +521,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case 't':  // true
             case 'f':  // false
                 if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
-                  datum = readSymbol(p, 0, "");      // create a symbol based solely on the character
-                  datum.val = '#'+datum.val;
+                  datum = readSymbolOrNumber(p, 0, "");      // create a symbol based solely on the character
+                  datum.val = ((datum.val==='t' || datum.val==='f')? "#" : "#'")+datum.val;
                   i+= datum.location.span;
                   break;
                 }
@@ -698,49 +699,55 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return quotedSexp;
     }
                    
+                                                                
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
-    // reads any number or symbol
-    function readSymbolOrNumber(str, i) {
+    function readSymbolOrNumber(str, i){
       var sCol = column, sLine = line, iStart = i;
-      var p = str.charAt(i), datum = "";
-      // snip off the next token, and let's analyze it...
-      while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
-         // check for newlines
-         if(str.charAt(i) === '\n'){ line++; column = 0;}
-         // if it's a verbatim symbol, add those characters as-is
-         if(str.charAt(i) === '|') {
-            var sym = readVerbatimSymbol(str, i, datum);
-            i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
-            return sym;
-         // otherwise add the character, taking case-sensitivity into account
-         } else {
-            datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
-            column++;
-         }
+      // match anything pattern consisting of stuff between two |bars|, or
+      // non-whitespace characters that do not include:  ( ) [ ] { } " , ' ` ; # | \\
+      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s])+/g.exec(str.slice(i))[0];
+      // move through the string checking for newlines and escaped characters
+      for(var j=0; j < chunk.length; j++){
+        i++; column++;
+        if(str.charAt(j) === "\\"){
+          j++;
+          if(j >= str.length){
+            errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+            throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
+                                          ": read: EOF following `\\' in symbol"])
+                       ,new Location(sCol, sLine, iStart, i-iStart)
+                       ,"Error-GenericReadError");
+          }
+          i++; column++; // read the backslash and adjust i and column counters
+        }
+        if(chunk.charAt[j] === '\n'){ line++; column = 0;}
       }
+      // split by |, and for each one enforce case-sensitivity for non-verbatim sections. Remove all escape characters
+      var filtered = chunk.split("|").reduce(function(acc, str, i){
+                                  // if we're inside bars *or* we're case sensitive, preserve case
+                                  return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
+                                }, "").replace(/\\/g,'');
+      // add bars if it's a symbol that needs them
+      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]+/i.test(filtered)? "|"+filtered+"|" : filtered;
+
       // special-case for ".", which is not supported in WeScheme
-      if(datum === "."){
+      if(filtered === "."){
+        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
                                     , sLine.toString(), ":"
                                     , sCol.toString()
                                     , ": read: '.' is not supported as a symbol in WeScheme"])
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
-                            
       }
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error
       try{
-        var numValue = jsnums.fromString(datum);
-        if(numValue || numValue === 0){ // don't interpret zero as 'false'
-          var sexp = new numberExpr(numValue);
-          sexp.location = new Location(sCol, sLine, iStart, i-iStart);
-          return sexp;
-        } else {
-          // if it was never a number (or turned out not to be), return the Symbol
-          var symbl = readSymbol(str,i,datum);
-          return symbl;
-        }
+        var numValue = jsnums.fromString(filtered),
+            node     = (numValue || numValue === 0)?  // don't interpret zero as 'false'
+                            new numberExpr(numValue) : new symbolExpr(filtered);
+        node.location = new Location(sCol, sLine, iStart, i-iStart);
+        return node;
       // if it's not a number OR a symbol
       } catch(e) {
           errorIndex = i; // HACK - remember where we are, so readList can pick up reading
@@ -750,63 +757,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");
       }
+                            
     }
-
-    // readSymbol : String Number String -> symbolExpr
-    // reads in a symbol which can be any character except for certain delimiters
-    // as described in isValidSymbolCharP
-    function readSymbol(str, i, datum) {
-      i-=datum.length; column-=datum.length; datum="";
-      var sCol = column-datum.length, sLine = line, iStart = i-datum.length, symbl;
-      while(i < str.length && isValidSymbolCharP(str.charAt(i))) {
-        // if there's an escape, read the escape *and* the next character
-        if(str.charAt(i) === "\\"){
-          datum += str.charAt(i); i++; column++; // read the backslash and adjust i and column counters
-          if(i >= str.length){ throw new Error("EOF following `\\' in symbol"); }
-          if(str.charAt(i) === "\n"){ line++; column = 0;}
-          datum += str.charAt(i); i++; column++; // read the next char and adjust i and column counters
-        // if it's a verbatim symbol, add those characters as-is
-        } else if(str.charAt(i) === "|") {
-          var sym = readVerbatimSymbol(str, i, datum);
-          i = sym.location.offset+sym.location.span+1; // move i ahead to the end of the symbol
-          datum = sym.val;
-        // otherwise add the character, taking case-sensitivity into account
-        } else {
-          datum += caseSensitiveSymbols? str.charAt(i++) : str.charAt(i++).toLowerCase();
-          column++;
-        }
-      }
-      if((i >= str.length) && (datum === "")) {
-        throwError(new types.Message(["read: Unexpected EOF while reading a symbol"])
-                  ,new Location(sCol, sLine, iStart, i-iStart));
-      }
-      symbl = new symbolExpr(datum);
-      symbl.location = new Location(sCol, sLine, iStart, i-iStart);
-      return symbl;
-    }
-
-    // readVerbatimSymbol : String Number String -> symbolExpr
-    // reads the next couple characters as-is until it reads
-    // a |.  It ignores both the closing | and the opening |.
-    function readVerbatimSymbol(str, i, datum) {
-      var sCol = column-datum.length, sLine = line, iStart = i-datum.length;
-      i++; column++; // skip over the opening |
-      while(i < str.length && str.charAt(i) !== "|") {
-        // check for newlines
-        if(str.charAt(i) === "\n"){ line++; column = 0;}
-        datum += str.charAt(i++);
-        column++;
-      }
-      column++; // skip over the closing |
-      if(i >= str.length) {
-        throwError(new types.Message(["Unexpected EOF while reading a verbatim symbol: ", datum])
-                   ,new Location(sCol, sLine, iStart, i-iStart));
-      }
-      var symbl = new symbolExpr(datum);
-      symbl.location = new Location(sCol, sLine, iStart, (i-iStart)+1); // add 1 to span for the closing |
-      return symbl;
-    }
-
     /////////////////////
     /* Export Bindings */
     /////////////////////
