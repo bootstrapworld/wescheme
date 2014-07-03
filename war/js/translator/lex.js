@@ -727,9 +727,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                   // if we're inside bars *or* we're case sensitive, preserve case
                                   return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
                                 }, "").replace(/\\/g,'');
+                                console.log('filtered is "'+filtered+'"');
       // add bars if it's a symbol that needs them
-      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]+/i.test(filtered)? "|"+filtered+"|" : filtered;
-
+      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
       // special-case for ".", which is not supported in WeScheme
       if(filtered === "."){
         errorIndex = i; // HACK - remember where we are, so readList can pick up reading
