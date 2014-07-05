@@ -249,6 +249,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    , sexp.location
                    , "Error-GenericSyntacticError");
       }
+      if(isSymbolEqualTo(sexp[0], "else")){
+        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp.location)
+                                      , ": not allowed "
+                                      , new types.ColoredPart("here", sexp.location)
+                                      , ", because this is not a question in a clause"])
+                   , sexp.location);
+      }
       return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr), sexp[0]) :
                             throwError(new types.Message(["function call sexp"]), sexp.location);
     }
