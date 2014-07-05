@@ -6,28 +6,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  Follows WeScheme's current implementation of Advanced Student
  http://docs.racket-lang.org/htdp-langs/advanced.html
- NOT SUPPORTED BY WESCHEME:
-  - define-datatype
-  - begin0
-  - set!
-  - time
-  - delay
-  - shared
-  - recur
-  - match
-  - check-member-of
-  - check-range
-  - (require planet)
-  - byetstrings (#"Apple")
-  - regexps (#rx or #px)
-  - hashtables (#hash)
-  - graphs (#1=100 #1# #1#)
-  - reader and language extensions (#reader and #lang)
+ NOT SUPPORTED BY WESCHEME: define-datatype, begin0, set!, time, delay, shared, recur,
+    match, check-member-of, check-range, (require planet), byetstrings (#"Apple"),
+    regexps (#rx or #px), hashtables (#hash), graphs (#1=100 #1# #1#), #reader and #lang
  
  
  TODO
  - JSLint
  - have every read function set i, then remove i-setting logic?
+ - collect all regexps into RegExp objects
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -463,7 +450,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           i = sexp.location.span;
           return datum;
         } else {
-          // match everything valid (or *almost-valid*) sequence of characters, or the empty string
+          // match every valid (or *almost-valid*) sequence of characters, or the empty string
           var chunk = /^(hasheq|hash|fl|fx|\d+|[tfeibdox]|\<\<|[\\\"\%\:\&\|\;\!\`\,\']|)/i.exec(str.slice(i))[0],
           // match the next character
               nextChar = str.charAt(i+chunk.length);
@@ -476,7 +463,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             // BYTE-STRINGS (unsupported)
             case '"': throwUnsupportedError(": byte strings are not supported in WeScheme", "#\"");
             // SYMBOLS
-            case '%': datum = readSymbolOrNumber(str, i, "");
+            case '%': datum = readSymbolOrNumber(str, i);
                       datum.val = '#'+datum.val;
                       i+= datum.location.span; break;
             // KEYWORDS (lex to a symbol, then strip out the contents)
@@ -521,7 +508,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case 't':  // true
             case 'f':  // false
                 if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
-                  datum = readSymbolOrNumber(p, 0, "");      // create a symbol based solely on the character
+                  datum = readSymbolOrNumber(p, 0);  // create a symbol based solely on the character
                   datum.val = ((datum.val==='t' || datum.val==='f')? "#" : "#'")+datum.val;
                   i+= datum.location.span;
                   break;
@@ -606,9 +593,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var sCol = column, sLine = line;
       if(i+1 >= str.length) {
         errorIndex = i; // HACK - remember where we are, so readList can pick up reading
-        throwError(new types.Message([source , ":"
-                                      , sLine.toString(), ":"
-                                      , (sCol-1).toString()
+        throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString()
                                       , ": read: expected a commented-out element for `#;' (found end-of-file)"])
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
                    ,"Error-GenericReadError");
@@ -649,14 +634,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
-                   "";
+                   /* else */  "";
       function eofError(i){
         errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
         var action = p == "'" ? " quoting " :
                      p == "`" ? " quasiquoting " :
                      p == "," ? " unquoting " : "";
-        throwError(new types.Message([source, ":", sLine.toString()
-                                      , ":", sCol.toString()
+        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
                                       , ": read: expected an element for" + action
                                       , p
                                       , " (found end-of-file)"])
@@ -682,8 +666,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
             errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
-            throwError(new types.Message([source, ":", sLine.toString()
-                                          , ":", column.toString()
+            throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
                                           , ": read: unexpected `" + unexpected[1] + "'"])
                        , new Location(column, line, i, 1)
                        , "Error-GenericReadError");
@@ -724,10 +707,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       }
       // split by |, and for each one enforce case-sensitivity for non-verbatim sections. Remove all escape characters
       var filtered = chunk.split("|").reduce(function(acc, str, i){
-                                  // if we're inside bars *or* we're case sensitive, preserve case
-                                  return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
-                                }, "").replace(/\\/g,'');
-                                console.log('filtered is "'+filtered+'"');
+            // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
+            return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
+          }, "").replace(/\\/g,'');
+      
       // add bars if it's a symbol that needs them
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
       // special-case for ".", which is not supported in WeScheme
@@ -762,9 +745,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     /////////////////////
     /* Export Bindings */
     /////////////////////
-//    plt.compiler.readFile = readSSFile;
     plt.compiler.lex = readProg;
     plt.compiler.sexpToString = sexpToString;
-//    plt.compiler.read = readSExp;
-
 })();
