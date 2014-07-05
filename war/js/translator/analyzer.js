@@ -331,8 +331,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , ", because this is not a question in a clause"]),
                    loc);
     }
-    // if this is a keyword without a parent
-    if(!this.parent && // || plt.compiler.isDefinition(this.parent) &&
+    // if this is a keyword without a parent, or if it's not the first child of the parent
+    if(!this.parent &&
        (plt.compiler.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
@@ -489,6 +489,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  defVars.prototype.analyzeUses = function(pinfo, env){
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
+ defFunc.prototype.analyzeUses = function(pinfo, env){
+    return this.body.analyzeUses(pinfo, pinfo.env);
+ };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
  };
@@ -532,6 +535,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                             }, pinfo);
  };
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
+    // if this is a keyword without a parent, or if it's not the first child of the parent
+    if((plt.compiler.keywords.indexOf(this.val) > -1) &&
+       (!this.parent || this.parent[0]!== this)){
+        throwError(new types.Message([new types.ColoredPart(this.val, this.location)
+                                      , ": expected an open parenthesis before "
+                                      , this.val
+                                      , ", but found none"]),
+                    this.location);
+    }
    if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
