@@ -447,6 +447,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         } else if(vectorTest && vectorTest[0].length > 0){
           var size = (vectorTest[1])? parseInt(vectorTest[1]) : "";
           var sexp = readList(str, i+(size.toString().length));
+          // test vector size
+          if((size!=="") && (sexp.length > size)){
+             var msg = new types.Message(["read: vector length "+size+" is too small, ",
+                                          sexp.length+" value" + ((sexp.length>1)? "s" : ""),
+                                          " provided"]);
+             throwError(msg, sexp.location);
+          }
           datum = new vectorExpr(sexp, size);
           datum.location = sexp.location;
           i = sexp.location.span;
