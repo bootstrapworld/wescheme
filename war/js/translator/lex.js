@@ -54,7 +54,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // the delimiters encountered so far, line and column, and case-sensitivity
     var delims, line, column, sCol, sLine, source, caseSensitiveSymbols = true;
     // UGLY HACK to track index if an error occurs. We should remove this if we can make i entirely stateful
-    var errorIndex;
+    var endOfError;
                             
     // the location struct
     var Location = function(sCol, sLine, offset, span, theSource){
@@ -139,7 +139,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           p = str.charAt(++i);
         }
       }
-
       return i;
     }
 
@@ -216,7 +215,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       i = chewWhiteSpace(str, i);
       var p = str.charAt(i);
       if(i >= str.length) {
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":"
                                       , sLine.toString(), ":"
                                       , (sCol-1).toString()
@@ -240,14 +239,16 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
     function readList(str, i) {
-      var sCol = column, sLine = line, iStart = i, innerError=false, lastKnownGoodLocation;
-      var openingDelim = str.charAt(i++);
-      column++; // count the openingDelim
+      var sCol=column, sLine=line, iStart=i, innerError=false,
+          errorLocation = new Location(sCol, sLine, iStart, 1),
+          openingDelim = str.charAt(i++);
+      column++; // move forward to count the closing delimeter
       var sexp, list = [];
       delims.push(openingDelim);
       i = chewWhiteSpace(str, i);
+                            
+      // read forward until we see a closing delim, saving the last known-good location
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
-        lastKnownGoodLocation = new Location(column, line, i, 1);
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
@@ -257,36 +258,34 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             sexp.parent = list;                // set this list as it's parent
             list.push(sexp);                   // and add the sexp to the list
           }
-        } catch (e){
+        } catch (e){                            // try to keep reading from endOfError...
           // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
-          if(  /expected a .+ to (close|open)/.exec(e)
-            || /unknown escape sequence/.exec(e)
-            || /unexpected/.exec(e)){
+          if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e)){
             throw e;
           } else {
-            var innerError = e; // store the error
-            var errorLoc = JSON.parse(JSON.parse(innerError)["structured-error"]).location;
-            i = errorIndex; // keep reading from the char after the error to see if we match delimeters
+            var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
+            errorLocation = new Location(Number(eLoc.column), Number(eLoc.line),
+                                         Number(eLoc.offset)-1, Number(eLoc.span));
+            i = endOfError;// keep reading from the last error location
+            innerError = e;
           }
         }
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
+      // if we reached the end of an otherwise-successful list but there's no closing delim...
       if(i >= str.length) {
-                            console.log(innerError);
-                            console.log((innerError? lastKnownGoodLocation : new Location(sCol, sLine, iStart, 1)));
-         var msg = new types.Message(["read: expected a ",
-                                      otherDelim(openingDelim),
+         var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
                                       " to close ",
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1))
                                       ]);
          // throw an error
-         throwError(msg, (innerError? lastKnownGoodLocation : new Location(column-1, sLine, i-1, 1)));
+         throwError(msg, errorLocation);
       }
+      // if we reached the end of an otherwise-successful list and it's the wrong closing delim...
       if(!matchingDelims(openingDelim, str.charAt(i))) {
-         var msg = new types.Message(["read: expected a ",
-                                      otherDelim(openingDelim),
+         var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
                                       " to close ",
                                       new types.ColoredPart(openingDelim.toString(),
                                                             new Location(sCol, sLine, iStart, 1)),
@@ -296,10 +295,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       ]);
          throwError(msg, new Location(column, line, i, 1));
       }
-      // if an error occured within the list, throw it
-      if(innerError) throw innerError;
-      // add 1 to span to count the closing delimeter
-      column++; i++;
+      
+      column++; i++;  // move forward to count the closing delimeter
+      // if an error occured within the list, set endOfError to the end, and throw it
+      if(innerError){ endOfError = i; throw innerError; }
       list.location = new Location(sCol, sLine, iStart, i-iStart);
       return list;
     }
@@ -309,20 +308,21 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // at index i
     function readString(str, i) {
       var sCol = column, sLine = line, iStart = i;
-      i++; // skip over the opening quotation mark and char
-      column++;
-                   
+      // greedily match to the end of the string, before examining escape sequences
+      var closedString = /^\"[^\"]*(\\"[^\"]*)*[^\\]\"/.test(str.slice(i)),
+          greedy = /^\"[^\"]*(\\"[^\"]*)*/.exec(str.slice(iStart))[0];
+      i++; column++; // skip over the opening quotation mark char
+      // it's a valid string, so let's make sure it's got proper escape sequences
       var chr, datum = "";
-
       while(i < str.length && str.charAt(i) !== '"') {
         chr = str.charAt(i++);
         // track line/char values while we scan
         if(chr === "\n"){ line++; column = 0;}
         else { column++; }
-
         if(chr === '\\') {
           column++; // move the column forward to skip over the escape character
           chr = str.charAt(i++);
+          if(i >= str.length) break; // if there's nothing there, break out
           switch(true){
              case /a/.test(chr)  : chr = '\u0007'; break;
              case /b/.test(chr)  : chr = '\b'; break;
@@ -357,20 +357,22 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                 i += match.length-1; column += match.length-1;
                 break;
              default   :
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
-        throwError(new types.Message([source, ":"
-                                      , sLine.toString(), ":"
-                                      , sCol.toString()
-                                      , ": read: unknown escape sequence \\" +chr+" in string"])
-                   , new Location(sCol, sLine, iStart, i-iStart)
-                   , "Error-GenericReadError");
-          }
+                // HACK - remember where we are, so readList can pick up reading
+                endOfError = iStart+greedy.length+1;
+                throwError(new types.Message([source, ":"
+                                              , sLine.toString(), ":"
+                                              , sCol.toString()
+                                              , ": read: unknown escape sequence \\" +chr+" in string"])
+                           , new Location(sCol, sLine, iStart, i-iStart)
+                           , "Error-GenericReadError");
+                  }
         }
         datum += chr;
       }
 
-      if(i >= str.length) {
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+      // if the next char after iStart+openquote+greedy isn't a closing quote, it's an unclosed string
+      if(!closedString) {
+        endOfError = iStart+greedy.length; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
                                       , sLine.toString(), ":"
                                       , sCol.toString()
@@ -514,7 +516,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                   break;
                 }
             default:
-              errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+              endOfError = i; // HACK - remember where we are, so readList can pick up reading
               throwError(new types.Message([source, ":", line.toString()
                                            , ":", (column-1).toString()
                                            , ": read: bad syntax `#", (chunk+nextChar),"'"])
@@ -524,6 +526,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         }
       // only reached if # is the end of the string...
       } else {
+        endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":", line.toString()
                                      , ":" , (column-1).toString()
                                      , ": read: bad syntax `#'"])
@@ -592,7 +595,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function readSExpComment(str, i) {
       var sCol = column, sLine = line;
       if(i+1 >= str.length) {
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString()
                                       , ": read: expected a commented-out element for `#;' (found end-of-file)"])
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
@@ -616,7 +619,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         txt+=str.charAt(i); column++; i++;
       }
       if(i > str.length) {
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message(["read: Unexpected EOF when reading a line comment"]),
                    new Location(sCol, sLine, iStart, i-iStart));
       }
@@ -636,15 +639,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    p == "`" ? new symbolExpr("quasiquote") :
                    /* else */  "";
       function eofError(i){
-        errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
         var action = p == "'" ? " quoting " :
                      p == "`" ? " quasiquoting " :
                      p == "," ? " unquoting " : "";
-        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
+        throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
                                       , ": read: expected an element for" + action
                                       , p
                                       , " (found end-of-file)"])
-                   , new Location(sCol, sLine, iStart, 1)
+                   , new Location(column, sLine, iStart, 1)
                    , "Error-GenericReadError");
 
       }
@@ -665,8 +668,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           if(/end-of-file/.exec(e)) eofError(i);
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
-            errorIndex = i+1; // HACK - remember where we are, so readList can pick up reading
-            throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
+            endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
+            throwError(new types.Message([source, ":", line.toString(), ":", column.toString()
                                           , ": read: unexpected `" + unexpected[1] + "'"])
                        , new Location(column, line, i, 1)
                        , "Error-GenericReadError");
@@ -686,16 +689,16 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
     function readSymbolOrNumber(str, i){
       var sCol = column, sLine = line, iStart = i;
-      // match anything pattern consisting of stuff between two |bars|, or
+      // match anything pattern consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) [ ] { } " , ' ` ; # | \\
-      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s])+/g.exec(str.slice(i))[0];
+      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"])+/g.exec(str.slice(i))[0];
       // move through the string checking for newlines and escaped characters
       for(var j=0; j < chunk.length; j++){
         i++; column++;
         if(str.charAt(j) === "\\"){
           j++;
           if(j >= str.length){
-            errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+            endOfError = i; // HACK - remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
                                           ": read: EOF following `\\' in symbol"])
                        ,new Location(sCol, sLine, iStart, i-iStart)
@@ -715,7 +718,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
       // special-case for ".", which is not supported in WeScheme
       if(filtered === "."){
-        errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
                                     , sLine.toString(), ":"
                                     , sCol.toString()
@@ -733,7 +736,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return node;
       // if it's not a number OR a symbol
       } catch(e) {
-          errorIndex = i; // HACK - remember where we are, so readList can pick up reading
+          endOfError = i; // HACK - remember where we are, so readList can pick up reading
           throwError(new types.Message([source, ":", sLine.toString()
                                         , ":" , sCol.toString()
                                         , ": read: "+e.message])
