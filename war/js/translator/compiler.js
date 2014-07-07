@@ -4,8 +4,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 /*
  TODO
- - toJSON method for each bytecode struct
- - toJSON for number literals
+ - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
  - figure out desugaring/compilation of primops
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
@@ -14,16 +13,55 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 (function (){
 
-    numberExpr.prototype.toJSON = function(){
-      return {"$": 'constant', "value" : this.val};
+    numberExpr.prototype.toBytecode = function(){
+      return '{"$":"constant","value":'+this.val.toBytecode()+'}';
     };
-    stringExpr.prototype.toJSON = function(){
-      return {"$": 'constant', "value" : this.val};
+    stringExpr.prototype.toBytecode = function(){
+      return '{"$":"constant","value":'+this.val+'}';
     };
-    symbolExpr.prototype.toJSON = function(){
-      return "new types.symbol(\""+this.val+"\")";
+    symbolExpr.prototype.toBytecode = function(){
+      return 'types.symbol("'+this.val+'")';
+    };
+    vectorExpr.prototype.toBytecode = function(){
+      return 'types.vector(['+this.vals.join(',')+'])';
     };
  
+    jsnums.Rational.prototype.toBytecode = function(){
+      return 'types.rational('+this.n+','+this.d+')';
+    };
+    jsnums.BigInteger.prototype.toBytecode = function(){
+      return 'types.bignum('+this.toString()+')';
+    };
+    jsnums.FloatPoint.prototype.toBytecode = function(){
+      return 'types["float"]('+this.toString()+')';
+    };
+    jsnums.Complex.prototype.toBytecode = function(){
+      return 'types.complex('+this.r+','+this.i+')';
+    };
+ 
+    // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
+    function stackReference(){}
+    function localStackReference(name, isBoxed, depth){
+      stackReference.call(this);
+      this.name = name;
+      this.isBoxed = isBoxed;
+      this.depth = depth;
+    }
+    localStackReference.prototype = heir(stackReference.prototype);
+    function globalStackReference(name, depth, pos){
+      stackReference.call(this);
+      this.name = name;
+      this.pos = pos;
+      this.depth = depth;
+    }
+    globalStackReference.prototype = heir(stackReference.prototype);
+    function unboundStackReference(name){
+      stackReference.call(this);
+      this.name = name;
+    }
+    unboundStackReference.prototype = heir(stackReference.prototype);
+
+
     /**************************************************************************
      *
      *    BYTECODE STRUCTS -
@@ -33,21 +71,21 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  
     // all Programs, by default, print out their values and have no location
-    // anything that behaves differently must provide their own toJSON() function
+    // anything that behaves differently must provide their own toBytecode() function
     var Bytecode = function() {
       // -> JSON
-      this.toJSON = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toJSON method was called on"; };
+      this.toBytecode = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
     };
 
     // for mapping JSON conversion over an array
- function convertToJSON(bc){ return (bc instanceof Bytecode)? bc.toJSON() : bc.toString(); }
+    function converttoBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
  
     // literal
     function literal(val) {
       Bytecode.call(this);
       this.val = val;  // could be a numberExpr, vectorExpr, stringExpr
-      this.toJSON = function(){
-        return {"$": 'constant', "value" : this.val.toJSON()};
+      this.toBytecode = function(){
+        return '{"$": "constant", "value":'+this.val.toBytecode()+'}';
       };
     };
     literal.prototype = heir(Bytecode.prototype);
@@ -56,7 +94,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function globalBucket(name) {
       Bytecode.call(this);
       this.name = name;  // symbol
-      this.toJSON = function(){return {"$":'global-bucket', "value": this.name.toString()};};
+      this.toBytecode = function(){return '{"$":"global-bucket", "value": '+this.name.toString()+'}';};
     };
     globalBucket.prototype = heir(Bytecode.prototype);
 
@@ -68,9 +106,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.sym    = sym;    // symbol
       this.pos    = pos;    // exact integer
       this.phase  = phase;  // 1/0 - direct access to exported id
-      this.toJSON = function(){
-        return {"$":'module-variable', "sym" : new symbolExpr(this.sym).toJSON(), "modidx": this.modidx.toJSON(),
-                "pos" : this.pos, "phase" : this.phase};
+      this.toBytecode = function(){
+        return '{"$": "module-variable", "sym":'+new symbolExpr(this.sym).toBytecode()
+                +',"modidx": '+this.modidx.toBytecode()+',"pos":'+this.pos
+                +',"phase":'+this.phase+'}';
       };
     };
     moduleVariable.prototype = heir(Bytecode.prototype);
@@ -103,9 +142,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.numLifts   = numLifts;  // exact, non-negative integer
       this.topLevels  = topLevels; // list of (false, symbol, globalBucket or moduleVariable)
       this.stxs       = stxs;      // list of stxs
-      this.toJSON = function(){
-        return {"$":'prefix', "num-lifts": this.numLifts, "toplevels" : this.topLevels.map(convertToJSON),
-                "stxs" : this.stxs.map(convertToJSON)};
+      this.toBytecode = function(){
+        return '{"$":"prefix","num-lifts":'+this.numLifts+',"toplevels":['
+                +this.topLevels.map(converttoBytecode).join(',')+'],"stxs":['
+                +this.stxs.map(converttoBytecode)+']}';
       };
     };
     prefix.prototype = heir(Bytecode.prototype);
@@ -126,8 +166,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function indirect(v) {
       Bytecode.call(this);
       this.v  = v; // ??
-      this.toJSON = function(){
-        return {"$":'indirect', "v": this.v.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"indirect", "v": '+this.v.toBytecode()+'}';
       };
     };
     indirect.prototype = heir(Bytecode.prototype);
@@ -138,9 +178,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.maxLetDepth= maxLetDepth;  // exact non-negative integer
       this.prefix     = prefix;       // prefix
       this.code       = code;         // form, indirect, or any
-      this.toJSON = function(){
-        return {"$":'compilation-top', "max-let-depth": this.maxLetDepth, "prefix" : this.prefix.toJSON(),
-              "compiled-indirects" : [], "code" : this.code.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"compilation-top","max-let-depth":'+this.maxLetDepth+',"prefix":'
+              + this.prefix.toBytecode()+',"compiled-indirects":[],"code":'
+              + this.code.toBytecode()+'}';
       };
     };
     compilationTop.prototype = heir(Bytecode.prototype);
@@ -166,9 +207,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.constant = constant; // boolean
       this.ready    = ready;    // boolean
       this.loc      = loc;      // false or Location
-      this.toJSON = function(){
-        return {"$":'toplevel', "depth": this.depth.toString(), "pos" : this.pos.toString(),
-               "const?" : this.constant, "ready?" : this.ready, "loc" : this.loc && this.loc.toVector().toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"toplevel", "depth": '+this.depth.toString()+',"pos":'+this.pos.toString()
+                +',"const?": '+this.constant+',"ready?":'+this.ready+',"loc":'
+                + this.loc && this.loc.toVector().toBytecode()+'}';
       };
     };
     topLevel.prototype = heir(Bytecode.prototype);
@@ -177,8 +219,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function seq(forms) {
       Bytecode.call(this);
       this.forms    = forms;  // list of form, indirect, any
-      this.toJSON = function(){
-        return {"$":'seq', "forms": this.forms.map(convertToJSON)};
+      this.toBytecode = function(){
+        return '{"$":"seq", "forms":['+this.forms.map(converttoBytecode)+']}';
       };
     };
     seq.prototype = heir(Bytecode.prototype);
@@ -188,8 +230,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.ids  = ids;  // list of toplevel or symbol
       this.rhs  = rhs;  // expr, indirect, seq, any
-      this.toJSON = function(){
-        return {"$":'def-values', "ids": this.ids.map(convertToJSON), "body" : this.rhs.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"def-values","ids":'+this.ids.map(converttoBytecode)+',"body": '+this.rhs.toBytecode()+'}';
       };
     };
     defValues.prototype = heir(Bytecode.prototype);
@@ -202,9 +244,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.rhs        = rhs;      // expr, indirect, seq, any
       this.prefix     = prefix;   // prefix
       this.maxLetDepth= maxLetDepth; // exact, non-negative integer
-      this.toJSON = function(){
-        return {"$":'def-values', "ids": this.ids.toJSON(), "rhs" : this.rhs.toJSON(),
-               "prefix" : this.prefix.toJSON(), "max-let-depth" : this.maxLetDepth.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"def-values","ids":'+this.ids.toBytecode()+',"rhs":'+this.rhs.toBytecode()
+                +',"prefix":'+this.prefix.toBytecode()+',"max-let-depth":'+this.maxLetDepth.toBytecode()+'}';
       };
     };
     defSyntaxes.prototype = heir(Bytecode.prototype);
@@ -236,11 +278,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.dummy      = dummy;        // false or Location
       this.langInfo   = langInfo;     // false or (vector modulePath symbol any)
       this.internalContext = internalContext;
-      this.toJSON = function(){
-        return {"$":'mod', "name": this.name.toJSON(), "self-modidx" : this.selfModidx.toJSON(),
-               "prefix" : this.prefix.toJSON(), "provides" : this.provides.toJSON(),
-               "requires" : this.requires && this.requires.toVector().toJSON(), "body" : this.body.toJSON(),
-               "stx-body" : this.syntaxBody.toJSON(), "max-let-depth" : this.maxLetDepth.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"mod", "name": '+this.name.toBytecode()+',"self-modidx":'+this.selfModidx.toBytecode()
+                +',"prefix":'+this.prefix.toBytecode()+',"provides":'+this.provides.toBytecode()
+                +',"requires":'+(this.requires && this.requires.toVector().toBytecode())+',"body":'
+                +this.body.toBytecode()+',"stx-body":'+this.syntaxBody.toBytecode()+',"max-let-depth":'
+                +this.maxLetDepth.toBytecode()+'}';
       };
     };
     mod.prototype = heir(Bytecode.prototype);
@@ -262,14 +305,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // operator+rand-locs includes a list of vectors corresponding to the location
       // of the operator, operands, etc if we can pick them out.  If we can't get
       // this information, it's false
-      this.toJSON = function(){
-        return {"$":'lam', "name": this.name, "locs" : this.operatorAndRandLocs.map(convertToJSON),
-               "flags" : this.flags.map(convertToJSON),
-               "num-params" : this.numParams, "param-types" : this.paramTypes.map(convertToJSON),
-               "rest?" : this.rest, "closure-map" : this.closureMap.map(convertToJSON),
-               "closure-types" : this.closureTypes.map(convertToJSON), "max-let-depth" : this.maxLetDepth,
-               "body" : this.body.toJSON()
-               };
+      this.toBytecode = function(){
+        return '{"$":"lam", "name": '+this.name+',"locs":'+this.operatorAndRandLocs.map(converttoBytecode)
+                +',"flags":'+this.flags.map(converttoBytecode)+',"num-params":'+this.numParams
+                +',"param-types":'+this.paramTypes.map(converttoBytecode)+',"rest?":'+this.rest
+                +',"closure-map":'+this.closureMap.map(converttoBytecode)+',"closure-types":'
+                +this.closureTypes.map(converttoBytecode)+',"max-let-depth":'+this.maxLetDepth
+                +',"body":'+this.body.toBytecode()+'}';
       };
     };
     lam.prototype = heir(Bytecode.prototype);
@@ -280,8 +322,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.code     = code;  // lam
       this.genId    = genId; // symbol
-      this.toJSON = function(){
-        return {"$":'closure', "code": this.code.toJSON(), "gen-id" : this.genId.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"closure", "code": '+this.code.toBytecode()+',"gen-id":'+this.genId.toBytecode()+'}';
       };
     };
     closure.prototype = heir(Bytecode.prototype);
@@ -291,8 +333,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.name     = name;  // symbol, vector, empty
       this.clauses  = clauses; // list of (lambda or indirect)
-      this.toJSON = function(){
-        return {"$":'case-lam', "name": this.name.toJSON(), "clauses" : this.clauses.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"case-lam", "name": '+this.name.toBytecode()+',"clauses":'+this.clauses.toBytecode()+'}';
       };
     };
     caseLam.prototype = heir(Bytecode.prototype);
@@ -303,9 +345,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.rhs     = rhs;   // expr, seq, indirect, any
       this.body    = body;  // expr, seq, indirect, any
       this.flonum  = flonum;// boolean
-      this.toJSON = function(){
-        return {"$":'let-one', "rhs": this.rhs.toJSON(), "body" : this.body.toJSON(),
-               "flonum" : this.flonum.toJSON()};
+      this.toBytecode = function(){
+        return '{"$": "let-one", "rhs": '+this.rhs.toBytecode()+',"body":'+this.body.toBytecode()
+                +',"flonum":'+this.flonum.toBytecode()+'}';
       };
     };
     letOne.prototype = heir(Bytecode.prototype);
@@ -316,9 +358,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.count   = count;   // exact, non-negative integer
       this.boxes   = boxes;   // boolean
       this.body    = body;    // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'let-void', "count": this.count.toJSON(), "boxes" : this.boxes.toJSON(),
-               "body" : this.body.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"let-void", "count": '+this.count.toBytecode()+',"boxes":'
+                +this.boxes.toBytecode()+',"body":'+this.body.toBytecode()+'}';
       };
     };
     letVoid.prototype = heir(Bytecode.prototype);
@@ -328,8 +370,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.procs   = procs;   // list of lambdas
       this.body    = body;    // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'let-rec', "procs": this.procs.toJSON(),"body" : this.body.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"let-rec", "procs": '+this.procs.toBytecode()+',"body":'+this.body.toBytecode()+'}';
       };
     };
     letRec.prototype = heir(Bytecode.prototype);
@@ -342,10 +384,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.boxes   = boxes;   // boolean
       this.rhs     = rhs;     // expr, seq, indirect, any
       this.body    = body;    // expr, seq, indirect, any -- set existing stack slot(s)
-      this.toJSON = function(){
-        return {"$":'install-value', "count": this.count.toJSON(), "pos" : this.pos.toJSON(),
-               "boxes" : this.boxes.toJSON(), "rhs" : this.rhs.toJSON(),
-               "body" : this.body.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"install-value", "count": '+this.count.toBytecode()+',"pos":'+this.pos.toBytecode()
+                +',"boxes":'+this.boxes.toBytecode()+',"rhs":'+this.rhs.toBytecode()
+                +',"body":'+this.body.toBytecode()+'}';
       };
     };
     installValue.prototype = heir(Bytecode.prototype);
@@ -355,8 +397,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.pos     = pos;     // exact, non-negative integer
       this.body    = body;    // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'boxenv', "pos": this.pos.toJSON(), "body" : this.body.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"boxenv", "pos": '+this.pos.toBytecode()+',"body":'+this.body.toBytecode()+'}';
       };
     };
     boxEnv.prototype = heir(Bytecode.prototype);
@@ -369,10 +411,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.clear   = clear;   // boolean
       this.flonum  = flonum;  // boolean
       this.otherClears= otherClears; // boolean
-      this.toJSON = function(){
-        return {"$":'localref', "unbox?": this.unbox, "pos" : this.pos,
-               "clear" : this.clear, "other-clears" : this.otherClears,
-               "flonum?" : this.flonum};
+      this.toBytecode = function(){
+        return '{"$":"localref", "unbox?": '+this.unbox+',"pos":'+this.pos+',"clear":'+this.clear
+                +',"other-clears":'+this.otherClears+',"flonum?":'+this.flonum+'}';
       };
     };
     localRef.prototype = heir(Bytecode.prototype);
@@ -391,8 +432,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.rator   = rator;   // expr, seq, indirect, any
       this.rands   = rands;   // list of (expr, seq, indirect, any)
-      this.toJSON = function(){
-        return {"$":'application', "rator": this.rator.toJSON(), "rands" : this.rands.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"application", "rator": '+this.rator.toBytecode()+',"rands":'+this.rands.toBytecode()+'}';
       };
     };
     application.prototype = heir(Bytecode.prototype);
@@ -403,9 +444,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.testExpr = testExpr;   // expr, seq, indirect, any
       this.thenExpr = thenExpr;   // expr, seq, indirect, any
       this.elseExpr = elseExpr;   // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'branch', "test": this.test.toJSON(), "then" : this.thenExpr.toJSON(),
-               "else" : this.elseExpr.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"branch", "test": '+this.test.toBytecode()+',"then":'+this.thenExpr.toBytecode()
+                +',"else":'+this.elseExpr.toBytecode()+'}';
       };
     };
     branch.prototype = heir(Bytecode.prototype);
@@ -417,9 +458,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.key  = key;   // expr, seq, indirect, any
       this.val  = val;   // expr, seq, indirect, any
       this.body = body;  // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'with-cont-mark', "key": this.key.toJSON(), "val" : this.val.toJSON(),
-               "body" : this.body.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"with-cont-mark", "key": '+this.key.toBytecode()
+                +',"val":'+this.val.map? this.val.map(converttoBytecode) : this.val.toBytecode()
+                +',"body":'+this.body.toBytecode()+'}';
       };
     };
     withContMark.prototype = heir(Bytecode.prototype);
@@ -428,7 +470,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function beg0(seq) {
       Bytecode.call(this);
       this.seq  = seq;   // list  of (expr, seq, indirect, any)
-      this.toJSON = function(){ return {"$":'beg0', "seq": this.seq.toJSON()};  };
+      this.toBytecode = function(){ return '{"$":"beg0", "seq": '+this.seq.toBytecode()+'}';  };
     };
     beg0.prototype = heir(Bytecode.prototype);
 
@@ -436,7 +478,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function splice(forms) {
       Bytecode.call(this);
       this.forms  = forms;   // list  of (expr, seq, indirect, any)
-      this.toJSON = function(){ return {"$":'splice', "forms": this.forms.toJSON()};  };
+      this.toBytecode = function(){ return '{"$":"splice", "forms": '+this.forms.toBytecode()+'}';  };
     };
     splice.prototype = heir(Bytecode.prototype);
 
@@ -444,7 +486,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function varRef(topLevel) {
       Bytecode.call(this);
       this.topLevel  = topLevel;   // topLevel
-      this.toJSON = function(){ return {"$":'varref', "top-level": this.topLevel.toJSON()};  };
+      this.toBytecode = function(){ return '{"$":"varref", "top-level": '+this.topLevel.toBytecode()+'}';  };
     };
     varRef.prototype = heir(Bytecode.prototype);
 
@@ -454,9 +496,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.id      = id;      // topLevel
       this.rhs     = rhs;     // expr, seq, indirect, any
       this.undefOk = undefOk; // boolean
-      this.toJSON = function(){
-        return {"$":'assign', "id": this.id.toJSON(), "rhs" : this.rhs.toJSON(),
-               "undef-ok" : this.undefOk.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"assign", "id": '+this.id.toBytecode()+',"rhs":'+this.rhs.toBytecode()
+                +',"undef-ok":'+this.undefOk.toBytecode()+'}';
       };
     };
     assign.prototype = heir(Bytecode.prototype);
@@ -466,8 +508,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.proc    = proc;    // expr, seq, indirect, any
       this.args    = args;    // expr, seq, indirect, any
-      this.toJSON = function(){
-        return {"$":'apply-values', "proc": this.proc.toJSON(), "args" : this.args.toJSON()};
+      this.toBytecode = function(){
+        return '{"$":"apply-values", "proc": '+this.proc.toBytecode()+',"args":'+this.args.toBytecode()+'}';
       };
     };
     applyValues.prototype = heir(Bytecode.prototype);
@@ -476,7 +518,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function primVal(id) {
       Bytecode.call(this);
       this.id      = id;    // exact, non-negative integer
-      this.toJSON = function(){ return {"$":'primval', "id": this.id.toJSON()};  };
+      this.toBytecode = function(){ return '{"$":"primval", "id": '+this.id.toBytecode()+'}';  };
     };
     primVal.prototype = heir(Bytecode.prototype);
 
@@ -486,7 +528,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.$        = 'req';
       this.reqs    = reqs;    // syntax
       this.dummy   = dummy;   // toplevel
-      this.toJSON = function(){ return {"$":'req', "reqs": this.reqs.toJSON(), "dummy" : this.dummy.toJSON()};  };
+      this.toBytecode = function(){
+        return '{"$":"req", "reqs": '+this.reqs.toBytecode()+',"dummy":'+this.dummy.toBytecode()+'}';
+      };
     };
     req.prototype = heir(Bytecode.prototype);
 
@@ -612,8 +656,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.path = path;
       this.base = base;
       Bytecode.call(this);
-      this.toJSON = function(){
-        return {"$": 'module-path', "path": this.path, "base": convertToJSON(this.base) };
+      this.toBytecode = function(){
+        return '{"$": "module-path","path":"'+this.path+'","base":'+converttoBytecode(this.base)+'}';
       };
     };
     modulePath.prototype = heir(Bytecode.prototype);
@@ -626,7 +670,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return this.exprs.reduceRight(function(expr, acc){return expr.freeVariables(env, acc);}, acc);
     };
     symbolExpr.prototype.freeVariables= function(env, acc){
-      return (env.lookup(this.val, 0) instanceof plt.compiler.unboundStackReference)? acc.concat([this.val]) : acc;
+      return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this.val]) : acc;
     };
     localExpr.prototype.freeVariables = function(env, acc){ return acc; };
     andExpr.prototype.freeVariables   = function(env, acc){ return acc; };
@@ -729,9 +773,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
             // some utility functions
             ormap = function(f, l){return (l.length===0)? false : f(l[0])? l[0] : ormap(f, l.slice(1));},
-            isLocalStackRef   = function(r){return r instanceof plt.compiler.localStackReference;},
-            isGlobalStackRef  = function(r){return r instanceof plt.compiler.globalStackReference;},
-            isUnboundStackRef = function(r){return r instanceof plt.compiler.unboundStackReference;},
+            isLocalStackRef   = function(r){return r instanceof localStackReference;},
+            isGlobalStackRef  = function(r){return r instanceof globalStackReference;},
+            isUnboundStackRef = function(r){return r instanceof unboundStackReference;},
             getDepthFromRef   = function(r){ return r.depth;},
  
             // this will either be #f, or the first unboundStackRef
@@ -802,7 +846,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
    
    callExpr.prototype.compile = function(env, pinfo){
-      // add space to the stack for each argument
+      // add space to the stack for each argument, then build the bytecode for the application itself
       var makeSpace = function(env, operand){return new plt.compiler.unnamedEnv(env);},
           extendedEnv = this.args.reduce(makeSpace, env),
           compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
@@ -810,8 +854,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           pinfo1 = compiledOperatorAndPinfo[1],
           compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledOperands = compiledOperatorAndPinfo[0],
-          pinfo2 = compiledOperatorAndPinfo[1];
-          return [new application(compiledOperator, compiledOperands), pinfo2];
+          pinfo2 = compiledOperatorAndPinfo[1],
+          app = new application(compiledOperator, compiledOperands);
+ 
+      // extract the relevant locations for error reporting, then wrap the application in continuation marks
+      var extractLoc= function(e){return e.location;},
+          locs      = [this.location].concat(this.args.map(extractLoc)),
+          locVectors= locs.concat(this.location).map(function(loc){return loc.toVector();}),
+          appWithcontMark=new withContMark(new symbolExpr("moby-application-position-key"), locVectors,
+                                           new withContMark(new symbolExpr("moby-stack-record-continuation-mark-key"),
+                                                            this.location.toVector(), app));
+          return [appWithcontMark, pinfo2];
    };
    
    ifExpr.prototype.compile = function(env, pinfo){
@@ -830,11 +883,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    
    symbolExpr.prototype.compile = function(env, pinfo){
      var stackReference = env.lookup(this.val, 0), bytecode;
-      if(stackReference instanceof plt.compiler.localStackReference){
+      if(stackReference instanceof localStackReference){
         bytecode = new localRef(stackReference.boxed, stackReference.depth, false, false, false);
-      } else if(stackReference instanceof plt.compiler.globalStackReference){
+      } else if(stackReference instanceof globalStackReference){
         bytecode = new topLevel(stackReference.depth, stackReference.pos, false, false, this.location);
-      } else if(stackReference instanceof plt.compiler.unboundStackReference){
+      } else if(stackReference instanceof unboundStackReference){
         throw "Couldn't find '"+this.val+"' in the environment";
       } else {
         throw "ANALYSIS FAILURE: env.lookup failed for '"+this.val+"'! A reference should be added to the environment!";
@@ -915,7 +968,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
           bytecode = new compilationTop(0, toplevelPrefix, forms),
           response = {"permissions" : pinfo.permissions(),
-                      "bytecode" : "/* runtime-version: clientside-summer-2014 */n" + JSON.stringify(bytecode.toJSON()),
+                      "bytecode" : "/* runtime-version: clientside-summer-2014 */n" + bytecode.toBytecode(),
                       "provides" : pinfo.providedNames.keys()};
           return response;
    }
@@ -924,5 +977,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   /////////////////////
   /* Export Bindings */
   /////////////////////
-  plt.compiler.compile     = compileCompilationTop;
+  plt.compiler.localStackReference  = localStackReference;
+  plt.compiler.globalStackReference = globalStackReference;
+  plt.compiler.unboundStackReference= unboundStackReference;
+  plt.compiler.compile              = compileCompilationTop;
  })();
