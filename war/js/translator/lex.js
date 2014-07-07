@@ -651,12 +651,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      p == "`" ? " quasiquoting " :
                      p == "," ? " unquoting " : "";
         throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
-                                      , ": read: expected an element for" + action
-                                      , p
+                                      , ": read: expected an element for" + action, p
                                       , " (found end-of-file)"])
                    , new Location(column, sLine, iStart, 1)
                    , "Error-GenericReadError");
-
       }
       if(i+1 >= str.length) { eofError(i); }
       i++; column++; // read forward one char
@@ -670,6 +668,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       }
       // read the next non-comment sexp
       while(!nextSExp || (nextSExp instanceof Comment)){
+        i = chewWhiteSpace(str, i);
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
           if(/end-of-file/.exec(e)) eofError(i);
