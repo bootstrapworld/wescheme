@@ -936,7 +936,6 @@ function getTopLevelEnv(lang){
   // Registers a new toplevel function for given env, munging the name
   var r = function(env, moduleName, name, arity, vararity){
     return env.extendFunction(name, moduleName, arity, vararity, false);
-    return e;
   };
   
   // The core environment includes bindings to Javascript-written functions.
@@ -1059,6 +1058,7 @@ function getTopLevelEnv(lang){
     }
     this.lookup = function(name, depth){
       var pos = position(name, this.names); // index or false
+ console.log('looked up '+name+' in the global envoronment, and found it at '+pos);
       return pos? new plt.compiler.globalStackReference(name, depth, pos)
                 : this.parent.lookup(name, depth+1);
     };

@@ -8,6 +8,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  - figure out desugaring/compilation of primops
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
+ - someday, get rid of convertToBytecode()
  */
 
 
@@ -96,7 +97,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function globalBucket(name) {
       Bytecode.call(this);
       this.name = name;  // symbol
-      this.toBytecode = function(){return '{"$":"global-bucket","value":'+this.name+'}';};
+      this.toBytecode = function(){return '{"$":"global-bucket","value":"'+this.name+'"}';};
     };
     globalBucket.prototype = heir(Bytecode.prototype);
 
@@ -223,7 +224,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.forms    = forms;  // list of form, indirect, any
       this.toBytecode = function(){
-        return '{"$":"seq","forms":['+this.forms.map(convertToBytecode)+']}';
+        return '{"$":"seq","forms":['+this.forms.map(convertToBytecode).join(',')+']}';
       };
     };
     seq.prototype = heir(Bytecode.prototype);
@@ -234,7 +235,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.ids  = ids;  // list of toplevel or symbol
       this.rhs  = rhs;  // expr, indirect, seq, any
       this.toBytecode = function(){
-        return '{"$":"def-values","ids":'+this.ids.map(convertToBytecode)+',"body":'+this.rhs.toBytecode()+'}';
+        return '{"$":"def-values","ids":['+this.ids.map(convertToBytecode).join(',')
+                +'],"body":'+this.rhs.toBytecode()+'}';
       };
     };
     defValues.prototype = heir(Bytecode.prototype);
@@ -248,7 +250,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.prefix     = prefix;   // prefix
       this.maxLetDepth= maxLetDepth; // exact, non-negative integer
       this.toBytecode = function(){
-        return '{"$":"def-values","ids":'+this.ids.toBytecode()+',"rhs":'+this.rhs.toBytecode()
+        return '{"$":"def-values","ids":['+this.ids.toBytecode().join(',')
+                +'],"rhs":'+this.rhs.toBytecode()
                 +',"prefix":'+this.prefix.toBytecode()+',"max-let-depth":'+this.maxLetDepth.toBytecode()+'}';
       };
     };
@@ -850,7 +853,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
    
    callExpr.prototype.compile = function(env, pinfo){
- console.log('compiling callExpr. func is '+this.func+', and args are '+this.args.toString());
       // add space to the stack for each argument, then build the bytecode for the application itself
       var makeSpace = function(env, operand){return new plt.compiler.unnamedEnv(env);},
           extendedEnv = this.args.reduce(makeSpace, env),
