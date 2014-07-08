@@ -307,16 +307,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.closureMap = closureMap;   // vector of exact, non-negative integers
       this.maxLetDepth= maxLetDepth;  // exact, non-negative integer
       this.closureTypes=closureTypes; // list of ('val/ref or 'flonum)
-      this.operatorAndRandLocs = operatorAndRandLocs;
+      this.operatorAndRandLocs = operatorAndRandLocs; // list of Vectors
       // operator+rand-locs includes a list of vectors corresponding to the location
       // of the operator, operands, etc if we can pick them out.  If we can't get
       // this information, it's false
       this.toBytecode = function(){
-        return '{"$":"lam","name":'+this.name+',"locs":'+this.operatorAndRandLocs.map(convertToBytecode)
-                +',"flags":'+this.flags.map(convertToBytecode)+',"num-params":'+this.numParams
-                +',"param-types":'+this.paramTypes.map(convertToBytecode)+',"rest?":'+this.rest
-                +',"closure-map":'+this.closureMap.map(convertToBytecode)+',"closure-types":'
-                +this.closureTypes.map(convertToBytecode)+',"max-let-depth":'+this.maxLetDepth
+        return '{"$":"lam","name":'+this.name.toBytecode()+',"locs":['
+                +this.operatorAndRandLocs.map(convertToBytecode).join(',')
+                +'],"flags":'+this.flags.map(convertToBytecode)+',"num-params":'+this.numParams
+                +',"param-types":['+this.paramTypes.map(convertToBytecode).join(',')+'],"rest?":'+this.rest
+                +',"closure-map":['+this.closureMap.map(convertToBytecode)+'],"closure-types":['
+                +this.closureTypes.map(convertToBytecode)+'],"max-let-depth":'+this.maxLetDepth
                 +',"body":'+this.body.toBytecode()+'}';
       };
     };
@@ -412,14 +413,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // localRef: access local via stack
     function localRef(unbox, pos, clear, otherClears, flonum) {
       Bytecode.call(this);
-      this.unbox   = unbox;   // boolean
+      this.unbox   = unbox || false;   // boolean
       this.pos     = pos;     // exact, non-negative integer
       this.clear   = clear;   // boolean
       this.flonum  = flonum;  // boolean
       this.otherClears= otherClears; // boolean
       this.toBytecode = function(){
         return '{"$":"localref","unbox?":'+this.unbox+',"pos":'+this.pos+',"clear":'+this.clear
-                +',"other-clears":'+this.otherClears+',"flonum?":'+this.flonum+'}';
+                +',"other-clears?":'+this.otherClears+',"flonum?":'+this.flonum+'}';
       };
     };
     localRef.prototype = heir(Bytecode.prototype);
@@ -669,23 +670,25 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
     modulePath.prototype = heir(Bytecode.prototype);
  
-    Program.prototype.freeVariables   = function(env, acc){ return acc; }
-    ifExpr.prototype.freeVariables    = function(env, acc){
-      return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(env, acc)));
+    Program.prototype.freeVariables   = function(acc, env){ return acc; }
+    ifExpr.prototype.freeVariables    = function(acc, env){
+      return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(acc, env)));
     };
-    beginExpr.prototype.freeVariables = function(env, acc){
-      return this.exprs.reduceRight(function(expr, acc){return expr.freeVariables(env, acc);}, acc);
+    beginExpr.prototype.freeVariables = function(acc, env){
+      return this.exprs.reduceRight(function(acc, expr){return expr.freeVariables(acc, env);}, acc);
     };
-    symbolExpr.prototype.freeVariables= function(env, acc){
+    symbolExpr.prototype.freeVariables= function(acc, env){
       return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this.val]) : acc;
     };
-    localExpr.prototype.freeVariables = function(env, acc){ return acc; };
-    andExpr.prototype.freeVariables   = function(env, acc){ return acc; };
-    lambdaExpr.prototype.freeVariables= function(env, acc){ return acc; };
-    quotedExpr.prototype.freeVariables= function(env, acc){ return acc; };
-    primop.prototype.freeVariables    = function(env, acc){ return acc; };
-    ifExpr.prototype.freeVariables    = function(env, acc){ return acc; };
-   
+    callExpr.prototype.freeVariables = function(acc, env){
+      return this.args.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+    };
+    localExpr.prototype.freeVariables = function(acc, env){ return acc; };
+    andExpr.prototype.freeVariables   = function(acc, env){ return acc; };
+    lambdaExpr.prototype.freeVariables= function(acc, env){ return acc; };
+    quotedExpr.prototype.freeVariables= function(acc, env){ return acc; };
+    primop.prototype.freeVariables    = function(acc, env){ return acc; };
+ 
   /**************************************************************************
    *
    *    COMPILATION -
@@ -787,7 +790,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
- 
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + "is bound.";
         } else {
@@ -820,31 +822,31 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       }
  
       var envWithArgs = this.args.reduce(pushLocal, new plt.compiler.emptyEnv());
-          freeVars = this.body.freeVariables(envWithArgs, []);
+          freeVars = this.body.freeVariables([], envWithArgs);
       var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
-          closureVector = closureVectorAndEnv[0],
+          closureMap = closureVectorAndEnv[0],
           extendedEnv = closureVectorAndEnv[1];
       var compiledBodyAndPinfo = this.body.compile(extendedEnv, pinfo),
           compiledBody = compiledBodyAndPinfo[0],
           pinfo = compiledBodyAndPinfo[1];
       var lambdaArgs = new Array(this.args.length),
-          closureArgs = new Array(closureVector.length);
+          closureArgs = new Array(closureMap.length);
  
-      var valSymbols = [], valRefSymbols = [];
-      for(var i=0; i < this.args.length; i++)     { valSymbols.push(new symbolExpr("val"));        }
-      for(var j=0; j < closureVector.length; j++) { valRefSymbols.push(new symbolExpr("val/ref")); }
- 
+      var paramTypes = [], closureTypes = [];
+      for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));        }
+      for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
+
       // emit the bytecode
-      var bytecode = new lam(isUnnamedLambda? [] : name,
-                             [name].concat(this.args).map(function(id){return id.location;}),
-                             [],
-                             this.args.length,
-                             valSymbols,
-                             false,
-                             closureVector,
-                             valRefSymbols,
-                             0,
-                             compiledBody);
+      var bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
+                             [name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
+                             [],              // flags
+                             this.args.length,// numParams
+                             paramTypes,      // paramTypes
+                             false,           // rest
+                             closureMap,      // closureMap
+                             closureTypes,    // closureTypes
+                             0,               // maxLetDepth
+                             compiledBody);   // body
       return [bytecode, pinfo];
    };
 
