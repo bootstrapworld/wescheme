@@ -13,7 +13,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 (function (){
     stringExpr.prototype.toBytecode = function(){
-      return this.val.toBytecode();
+      return '"'+this.val+'"';
     };
     symbolExpr.prototype.toBytecode = function(){
       return 'types.symbol("'+this.val+'")';
@@ -22,14 +22,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return 'types.vector(['+this.vals.join(',')+'])';
     };
     Array.prototype.toBytecode = function(){
-      return 'types.list(['+this.map(converttoBytecode).join(',')+'])';
+      return 'types.list(['+this.map(convertToBytecode).join(',')+'])';
     };
     numberExpr.prototype.toBytecode = function(){
-      return this.val.toBytecode();
+      return convertToBytecode(this.val);
     };
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toBytecode = function(){
-      return 'types.rational('+this.n+','+this.d+')';
+      return 'types.rational('+this.n+', '+this.d+')';
     };
     jsnums.BigInteger.prototype.toBytecode = function(){
       return 'types.bignum('+this.toString()+')';
@@ -38,7 +38,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return 'types["float"]('+this.toString()+')';
     };
     jsnums.Complex.prototype.toBytecode = function(){
-      return 'types.complex('+this.r+','+this.i+')';
+      return 'types.complex('+this.r+', '+this.i+')';
     };
  
     // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
@@ -80,14 +80,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
 
     // for mapping JSON conversion over an array
-    function converttoBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
+    function convertToBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
  
     // literal
     function literal(val) {
       Bytecode.call(this);
       this.val = val;  // could be a numberExpr, vectorExpr, stringExpr
       this.toBytecode = function(){
-        return '{"$":"constant","value":'+converttoBytecode(this.val)+'}';
+        return '{"$":"constant","value":'+convertToBytecode(this.val)+'}';
       };
     };
     literal.prototype = heir(Bytecode.prototype);
@@ -109,7 +109,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.pos    = pos;    // exact integer
       this.phase  = phase;  // 1/0 - direct access to exported id
       this.toBytecode = function(){
-        return '{"$":"module-variable","sym":'+new symbolExpr(this.sym.val).toBytecode()
+        return '{"$":"module-variable","sym":'+this.sym.toBytecode()
                 +',"modidx":'+this.modidx.toBytecode()+',"pos":'+this.pos
                 +',"phase":'+this.phase+'}';
       };
@@ -146,9 +146,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.stxs       = stxs;      // list of stxs
       this.toBytecode = function(){
         return '{"$":"prefix","num-lifts":'+this.numLifts+',"toplevels":['
-                +this.topLevels.map(function(v){return converttoBytecode(v);}).join(',')
+                +this.topLevels.map(function(v){return convertToBytecode(v);}).join(',')
                 +'],"stxs":['
-                +this.stxs.map(converttoBytecode)+']}';
+                +this.stxs.map(convertToBytecode)+']}';
       };
     };
     prefix.prototype = heir(Bytecode.prototype);
@@ -223,7 +223,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       Bytecode.call(this);
       this.forms    = forms;  // list of form, indirect, any
       this.toBytecode = function(){
-        return '{"$":"seq","forms":['+this.forms.map(converttoBytecode)+']}';
+        return '{"$":"seq","forms":['+this.forms.map(convertToBytecode)+']}';
       };
     };
     seq.prototype = heir(Bytecode.prototype);
@@ -234,7 +234,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.ids  = ids;  // list of toplevel or symbol
       this.rhs  = rhs;  // expr, indirect, seq, any
       this.toBytecode = function(){
-        return '{"$":"def-values","ids":'+this.ids.map(converttoBytecode)+',"body":'+this.rhs.toBytecode()+'}';
+        return '{"$":"def-values","ids":'+this.ids.map(convertToBytecode)+',"body":'+this.rhs.toBytecode()+'}';
       };
     };
     defValues.prototype = heir(Bytecode.prototype);
@@ -309,11 +309,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // of the operator, operands, etc if we can pick them out.  If we can't get
       // this information, it's false
       this.toBytecode = function(){
-        return '{"$":"lam","name":'+this.name+',"locs":'+this.operatorAndRandLocs.map(converttoBytecode)
-                +',"flags":'+this.flags.map(converttoBytecode)+',"num-params":'+this.numParams
-                +',"param-types":'+this.paramTypes.map(converttoBytecode)+',"rest?":'+this.rest
-                +',"closure-map":'+this.closureMap.map(converttoBytecode)+',"closure-types":'
-                +this.closureTypes.map(converttoBytecode)+',"max-let-depth":'+this.maxLetDepth
+        return '{"$":"lam","name":'+this.name+',"locs":'+this.operatorAndRandLocs.map(convertToBytecode)
+                +',"flags":'+this.flags.map(convertToBytecode)+',"num-params":'+this.numParams
+                +',"param-types":'+this.paramTypes.map(convertToBytecode)+',"rest?":'+this.rest
+                +',"closure-map":'+this.closureMap.map(convertToBytecode)+',"closure-types":'
+                +this.closureTypes.map(convertToBytecode)+',"max-let-depth":'+this.maxLetDepth
                 +',"body":'+this.body.toBytecode()+'}';
       };
     };
@@ -436,7 +436,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.rator   = rator;   // expr, seq, indirect, any
       this.rands   = rands;   // list of (expr, seq, indirect, any)
       this.toBytecode = function(){
-        return '{"$":"application","rator":'+this.rator.toBytecode()+',"rands":'+this.rands.toBytecode()+'}';
+        return '{"$":"application","rator":'+this.rator.toBytecode()+',"rands":['
+                +this.rands.map(convertToBytecode).join(',')+']}';
       };
     };
     application.prototype = heir(Bytecode.prototype);
@@ -660,7 +661,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.base = base;
       Bytecode.call(this);
       this.toBytecode = function(){
-        return '{"$":"module-path","path":'+this.path+',"base":'+converttoBytecode(this.base)+'}';
+        return '{"$":"module-path","path":'+this.path+',"base":'+convertToBytecode(this.base)+'}';
       };
     };
     modulePath.prototype = heir(Bytecode.prototype);
@@ -849,19 +850,20 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
    
    callExpr.prototype.compile = function(env, pinfo){
+ console.log('compiling callExpr. func is '+this.func+', and args are '+this.args.toString());
       // add space to the stack for each argument, then build the bytecode for the application itself
       var makeSpace = function(env, operand){return new plt.compiler.unnamedEnv(env);},
           extendedEnv = this.args.reduce(makeSpace, env),
           compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
           compiledOperator = compiledOperatorAndPinfo[0],
           pinfo1 = compiledOperatorAndPinfo[1],
-          compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, env]),
+          compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, extendedEnv]),
           compiledOperands = compiledOperandsAndPinfo[0],
           pinfo2 = compiledOperatorAndPinfo[1],
           app = new application(compiledOperator, compiledOperands);
       // extract the relevant locations for error reporting, then wrap the application in continuation marks
       var extractLoc= function(e){return e.location;},
-          locs      = [this.location].concat(this.args.map(extractLoc)),
+          locs      = [this.func.location].concat(this.args.map(extractLoc)),
           locVectors= locs.concat(this.location).map(function(loc){return loc.toVector();}),
           appWithcontMark=new withContMark(new symbolExpr("moby-application-position-key"), new literal(locVectors),
                                            new withContMark(new symbolExpr("moby-stack-record-continuation-mark-key"),
@@ -927,7 +929,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             makeModuleVariablefromBinding = function(b){
               return new moduleVariable(modulePathIndexJoin(b.moduleSource,
                                                             modulePathIndexJoin(false, false))
-                                        , b.name, -1, 0);
+                                        , new symbolExpr(b.name), -1, 0);
             };
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
@@ -967,8 +969,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // generate the bytecode for the program and return it, along with the program info
       var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
           bytecode = new compilationTop(0, toplevelPrefix, forms),
-          response = {"permissions" : pinfo.permissions(),
-                      "bytecode" : "/* runtime-version: clientside-summer-2014 */n" + bytecode.toBytecode(),
+          response = {"bytecode" : "/* runtime-version: clientside-summer-2014 */\n" + bytecode.toBytecode(),
+                      "permissions" : pinfo.permissions(),
                       "provides" : pinfo.providedNames.keys()};
           return response;
    }

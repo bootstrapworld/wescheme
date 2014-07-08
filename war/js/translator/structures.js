@@ -4,7 +4,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
  - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
- - add seperate module (with bindings) for moby/kernel/runtime/misc
+ - better handling of other modules
+ - add modules for foreign, world-effects, world-handlers
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -31,11 +32,11 @@ function throwError(msg, loc, errorClass) {
       return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
       return part.val;
     } else if(part.location !== undefined){
-      return {text: part.text, type: 'ColoredPart', loc: part.location.toJSON()
+      return {text: part.text, type: 'ColoredPart', loc: part.location.toBytecode()
             , toString: function(){return part.text;}};
     } else if(part.locations !== undefined){
       return {text: part.text, type: 'MultiPart', solid: part.solid
-            , locs: part.locations.map(function(l){return l.toJSON()})
+            , locs: part.locations.map(function(l){return l.toBytecode()})
             , toString: function(){return part.text;}};
     }
   }
@@ -69,7 +70,7 @@ function throwError(msg, loc, errorClass) {
                            ]
                         ]
                       ]
-    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toJSON() })
+    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toBytecode() })
   };
   throw JSON.stringify(json);
 }
@@ -498,18 +499,13 @@ function getTopLevelEnv(lang){
   var baseConstantsEnv = ["null", "empty", "true",//effect:do-nothing
                          , "false", "eof", "pi", "e","js-undefined"
                          , "js-null"].reduce(function(env, id){
-                                             return env.extendConstant(id.toString(), "moby/toplevel", false)
+                                             return env.extendConstant(id.toString(), '"moby/toplevel"', false)
                                              }, new plt.compiler.emptyEnv());
 
-  // Registers a new toplevel function, munging the name
-  var r = function(env, name, arity, vararity){
-    return env.extendFunction(name, "moby/toplevel", arity, vararity, false);
-    return e;
-  };
-  
   // runtime symbols
-  var runtimeBindings = [["verify-boolean-branch-value", 0]
-                         ,["throw-cond-exhausted-error", 0]
+  var runtimeBindings = [["verify-boolean-branch-value", 2]
+                         ,["throw-cond-exhausted-error", 1 ]
+                         ,["'check-operator-is-function", 3]
                          ,["print-values", 0]];
   
   // core defined symbols
@@ -937,17 +933,28 @@ function getTopLevelEnv(lang){
                       ,["step-count?", 1, false]
                       
                       ];
-                       
+  // Registers a new toplevel function for given env, munging the name
+  var r = function(env, moduleName, name, arity, vararity){
+    return env.extendFunction(name, moduleName, arity, vararity, false);
+    return e;
+  };
+  
   // The core environment includes bindings to Javascript-written functions.
-  // FIXME: do not concat runtimeBindings!!!
-  var coreEnv = coreBindings.concat(runtimeBindings).reduce(function (env, nameAndArity){
+  var addCoreEnv = coreBindings.reduce(function (env, nameAndArity){
                    if(nameAndArity.length === 2 ){
-                      return r(env, nameAndArity[0], nameAndArity[1], false);
+                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], false);
                    } else if(nameAndArity.length === 3 ){
-                      return r(env, nameAndArity[0], nameAndArity[1], nameAndArity[3]);
+                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
                    }
-                }, baseConstantsEnv);
-  return coreEnv;
+                }, baseConstantsEnv),
+      addRuntimeEnv = runtimeBindings.reduce(function (env, nameAndArity){
+                   if(nameAndArity.length === 2 ){
+                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], false);
+                   } else if(nameAndArity.length === 3 ){
+                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
+                   }
+                }, addCoreEnv);
+  return addRuntimeEnv;
 }
 
 
@@ -1018,7 +1025,7 @@ function getTopLevelEnv(lang){
   // sub-classes of env
   function emptyEnv(){
     env.call(this);
-  this.lookup = function(name, depth){ return new unboundStackReference(name); };
+  this.lookup = function(name, depth){ return new plt.compiler.unboundStackReference(name); };
   }
   emptyEnv.prototype = heir(env.prototype);
  
@@ -1035,7 +1042,7 @@ function getTopLevelEnv(lang){
     this.boxed  = boxed;
     this.parent = parent;
     this.lookup = function(name, depth){
-      return (name===this.name)? new localStackReference(name, this.boxed, depth)
+      return (name===this.name)? new plt.compiler.localStackReference(name, this.boxed, depth)
                               : this.parent.lookup(name, depth+1);
     };
   }
@@ -1052,35 +1059,12 @@ function getTopLevelEnv(lang){
     }
     this.lookup = function(name, depth){
       var pos = position(name, this.names); // index or false
-      return pos? new globalStackReference(name, depth, pos)
+      return pos? new plt.compiler.globalStackReference(name, depth, pos)
                 : this.parent.lookup(name, depth+1);
     };
   }
   globalEnv.prototype = heir(env.prototype);
- 
-   // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
-  function stackReference(){}
-  function localStackReference(name, isBoxed, depth){
-    stackReference.call(this);
-    this.name = name;
-    this.isBoxed = isBoxed;
-    this.depth = depth;
-  }
-  localStackReference.prototype = heir(stackReference.prototype);
-  function globalStackReference(name, depth, pos){
-    stackReference.call(this);
-    this.name = name;
-    this.pos = pos;
-    this.depth = depth;
-  }
-  globalStackReference.prototype = heir(stackReference.prototype);
-  function unboundStackReference(name){
-    stackReference.call(this);
-    this.name = name;
-  }
-  unboundStackReference.prototype = heir(stackReference.prototype);
-
- 
+  
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
   var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"];
  
@@ -1382,7 +1366,4 @@ function getTopLevelEnv(lang){
  plt.compiler.localEnv    = localEnv;
  plt.compiler.globalEnv   = globalEnv;
  plt.compiler.unnamedEnv  = unnamedEnv;
- plt.compiler.localStackReference = localStackReference;
- plt.compiler.globalStackReference = globalStackReference;
- plt.compiler.unboundStackReference = unboundStackReference;
 })();
