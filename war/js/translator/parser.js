@@ -790,7 +790,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       for(var i=sexp.vals.length-1; i < sexp.size; i++)
         sexp.vals[i] = sexp.vals[sexp.vals.length-1] || 0;
     }
-    return new callExpr(new symbolExpr("vector"), sexp.vals);
+    var vectorFunc = new symbolExpr("vector"),
+        buildVector = new callExpr(vectorFunc, sexp.vals);
+    vectorFunc.location = buildVector.location = sexp.location;
+    return buildVector;
   }
   
   function parseExprSingleton(sexp) {
