@@ -6,7 +6,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  TODO
  - desugar Symbols
  - fix and uncomment uses of 'tagApplicationOperator_Module'
- - test cases get desugared into native calls (and thunks?)
+ - test cases get desugared into native calls 
  - how to add struct binding when define-struct is desugared away?
 */
 
@@ -49,8 +49,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             var desugaredAndPinfo = p.desugar(acc[1]);
             // if it's an expression, insert a print-values call so it shows up in the repl
             if(plt.compiler.isExpression(p) && isTopLevelExpr){
-              var runtimeCall = new callExpr(new symbolExpr("print-values"), [desugaredAndPinfo[0]]);
-              runtimeCall.location = p.location;
+              var printValues = new symbolExpr("print-values"),
+                  runtimeCall = new callExpr(printValues, [desugaredAndPinfo[0]]);
+               // set the location of the runtime call to that of the expression
+              printValues.location = runtimeCall.location = p.location;
               desugaredAndPinfo[0] = runtimeCall;
 //              tagApplicationOperator_Module(runtimeCall,'moby/runtime/kernel/misc');
             }
@@ -490,7 +492,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defFunc.prototype.analyzeUses = function(pinfo, env){
-    return this.body.analyzeUses(pinfo, pinfo.env);
+    // extend the env to include the function binding, then add each arg as a constant binding
+    var env1 = env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
+        env2 = this.args.reduce(function(env, arg){
+                                  return env.extend(new bindingConstant(arg.val, false, [], arg.location));
+                                }, env1);
+    pinfo.env = env1;
+    return this.body.analyzeUses(pinfo, env2);
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);

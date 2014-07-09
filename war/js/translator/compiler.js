@@ -77,7 +77,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // anything that behaves differently must provide their own toBytecode() function
     var Bytecode = function() {
       // -> JSON
-      this.toBytecode = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
+      this.toBytecode = function(){ throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
     };
 
     // for mapping JSON conversion over an array
@@ -313,8 +313,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // this information, it's false
       this.toBytecode = function(){
         return '{"$":"lam","name":'+this.name.toBytecode()+',"locs":['
-                +this.operatorAndRandLocs.map(convertToBytecode).join(',')
-                +'],"flags":'+this.flags.map(convertToBytecode)+',"num-params":'+this.numParams
+                +this.operatorAndRandLocs.map(convertToBytecode).join(',')+'],"flags":['
+                +this.flags.map(convertToBytecode).join(',')+'],"num-params":'+this.numParams
                 +',"param-types":['+this.paramTypes.map(convertToBytecode).join(',')+'],"rest?":'+this.rest
                 +',"closure-map":['+this.closureMap.map(convertToBytecode)+'],"closure-types":['
                 +this.closureTypes.map(convertToBytecode)+'],"max-let-depth":'+this.maxLetDepth
@@ -678,10 +678,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return this.exprs.reduceRight(function(acc, expr){return expr.freeVariables(acc, env);}, acc);
     };
     symbolExpr.prototype.freeVariables= function(acc, env){
-      return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this.val]) : acc;
+      return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this]) : acc;
     };
     callExpr.prototype.freeVariables = function(acc, env){
-      return this.args.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+      return [this.func].concat(this.args).reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
     };
     localExpr.prototype.freeVariables = function(acc, env){ return acc; };
     andExpr.prototype.freeVariables   = function(acc, env){ return acc; };
@@ -771,52 +771,57 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    lambdaExpr.prototype.compile = function(env, pinfo, isUnnamedLambda, name){
       // maskUnusedGlobals : (listof symbol?) (listof symbol?) -> (listof symbol or false)
       function maskUnusedGlobals(listOfNames, namesToKeep){
-        listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
+        return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
       }
  
-      function pushLocal(env, n){ return new plt.compiler.localEnv(n.val, false, env); }
-      function pushLocalBoxed(env, n){ return new plt.compiler.localEnv(n.val, true, env); }
+      function pushLocal(env, n)      { return new plt.compiler.localEnv(n.val, false, env); }
+      function pushLocalBoxed(env, n) { return new plt.compiler.localEnv(n.val, true, env); }
+      function pushGlobals(names, env){ return new plt.compiler.globalEnv(names, false, env); }
  
       // getClosureVectorAndEnv : (list of Symbols) (list of Symbols) env -> [(Vector of number), env]
+      // take in a list of args, a list of freevars, and an empty env that ONLY includes the arguments
       function getClosureVectorAndEnv(args, freeVariables, originalEnv){
-        var freeVariableRefs = freeVariables.map(function(v){return originalEnv.lookup(v, 0);}),
+        // pull out the stack references for all variables that are free in this environment
+        var freeVariableRefs = freeVariables.map(function(v){return originalEnv.lookup(v.val, 0);}),
  
             // some utility functions
             ormap = function(f, l){return (l.length===0)? false : f(l[0])? l[0] : ormap(f, l.slice(1));},
             isLocalStackRef   = function(r){return r instanceof localStackReference;},
             isGlobalStackRef  = function(r){return r instanceof globalStackReference;},
             isUnboundStackRef = function(r){return r instanceof unboundStackReference;},
-            getDepthFromRef   = function(r){ return r.depth;},
+            getDepthFromRef   = function(r){return r.depth;},
  
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
+        // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + "is bound.";
+        // otherwise, compute the depts of all local and global free variables
         } else {
-          var localStackRefs = freeVariableRefs.filter(isLocalStackRef),
-              lexicalFreeRefs = sortAndUnique(localStackRefs,
-                                              function(x,y){return x.depth < y.depth;},
-                                              function(x,y){return x.depth === y.depth;}),
+          var localStackRefs    = freeVariableRefs.filter(isLocalStackRef),
+              lexicalFreeRefs   = sortAndUnique(localStackRefs,
+                                                function(x,y){return x.depth < y.depth;},
+                                                function(x,y){return x.depth === y.depth;}),
               lexicalFreeDepths = lexicalFreeRefs.map(getDepthFromRef),
               globalRefs        = freeVariableRefs.filter(isGlobalStackRef),
               globalDepths      = sortAndUnique(globalRefs.map(getDepthFromRef),
                                                 function(x,y){return x<y;},
                                                 function(x,y){return x===y;});
-          // Function Arguments
+          // Add Function Arguments (in reverse order) to the environment
           var env1 = args.reverse().reduce(pushLocal, originalEnv);
- 
-          // The lexical free variables
+          // Add the lexical free variables (in reverse order)
           var env2 = lexicalFreeRefs.reverse().reduce(function(ref, env){
                       return ref.boxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
                     }, env1);
  
-          // The global free variables
-          var env3 = globalDepths.reverse().reduce(function(depth, env){
-                       var refsAtDepth = globalRefs.filter(function(ref){return ref.depth=depth;}, env2),
-                           usedGlobalNames = refsAtDepth.map(function(ref){ref.name});
-                       return env.pushGlobals(maskUnusedGlobals(originalEnv.peek(depth).names,
-                                                                usedGlobalNames));
+          // Add the global free variables (in reverse order)
+          var env3 = globalDepths.reverse().reduce(function(env, depth){
+                       var refsAtDepth = globalRefs.filter(function(ref){return ref.depth===depth;}),
+                           usedGlobals = refsAtDepth.map(function(ref){return ref.name}),
+                           newGlobals  = maskUnusedGlobals(originalEnv.peek(depth).names, usedGlobals);
+                       return pushGlobals(newGlobals, env);
                      }, env2);
+          // return a vector of depths (global, then local), along with the environment
           return [globalDepths.concat(lexicalFreeDepths), env3];
         }
       }

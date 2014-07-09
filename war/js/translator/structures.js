@@ -975,6 +975,13 @@ function getTopLevelEnv(lang){
       return (this.bindings.containsKey(id))? this.bindings.get(id) : false;
     };
  
+    // peek: Number -> env
+    this.peek = function(depth){
+      return (depth==0)?                  this
+          :  (this instanceof emptyEnv)?  "IMPOSSIBLE - peeked at an emptyEnv!"
+           /* else */                   : this.parent.peek(depth-1);
+    };
+ 
     // contains?: symbol -> boolean
     this.contains = function(name){
       return this.lookup(name) !== false;
@@ -1052,15 +1059,15 @@ function getTopLevelEnv(lang){
     this.names  = names;
     this.boxed  = boxed;
     this.parent = parent;
+    var that = this;
     // Find position of element in list; return false if we can't find the element.
-    function position(x, lst){
-      return (lst.indexOf(x) > -1)? lst.indexOf(x) : false;
+    function position(x){
+      return (that.names.indexOf(x) > -1)? that.names.indexOf(x) : false;
     }
     this.lookup = function(name, depth){
-      var pos = position(name, this.names); // index or false
- console.log('looked up '+name+' in the global envoronment, and found it at '+pos);
+      var pos = position(name); // index or false
       return pos? new plt.compiler.globalStackReference(name, depth, pos)
-                : this.parent.lookup(name, depth+1);
+                : that.parent.lookup(name, depth+1);
     };
   }
   globalEnv.prototype = heir(env.prototype);
