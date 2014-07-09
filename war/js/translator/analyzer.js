@@ -101,9 +101,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
         call = new callExpr(new primop(new symbolExpr('make-struct-type')),
                             [new quotedExpr(new symbolExpr(name)),
-                             new symbolExpr("#f"),
-                             new numberExpr(fields.length),
-                             new numberExpr(0)]);
+                             new literal(false),
+                             new literal(fields.length),
+                             new literal(0)]);
         call.location = this.location;
     var defineValuesStx = [new defVars(idSymbols, call)],
         selectorStx = [];
@@ -111,7 +111,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
       var runtimeOp = new primop(new symbolExpr('make-struct-field-accessor')),
-          runtimeArgs = [new symbolExpr(name+'-ref'), new numberExpr(i), new quotedExpr(new symbolExpr(f))],
+          runtimeArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f))],
           runtimeCall = new callExpr(runtimeOp, runtimeArgs),
           defineVar = new defVar(new symbolExpr(name+'-'+f), runtimeCall);
       selectorStx.push(defineVar);
@@ -342,9 +342,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , ", but found none"]),
                     this.location);
     }
-    // desugar 'true' and 'false' to #t and #f
-    if(this.val === 'true') this.val = '#t';
-    if(this.val === 'false') this.val = '#f';
     return [this, pinfo];
  };
  

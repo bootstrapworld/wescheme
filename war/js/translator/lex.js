@@ -13,8 +13,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  TODO
  - JSLint
+ - vectors, chars, strings, numbers and booleans should be Literals
+ - types.vector.prototype.toString() = types.vector.prototype.toDisplayedString()
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
+ - readList should return a listExpr, which inherits from Array
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -24,15 +27,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 // Parse a program into SExps
 //
 // A SExp is either:
-// - Atom x Location
+// - Literal x Location
+// - symbolExpr x Location
 // - [ListOf SExp] x Location
 //
-// An Atom is either:
-// - numberExpr
-// - symbolExpr
-// - stringExpr
-// - charExpr
-// - vectorExpr
+// A Literal is either:
+// - types.<number>
+// - types.string
+// - types.char
+// - types.vector
 
     /////////////////////
     /*      Data       */
@@ -69,14 +72,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
       };
       this.toVector = function(){
-        return new vectorExpr(['"'+this.source+'"' // add quotes to the source, since it's a str (not a symbol)
-                             ,new numberExpr(this.offset+1)
-                             ,new numberExpr(this.sLine)
-                             ,new numberExpr(this.sCol)
-                             ,new numberExpr(this.span)]
-                             ,new numberExpr(5));
+        return new types.vector(['"'+this.source+'"' // add quotes to the source, since it's a str (not a symbol)
+                                ,this.offset+1
+                                ,this.sLine
+                                ,this.sCol
+                                ,this.span]);
       };
-      this.toJSON = function(){
+      this.toBytecode = function(){
         return {line: this.sLine.toString(), id: this.source, span: this.span.toString(),
                offset: (this.offset+1).toString(), column: this.sCol.toString()};
       };
@@ -380,7 +382,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                    , new Location(sCol, sLine, iStart, 1)
                    , "Error-GenericReadError");
       }
-      var strng = new stringExpr(datum);
+      var strng = new literal(new types.string(datum));
       i++; column++; // move forward to include the ending quote
       strng.location = new Location(sCol, sLine, iStart, i-iStart);
       return strng;
@@ -420,20 +422,20 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             vectorTest = vectorMatch.exec(str.slice(i));
         if(unsupportedTest && unsupportedTest[0].length > 0){
             var sexp = readSExpByIndex(str, i+unsupportedTest[0].length-1),
-                literal, span = unsupportedTest[0].length, // save different error strings and spans
+                kind, span = unsupportedTest[0].length, // save different error strings and spans
                 base = unsupportedTest[0].replace(/[\(\[\{\"|#\"]/g, '');
             switch(base){
-              case "fl":    literal = "flvectors"; break;
-              case "fx":    literal = "fxvectors"; break;
-              case "s":     literal = "structs";   break;
+              case "fl":    kind = "flvectors"; break;
+              case "fx":    kind = "fxvectors"; break;
+              case "s":     kind = "structs";   break;
               case "hash":
-              case "hasheq": literal = "hashtables"; break;
+              case "hasheq": kind = "hashtables"; break;
               case "px":
-              case "rx":    literal = "regular expressions"; break;
+              case "rx":    kind = "regular expressions"; break;
               default: throw "IMPOSSIBLE: unsupportedMatch captured something it shouldn't: "+base;
             }
             var error = new types.Message([source, ":", line.toString(), ":", "0"
-                                           , ": read-syntax: literal "+ literal + " not allowed"]);
+                                           , ": read-syntax: literal "+ kind + " not allowed"]);
             datum = new unsupportedExpr(sexp, error, span);
             datum.location = new Location(sCol, sLine, iStart, unsupportedTest[0].length+sexp.location.span);
             return datum;
@@ -445,18 +447,20 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
             return readSExpByIndex(str, i+2);
         } else if(vectorTest && vectorTest[0].length > 0){
-          var size = (vectorTest[1])? parseInt(vectorTest[1]) : "";
-          var sexp = readList(str, i+(size.toString().length));
+          var size = (vectorTest[1])? parseInt(vectorTest[1]) : "",     // do we have a size string?
+              elts = readList(str, i+(size.toString().length)),         // extract element literals that follow the size string
+              len = size===""? elts.length : parseInt(vectorTest[1]);  // set the size to a number
           // test vector size
-          if((size!=="") && (sexp.length > size)){
-             var msg = new types.Message(["read: vector length "+size+" is too small, ",
-                                          sexp.length+" value" + ((sexp.length>1)? "s" : ""),
+          if(elts.length > len){
+             var msg = new types.Message(["read: vector length "+len+" is too small, ",
+                                          elts.length+" value" + ((elts.length>1)? "s" : ""),
                                           " provided"]);
              throwError(msg, sexp.location);
           }
-          datum = new vectorExpr(sexp, size);
-          datum.location = sexp.location;
-          i = sexp.location.span;
+          datum = new literal(new Vector(len, elts));
+          datum.location = elts.location;
+                                                        console.log(datum.location);
+          i = elts.location.span;
           return datum;
         } else {
           // match every valid (or *almost-valid*) sequence of characters, or the empty string
@@ -517,9 +521,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             case 't':  // true
             case 'f':  // false
                 if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
-                  datum = readSymbolOrNumber(p, 0);  // create a symbol based solely on the character
-                  datum.val = ((datum.val==='t' || datum.val==='f')? "#" : "#'")+datum.val;
-                  i+= datum.location.span;
+                  datum = new literal(p=='t');       // create a Boolean literal
+                  i++; column++;                     // move i/col ahead by the char
                   break;
                 }
             default:
@@ -570,7 +573,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                           datum.length === 1   ? datum :
                             throwError(new types.Message(["read: Unsupported character: #\\",datum]),
                                        new Location(sCol, sLine, iStart, i-iStart));
-      var chr = new charExpr(datum);
+      var chr = new literal(new types.char(datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
       return chr;
     }
@@ -671,7 +674,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         i = chewWhiteSpace(str, i);
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
-          if(/end-of-file/.exec(e)) eofError(i);
+          // if it's the end of file, throw a special EOF for quoting
+          if(/read\: \(found end-of-file\)/.test(e)) eofError(i);
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
             endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
@@ -737,7 +741,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       try{
         var numValue = jsnums.fromString(filtered),
             node     = (numValue || numValue === 0)?  // don't interpret zero as 'false'
-                            new numberExpr(numValue) : new symbolExpr(filtered);
+                            new literal(numValue) : new symbolExpr(filtered);
         node.location = new Location(sCol, sLine, iStart, i-iStart);
         return node;
       // if it's not a number OR a symbol

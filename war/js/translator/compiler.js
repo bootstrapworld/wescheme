@@ -13,20 +13,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 
 (function (){
-    stringExpr.prototype.toBytecode = function(){
-      return '"'+this.val+'"';
+    literal.prototype.toBytecode = function(){
+        return '{"$":"constant","value":'+convertToBytecode(this.val)+'}';
     };
     symbolExpr.prototype.toBytecode = function(){
       return 'types.symbol("'+this.val+'")';
     };
-    vectorExpr.prototype.toBytecode = function(){
-      return 'types.vector(['+this.vals.join(',')+'])';
+    Vector.prototype.toBytecode = function(){
+      return 'types.vector(['+this.elts.join(',')+'])';
     };
     Array.prototype.toBytecode = function(){
       return 'types.'+(this.length===0? 'EMPTY':'list(['+this.map(convertToBytecode).join(',')+'])');
-    };
-    numberExpr.prototype.toBytecode = function(){
-      return convertToBytecode(this.val);
     };
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toBytecode = function(){
@@ -77,7 +74,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // anything that behaves differently must provide their own toBytecode() function
     var Bytecode = function() {
       // -> JSON
-      this.toBytecode = function(){ throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
+      this.toBytecode = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
     };
 
     // for mapping JSON conversion over an array
@@ -86,10 +83,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // literal
     function literal(val) {
       Bytecode.call(this);
-      this.val = val;  // could be a numberExpr, vectorExpr, stringExpr
-      this.toBytecode = function(){
-        return '{"$":"constant","value":'+convertToBytecode(this.val)+'}';
-      };
+      this.val = val;  // could be a boolean, number, string, char, or vector
+      this.toString = function(){ return types.toDisplayedString(this); }
+      this.toBytecode = function(){ return this.val.toBytecode(); }
     };
     literal.prototype = heir(Bytecode.prototype);
 
@@ -720,8 +716,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
    // extend the Program class to include compilation
    // compile: pinfo -> [bytecode, pinfo]
+ 
+   // literals evaluate to themselves
    Program.prototype.compile = function(env, pinfo){
-      return [new literal(this), pinfo];
+      return [this, pinfo];
    };
    
    defFunc.prototype.compile = function(env, pinfo){

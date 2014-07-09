@@ -314,40 +314,23 @@ function symbolExpr(val) {
 };
 symbolExpr.prototype = heir(Program.prototype);
 
-// number expression
-function numberExpr(val) {
+// Literal values (String, Char, Number, Vector)
+function literal(val) {
   Program.call(this);
   this.val = val;
-};
-numberExpr.prototype = heir(Program.prototype);
-
-// string expression
-function stringExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return "\""+this.val.toString()+"\""; };
-};
-stringExpr.prototype = heir(Program.prototype);
-
-// vector expression
-function vectorExpr(vals, size) {
-  Program.call(this);
-  this.vals = vals;
-  this.size = size;
   this.toString = function(){
-    var strVals = this.vals.map(function(v){return v.toString();});
-    return "#("+strVals.join(" ")+")" ;
-  };
+    if(this.val===true) return "#t";
+    if(this.val===false) return "#f";
+    return types.toWrittenString(this.val);
+  }
 };
-vectorExpr.prototype = heir(Program.prototype);
+literal.prototype = heir(Program.prototype);
 
-// char expression
-function charExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return "#\\"+this.val.toString(); };
-};
-charExpr.prototype = heir(Program.prototype);
+Vector.prototype.toString = Vector.prototype.toWrittenString = function(){
+  var filtered = this.elts.filter(function(e){return e!==undefined;}),
+      last = filtered[filtered.length-1];
+  return "#("+this.elts.map(function(elt){return elt===undefined? last : elt;})+")";
+}
 
 // list expression
 function listExpr(val) {
@@ -496,7 +479,7 @@ function bindingStructure(name, moduleSource, fields, constructor,
 // getTopLevelEnv: symbol -> env
 function getTopLevelEnv(lang){
   // fixme: use the language to limit what symbols get in the toplevel.
-  var baseConstantsEnv = ["null", "empty", "true",//effect:do-nothing
+  var baseConstantsEnv = ["null", "empty", "#t"//effect:do-nothing
                          , "false", "eof", "pi", "e","js-undefined"
                          , "js-null"].reduce(function(env, id){
                                              return env.extendConstant(id.toString(), '"moby/toplevel"', false)
@@ -1060,14 +1043,10 @@ function getTopLevelEnv(lang){
     this.boxed  = boxed;
     this.parent = parent;
     var that = this;
-    // Find position of element in list; return false if we can't find the element.
-    function position(x){
-      return (that.names.indexOf(x) > -1)? that.names.indexOf(x) : false;
-    }
     this.lookup = function(name, depth){
-      var pos = position(name); // index or false
-      return pos? new plt.compiler.globalStackReference(name, depth, pos)
-                : that.parent.lookup(name, depth+1);
+      var pos = this.names.indexOf(name);
+      return (pos > -1)? new plt.compiler.globalStackReference(name, depth, pos)
+                  : this.parent.lookup(name, depth+1);
     };
   }
   globalEnv.prototype = heir(env.prototype);

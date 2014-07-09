@@ -16,17 +16,16 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  TODO
  - JSLint
  - parse define-values
+ - primop("list", []) should be types.EMPTY
  */
 
 (function () {
  'use strict';
  
  //////////////////////////////////// UTILITY FUNCTIONS //////////////////////////////
- function isString(x) { return x instanceof stringExpr; }
- function isNumber(x) { return x instanceof numberExpr; }
+ function isVector(x) { return types.isVector(x.val); }
  function isSymbol(x) { return x instanceof symbolExpr; }
- function isChar(x)   { return x instanceof charExpr;   }
- function isVector(x) { return x instanceof vectorExpr; }
+ function isLiteral(x){ return x instanceof literal; }
  function isUnsupported(x){ return x instanceof unsupportedExpr;}
  
  // isSymbolEqualTo : symbolExpr symbolExpr -> Boolean
@@ -783,27 +782,24 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
   }
  
+  // replace all undefineds with the last sexp, and convert to a function call
   function parseVector(sexp){
-    sexp.vals = parseStar(sexp.vals);
-    sexp.size = Math.max(sexp.size, sexp.vals.length);
-    if(sexp.vals.length < sexp.size){
-      for(var i=sexp.vals.length-1; i < sexp.size; i++)
-        sexp.vals[i] = sexp.vals[sexp.vals.length-1] || 0;
-    }
+    var unParsedVector = sexp.val,
+        vals = parseStar(unParsedVector.elts.filter(function(e){return e!==undefined;})),
+        last = (vals.length===0)? new literal(0) : vals[vals.length-1], // if they're all undefined, use 0
+        elts = unParsedVector.elts.map(function(v){return (v===undefined)? last : v;});
     var vectorFunc = new symbolExpr("vector"),
-        buildVector = new callExpr(vectorFunc, sexp.vals);
+        buildVector = new callExpr(vectorFunc, elts);
     vectorFunc.location = buildVector.location = sexp.location;
     return buildVector;
   }
   
   function parseExprSingleton(sexp) {
-    var singleton = isString(sexp)  ? sexp :
-                    isNumber(sexp)  ? sexp :
-                    isChar(sexp)    ? sexp :
-                    isSymbol(sexp)  ? sexp :
-                    isUnsupported(sexp) ? sexp :
-                    isPrimop(sexp)  ? new primop(sexp) :
+    var singleton = isUnsupported(sexp) ? sexp :
+//                    isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :
+                    isSymbol(sexp) ? sexp :
+                    isLiteral(sexp) ? sexp :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :
                     isSymbolEqualTo("empty", sexp) ? new callExpr(new primop("list"), []) :
       throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
@@ -861,7 +857,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         }
         // is it (require (lib not-strings))?
         rest(sexp[1]).forEach(function(str){
-          if (!(str instanceof stringExpr)){
+          if (!(types.isString(str))){
             throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                         , ": expected a string for a library collection, but found "
                                         , new types.ColoredPart("something else", str.location)]),
@@ -874,7 +870,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                     , ": Importing PLaneT pacakges is not supported at this time"]),
                  sexp.location);
     // if it's (require <not-a-string-or-symbol>)
-    } else if(!((sexp[1] instanceof symbolExpr) || (sexp[1] instanceof stringExpr))){
+    } else if(!((sexp[1] instanceof symbolExpr) || types.isString(sexp[1]))){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                     , ": expected a module name as a string or a `(lib ...)' form, but found "
                                     , new types.ColoredPart("something else", sexp[1].location)]),

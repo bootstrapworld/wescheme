@@ -110,8 +110,9 @@ function readFromRepl(event) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       throw Error("ANALYSIS ERROR\n"+getError(e).toString());
     }
-    try {
-//      console.log('after analyzing, pinfo is\n'+pinfo.toString());
+    
+    var compileTime = 0;
+/*    try {
       console.log("// COMPILATION: //////////////////////////////\n");
       var start       = new Date().getTime(),
           response    = plt.compiler.compile(program, pinfo),
@@ -124,12 +125,13 @@ function readFromRepl(event) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
- 
+ */
  
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                 + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-                + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime)+"ms");
+                + "Compiling:  " + compileTime + "ms\n"
+                + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime+compileTime)+"ms");
     
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
