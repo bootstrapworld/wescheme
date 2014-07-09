@@ -23,7 +23,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return 'types.vector(['+this.vals.join(',')+'])';
     };
     Array.prototype.toBytecode = function(){
-      return 'types.list(['+this.map(convertToBytecode).join(',')+'])';
+      return 'types.'+(this.length===0? 'EMPTY':'list(['+this.map(convertToBytecode).join(',')+'])');
     };
     numberExpr.prototype.toBytecode = function(){
       return convertToBytecode(this.val);
@@ -769,6 +769,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    // Compile a lambda expression.  The lambda must close its free variables over the
    // environment.
    lambdaExpr.prototype.compile = function(env, pinfo, isUnnamedLambda, name){
+      isUnnamedLambda = isUnnamedLambda || true;
       // maskUnusedGlobals : (listof symbol?) (listof symbol?) -> (listof symbol or false)
       function maskUnusedGlobals(listOfNames, namesToKeep){
         return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
@@ -840,10 +841,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var paramTypes = [], closureTypes = [];
       for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));        }
       for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
-
       // emit the bytecode
       var bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
+                             [isUnnamedLambda? this.stx[0]:name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
                              [],              // flags
                              this.args.length,// numParams
                              paramTypes,      // paramTypes
