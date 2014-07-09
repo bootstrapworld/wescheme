@@ -449,7 +449,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.thenExpr = thenExpr;   // expr, seq, indirect, any
       this.elseExpr = elseExpr;   // expr, seq, indirect, any
       this.toBytecode = function(){
-        return '{"$":"branch","test":'+this.test.toBytecode()+',"then":'+this.thenExpr.toBytecode()
+        return '{"$":"branch","test":'+this.testExpr.toBytecode()
+                +',"then":'+this.thenExpr.toBytecode()
                 +',"else":'+this.elseExpr.toBytecode()+'}';
       };
     };
@@ -668,7 +669,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
     Program.prototype.freeVariables   = function(acc, env){ return acc; }
     ifExpr.prototype.freeVariables    = function(acc, env){
-      return this.alternative.freeVariables(env, this.consequence.freeVariables(env, this.predicate.freeVariables(acc, env)));
+      return this.alternative.freeVariables(this.consequence.freeVariables(this.predicate.freeVariables(acc, env), env), env);
     };
     beginExpr.prototype.freeVariables = function(acc, env){
       return this.exprs.reduceRight(function(acc, expr){return expr.freeVariables(acc, env);}, acc);
@@ -841,7 +842,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
       // emit the bytecode
       var bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [isUnnamedLambda? this.stx[0]:name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
+                             [isUnnamedLambda? this.stx:name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
                              [],              // flags
                              this.args.length,// numParams
                              paramTypes,      // paramTypes

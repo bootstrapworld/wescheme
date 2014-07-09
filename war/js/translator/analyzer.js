@@ -28,12 +28,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 // Force a boolean runtime test on the given expression.
  function forceBooleanContext(stx, loc, boolExpr){
     stx = '"'+stx+'"'; // add quotes to the stx
-    var runtimeCall = new callExpr(new symbolExpr("verify-boolean-branch-value")
-                                   , [new quotedExpr(new symbolExpr(stx))
-                                      , new quotedExpr(loc.toVector())
-                                      , boolExpr
-                                      , new quotedExpr(boolExpr.location.toVector())]);
-    runtimeCall.location = boolExpr.location;
+    var verifyCall  = new symbolExpr("verify-boolean-branch-value"),
+        stxQuote    = new quotedExpr(new symbolExpr(stx)),
+        locQuote    = new quotedExpr(loc.toVector()),
+        boolLocQuote= new quotedExpr(boolExpr.location.toVector()),
+        runtimeCall = new callExpr(verifyCall
+                                   , [stxQuote, locQuote, boolExpr, boolLocQuote]);
+    runtimeCall.location = verifyCall.location = boolExpr.location;
+    stxQuote.location=locQuote.location=boolLocQuote.location = boolExpr.location;
 //    tagApplicationOperator_Module(runtimeCall, 'moby/runtime/kernel/misc');
     return runtimeCall;
  }
@@ -172,14 +174,17 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // lets become calls
  letExpr.prototype.desugar = function(pinfo){
     var ids   = this.bindings.map(coupleFirst),
-        exprs = this.bindings.map(coupleSecond);
-    return new callExpr(new lambdaExpr(ids, this.body), exprs).desugar(pinfo);
+        exprs = this.bindings.map(coupleSecond),
+        lambda= new lambdaExpr(ids, this.body, this.stx),
+        call  = new callExpr(lambda, exprs);
+    lambda.location = call.location = this.location;
+    return call.desugar(pinfo);
  };
  // let*s become nested lets
  letStarExpr.prototype.desugar = function(pinfo){
     var body = this.body;
     for(var i=0; i<this.bindings.length; i++){
-      body = new letExpr([this.bindings[i]], body);
+      body = new letExpr([this.bindings[i]], body, this.stx);
     }
     return body.desugar(pinfo);
  };
@@ -188,6 +193,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // base case is all-false
     var expr = new callExpr(new symbolExpr("throw-cond-exhausted-error")
                             , [new quotedExpr(this.location.toVector())]);
+    expr.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
       expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
       expr.location = this.location;
@@ -233,7 +239,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // build the body of the let by decomposing cases into nested ifs
     var binding = new couple(valStx, this.expr),
         body = clauses.reduceRight(processClause, expr),
-        letExp = new letExpr([binding], body);
+        letExp = new letExpr([binding], body, that.stx);
     stxs = stxs.concat([binding, body, letExp]);
 
     // assign location to every stx element
@@ -255,6 +261,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // grab the last expr, and remove it from the list and desugar
     var expr = forceBooleanContext(this.stx, this.stx.location, this.exprs.pop()),
         that = this;
+    expr.location = this.location;
  
     // given a desugared chain, add this expr to the chain
     // we optimize the predicate/consequence by binding the expression to a temp symbol
@@ -268,7 +275,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       tmpSym.location = that.location;
       tmpBinding.location = exprLoc;
       var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0], new symbolExpr("if")),
-          let_exp = new letExpr([tmpBinding], if_exp);
+          let_exp = new letExpr([tmpBinding], if_exp, that.stx);
       if_exp.stx.location = that.location;
       if_exp.location = exprLoc;
       let_exp.location = exprLoc;

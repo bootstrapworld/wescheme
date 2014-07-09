@@ -13,8 +13,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  TODO
  - JSLint
- - vectors, chars, strings, numbers and booleans should be Literals
- - types.vector.prototype.toString() = types.vector.prototype.toDisplayedString()
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
  - readList should return a listExpr, which inherits from Array
@@ -429,7 +427,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
               case "fx":    kind = "fxvectors"; break;
               case "s":     kind = "structs";   break;
               case "hash":
-              case "hasheq": kind = "hashtables"; break;
+              case "hasheq":kind = "hashtables"; break;
               case "px":
               case "rx":    kind = "regular expressions"; break;
               default: throw "IMPOSSIBLE: unsupportedMatch captured something it shouldn't: "+base;
@@ -459,7 +457,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           }
           datum = new literal(new Vector(len, elts));
           datum.location = elts.location;
-                                                        console.log(datum.location);
           i = elts.location.span;
           return datum;
         } else {
