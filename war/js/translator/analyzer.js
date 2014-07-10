@@ -4,7 +4,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 /*
  TODO
- - desugar Symbols
+ - assign location in constructors
  - fix and uncomment uses of 'tagApplicationOperator_Module'
  - test cases get desugared into native calls 
  - how to add struct binding when define-struct is desugared away?
@@ -96,15 +96,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return [this, exprAndPinfo[1]];
  };
  defStruct.prototype.desugar = function(pinfo){
-    var name = this.name.toString(),
-        fields = this.fields.map(function(f){return f.toString();}),
-        mutatorIds = fields.map(function(field){return name+'-'+field+'-set!';}),
+    var that = this,
+        name = this.name.val,
+        mutatorIds = this.fields.map(function(f){return name+'-'+f.val+'-set!';}),
         ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'], //.concat(mutatorIds),
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
-        call = new callExpr(new primop(new symbolExpr('make-struct-type')),
+        call = new callExpr(new symbolExpr('make-struct-type'),
                             [new quotedExpr(new symbolExpr(name)),
                              new literal(false),
-                             new literal(fields.length),
+                             new literal(this.fields.length),
                              new literal(0)]);
         call.location = this.location;
     var defineValuesStx = [new defVars(idSymbols, call)],
@@ -112,13 +112,14 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
-      var runtimeOp = new primop(new symbolExpr('make-struct-field-accessor')),
-          runtimeArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f))],
+      var runtimeOp = new symbolExpr('make-struct-field-accessor'),
+          runtimeArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
           runtimeCall = new callExpr(runtimeOp, runtimeArgs),
-          defineVar = new defVar(new symbolExpr(name+'-'+f), runtimeCall);
+          defineVar = new defVar(new symbolExpr(name+'-'+f.val), runtimeCall);
+      runtimeCall.location = that.location;
       selectorStx.push(defineVar);
     }
-    fields.forEach(makeAccessorDefn);
+    this.fields.forEach(makeAccessorDefn);
     return [defineValuesStx.concat(selectorStx), pinfo];
  };
  beginExpr.prototype.desugar = function(pinfo){

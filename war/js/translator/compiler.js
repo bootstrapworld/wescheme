@@ -14,7 +14,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 (function (){
     literal.prototype.toBytecode = function(){
-        return '{"$":"constant","value":'+convertToBytecode(this.val)+'}';
+      return '{"$":"constant","value":'+(this.val.toBytecode? this.val.toBytecode : this.toString())+'}';
     };
     symbolExpr.prototype.toBytecode = function(){
       return 'types.symbol("'+this.val+'")';
@@ -80,15 +80,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // for mapping JSON conversion over an array
     function convertToBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
  
-    // literal
-    function literal(val) {
-      Bytecode.call(this);
-      this.val = val;  // could be a boolean, number, string, char, or vector
-      this.toString = function(){ return types.toDisplayedString(this); }
-      this.toBytecode = function(){ return this.val.toBytecode(); }
-    };
-    literal.prototype = heir(Bytecode.prototype);
-
     // Global bucket
     function globalBucket(name) {
       Bytecode.call(this);
@@ -464,7 +455,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.val  = val;   // expr, seq, indirect, any
       this.body = body;  // expr, seq, indirect, any
       this.toBytecode = function(){
-        return '{"$":"with-cont-mark","key":'+new literal(new symbolExpr(this.key)).toBytecode()
+        return '{"$":"with-cont-mark","key":'+(new literal(new symbolExpr(this.key)).toBytecode())
                 +',"val":'+this.val.toBytecode()
                 +',"body":'+this.body.toBytecode()+'}';
       };
@@ -768,7 +759,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    // Compile a lambda expression.  The lambda must close its free variables over the
    // environment.
    lambdaExpr.prototype.compile = function(env, pinfo, isUnnamedLambda, name){
-      isUnnamedLambda = isUnnamedLambda || true;
+      if(isUnnamedLambda===undefined) isUnnamedLambda = true;
       // maskUnusedGlobals : (listof symbol?) (listof symbol?) -> (listof symbol or false)
       function maskUnusedGlobals(listOfNames, namesToKeep){
         return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
@@ -825,7 +816,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           return [globalDepths.concat(lexicalFreeDepths), env3];
         }
       }
- 
       var envWithArgs = this.args.reduce(pushLocal, new plt.compiler.emptyEnv());
           freeVars = this.body.freeVariables([], envWithArgs);
       var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
@@ -838,7 +828,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           closureArgs = new Array(closureMap.length);
  
       var paramTypes = [], closureTypes = [];
-      for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));        }
+      for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));       }
       for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
       // emit the bytecode
       var bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
@@ -869,6 +859,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           compiledOperands = compiledOperandsAndPinfo[0],
           pinfo2 = compiledOperatorAndPinfo[1],
           app = new application(compiledOperator, compiledOperands);
+ 
       // extract the relevant locations for error reporting, then wrap the application in continuation marks
       var extractLoc= function(e){return e.location;},
           locs      = [this.func.location].concat(this.args.map(extractLoc)),
@@ -918,6 +909,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
    // compile-compilation-top: program pinfo -> bytecode
    function compileCompilationTop(program, pinfo){
+ 
+ // EMMANUEL: ARE FREE VARS IN THE PINFO ENV?
+ window.pinfo = pinfo;
+ 
       // makeModulePrefixAndEnv : pinfo -> [prefix, env]
       // collect all the free names being defined and used at toplevel
       // Create a prefix that refers to those values
@@ -943,12 +938,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),
             globals   = [false].concat(pinfo.freeVariables
-                                      ,pinfo.definedNames.values()
-                                      ,allModuleBindings),
-            globalNames= globals.map(function(b){return b.name;});
+                                      ,pinfo.definedNames.keys()
+                                      ,allModuleBindings.map(function(b){return b.name;}));
  
         return [new prefix(0, topLevels ,[])
-               , new plt.compiler.globalEnv(globalNames, false, new plt.compiler.emptyEnv())];
+               , new plt.compiler.globalEnv(globals, false, new plt.compiler.emptyEnv())];
       };
  
       // The toplevel is going to include all of the defined identifiers in the pinfo
@@ -956,7 +950,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var toplevelPrefixAndEnv = makeModulePrefixAndEnv(pinfo),
           toplevelPrefix = toplevelPrefixAndEnv[0],
           env = toplevelPrefixAndEnv[1];
-   
       // pull out separate program components for ordered compilation
       var defns    = program.filter(plt.compiler.isDefinition),
           requires = program.filter((function(p){return (p instanceof requireExpr);})),

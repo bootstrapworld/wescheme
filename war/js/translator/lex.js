@@ -12,10 +12,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  
  TODO
+ - assign location in constructors
  - JSLint
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
- - readList should return a listExpr, which inherits from Array
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -485,7 +485,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                       break;
             // BOXES
             case '&': sexp = readSExpByIndex(str, i+1);
-                      var datum = [new symbolExpr("box"), sexp];
+                      var boxCall = new symbolExpr("box"),
+                          datum = [boxCall, sexp];
+                      boxCall.location = sexp.location;
                       i+= sexp.location.span+1; break;
             // BLOCK COMMENTS
             case '|':  datum = readBlockComment(str, i-1);
@@ -570,7 +572,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                           datum.length === 1   ? datum :
                             throwError(new types.Message(["read: Unsupported character: #\\",datum]),
                                        new Location(sCol, sLine, iStart, i-iStart));
-      var chr = new literal(new types.char(datum));
+      var chr = new literal(new types['char'](datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
       return chr;
     }
