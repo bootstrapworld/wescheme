@@ -101,14 +101,14 @@ function loadSuite(json){
 
 function runTests(verbose){
   function test(expr, expected, desugarRef){
-      console.log('expecting: '+expected);
       // show the result
       var row   = document.createElement('tr'),
           num   = document.createElement('td'),
           test  = document.createElement('td'),
           lex   = document.createElement('td'),
           parse = document.createElement('td'),
-          desugar=document.createElement('td');
+          desugar=document.createElement('td'),
+          bytecode=document.createElement('td');
       num.innerHTML  = (i+1)+')'; // make test nums 1-aligned, instead of 0-aligned
       test.innerHTML = expr;      // show which expr we're testing
       row.appendChild(num);
@@ -116,6 +116,7 @@ function runTests(verbose){
       row.appendChild(lex);
       row.appendChild(parse);
       row.appendChild(desugar);
+      row.appendChild(bytecode);
       table.appendChild(row);
       row.style.background = 'lightgreen';
                         
@@ -129,9 +130,8 @@ function runTests(verbose){
       } catch (e) {
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
         else{
-          console.log('comparing\n'+e+'\n to \n'+expected);
           if(sameResults(JSON.parse(e), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
-          else{ row.style.background = 'pink'; return false; }
+          else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
         }
       }
       lex.style.background = 'lightgreen';
@@ -147,7 +147,7 @@ function runTests(verbose){
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         else{
           if(sameResults(JSON.parse(e), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
-          else{ row.style.background = 'pink'; return false; }
+          else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
         }
       }
       parse.style.background = 'lightgreen';
@@ -165,23 +165,39 @@ function runTests(verbose){
       } catch (e) {
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
-        else{ row.style.background = 'pink'; return false; }
+        else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
       }
       // if we don't have a desugarRef for this test, call it a questinonable pass move on
       if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       desugarRef = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
-      program = program.toString().replace(/\s*/g,"");// remove whitespace from test output
-      if(desugarRef !== program.toString()) {
+      desugarLocal = program.toString().replace(/\s*/g,"");// remove whitespace from test output
+      if(desugarRef !== desugarLocal) {
         console.log('DESUGARING ERROR: server desugar is \n'+desugarRef+'\n and local desugar is \n\n'+program+'\n');
         row.style.background = 'pink';
         return false;
       }
       desugar.style.background = 'lightgreen';
 /*
-      // COMPILE:
-      try{  var bytecode = plt.compiler.compile(desugared, pinfo2); }
-      catch (e) { throw e; }
+      try {
+        console.log("// COMPILATION: //////////////////////////////\n");
+        var response    = plt.compiler.compile(program, pinfo2);
+      } catch (e) {
+        if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
+        throw Error("COMPILATION ERROR\n"+getError(e).toString());
+      }
+
+      // if we don't have a desugarRef for this test, call it a questinonable pass move on
+      if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
+      bytecodeRef = bytecodeRef.replace(/\s/g,"");     // remove whitespace fom  reference
+      response = response.toString().replace(/\s/g,"");// remove whitespace from test output
+      if(bytecodeRef !== response) {
+        console.log('BYTECODE GENERATION ERROR: server bytecode is \n'+bytecodeRef+'\n and local bytecode is \n\n'+response+'\n');
+        row.style.background = 'pink';
+        return false;
+      }
 */
+      // EVERYTHING PASSED! WHOOPIE!
+      bytecode.style.background = 'lightgreen';
       return true;
     }
   
