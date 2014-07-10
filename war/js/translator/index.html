@@ -218,7 +218,7 @@ function runTests(verbose){
       if(verbose) console.log('testing :'+tests[i].expr);
       var result = test(tests[i].expr, tests[i].server, tests[i].desugar);
       if(result) passed++;
-      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed';
+      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed. Click on failures to see a Diff of the output';
     }
 }
                         
