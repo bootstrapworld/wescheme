@@ -909,10 +909,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
    // compile-compilation-top: program pinfo -> bytecode
    function compileCompilationTop(program, pinfo){
- 
- // EMMANUEL: ARE FREE VARS IN THE PINFO ENV?
- window.pinfo = pinfo;
- 
       // makeModulePrefixAndEnv : pinfo -> [prefix, env]
       // collect all the free names being defined and used at toplevel
       // Create a prefix that refers to those values
