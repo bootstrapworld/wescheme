@@ -738,10 +738,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
 
    defVars.prototype.compile = function(env, pinfo){
-        var compiledIdsAndPinfo = this.name.compile(env, pinfo),
+        var compiledIdsAndPinfo = this.names.reduceRight(compilePrograms, [[], pinfo, env]),
             compiledIds = compiledIdsAndPinfo[0],
             pinfo = compiledIdsAndPinfo[1];
-        var compiledBodyAndPinfo = this.body.compile(env, pinfo),
+        var compiledBodyAndPinfo = this.expr.compile(env, pinfo),
             compiledBody = compiledBodyAndPinfo[0],
             pinfo = compiledBodyAndPinfo[1];
         var bytecode = new defValues(compiledIds, compiledBody);
@@ -862,7 +862,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
       // extract the relevant locations for error reporting, then wrap the application in continuation marks
       var extractLoc= function(e){return e.location;},
-          locs      = [this.func.location].concat(this.args.map(extractLoc)),
+          locs      = [this.func.location].concat(this.args.map(extractLoc));
           locVectors= locs.concat(this.location).map(function(loc){return loc.toVector();}),
           appWithcontMark=new withContMark(new symbolExpr("moby-application-position-key"), new literal(locVectors),
                                            new withContMark(new symbolExpr("moby-stack-record-continuation-mark-key"),

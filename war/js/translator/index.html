@@ -71,6 +71,22 @@ function sameResults(x, y){
   return true;
 }
 
+// set the parent row to pink, and add a link that will load
+// a diff of the expected and recieved output
+function setTestFailureLink(test, expected, recieved){
+  test.parentNode.style.background = 'pink';
+  var linkText = test.innerHTML;
+  console.log(linkText);
+  test.onclick = function(){compareText(expected,recieved);}
+  return false;
+}
+
+function compareText(expected, recieved){
+  document.getElementById('text1').value = expected;
+  document.getElementById('text2').value = recieved;
+  document.getElementById('compareText').submit();
+}
+
 function loadTests(){
   var testButton = document.getElementById('runTests'),
       script = document.createElement('script'),
@@ -127,11 +143,11 @@ function runTests(verbose){
       lex.innerHTML = 'lex';
       try{
         var sexp = plt.compiler.lex(expr,"<definitions>");
-      } catch (e) {
+      } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
         else{
-          if(sameResults(JSON.parse(e), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
-          else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
+          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+          else{ return setTestFailureLink(test, expected, recieved);}
         }
       }
       lex.style.background = 'lightgreen';
@@ -143,11 +159,11 @@ function runTests(verbose){
       parse.innerHTML = 'parse';
       try{
         var AST = plt.compiler.parse(sexp);
-      } catch (e) {
+      } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         else{
-          if(sameResults(JSON.parse(e), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
-          else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
+          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
+          else{ return setTestFailureLink(test, expected, recieved);}
         }
       }
       parse.style.background = 'lightgreen';
@@ -158,42 +174,35 @@ function runTests(verbose){
       // Catch: If we fail when we shoulnd't, set to pink and return false
       desugar.innerHTML = 'desugar';
       try{
-        var desugared = plt.compiler.desugar(AST);
-            program   = desugared[0],
+        var desugared = plt.compiler.desugar(AST),
+            recieved  = program=desugared[0],
             pinfo     = desugared[1],
             pinfo2    = plt.compiler.analyze(program);
-      } catch (e) {
+      } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
-        else if(sameResults(JSON.parse(e), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
-        else{ row.style.background = 'pink'; console.log('expected\n'+expected+'\n but got \n'+e);return false; }
+        else if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
+        else{ return setTestFailureLink(test, expected, recieved);}
       }
       // if we don't have a desugarRef for this test, call it a questinonable pass move on
       if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
-      desugarRef = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
-      desugarLocal = program.toString().replace(/\s*/g,"");// remove whitespace from test output
-      if(desugarRef !== desugarLocal) {
-        console.log('DESUGARING ERROR: server desugar is \n'+desugarRef+'\n and local desugar is \n\n'+program+'\n');
-        row.style.background = 'pink';
-        return false;
-      }
+      expected = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
+      recieved = recieved.toString().replace(/\s*/g,"");// remove whitespace from test output
+      if(expected !== recieved) { return setTestFailureLink(test, expected, recieved);}
       desugar.style.background = 'lightgreen';
 /*
       try {
         console.log("// COMPILATION: //////////////////////////////\n");
-        var response    = plt.compiler.compile(program, pinfo2);
-      } catch (e) {
-        if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-        throw Error("COMPILATION ERROR\n"+getError(e).toString());
+        var recieved    = plt.compiler.compile(program, pinfo2);
+      } catch (recieved) {
+        if(recieved instanceof unimplementedException){throw recieved.str + " NOT IMPLEMENTED";}
+        throw Error("COMPILATION ERROR\n"+getError(recieved).toString());
       }
 
-      // if we don't have a desugarRef for this test, call it a questinonable pass move on
+      // if we don't have a bytecodeRef for this test, call it a questinonable pass move on
       if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
-      bytecodeRef = bytecodeRef.replace(/\s/g,"");     // remove whitespace fom  reference
-      response = response.toString().replace(/\s/g,"");// remove whitespace from test output
-      if(bytecodeRef !== response) {
-        console.log('BYTECODE GENERATION ERROR: server bytecode is \n'+bytecodeRef+'\n and local bytecode is \n\n'+response+'\n');
-        row.style.background = 'pink';
-        return false;
+      expected = bytecodeRef.replace(/\s/g,"");     // remove whitespace fom  reference
+      recieved = recieved().replace(/\s/g,"");// remove whitespace from test output
+      if(bytecodeRef !== response) { return setTestFailureLink(test, expected, recieved);}
       }
 */
       // EVERYTHING PASSED! WHOOPIE!
@@ -233,6 +242,13 @@ function runMemoryTest(){
 <span id="status"></span>
 <table id="testResults" style="font-family:monospace;">
 </table>
+
+<form id="compareText" method="post" action="http://text-compare.com/" style="display: none;">
+	<textarea name="text1" id="text1"></textarea>
+	<textarea name="text2" id="text2"></textarea>
+	<button type="submit" id="compareButton">Compare!</button>
+</form>
+
 
 </body>
 </html>

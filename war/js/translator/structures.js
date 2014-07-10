@@ -308,9 +308,10 @@ function ifExpr(predicate, consequence, alternative, stx) {
 ifExpr.prototype = heir(Program.prototype);
 
 // symbol expression (ID)
-function symbolExpr(val) {
+function symbolExpr(val, stx) {
   Program.call(this);
   this.val = val;
+  this.stx = stx;
 };
 symbolExpr.prototype = heir(Program.prototype);
 

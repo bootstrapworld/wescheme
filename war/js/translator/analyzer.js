@@ -98,25 +98,27 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  defStruct.prototype.desugar = function(pinfo){
     var that = this,
         name = this.name.val,
-        mutatorIds = this.fields.map(function(f){return name+'-'+f.val+'-set!';}),
-        ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'], //.concat(mutatorIds),
+        ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'],
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
-        call = new callExpr(new symbolExpr('make-struct-type'),
-                            [new quotedExpr(new symbolExpr(name)),
-                             new literal(false),
-                             new literal(this.fields.length),
-                             new literal(0)]);
-        call.location = this.location;
-    var defineValuesStx = [new defVars(idSymbols, call)],
+        makeStructTypeFunc = new symbolExpr('make-struct-type'),
+        makeStructTypeArgs = [new quotedExpr(new symbolExpr(name)),
+                              new literal(false),
+                              new literal(this.fields.length),
+                              new literal(0)],
+        makeStructTypeCall = new callExpr(makeStructTypeFunc, makeStructTypeArgs);
+    // set location for all of these nodes
+    [makeStructTypeCall, makeStructTypeFunc].concat(ids, makeStructTypeArgs).forEach(function(p){p.location = that.location});
+    var defineValuesStx = [new defVars(idSymbols, makeStructTypeCall)],
         selectorStx = [];
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
-      var runtimeOp = new symbolExpr('make-struct-field-accessor'),
-          runtimeArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
-          runtimeCall = new callExpr(runtimeOp, runtimeArgs),
-          defineVar = new defVar(new symbolExpr(name+'-'+f.val), runtimeCall);
-      runtimeCall.location = that.location;
+      var makeFieldFunc = new symbolExpr('make-struct-field-accessor'),
+          makeFieldArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
+          makeFieldCall = new callExpr(makeFieldFunc, makeFieldArgs),
+          defineVar = new defVar(new symbolExpr(name+'-'+f.val), makeFieldCall);
+      // set location for all of these nodes
+      [defineVar, makeFieldFunc, makeFieldCall].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
       selectorStx.push(defineVar);
     }
     this.fields.forEach(makeAccessorDefn);
