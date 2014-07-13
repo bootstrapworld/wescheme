@@ -101,11 +101,11 @@ function loadTests(){
 function loadSuite(json){
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
-    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: /);
+    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
-               difference = chunks[4], reason = chunks[5], desugar = chunks[6];
+               difference = chunks[4], reason = chunks[5], desugar = chunks[6], bytecode = chunks[7];
     expr = expr.replace(/^\'\'/,"'");
-    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar});
+    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar, bytecode: bytecode});
   }
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
@@ -116,7 +116,7 @@ function loadSuite(json){
 }
 
 function runTests(verbose){
-  function test(expr, expected, desugarRef){
+  function test(expr, expected, desugarRef, bytecodeRef, generateBytecode){
       // show the result
       var row   = document.createElement('tr'),
           num   = document.createElement('td'),
@@ -189,10 +189,12 @@ function runTests(verbose){
       recieved = recieved.toString().replace(/\s*/g,"");// remove whitespace from test output
       if(expected !== recieved) { return setTestFailureLink(test, expected, recieved);}
       desugar.style.background = 'lightgreen';
-/*
+
+if(generateBytecode){
+      bytecode.innerHTML = 'bytecode';
       try {
         console.log("// COMPILATION: //////////////////////////////\n");
-        var recieved    = plt.compiler.compile(program, pinfo2);
+        var recieved    = JSON.stringify(plt.compiler.compile(program, pinfo2));
       } catch (recieved) {
         if(recieved instanceof unimplementedException){throw recieved.str + " NOT IMPLEMENTED";}
         throw Error("COMPILATION ERROR\n"+getError(recieved).toString());
@@ -201,24 +203,27 @@ function runTests(verbose){
       // if we don't have a bytecodeRef for this test, call it a questinonable pass move on
       if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       expected = bytecodeRef.replace(/\s/g,"");     // remove whitespace fom  reference
-      recieved = recieved().replace(/\s/g,"");// remove whitespace from test output
-      if(bytecodeRef !== response) { return setTestFailureLink(test, expected, recieved);}
-      }
-*/
+      recieved = recieved.replace(/\s/g,"");        // remove whitespace from test output
+      if(bytecodeRef !== recieved) { return setTestFailureLink(test, expected, recieved);}
+
       // EVERYTHING PASSED! WHOOPIE!
       bytecode.style.background = 'lightgreen';
+}
       return true;
+ 
     }
-  
+ 
     if(verbose) console.log('running tests');
-    var table = document.getElementById('testResults');
+    var table = document.getElementById('testResults'),
+        generateBytecode = document.getElementById('generateBytecode').checked;
     for(var i=0; i<tests.length; i++){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server, tests[i].desugar);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode,
+                        generateBytecode);
       if(result) passed++;
-      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed. Click on failures to see a Diff of the output';
+      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed. <b>Click on failures to see a Diff of the output</b>.';
     }
 }
                         
@@ -237,6 +242,8 @@ function runMemoryTest(){
 <textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
 <input type="button" value="Load test-suite" id="runTests" onclick="loadTests();"/>
+<input type="checkbox" id="generateBytecode" />Generate bytecode during tests
+<br/>
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
 <br/>
 <span id="status"></span>
