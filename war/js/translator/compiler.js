@@ -14,7 +14,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
 (function (){
     literal.prototype.toBytecode = function(){
-      return '{"$":"constant","value":'+(this.val.toBytecode? this.val.toBytecode : this.toString())+'}';
+      var str = this.val.toBytecode? this.val.toBytecode()
+              : this.val===true? "true"
+              : this.val===false? "false"
+              : this.toString();
+ 
+      return '{"$":"constant","value":'+str+'}';
     };
     symbolExpr.prototype.toBytecode = function(){
       return 'types.symbol("'+this.val+'")';
@@ -38,7 +43,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     jsnums.Complex.prototype.toBytecode = function(){
       return 'types.complex('+this.r+', '+this.i+')';
     };
- 
+    Char.prototype.toBytecode = function(){
+      return 'types[\'char\'](String.fromCharCode('+this.val.charCodeAt(0)+'))';
+    };
     // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
     function stackReference(){}
     function localStackReference(name, isBoxed, depth){
@@ -455,8 +462,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       this.val  = val;   // expr, seq, indirect, any
       this.body = body;  // expr, seq, indirect, any
       this.toBytecode = function(){
-        return '{"$":"with-cont-mark","key":'+(new literal(new symbolExpr(this.key)).toBytecode())
-                +',"val":'+this.val.toBytecode()
+        return '{"$":"with-cont-mark","key":'+new literal(new symbolExpr(this.key)).toBytecode()
+                +',"val":'+new literal(this.val).toBytecode()
                 +',"body":'+this.body.toBytecode()+'}';
       };
     };
@@ -862,11 +869,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
       // extract the relevant locations for error reporting, then wrap the application in continuation marks
       var extractLoc= function(e){return e.location;},
-          locs      = [this.func.location].concat(this.args.map(extractLoc));
+          locs      = [this.func.location].concat(this.args.map(extractLoc)),
           locVectors= locs.concat(this.location).map(function(loc){return loc.toVector();}),
-          appWithcontMark=new withContMark(new symbolExpr("moby-application-position-key"), new literal(locVectors),
+          appWithcontMark=new withContMark(new symbolExpr("moby-application-position-key"), locVectors,
                                            new withContMark(new symbolExpr("moby-stack-record-continuation-mark-key"),
-                                                            new literal(this.location.toVector()), app));
+                                                            this.location.toVector(), app));
           return [appWithcontMark, pinfo2];
    };
    
@@ -931,8 +938,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                         , new symbolExpr(b.name), -1, 0);
             };
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
-                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)
-                                      ,allModuleBindings.map(makeModuleVariablefromBinding)),
+                                       ,allModuleBindings.map(makeModuleVariablefromBinding)
+                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)),
             globals   = [false].concat(pinfo.freeVariables
                                       ,pinfo.definedNames.keys()
                                       ,allModuleBindings.map(function(b){return b.name;}));
@@ -966,7 +973,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // generate the bytecode for the program and return it, along with the program info
       var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
           bytecode = new compilationTop(0, toplevelPrefix, forms),
-          response = {"bytecode" : "/* runtime-version: clientside-summer-2014 */\n" + bytecode.toBytecode(),
+          response = {"bytecode" : "/* runtime-version: moby-colored-20120807 */\n" + bytecode.toBytecode(),
                       "permissions" : pinfo.permissions(),
                       "provides" : pinfo.providedNames.keys()};
           return response;
