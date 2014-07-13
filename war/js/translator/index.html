@@ -56,6 +56,7 @@ function sameResults(x, y){
       if ( ! x.hasOwnProperty(p) ){ return false; }
       if ( ! y.hasOwnProperty(p) ){ return false; }
       // if they both have the property, compare it
+      if(p==="_eqHashCode") continue;
       if(sameResults(x[p],y[p])) continue;
       else return false;
     }
@@ -74,9 +75,8 @@ function sameResults(x, y){
 // set the parent row to pink, and add a link that will load
 // a diff of the expected and recieved output
 function setTestFailureLink(test, expected, recieved){
-  test.parentNode.style.background = 'pink';
+  test.style.background = 'pink';
   var linkText = test.innerHTML;
-  console.log(linkText);
   test.onclick = function(){compareText(expected,recieved);}
   return false;
 }
@@ -147,7 +147,7 @@ function runTests(verbose){
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
         else{
           if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
-          else{ return setTestFailureLink(test, expected, recieved);}
+          else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
       lex.style.background = 'lightgreen';
@@ -163,7 +163,7 @@ function runTests(verbose){
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         else{
           if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
-          else{ return setTestFailureLink(test, expected, recieved);}
+          else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
       parse.style.background = 'lightgreen';
@@ -181,13 +181,13 @@ function runTests(verbose){
       } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         else if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
-        else{ return setTestFailureLink(test, expected, recieved);}
+        else{ return setTestFailureLink(row, expected, recieved);}
       }
       // if we don't have a desugarRef for this test, call it a questinonable pass move on
       if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       expected = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
       recieved = recieved.toString().replace(/\s*/g,"");// remove whitespace from test output
-      if(expected !== recieved) { return setTestFailureLink(test, expected, recieved);}
+      if(expected !== recieved) { return setTestFailureLink(row, expected, recieved);}
       desugar.style.background = 'lightgreen';
 
 if(generateBytecode){
@@ -199,12 +199,19 @@ if(generateBytecode){
         if(recieved instanceof unimplementedException){throw recieved.str + " NOT IMPLEMENTED";}
         throw Error("COMPILATION ERROR\n"+getError(recieved).toString());
       }
-
       // if we don't have a bytecodeRef for this test, call it a questinonable pass move on
       if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
-      expected = bytecodeRef.replace(/\s/g,"");     // remove whitespace fom  reference
-      recieved = recieved.replace(/\s/g,"");        // remove whitespace from test output
-      if(bytecodeRef !== recieved) { return setTestFailureLink(test, expected, recieved);}
+      expected = JSON.parse(bytecodeRef);
+      recieved = JSON.parse(recieved);
+      console.log((0,eval)('('+expected.bytecode+')'));
+      try { console.log((0,eval)('('+recieved.bytecode+')'));}
+      catch(e){console.log('MALFORMED BYTECODE:\n'+recieved.bytecode); return setTestFailureLink(row, expected.bytecode, recieved.bytecode); }
+      if(sameResults((0,eval)('('+expected.bytecode+')'), (0,eval)('('+recieved.bytecode+')'))) {
+        desugar.style.background = 'lightgreen'; return true;
+      } else {
+                        console.log('compared\n'+expected.bytecode+'\nto\n'+recieved.bytecode);
+        return setTestFailureLink(row, JSON.stringify(expected.bytecode), JSON.stringify(recieved.bytecode));
+      }
 
       // EVERYTHING PASSED! WHOOPIE!
       bytecode.style.background = 'lightgreen';
@@ -250,7 +257,7 @@ function runMemoryTest(){
 <table id="testResults" style="font-family:monospace;">
 </table>
 
-<form id="compareText" method="post" action="http://text-compare.com/" style="display: none;">
+<form id="compareText" target="_blank" method="post" action="http://text-compare.com/" style="display: none;">
 	<textarea name="text1" id="text1"></textarea>
 	<textarea name="text2" id="text2"></textarea>
 	<button type="submit" id="compareButton">Compare!</button>
