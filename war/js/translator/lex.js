@@ -309,7 +309,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function readString(str, i) {
       var sCol = column, sLine = line, iStart = i;
       // greedily match to the end of the string, before examining escape sequences
-      var closedString = /^\"[^\"]*(\\"[^\"]*)*[^\\]\"/.test(str.slice(i)),
+      var closedString = /^\"[^\"]*(\\"[^\"]*)*[^\\]*\"/.test(str.slice(i)),
           greedy = /^\"[^\"]*(\\"[^\"]*)*/.exec(str.slice(iStart))[0];
       i++; column++; // skip over the opening quotation mark char
       // it's a valid string, so let's make sure it's got proper escape sequences
