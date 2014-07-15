@@ -5,7 +5,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
  - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
- - figure out desugaring/compilation of primops
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
  - someday, get rid of convertToBytecode()
@@ -682,7 +681,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     andExpr.prototype.freeVariables   = function(acc, env){ return acc; };
     lambdaExpr.prototype.freeVariables= function(acc, env){ return acc; };
     quotedExpr.prototype.freeVariables= function(acc, env){ return acc; };
-    primop.prototype.freeVariables    = function(acc, env){ return acc; };
  
   /**************************************************************************
    *
@@ -908,7 +906,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    quotedExpr.prototype.compile = function(env, pinfo){
       return [this.val, pinfo];
    };
-   primop.prototype.compile = function(env, pinfo){}
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(pinfo){
      return [new req(this.spec, new topLevel(0, 0, false, false, false)), pinfo];

@@ -379,13 +379,6 @@ function unquoteSplice(val) {
 };
 unquoteSplice.prototype = heir(Program.prototype);
 
-// primop expression
-function primop(val) {
-  Program.call(this);
-  this.val = val;
-};
-primop.prototype = heir(Program.prototype);
-
 // require expression
 function requireExpr(spec, stx) {
   Program.call(this);
@@ -864,7 +857,6 @@ function getTopLevelEnv(lang){
                       ,["triangle/asa", 3, false]
                       ,["triangle/saa", 3, false]
                       ,["right-triangle", 4, false]
-                      ,["right-triangle", 4, false]
                       ,["radial-star", 5, false]
                       ,["square", 3, false]
                       ,["rectangle", 4, false]
@@ -1236,7 +1228,7 @@ function getTopLevelEnv(lang){
     };
    
     // gensym: symbol -> [pinfo, symbol]
-    // Generates a unique symbol.
+    // Generates a unique symbol
     this.gensym = function(label){
       return [this, new symbolExpr(label+this.gensymCounter++)];
     };

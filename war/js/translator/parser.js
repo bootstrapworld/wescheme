@@ -15,7 +15,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  TODO
  - assign location in constructors
- - get rid of primop?
  - JSLint
  - parse define-values
  */
@@ -797,12 +796,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   
   function parseExprSingleton(sexp) {
     var singleton = isUnsupported(sexp) ? sexp :
-//                    isPrimop(sexp)  ? new primop(sexp) :
                     isVector(sexp)  ? parseVector(sexp) :
                     isSymbol(sexp) ? sexp :
                     isLiteral(sexp) ? sexp :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :
-                    isSymbolEqualTo("empty", sexp) ? new callExpr(new primop("list"), []) :
+                    isSymbolEqualTo("empty", sexp) ? new callExpr(new symbolExpr("list"), []) :
       throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
                                     , ": expected a function, but nothing's there"])
                  , sexp.location);
@@ -821,10 +819,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
   function sexpIsCouple(sexp) {
     return ((isCons(sexp)) && ((sexp.length === 2)));
-  }
-
-  function isPrimop(sexp) {
-       return primitive.getPrimitive(sexp);
   }
 
   function sexpIsCondListP(sexp) {

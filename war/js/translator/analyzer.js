@@ -207,7 +207,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // case become nested ifs, with ormap as the predicate
  caseExpr.prototype.desugar = function(pinfo){
     var that = this,
-        caseStx = new symbolExpr("if"); // The server returns "if" here, but I am almost certain it's a bug
+        caseStx = new symbolExpr("if"); // TODO: The server returns "if" here, but I am almost certain it should be "case"
     caseStx.location = this.location;
 
     var pinfoAndValSym = pinfo.gensym('val'),      // create a symbol 'val'
@@ -218,7 +218,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         xStx = pinfoAndXSym[1],                   // remember the symbolExpr for 'x'
         voidStx = new symbolExpr('void');         // make the void symbol
 
-    // track all the syntax we've created
+    // track all the syntax we've created so far...
     var stxs = [valStx, xStx, voidStx];
 
     // if there's an 'else', pop off the clause and use the result as the base
@@ -231,7 +231,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       expr.location = that.location;
     }
 
-    // This is predicate we'll be applying using ormap: (lambda (x) (equal? x val))
+    // This is the predicate we'll be applying using ormap: (lambda (x) (equal? x val))
     var equalStx = new symbolExpr('equal?'),
         equalTestStx = new callExpr(equalStx, [xStx, valStx], that.stx),
         predicateStx = new lambdaExpr([xStx], equalTestStx, that.stx);
@@ -298,12 +298,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  quotedExpr.prototype.desugar = function(pinfo){
     function desugarQuotedItem(sexp){
-      if(sexp instanceof Array) return new callExpr(new primop('list'), sexp.map(desugarQuotedItem));
+      if(sexp instanceof Array) return new callExpr(new symbolExpr('list'), sexp.map(desugarQuotedItem));
       if(sexp instanceof symbolExpr) return new quotedExpr(sexp.val);
       else return sexp;
     }
     if(this.val instanceof Array){
-      var call_exp = new callExpr(new primop('list'), this.val.map(desugarQuotedItem));
+      var call_exp = new callExpr(new symbolExpr('list'), this.val.map(desugarQuotedItem));
       call_exp.location = this.location;
       return [call_exp, pinfo];
     } else {
@@ -317,23 +317,23 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       if(element instanceof unquoteSplice){
         return element.val.desugar(pinfo)[0];
       } else if(element instanceof unquotedExpr){
-        return new callExpr(new primop(new symbolExpr('list')), [element.val.desugar(pinfo)[0]]);
+        return new callExpr(new symbolExpr('list'), [element.val.desugar(pinfo)[0]]);
       } else if(element instanceof quasiquotedExpr){
         /* we first must exit the regime of quasiquote by calling desugar on the
          * list a la unquote or unquoteSplice */
         throwError("ASSERT: we should never parse a quasiQuotedExpr within an existing quasiQuotedExpr")
       } else if(element instanceof Array){
-        return new callExpr(new primop(new symbolExpr('list')),
-                            [new callExpr(new primop(new symbolExpr('append')),
+        return new callExpr(new symbolExpr('list'),
+                            [new callExpr(new symbolExpr(new symbolExpr('append')),
                                           element.map(desugarQuasiQuotedElements))]);
       } else {
-        return new callExpr(new primop(new symbolExpr('list')),
+        return new callExpr(new symbolExpr('list'),
                             [new quotedExpr(element.toString())]);
       }
     }
 
     if(this.val instanceof Array){
-      var result = new callExpr(new primop(new symbolExpr('append')),
+      var result = new callExpr(new symbolExpr('append'),
                                 this.val.map(desugarQuasiQuotedElements));
       return [result, pinfo];
     } else {
