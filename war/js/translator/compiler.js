@@ -772,8 +772,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
       }
  
-      function pushLocal(env, n)      { return new plt.compiler.localEnv(n.val, false, env); }
-      function pushLocalBoxed(env, n) { return new plt.compiler.localEnv(n.val, true, env); }
+      function pushLocal(env, n)      { return new plt.compiler.localEnv(n, false, env); }
+      function pushLocalBoxed(env, n) { return new plt.compiler.localEnv(n, true, env); }
       function pushGlobals(names, env){ return new plt.compiler.globalEnv(names, false, env); }
  
       // getClosureVectorAndEnv : (list of Symbols) (list of Symbols) env -> [(Vector of number), env]
@@ -806,12 +806,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                 function(x,y){return x<y;},
                                                 function(x,y){return x===y;});
           // Add Function Arguments (in reverse order) to the environment
-          var env1 = args.reverse().reduce(pushLocal, originalEnv);
+          var env1 = args.reverse().map(function(s){return s.val;}).reduce(pushLocal, originalEnv);
           // Add the lexical free variables (in reverse order)
-          var env2 = lexicalFreeRefs.reverse().reduce(function(ref, env){
+          var env2 = lexicalFreeRefs.reverse().reduce(function(env, ref){
                       return ref.boxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
                     }, env1);
- 
           // Add the global free variables (in reverse order)
           var env3 = globalDepths.reverse().reduce(function(env, depth){
                        var refsAtDepth = globalRefs.filter(function(ref){return ref.depth===depth;}),
@@ -823,7 +822,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           return [globalDepths.concat(lexicalFreeDepths), env3];
         }
       }
-      var envWithArgs = this.args.reduce(pushLocal, new plt.compiler.emptyEnv());
+      var envWithArgs = this.args.map(function(s){return s.val;}).reduce(pushLocal, new plt.compiler.emptyEnv());
           freeVars = this.body.freeVariables([], envWithArgs);
       var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
           closureMap = closureVectorAndEnv[0],
@@ -837,9 +836,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var paramTypes = [], closureTypes = [];
       for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));       }
       for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
+ 
       // emit the bytecode
-      var bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [isUnnamedLambda? this.stx:name].concat(this.args.reverse()).map(function(id){return id.location.toVector();}),
+      var getLocs = function(id){return id.location.toVector();},
+          bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
+                             [isUnnamedLambda? this.stx:name].concat(this.args.reverse()).map(getLocs),
                              [],              // flags
                              this.args.length,// numParams
                              paramTypes,      // paramTypes
@@ -866,7 +867,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           compiledOperands = compiledOperandsAndPinfo[0],
           pinfo2 = compiledOperatorAndPinfo[1],
           app = new application(compiledOperator, compiledOperands);
- 
       // extract the relevant locations for error reporting, then wrap the application in continuation marks
       var extractLoc= function(e){return e.location;},
           locs      = [this.func.location].concat(this.args.map(extractLoc)),

@@ -97,28 +97,28 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  defStruct.prototype.desugar = function(pinfo){
     var that = this,
-        name = this.name.val,
-        ids = [name, 'make-'+name, name+'?', name+'-ref', , name+'-set!'],
+        ids = ['make-'+this.name.val, this.name.val+'?', this.name.val+'-ref', this.name.val+'-set!'],
         idSymbols = ids.map(function(id){return new symbolExpr(id);}),
         makeStructTypeFunc = new symbolExpr('make-struct-type'),
-        makeStructTypeArgs = [new quotedExpr(new symbolExpr(name)),
+        makeStructTypeArgs = [new quotedExpr(new symbolExpr(this.name.val)),
                               new literal(false),
                               new literal(this.fields.length),
                               new literal(0)],
         makeStructTypeCall = new callExpr(makeStructTypeFunc, makeStructTypeArgs);
     // set location for all of these nodes
-    [makeStructTypeCall, makeStructTypeFunc].concat(ids, makeStructTypeArgs).forEach(function(p){p.location = that.location});
-    var defineValuesStx = [new defVars(idSymbols, makeStructTypeCall)],
+    [makeStructTypeCall, makeStructTypeFunc].concat(idSymbols, makeStructTypeArgs).forEach(function(p){p.location = that.location});
+    var defineValuesStx = [new defVars([this.name].concat(idSymbols), makeStructTypeCall)],
         selectorStx = [];
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
       var makeFieldFunc = new symbolExpr('make-struct-field-accessor'),
-          makeFieldArgs = [new symbolExpr(name+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
+          makeFieldArgs = [new symbolExpr(that.name.val+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
           makeFieldCall = new callExpr(makeFieldFunc, makeFieldArgs),
-          defineVar = new defVar(new symbolExpr(name+'-'+f.val), makeFieldCall);
+          accessorSymbol= new symbolExpr(that.name.val+'-'+f.val),
+          defineVar = new defVar(new literal(accessorSymbol), makeFieldCall);
       // set location for all of these nodes
-      [defineVar, makeFieldFunc, makeFieldCall].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
+      [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
       selectorStx.push(defineVar);
     }
     this.fields.forEach(makeAccessorDefn);
@@ -194,9 +194,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // conds become nested ifs
  condExpr.prototype.desugar = function(pinfo){
     // base case is all-false
-    var expr = new callExpr(new symbolExpr("throw-cond-exhausted-error")
-                            , [new quotedExpr(this.location.toVector())]);
-    expr.location = this.location;
+    var condExhausted = new symbolExpr("throw-cond-exhausted-error"),
+        exhaustedLoc = new quotedExpr(this.location.toVector()),
+        expr = new callExpr(condExhausted, [exhaustedLoc]);
+    expr.location = condExhausted.location = exhaustedLoc.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
       expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
       expr.location = this.location;
@@ -214,7 +215,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         valStx = pinfoAndValSym[1];               // remember the symbolExpr for 'val'
     var pinfoAndXSym = updatedPinfo1.gensym('x'), // create another symbol 'x' using pinfo1
         updatedPinfo2 = pinfoAndXSym[0],          // generate pinfo containing 'x'
-        xStx = pinfoAndXSym[1];                   // remember the symbolExpr for 'x'
+        xStx = pinfoAndXSym[1],                   // remember the symbolExpr for 'x'
+        voidStx = new symbolExpr('void');         // make the void symbol
+
+    // track all the syntax we've created
+    var stxs = [valStx, xStx, voidStx];
 
     // if there's an 'else', pop off the clause and use the result as the base
     var expr, clauses = this.clauses, lastClause = clauses[this.clauses.length-1];
@@ -222,18 +227,21 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       expr = lastClause.second;
       clauses.pop();
     } else {
-      expr = new callExpr(new symbolExpr('void'),[]);
+      expr = new callExpr(voidStx,[], that.stx);
+      expr.location = that.location;
     }
- 
+
     // This is predicate we'll be applying using ormap: (lambda (x) (equal? x val))
-    var predicateStx = new lambdaExpr([xStx], new callExpr(new symbolExpr('equal?'),
-                                                          [xStx, valStx]));
-    var stxs = [valStx, xStx, predicateStx]; // track all the syntax we've created
+    var equalStx = new symbolExpr('equal?'),
+        equalTestStx = new callExpr(equalStx, [xStx, valStx], that.stx),
+        predicateStx = new lambdaExpr([xStx], equalTestStx, that.stx);
+    stxs = stxs.concat([equalStx, equalTestStx, predicateStx]);
+ 
     // generate (if (ormap <predicate> (quote clause.first)) clause.second base)
     function processClause(base, clause){
-      var ormapStx = new primop('ormap'),
+      var ormapStx = new symbolExpr('ormap'),
           quoteStx = new quotedExpr(clause.first),
-          callStx = new callExpr(ormapStx, [predicateStx, quoteStx]),
+          callStx = new callExpr(ormapStx, [predicateStx, quoteStx], that.stx),
           ifStx = new ifExpr(callStx, clause.second, base, caseStx);
       stxs = stxs.concat([ormapStx, callStx, quoteStx, ifStx]);
       return ifStx;
@@ -244,10 +252,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         body = clauses.reduceRight(processClause, expr),
         letExp = new letExpr([binding], body, that.stx);
     stxs = stxs.concat([binding, body, letExp]);
-
-    // assign location to every stx element
-    var loc = this.location;
-    stxs.forEach(function(stx){stx.location = loc;});
+ 
+    // assign location to every stx element we created
+    stxs.forEach(function(stx){stx.location = that.location;});
     return letExp.desugar(updatedPinfo2);
  };
  // ands become nested ifs
