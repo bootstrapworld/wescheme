@@ -55,8 +55,9 @@ function sameResults(x, y){
       // log error if a property is not defined
       if ( ! x.hasOwnProperty(p) ){ return false; }
       if ( ! y.hasOwnProperty(p) ){ return false; }
-      // if they both have the property, compare it
+      // ignore the hashcode property
       if(p==="_eqHashCode") continue;
+      // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
       else return false;
     }
@@ -76,7 +77,7 @@ function sameResults(x, y){
 // a diff of the expected and recieved output
 function setTestFailureLink(test, expected, recieved){
   test.style.background = 'pink';
-  var linkText = test.innerHTML;
+  test.style.cursor     = 'pointer';
   test.onclick = function(){compareText(expected,recieved);}
   return false;
 }
