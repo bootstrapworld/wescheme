@@ -443,10 +443,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                   , badExtensionTest[0]);
         } else if(caseSensitiveTest && caseSensitiveTest[0].length > 0){
             caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
-            return readSExpByIndex(str, i+2);
+            i+=2; column+=2;
+            return readSExpByIndex(str, i);
         } else if(vectorTest && vectorTest[0].length > 0){
-          var size = (vectorTest[1])? parseInt(vectorTest[1]) : "",     // do we have a size string?
-              elts = readList(str, i+(size.toString().length)),         // extract element literals that follow the size string
+          var size = (vectorTest[1])? parseInt(vectorTest[1]) : "",    // do we have a size string?
+              sizeChars = size.toString().length;                     // how long is the size string?
+          i+=sizeChars; column+=sizeChars           // start reading after the vectorsize was specified
+          var elts = readList(str, i),
               len = size===""? elts.length : parseInt(vectorTest[1]);  // set the size to a number
           // test vector size
           if(elts.length > len){
@@ -455,9 +458,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                           " provided"]);
              throwError(msg, sexp.location);
           }
+
+          i+=elts.location.span;
           datum = new literal(new Vector(len, elts));
-          datum.location = elts.location;
-          i = elts.location.span;
+          datum.location = new Location(sCol, sLine, iStart, i-iStart);
           return datum;
         } else {
           // match every valid (or *almost-valid*) sequence of characters, or the empty string
@@ -484,17 +488,19 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                       i+= datum.val.length-1;
                       break;
             // BOXES
-            case '&': sexp = readSExpByIndex(str, i+1);
+            case '&': column++;
+                      sexp = readSExpByIndex(str, i+1);
                       var boxCall = new symbolExpr("box"),
                           datum = [boxCall, sexp];
-                      boxCall.location = sexp.location;
-                      i+= sexp.location.span+1; break;
+                      i+= sexp.location.span+1;
+                      boxCall.location = new Location(sCol, sLine, iStart, i-iStart);
+                      break;
             // BLOCK COMMENTS
             case '|':  datum = readBlockComment(str, i-1);
                        i+= datum.location.span; break;
             // SEXP COMMENTS
             case ';':  datum = readSExpComment(str, i+1);
-                       i+= datum.location.span+1; break;
+                       column=i+= datum.location.span+1; break;
             // LINE COMMENTS
             case '!': datum = readLineComment(str, i-1);
                        i+= datum.location.span; break;
