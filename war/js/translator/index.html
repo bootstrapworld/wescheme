@@ -236,13 +236,11 @@ if(generateBytecode){
         start = 0, end = tests.length;
     var whichValue = document.getElementById('whichTests').value;
     if(whichValue !== "all"){start=Number(whichValue)-1; end=start+1;}
-                        console.log('start='+start+', end='+end);
     for(var i=start; i<end; i++){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode,
-                        generateBytecode);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode, generateBytecode);
       if(result) passed++;
       testsRun++;
       document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
