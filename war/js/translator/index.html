@@ -13,9 +13,10 @@
 <script type="text/javascript" src="repl2.js"></script>
   
 <script>
-var rows = [];
-var tests = [];
-var passed = 0;
+var rows    = [];
+var tests   = [];
+var passed  = 0;
+var testsRun= 0;
 
 // sameResults : local server -> boolean
 // compare entities using a 3-step process
@@ -90,8 +91,8 @@ function compareText(expected, recieved){
 
 function loadTests(){
   var testButton = document.getElementById('runTests'),
-      script = document.createElement('script'),
-      head = document.getElementsByTagName('head')[0];
+      script  = document.createElement('script'),
+      head    = document.getElementsByTagName('head')[0];
   testButton.disabled = true;
   testButton.value = "Loading tests...";
   head.appendChild(script);
@@ -100,20 +101,25 @@ function loadTests(){
 }
 
 function loadSuite(json){
+  var which   = document.getElementById('whichTests');
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
     var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
-               difference = chunks[4], reason = chunks[5], desugar = chunks[6], bytecode = chunks[7];
+               difference = chunks[4], reason = chunks[5], desugar = chunks[6], bytecode = chunks[7],
+        opt = document.createElement('option');
     expr = expr.replace(/^\'\'/,"'");
     tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar, bytecode: bytecode});
+    opt.value=opt.innerHTML = Number(i)+1;
+    which.appendChild(opt);
   }
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
-  document.getElementById('runTests').value="Run test-suite";
+  document.getElementById('runTests').value="Run test:";
   document.getElementById('runTests').onclick=function(){runTests(true);};
   document.getElementById('memoryTest').disabled=false;
   console.log('Test Suite data retrieved from Google Drive: '+tests.length+' tests loaded');
+  which.style.display = 'inline-block';
 }
 
 function runTests(verbose){
@@ -146,13 +152,14 @@ function runTests(verbose){
         var sexp = plt.compiler.lex(expr,"<definitions>");
       } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
           if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
       lex.style.background = 'lightgreen';
-                      
+
       // PARSE: If we pass when we shouldn't, set to pink and return false.
       // Catch: If we fail better than the server, set to blue and return true.
       // Catch: If we fail equal to the server, set to green and return true.
@@ -162,13 +169,14 @@ function runTests(verbose){
         var AST = plt.compiler.parse(sexp);
       } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
           if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
       parse.style.background = 'lightgreen';
-                      
+
       // DESUGAR AND ANALYZE: If we pass when we shouldn't, set to pink and return false.
       // Catch: If we fail better than the server, set to blue and return true.
       // Catch: If we fail equal to the server, set to green and return true.
@@ -181,6 +189,7 @@ function runTests(verbose){
             pinfo2    = plt.compiler.analyze(program);
       } catch (recieved) {
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
         else{ return setTestFailureLink(row, expected, recieved);}
       }
@@ -223,15 +232,20 @@ if(generateBytecode){
  
     if(verbose) console.log('running tests');
     var table = document.getElementById('testResults'),
-        generateBytecode = document.getElementById('generateBytecode').checked;
-    for(var i=0; i<tests.length; i++){
+        generateBytecode = document.getElementById('generateBytecode').checked,
+        start = 0, end = tests.length;
+    var whichValue = document.getElementById('whichTests').value;
+    if(whichValue !== "all"){start=Number(whichValue)-1; end=start+1;}
+                        console.log('start='+start+', end='+end);
+    for(var i=start; i<end; i++){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
       var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode,
                         generateBytecode);
       if(result) passed++;
-      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed. <b>Click on failures to see a Diff of the output</b>.';
+      testsRun++;
+      document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
     }
 }
                         
@@ -250,6 +264,9 @@ function runMemoryTest(){
 <textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
 <input type="button" value="Load test-suite" id="runTests" onclick="loadTests();"/>
+<select id="whichTests" style="display: none;">
+  <option value="all">all</option>
+</select>
 <input type="checkbox" id="generateBytecode" />Generate bytecode during tests
 <br/>
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
