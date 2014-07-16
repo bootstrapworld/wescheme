@@ -21,7 +21,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return '{"$":"constant","value":'+str+'}';
     };
     symbolExpr.prototype.toBytecode = function(){
-      return 'types.symbol("'+this.val+'")';
+      return 'types.symbol("'+escapeSym(this.val)+'")';
     };
     Vector.prototype.toBytecode = function(){
       return 'types.vector(['+this.elts.join(',')+'])';
@@ -86,11 +86,24 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // for mapping JSON conversion over an array
     function convertToBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
  
+    // convert a symbol-name into bytecode string
+    function escapeSym(symName){
+      var str = symName.toString().replace(/\|/g,''),  bcStr = "";
+      // possible characters that need to be escaped
+      var escapes = ["(", ")", "{", "}", "[", "]", ",", "'", "`", " ", '"'];
+      for(var j=0; j<str.length; j++){
+        bcStr += ((escapes.indexOf(str.charAt(j)) > -1)? '\\' : '') + str.charAt(j);
+      }
+      return bcStr;
+    }
+ 
     // Global bucket
     function globalBucket(name) {
       Bytecode.call(this);
       this.name = name;  // symbol
-      this.toBytecode = function(){return '{"$":"global-bucket","value":"'+this.name+'"}';};
+      this.toBytecode = function(){
+        return '{"$":"global-bucket","value":"'+escapeSym(this.name)+'"}';
+      };
     };
     globalBucket.prototype = heir(Bytecode.prototype);
 
@@ -834,7 +847,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var paramTypes = [], closureTypes = [];
       for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));       }
       for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
- 
+
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),

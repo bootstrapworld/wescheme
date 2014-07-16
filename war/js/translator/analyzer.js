@@ -131,7 +131,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  lambdaExpr.prototype.desugar = function(pinfo){
     // if this was parsed from raw syntax, check for duplicate arguments
-    if(this.stx) checkDuplicateIdentifiers(this.args, this.stx[0], this.location);
+    if(this.stx) checkDuplicateIdentifiers(this.args, this.stx, this.location);
     var bodyAndPinfo = this.body.desugar(pinfo);
     this.body = bodyAndPinfo[0];
     return [this, bodyAndPinfo[1]];

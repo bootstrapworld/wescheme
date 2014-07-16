@@ -296,7 +296,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
+      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLocalExpr(sexp) {
       // is it just (local)?
@@ -417,7 +417,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
+      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp);
     }
     function parseLetStarExpr(sexp) {
       // is it just (let*)?
