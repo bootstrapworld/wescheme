@@ -496,8 +496,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                       boxCall.location = new Location(sCol, sLine, iStart, i-iStart);
                       break;
             // BLOCK COMMENTS
-            case '|':  datum = readBlockComment(str, i-1);
-                       i+= datum.location.span; break;
+            case '|': i--; // back up by one, and add it after the comment
+                      datum = readBlockComment(str, i);
+                      i+= datum.location.span+1; break;
             // SEXP COMMENTS
             case ';':  datum = readSExpComment(str, i+1);
                        column=i+= datum.location.span+1; break;
@@ -599,10 +600,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         throwError(new types.Message(["read: Unexpected EOF when reading a multiline comment"])
                    ,new Location(sCol, sLine, iStart, i-iStart));
       }
-      i+=2; column+=2; // hop over '|#'
-      var atom = new Comment(txt);
-      atom.location = new Location(sCol, sLine, iStart, i-iStart);
-      return atom;
+      i++; column++; // hop over '|#'
+      var comment = new Comment(txt);
+      comment.location = new Location(sCol, sLine, iStart, i-iStart);
+      return comment;
     }
 
     // readSExpComment : String Number -> Atom
