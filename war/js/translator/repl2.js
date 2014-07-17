@@ -38,6 +38,7 @@ function popElementFromHistory(dir, current) {
 }
 
 function getError(e){
+  console.log('getError given '+e.toString());
   try{
     var err =  JSON.parse(e),
         structuredErr = JSON.parse(err['structured-error']);
@@ -49,7 +50,8 @@ function getError(e){
 }
 
 function readFromRepl(event) {
-  var key = event.keyCode;
+  var key = event.keyCode,
+      lexTime=parseTime=desugarTime=analysisTime=compileTime = 0;
 
   if(key === 13) { // "\n"
     var aSource = repl_input.value;
@@ -111,21 +113,20 @@ function readFromRepl(event) {
       throw Error("ANALYSIS ERROR\n"+getError(e).toString());
     }
     
-    var compileTime = 0;
-/*    try {
+    try {
       console.log("// COMPILATION: //////////////////////////////\n");
       var start       = new Date().getTime(),
           response    = plt.compiler.compile(program, pinfo),
           end         = new Date().getTime(),
       compileTime     = Math.floor(end-start);
       console.log("Compiled in "+compileTime+"ms");
-      console.log("response:");
-      console.log(JSON.stringify(response));
+      console.log((0,eval)('(' + response.bytecode + ')'));
+      console.log("response:\n\n"+JSON.stringify(response));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
- */
+ 
  
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
