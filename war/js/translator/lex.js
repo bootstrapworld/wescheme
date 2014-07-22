@@ -144,14 +144,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
     Array.prototype.toString = function () {return this.join(" "); };
     function sexpToString(sexp) {
-      var str="";
-      if(sexp instanceof Array) {
-        str += "(" + sexp.map(sexpToString).toString() + ")";
-      } else {
-        str += sexp.toString();
-      }
-
-      return str;
+      return (sexp instanceof Array)? "(" + sexp.map(sexpToString).toString() + ")"
+                                    : sexp.toString();
     }
 
                    
@@ -749,9 +743,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // special-case for ".", which is not supported in WeScheme
       if(filtered === "."){
         endOfError = i; // HACK - remember where we are, so readList can pick up reading
-        throwError(new types.Message([source, ":"
-                                    , sLine.toString(), ":"
-                                    , sCol.toString()
+        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
                                     , ": read: '.' is not supported as a symbol in WeScheme"])
                      , new Location(sCol, sLine, iStart, i-iStart)
                      , "Error-GenericReadError");

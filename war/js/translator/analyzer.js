@@ -297,7 +297,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  };
  
  quotedExpr.prototype.desugar = function(pinfo){
-    function desugarQuotedItem(sexp){
+    return [this, pinfo];
+/*    function desugarQuotedItem(sexp){
       if(sexp instanceof Array) return new callExpr(new symbolExpr('list'), sexp.map(desugarQuotedItem));
       if(sexp instanceof symbolExpr) return new quotedExpr(sexp.val);
       else return sexp;
@@ -309,6 +310,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     } else {
       return [this, pinfo];
     }
+ */
  };
 
  // go through each item in search of unquote or unquoteSplice

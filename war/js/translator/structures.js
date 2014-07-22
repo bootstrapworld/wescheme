@@ -346,8 +346,11 @@ function quotedExpr(val) {
   Program.call(this);
   this.val = val;
   this.toString = function(){
-    if(this.val instanceof Array) return "'("+this.val.toString()+")";
-    else return "'"+this.val.toString();
+    function sexpToString(sexp) {
+      return (sexp instanceof Array)? "(" + sexp.map(sexpToString).toString() + ")"
+                                    : sexp.toString();
+    }
+    return "'"+sexpToString(this.val);
   };
 };
 quotedExpr.prototype = heir(Program.prototype);
