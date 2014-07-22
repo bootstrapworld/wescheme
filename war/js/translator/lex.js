@@ -12,8 +12,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  
  TODO
- - assign location in constructors
  - JSLint
+ - dot in readList
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
  */
@@ -252,15 +252,26 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
-          sexp = readSExpByIndex(str, i);      // try to read the next s-exp
-          i = sexp.location.end().offset+1;    // move i to the character at the end of the sexp
-          if(!(sexp instanceof Comment)){       // if it's not a comment...
-            sexp.parent = list;                // set this list as it's parent
-            list.push(sexp);                   // and add the sexp to the list
+          if(str.charAt(i)==='.'){
+            var subList = readSExpByIndex(str, ++i);  // read the next sexp
+            if(!(subList instanceof Array)){           // if it's not a list, throw an error
+               throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
+                                            , new types.ColoredPart("something else", subList.location)])
+                          , subList.location);
+            }
+            list = list.concat(subList);              // if it IS, splice it into this one
+            i = subList.location.offset+subList.location.span;
+          } else {
+            sexp = readSExpByIndex(str, i);           // try to read the next s-exp
+            i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
+            if(!(sexp instanceof Comment)){            // if it's not a comment...
+              sexp.parent = list;                     // set this list as it's parent
+              list.push(sexp);                        // and add the sexp to the list
+            }
           }
         } catch (e){                            // try to keep reading from endOfError...
-          // UGLY HACK: if the error *looks like a brace error*, throw it. Otherwise swallow it and keep reading
-          if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e)){
+          // If the error is brace or dot error, throw it. Otherwise swallow it and keep reading
+          if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e) || /syntax list/.exec(e)){
             throw e;
           } else {
             var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
@@ -496,7 +507,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                       boxCall.location = new Location(sCol, sLine, iStart, i-iStart);
                       break;
             // BLOCK COMMENTS
-            case '|': i--; // back up by one, and add it after the comment
+            case '|': i--;
                       datum = readBlockComment(str, i);
                       i+= datum.location.span+1; break;
             // SEXP COMMENTS
