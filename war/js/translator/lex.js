@@ -231,7 +231,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                  p === '"'                  ? readString(str, i) :
                  p === '#'                  ? readPoundSExp(str, i) :
                  p === ';'                  ? readLineComment(str, i) :
-                 quotes.test(p)             ? readQuote(str, i) :
+                 quotes.test(p)             ? readQuote(str, i, false) :
                   /* else */                   readSymbolOrNumber(str, i);
        return sexp;
     }
@@ -519,7 +519,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
             case '`':
             case ',':
-            case '\'': datum = readQuote(str, i);
+            case '\'': datum = readQuote(str, i, true);
                        i+= datum.location.span; break;
             // STRINGS
             case '<<': datum = readString(str, i-1);
@@ -659,17 +659,20 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
-    function readQuote(str, i) {
+    function readQuote(str, i, syntaxp) {
       var sCol = column, sLine = line, iStart = i, nextSExp;
       var p = str.charAt(i);
-      var symbol = p == "'" ? new symbolExpr("quote") :
-                   p == "`" ? new symbolExpr("quasiquote") :
+      var symbol = p == "'" ? (syntaxp ? new symbolExpr("syntax")
+                                       : new symbolExpr("quote")) :
+                   p == "`" ? (syntaxp ? new symbolExpr("quasisyntax")
+                                       : new symbolExpr("quasiquote")) :
                    /* else */  "";
       function eofError(i){
         endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
-        var action = p == "'" ? " quoting " :
-                     p == "`" ? " quasiquoting " :
-                     p == "," ? " unquoting " : "";
+        var action = p == "'" ? (syntaxp ? " syntaxing " : " quoting ") :
+                     p == "`" ? (syntaxp ? " quasisyntaxing " : " quasiquoting ") :
+                     p == "," ? (syntaxp ? " unsyntaxing " : " unquoting ") :
+                                "";
         throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
                                       , ": read: expected an element for" + action, p
                                       , " (found end-of-file)"])
@@ -681,9 +684,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       if(p == ',') {
         if(str.charAt(i) == '@') {
           i++; column++; // read forward one char
-          symbol = new symbolExpr("unquote-splicing");
+          symbol = (syntaxp ? new symbolExpr("unsyntax-splicing") : new symbolExpr("unquote-splicing"));
         } else {
-          symbol = new symbolExpr("unquote");
+          symbol = (syntaxp ? new symbolExpr("unsyntax") : new symbolExpr("unquote"));
         }
       }
       // read the next non-comment sexp
