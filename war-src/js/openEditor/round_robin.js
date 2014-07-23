@@ -141,7 +141,8 @@ goog.provide("plt.wescheme.RoundRobin");
                               onDone, onDoneError) {
        // if no cookie exists, set it for one hour
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
-       var TEST_LOCAL = readLocalCompilerCookie() === "true";
+       // turn on local testing if the cookie is true *and* if we have the error logging form in place
+       var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL);
  
  if(TEST_LOCAL){
@@ -201,24 +202,36 @@ goog.provide("plt.wescheme.RoundRobin");
           }
           try {
             console.log("// ANALYSIS: //////////////////////////////\n");
-            var start       = new Date().getTime();
-            window.pinfo    = plt.compiler.analyze(program);
-            var end         = new Date().getTime(),
+            var start       = new Date().getTime(),
+                pinfo       = plt.compiler.analyze(program),
+                end         = new Date().getTime(),
             analysisTime    = Math.floor(end-start);
-            console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
+            console.log("Analyzed in "+analysisTime+"ms");
           } catch (e) {
             var end = new Date().getTime(),
             analysisTime = Math.floor(end-start);
             console.log("ANALYSIS ERROR");
             throw e;
           }
-
+/*          try {
+            console.log("// COMPILATION: //////////////////////////////\n");
+            var start       = new Date().getTime(),
+                response    = plt.compiler.compile(program, pinfo),
+                end         = new Date().getTime(),
+            compileTime     = Math.floor(end-start);
+            console.log("Compiled in "+compileTime+"ms");
+            console.log("response:");
+            console.log(response);
+          } catch (e) {
+            if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
+            throw Error("COMPILATION ERROR\n"+getError(e).toString());
+          }
+*/
       } catch (e) {
           local_error = getError(e).toString();
-// ignore local errors for now
 //          onDoneError(local_error);
       }
-      // We made it safely! Okay, let's turn the local compiler!
+
       writeLocalCompilerCookie("true");
       var localTime = lexTime+parseTime+desugarTime+analysisTime;
       console.log("// SUMMARY: /////////////////////////////////\n"
@@ -240,7 +253,6 @@ goog.provide("plt.wescheme.RoundRobin");
                     if(TEST_LOCAL){
                        console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                        if(local_error){
-//                         TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                          console.log("FAIL: LOCAL RETURNED AN ERROR, SERVER DID NOT");
                          logResults(code, JSON.stringify(local_error), "NO SERVER ERROR");
                        } else {
@@ -248,6 +260,13 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                     }
                     onDone(bytecode);
+/*
+ //                 console.log('SERVER bytecode is:\n'+bytecode+'\n\n');
+                    // execute using locally-compiled bytecodes!!
+                    console.log('LOCAL bytecode is:\n'+JSON.stringify(response)+'\n\n');
+                    try{ onDone(JSON.stringify(response));}
+                    catch(e){console.log(e);}
+ */
                 },
                 // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
@@ -280,13 +299,11 @@ goog.provide("plt.wescheme.RoundRobin");
                     } else if(TEST_LOCAL){
                         console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                         if(!local_error){
-//                          TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
                         // if the results are different, we should log them to the server
                         else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
-//                            TEST_LOCAL = writeLocalCompilerCookie(false); // turn off local testing
                             console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         } else {
