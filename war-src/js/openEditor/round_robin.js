@@ -401,11 +401,16 @@ goog.provide("plt.wescheme.RoundRobin");
     // logResults : code local server -> void
     // send code, local error and server error to a Google spreadsheet
     function logResults(code, local, server){
-      console.log('Error messages differed. Logging anonymized error message to GDocs');
-      document.getElementById('expr').value = code;
-      document.getElementById('local').value = local.replace(/\s+/g,"").toLowerCase();
-      document.getElementById('server').value = server.replace(/\s+/g,"").toLowerCase();
-      document.getElementById('errorLogForm').submit();
+       try{
+            console.log('Error messages differed. Logging anonymized error message to GDocs');
+            document.getElementById('expr').value = code;
+            document.getElementById('local').value = local.replace(/\s+/g,"").toLowerCase();
+            document.getElementById('server').value = server.replace(/\s+/g,"").toLowerCase();
+            document.getElementById('errorLogForm').submit();
+       } catch (e){
+          console.log('LOGGING FAILED. Turning off Local Compiler.');
+          writeLocalCompilerCookie("false");
+       }
     }
 
     // TODO: add a real LRU cache for compilations.
