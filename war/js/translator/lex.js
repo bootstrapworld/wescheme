@@ -16,6 +16,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  - dot in readList
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
+ - treat syntax and unsyntax as errors
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -713,32 +714,30 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
     function readSymbolOrNumber(str, i){
       var sCol = column, sLine = line, iStart = i;
-      // match anything pattern consisting of stuff between two |bars|, **OR**
+      // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) [ ] { } " , ' ` ; # | \\
       var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"])+/g.exec(str.slice(i))[0];
-      // move through the string checking for newlines and escaped characters
-      for(var j=0; j < chunk.length; j++){
-        i++; column++;
-        if(str.charAt(j) === "\\"){
-          j++;
-          if(j >= str.length){
-            endOfError = i; // HACK - remember where we are, so readList can pick up reading
+
+      // if the chunk *and the string* end with an escape, throw an error
+      if((chunk.charAt(chunk.length-1)==="\\") && (i+chunk.length+1 > str.length)){
+            i = str.length; // jump to the end of the string
+            endOfError = i; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
                                           ": read: EOF following `\\' in symbol"])
                        ,new Location(sCol, sLine, iStart, i-iStart)
                        ,"Error-GenericReadError");
-          }
-          i++; column++; // read the backslash and adjust i and column counters
-        }
-        if(chunk.charAt[j] === '\n'){ line++; column = 0;}
       }
-      // split by |, and for each one enforce case-sensitivity for non-verbatim sections. Remove all escape characters
+                                
+      // move the read head and column tracker forward
+      i+=chunk.length; column+=chunk.length;
+                                
+      // split by |, and enforce case-sensitivity for non-verbatim sections. Remove all escape characters
       var filtered = chunk.split("|").reduce(function(acc, str, i){
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "").replace(/\\/g,'');
       
-      // add bars if it's a symbol that needs them
+      // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
       // special-case for ".", which is not supported in WeScheme
       if(filtered === "."){
