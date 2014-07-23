@@ -417,7 +417,8 @@ function isExpression(node){
            || (node instanceof defStruct)
            || (node instanceof defFunc)
            || (node instanceof provideStatement)
-           || (node instanceof unsupportedExpr));
+           || (node instanceof unsupportedExpr)
+           || (node instanceof requireExpr));
 }
 
 function isDefinition(node){
@@ -1095,7 +1096,7 @@ function getTopLevelEnv(lang){
   // Provides a default module resolver.
   plt.compiler.defaultModulePathResolver = function(path, parentPath){
     // anything of the form wescheme/w+, or that has a known collection AND module
-    var parts = path.split("/"),
+    var parts = path.toString().split("/"),
         collectionName = parts[0],
         moduleName = parts.slice(1).join();
     return ((knownCollections.indexOf(collectionName) > -1)

@@ -911,7 +911,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       } else if(stackReference instanceof unboundStackReference){
         throw "Couldn't find '"+this.val+"' in the environment";
       } else {
-        throw "ANALYSIS FAILURE: env.lookup failed for '"+this.val+"'! A reference should be added to the environment!";
+        throw "IMPOSSIBLE: env.lookup failed for '"+this.val+"'! A reference should be added to the environment!";
       }
       return [bytecode, pinfo];
    };
@@ -920,7 +920,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       return [this.val, pinfo];
    };
    provideStatement.prototype.compile = function(env, pinfo){};
-   requireExpr.prototype.compile = function(pinfo){
+   requireExpr.prototype.compile = function(env, pinfo){
      return [new req(this.spec, new topLevel(0, 0, false, false, false)), pinfo];
    };
 
@@ -948,12 +948,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                         , new symbolExpr(b.name), -1, 0);
             };
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
-                                       ,allModuleBindings.map(makeModuleVariablefromBinding)
-                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)),
+                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)
+                                      ,allModuleBindings.map(makeModuleVariablefromBinding)),
             globals   = [false].concat(pinfo.freeVariables
                                       ,pinfo.definedNames.keys()
                                       ,allModuleBindings.map(function(b){return b.name;}));
- 
         return [new prefix(0, topLevels ,[])
                , new plt.compiler.globalEnv(globals, false, new plt.compiler.emptyEnv())];
       };

@@ -24,6 +24,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  //////////////////////////////////// UTILITY FUNCTIONS //////////////////////////////
  function isVector(x) { return types.isVector(x.val); }
+ function isString(x) { return types.isString(x.val); }
  function isSymbol(x) { return x instanceof symbolExpr; }
  function isLiteral(x){ return x instanceof literal; }
  function isUnsupported(x){ return x instanceof unsupportedExpr;}
@@ -851,8 +852,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      sexp.location);
         }
         // is it (require (lib not-strings))?
-        rest(sexp[1]).forEach(function(str){
-          if (!(types.isString(str))){
+        rest(sexp[1]).forEach(function(lit){
+          if (!(isString(lit))){
             throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                         , ": expected a string for a library collection, but found "
                                         , new types.ColoredPart("something else", str.location)]),
@@ -865,7 +866,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                     , ": Importing PLaneT pacakges is not supported at this time"]),
                  sexp.location);
     // if it's (require <not-a-string-or-symbol>)
-    } else if(!((sexp[1] instanceof symbolExpr) || types.isString(sexp[1]))){
+    } else if(!((sexp[1] instanceof symbolExpr) || isString(sexp[1]))){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                     , ": expected a module name as a string or a `(lib ...)' form, but found "
                                     , new types.ColoredPart("something else", sexp[1].location)]),
