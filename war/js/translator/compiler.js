@@ -917,7 +917,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
  
    quotedExpr.prototype.compile = function(env, pinfo){
-      return [this.val, pinfo];
+      return [new literal(this.val), pinfo];
    };
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(env, pinfo){
@@ -947,6 +947,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                             modulePathIndexJoin(false, false))
                                         , new symbolExpr(b.name), -1, 0);
             };
+ 
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),
