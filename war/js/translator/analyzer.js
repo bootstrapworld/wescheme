@@ -296,51 +296,54 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return [desugared[0], exprsAndPinfo[1]];
  };
  
- quotedExpr.prototype.desugar = function(pinfo){
-    return [this, pinfo];
-/*    function desugarQuotedItem(sexp){
-      if(sexp instanceof Array) return new callExpr(new symbolExpr('list'), sexp.map(desugarQuotedItem));
-      if(sexp instanceof symbolExpr) return new quotedExpr(sexp.val);
-      else return sexp;
-    }
-    if(this.val instanceof Array){
-      var call_exp = new callExpr(new symbolExpr('list'), this.val.map(desugarQuotedItem));
-      call_exp.location = this.location;
-      return [call_exp, pinfo];
-    } else {
-      return [this, pinfo];
-    }
- */
- };
+// quotedExprs desugar to themselves. Including this as a comment for documentation purposes:
+// quotedExpr.prototype.desugar = function(pinfo){  return [this, pinfo]; };
 
  // go through each item in search of unquote or unquoteSplice
  quasiquotedExpr.prototype.desugar = function(pinfo){
+    var listSym   = new symbolExpr('list'),
+        appendSym = new symbolExpr('append'),
+        stxs = [listSym, appendSym],
+        that = this;
+ 
     function desugarQuasiQuotedElements(element) {
       if(element instanceof unquoteSplice){
         return element.val.desugar(pinfo)[0];
       } else if(element instanceof unquotedExpr){
-        return new callExpr(new symbolExpr('list'), [element.val.desugar(pinfo)[0]]);
+        var listArgs = [element.val.desugar(pinfo)[0]],
+            listCall = new callExpr(listSym, listArgs);
+        stxs = stxs.concat([listArgs, listCall]);
+        return listCall;
       } else if(element instanceof quasiquotedExpr){
         /* we first must exit the regime of quasiquote by calling desugar on the
          * list a la unquote or unquoteSplice */
         throwError("ASSERT: we should never parse a quasiQuotedExpr within an existing quasiQuotedExpr")
       } else if(element instanceof Array){
-        return new callExpr(new symbolExpr('list'),
-                            [new callExpr(new symbolExpr(new symbolExpr('append')),
-                                          element.map(desugarQuasiQuotedElements))]);
+        var appendArgs = element.map(desugarQuasiQuotedElements),
+            appendCall = new callExpr(appendSym, appendArgs),
+            listArgs = [appendCall],
+            listCall = new callExpr(listSym, listArgs);
+        stxs = stxs.concat([appendArgs, appendCall, listArgs, listCall]);
+        return listCall;
       } else {
-        return new callExpr(new symbolExpr('list'),
-                            [new quotedExpr(element.toString())]);
+        var quoted = new quotedExpr(element.toString()),
+            listArgs = [quoted],
+            listCall = new callExpr(listSym, listArgs);
+        stxs = stxs.concat([quoted, listArgs, listCall]);
+        return listCall;
       }
     }
 
     if(this.val instanceof Array){
-      var result = new callExpr(new symbolExpr('append'),
-                                this.val.map(desugarQuasiQuotedElements));
-      return [result, pinfo];
+      var appendArgs = this.val.map(desugarQuasiQuotedElements),
+          result = new callExpr(appendSym, appendArgs);
+      stxs = stxs.concat(appendArgs, result);
     } else {
-      return [new quotedExpr(this.val.toString()), pinfo];
+      var result = new quotedExpr(this.val.toString());
+      stxs.push(result);
     }
+    stxs.forEach(function(stx){stx.location = that.location;});
+    return [result, pinfo];
  };
  symbolExpr.prototype.desugar = function(pinfo){
     // if we're not in a clause, we'd better not see an "else"...
