@@ -409,9 +409,13 @@ WeSchemeInteractions = (function () {
                 if(thing.nodeName === "CANVAS"){
                     thing.ondblclick = function(){
                                         var link = document.createElement("a");
-                                        link.download = "WeScheme Image";
                                         link.href = thing.toDataURL("image/png");
+                                        // if download is supported, use it. Otherwise (IE/Safari), open in a new tab
+                                        if(link.download != undefined) link.download = "WeScheme Image";
+                                        else link.target = "WeScheme Image";
+                                        document.body.appendChild(link);  // for firefox
                                         link.click();
+                                        document.body.removeChild(link);  // clean up firefox
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
                 }
