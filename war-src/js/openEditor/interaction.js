@@ -407,7 +407,13 @@ WeSchemeInteractions = (function () {
             write: function(thing) {
                 // if it's a canvas element, make double-clicking generate a PNG file in a new window
                 if(thing.nodeName === "CANVAS"){
-                    thing.ondblclick = function(){window.open(thing.toDataURL("image/png"), 'Save this image');};
+                    thing.ondblclick = function(){
+                                        var link = document.createElement("a");
+                                        link.download = "WeScheme Image";
+                                        link.href = thing.toDataURL("image/png");
+                                        link.click();
+                                      };
+                    thing.style.cursor    = "url(css/images/dblclick.png), pointer";
                 }
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
