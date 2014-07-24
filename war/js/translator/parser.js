@@ -780,7 +780,9 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       if(isCons(sexp)) return sexp.map(parseQqListItem);
       else return sexp;
     }
-    return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
+    var quoted = isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1];
+    quoted.location = sexp[1].location;
+    return new quasiquotedExpr(quoted);
   }
  
   // replace all undefineds with the last sexp, and convert to a function call

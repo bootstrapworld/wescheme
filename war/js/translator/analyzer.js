@@ -342,7 +342,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var result = new quotedExpr(this.val.toString());
       stxs.push(result);
     }
-    stxs.forEach(function(stx){stx.location = that.location;});
+    stxs.forEach(function(stx){stx.location = that.val.location;});
     return [result, pinfo];
  };
  symbolExpr.prototype.desugar = function(pinfo){
