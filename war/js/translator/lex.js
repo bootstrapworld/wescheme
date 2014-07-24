@@ -13,7 +13,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  
  TODO
  - JSLint
- - dot in readList
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
  - treat syntax and unsyntax as errors
@@ -248,7 +247,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
           if(str.charAt(i)==='.'){
-            var subList = readSExpByIndex(str, ++i);  // read the next sexp
+            column++; i++;
+            var subList = readSExpByIndex(str, i);    // read the next sexp
             if(!(subList instanceof Array)){           // if it's not a list, throw an error
                throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
                                             , new types.ColoredPart("something else", subList.location)])
