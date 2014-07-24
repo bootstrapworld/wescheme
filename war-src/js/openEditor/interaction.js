@@ -405,6 +405,10 @@ WeSchemeInteractions = (function () {
     var makeFreshEvaluator = function(that, afterInit) {         
         var evaluator = new Evaluator({
             write: function(thing) {
+                // if it's a canvas element, make double-clicking generate a PNG file in a new window
+                if(thing.nodeName === "CANVAS"){
+                    thing.ondblclick = function(){window.open(thing.toDataURL("image/png"), 'Save this image');};
+                }
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
                 rewrapOutput(thing);
