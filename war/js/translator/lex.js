@@ -246,23 +246,21 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         try{
-          if(str.charAt(i)==='.'){
-            column++; i++;
-            var subList = readSExpByIndex(str, i);    // read the next sexp
-            if(!(subList instanceof Array)){           // if it's not a list, throw an error
+          sexp = readSExpByIndex(str, i);           // try to read the next s-exp
+          i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
+          // if it's a dot, treat it as a cons
+          if(sexp instanceof symbolExpr && sexp.val == '.'){
+            sexp = readSExpByIndex(str, i);        // read the next sexp
+            if(!(sexp instanceof Array)){           // if it's not a list, throw an error
                throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
-                                            , new types.ColoredPart("something else", subList.location)])
-                          , subList.location);
+                                            , new types.ColoredPart("something else", sexp.location)])
+                          , sexp.location);
             }
-            list = list.concat(subList);              // if it IS, splice it into this one
-            i = subList.location.offset+subList.location.span;
-          } else {
-            sexp = readSExpByIndex(str, i);           // try to read the next s-exp
-            i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
-            if(!(sexp instanceof Comment)){            // if it's not a comment...
-              sexp.parent = list;                     // set this list as it's parent
-              list.push(sexp);                        // and add the sexp to the list
-            }
+            list = list.concat(sexp);              // if it IS, splice it into this one
+            i = sexp.location.end().offset+1;
+          } else if(!(sexp instanceof Comment)){     // if it's not a comment, add it to the list
+            sexp.parent = list;                     // set this list as it's parent
+            list.push(sexp);                        // and add the sexp to the list
           }
         } catch (e){                            // try to keep reading from endOfError...
           // If the error is brace or dot error, throw it. Otherwise swallow it and keep reading
@@ -701,10 +699,10 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           }
           throw e;
         }
-        i = nextSExp.location.offset+nextSExp.location.span;
+        i = nextSExp.location.end().offset+1;
       }
       var quotedSexp = [symbol, nextSExp],
-          quotedSpan = (nextSExp.location.offset + nextSExp.location.span) - iStart;
+          quotedSpan = (nextSExp.location.end().offset+1) - iStart;
       
       quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
       return quotedSexp;
@@ -739,14 +737,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       
       // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
-      // special-case for ".", which is not supported in WeScheme
-      if(filtered === "."){
-        endOfError = i; // HACK - remember where we are, so readList can pick up reading
-        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
-                                    , ": read: '.' is not supported as a symbol in WeScheme"])
-                     , new Location(sCol, sLine, iStart, i-iStart)
-                     , "Error-GenericReadError");
-      }
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error
       try{

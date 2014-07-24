@@ -364,6 +364,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , ", but found none"]),
                     this.location);
     }
+    // the dot operator is not supported by WeScheme
+    if(this.val === "."){
+     throwError(new types.Message([this.location.source, ":",
+                                   this.location.sLine.toString(), ":",
+                                   this.location.sCol.toString()
+                                , ": read: '.' is not supported as a symbol in WeScheme"])
+                 , this.location
+                 , "Error-GenericReadError");
+    }
     return [this, pinfo];
  };
  
