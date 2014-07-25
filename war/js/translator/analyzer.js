@@ -116,7 +116,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           makeFieldArgs = [new symbolExpr(that.name.val+'-ref'), new literal(i), new quotedExpr(new symbolExpr(f.val))],
           makeFieldCall = new callExpr(makeFieldFunc, makeFieldArgs),
           accessorSymbol= new symbolExpr(that.name.val+'-'+f.val),
-          defineVar = new defVar(new literal(accessorSymbol), makeFieldCall);
+          defineVar = new defVar(accessorSymbol, makeFieldCall);
       // set location for all of these nodes
       [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
       selectorStx.push(defineVar);
