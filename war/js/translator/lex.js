@@ -719,8 +719,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) [ ] { } " , ' ` ; # | \\
-      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"])+/g.exec(str.slice(i))[0];
-
+      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"])+/mg.exec(str.slice(i))[0];
       // if the chunk *and the string* end with an escape, throw an error
       if((chunk.charAt(chunk.length-1)==="\\") && (i+chunk.length+1 > str.length)){
             i = str.length; // jump to the end of the string
@@ -739,9 +738,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "").replace(/\\/g,'');
-      
+
+      // special-case: if it's the empty string, than it should be read as a newline character
+      if(filtered===""){filtered = "\n"; i++; line++; column=0;}
+                                
       // add bars if it's a symbol that needs those escape characters
-      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]|^$/g.test(filtered)? "|"+filtered+"|" : filtered;
+      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
+                   
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error
       try{

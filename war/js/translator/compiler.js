@@ -17,7 +17,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
               : this.val===true? "true"
               : this.val===false? "false"
               : this.toString();
- 
       return '{"$":"constant","value":'+str+'}';
     };
     symbolExpr.prototype.toBytecode = function(){
@@ -94,6 +93,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       for(var j=0; j<str.length; j++){
         bcStr += ((escapes.indexOf(str.charAt(j)) > -1)? '\\' : '') + str.charAt(j);
       }
+      // special-case for newline characters
+      bcStr= bcStr.replace(/\n/g,"\\n");
       return bcStr;
     }
  
