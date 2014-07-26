@@ -17,15 +17,23 @@ var rows    = [];
 var tests   = [];
 var passed  = 0;
 var testsRun= 0;
+// dictionaries of toplevel names for x and y bytecodes
+var x_toplevels = [], y_toplevels = [],
+    extractTopLevelName = function (tl){
+      if(!tl) return false;
+      if(tl.$ === 'global-bucket') return tl.value;
+      if(tl.$ === 'module-variable') return tl.sym.val;
+      else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
+}
 
 // sameResults : local server -> boolean
-// compare entities using a 3-step process
-// 1) Weak comparison on locations
-// 2) Recursive comparison for objects
-// 3) Strong comparison for literals
+// Weak comparison on locations, indirect comparison for toplevel references
+// Recursive comparison for objects
+// Strong comparison for literals
 // if there's a difference, log a diff to the form and return false
 // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
 function sameResults(x, y){
+  
   // given an object, remove empty properties and reconstruct as an alphabetized JSON string
   // then parse and return a canonicalized object
   function canonicalizeObject(obj){
@@ -49,8 +57,14 @@ function sameResults(x, y){
   // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
   if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
     return ( (x.span == y.span) && (x.offset == y.offset) );
-  // 2) if they are both objects, compare each property
-  } else if(typeof(x)=="object" && typeof(x)=="object"){
+  }
+  // 2) if both objects have a prefix field, build our dictionaries
+  if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
+    x_toplevels = x.prefix.toplevels.map(extractTopLevelName);
+    y_toplevels = y.prefix.toplevels.map(extractTopLevelName);
+  }
+  // 3) if they are both objects, compare each property
+  if(typeof(x)=="object" && typeof(x)=="object"){
     // does every property in x also exist in y?
     for (var p in x) {
       // log error if a property is not defined
@@ -58,6 +72,13 @@ function sameResults(x, y){
       if ( ! y.hasOwnProperty(p) ){ return false; }
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
+      if(p==="toplevels"){
+        return x_toplevels.length==y_toplevels.length &&
+               x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;});
+      }
+      if(p==="pos"){
+        return x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])];
+      }
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
       else return false;
@@ -67,7 +88,7 @@ function sameResults(x, y){
       // log error if a property is not defined
       if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){ return false; }
     }
-  // 3)if they are literals, they must be identical
+  // 4)if they are literals, they must be identical
   } else {
       if (x !== y){ return false; }
   }
@@ -123,7 +144,7 @@ function loadSuite(json){
 }
 
 function runTests(verbose){
-  function test(expr, expected, desugarRef, bytecodeRef, generateBytecode){
+  function test(expr, expected, desugarRef, bytecodeRef){
       // show the result
       var row   = document.createElement('tr'),
           num   = document.createElement('td'),
@@ -200,7 +221,6 @@ function runTests(verbose){
       if(expected !== recieved) { return setTestFailureLink(row, expected, recieved);}
       desugar.style.background = 'lightgreen';
 
-if(generateBytecode){
       bytecode.innerHTML = 'bytecode';
       try {
         console.log("// COMPILATION: //////////////////////////////\n");
@@ -225,14 +245,13 @@ if(generateBytecode){
 
       // EVERYTHING PASSED! WHOOPIE!
       bytecode.style.background = 'lightgreen';
-}
+                        
       return true;
  
     }
  
     if(verbose) console.log('running tests');
     var table = document.getElementById('testResults'),
-        generateBytecode = document.getElementById('generateBytecode').checked,
         start = 0, end = tests.length;
     var whichValue = document.getElementById('whichTests').value;
     if(whichValue !== "all"){start=Number(whichValue)-1; end=start+1;}
@@ -240,7 +259,7 @@ if(generateBytecode){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode, generateBytecode);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode);
       if(result) passed++;
       testsRun++;
       document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
@@ -265,7 +284,6 @@ function runMemoryTest(){
 <select id="whichTests" style="display: none;">
   <option value="all">all</option>
 </select>
-<input type="checkbox" id="generateBytecode" />Generate bytecode during tests
 <br/>
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
 <br/>
