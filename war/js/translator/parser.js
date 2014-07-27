@@ -387,15 +387,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                       , ": expected at least one binding (in parentheses) after let, but nothing's there"]),
                      sexp.location);
       }
-      // too many expressions?
-      if(sexp.length > 3){
-        var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
-            wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                      , ": expected a single body, but found "
-                                      , new types.MultiPart(wording, extraLocs, false)]),
-                     sexp.location);
-      }
       // is it just (let <not-list>)?
       if(!(sexp[1] instanceof Array) || (sexp[1].length < 1)){
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -412,6 +403,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      binding.location);
         }
       });
+      // too many expressions?
+      if(sexp.length > 3){
+        var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
+            wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
+        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a single body, but found "
+                                      , new types.MultiPart(wording, extraLocs, false)]),
+                     sexp.location);
+      }
       // is it just (let (...bindings...) ))?
       if(sexp.length === 2){
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
