@@ -58,7 +58,7 @@ function sameResults(x, y){
   if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
     return ( (x.span == y.span) && (x.offset == y.offset) );
   }
-  // 2) if both objects have a prefix field, build our dictionaries
+  // 2) if both objects have a prefix field, build our dictionaries *before* moving on
   if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
     x_toplevels = x.prefix.toplevels.map(extractTopLevelName);
     y_toplevels = y.prefix.toplevels.map(extractTopLevelName);
@@ -72,10 +72,21 @@ function sameResults(x, y){
       if ( ! y.hasOwnProperty(p) ){ return false; }
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
+      // toplevel properties are equal if the sets of names are equal
+      // WARNING: this may require stronger checking!
       if(p==="toplevels"){
-        return x_toplevels.length==y_toplevels.length &&
-               x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;});
+        // if they're not the same length, bail
+        if(x_toplevels.length !== y_toplevels.length) return false;
+        // if they're not the same names, bail
+        if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})) return false;
+        // build sorted lists of all module variables, return true if they are identical
+        x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
+        y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
+        x_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
+        y_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
+        return sameResults(x_modVariables, y_modVariables);
       }
+      // use pos's as keys into the toplevel dictionaries, and compare their values
       if(p==="pos"){
         return x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])];
       }
