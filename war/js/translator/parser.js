@@ -388,7 +388,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      sexp.location);
       }
       // is it just (let <not-list>)?
-      if(!(sexp[1] instanceof Array) || (sexp[1].length < 1)){
+      if(!(sexp[1] instanceof Array)){
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                       , ": expected sequence of key value pairs, but given "
                                       , new types.ColoredPart("something else", sexp[1].location)]),
