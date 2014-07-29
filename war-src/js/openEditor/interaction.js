@@ -128,7 +128,7 @@ WeSchemeInteractions = (function () {
     Prompt = function(interactions, parentDiv, K) {
         var that = this;
         this.interactions = interactions;
-        this.div = jQuery("<div><span class='top-aligned-inline-block'>&gt;&nbsp;</span><span class='top-aligned-inline-block' style='position: absolute; left: 20px; right: 5px;'/></div>");
+                        this.div = jQuery("<div style='clear: left'><span class='top-aligned-inline-block'>&gt;&nbsp;</span><span class='top-aligned-inline-block' style='position: absolute; left: 20px; right: 5px;'/></div>");
         parentDiv.append(this.div);
 
         var innerDivElt = this.div.find("span").get(1);
