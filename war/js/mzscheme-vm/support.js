@@ -2981,7 +2981,7 @@ if (typeof(exports) !== 'undefined') {
     };
 
     var expandExponent = function(s) {
-	var match = s.match(scientificPattern), mantissaChunks, exponent;
+	var match = s.match(scientificPattern(digitsForRadix(10), expMarkForRadix(10))), mantissaChunks, exponent;
 	if (match) {
 	    mantissaChunks = match[1].match(/^([^.]*)(.*)$/);
 	    exponent = Number(match[2]);
@@ -5364,9 +5364,7 @@ if (typeof(exports) !== 'undefined') {
     // fromString: string -> (scheme-number | false)
     var fromString = function(x) {
 	var radix = 10
-	// not used currently, because parsing exact non-decimal stirngs is
-	// unimplemented
-	var exactp = false
+	var exactp = true
 
 	var hMatch = x.toLowerCase().match(hashModifiersRegexp)
 	if (hMatch) {
@@ -5403,7 +5401,6 @@ if (typeof(exports) !== 'undefined') {
     };
 
     function fromStringRaw(x, radix, exactp, mustBeANumberp) {
-	// exactp is currently unused
 	var cMatch = matchComplexRegexp(radix, x);
 	if (cMatch) {
 	  return Complex.makeInstance( fromStringRawNoComplex( cMatch[1] || "0"
@@ -5422,7 +5419,6 @@ if (typeof(exports) !== 'undefined') {
     }
 
     function fromStringRawNoComplex(x, radix, exactp, mustBeANumberp) {
-	// exactp is currently unused
 	var aMatch = x.match(rationalRegexp(digitsForRadix(radix)));
 	if (aMatch) {
 	    return Rational.makeInstance(fromStringRawNoComplex(aMatch[1], radix, exactp),
@@ -5452,7 +5448,7 @@ if (typeof(exports) !== 'undefined') {
 					      ))
 	if (sMatch) {
 	    var coefficient = fromStringRawNoComplex(sMatch[1], radix, exactp)
-	    var exponent = parseInt(sMatch[2], radix, exactp)
+	    var exponent = fromStringRawNoComplex(sMatch[2], radix, exactp)
 	    return FloatPoint.makeInstance(coefficient * Math.pow(radix, exponent));
 	}
 
@@ -5461,6 +5457,8 @@ if (typeof(exports) !== 'undefined') {
 	    var n = parseInt(x, radix);
 	    if (isOverflow(n)) {
 		return makeBignum(x);
+	    } else if (!exactp) {
+		return FloatPoint.makeInstance(n);
 	    } else {
 		return n;
 	    }
@@ -11734,7 +11732,6 @@ if (typeof(world) === 'undefined') {
             vertices.push({x: offsetX + sideC, y: -thirdY});
             vertices.push({x: offsetX + thirdX, y: 0});
           }
-            console.log(vertices);
           this.vertices = vertices;
           
           this.style = style;
