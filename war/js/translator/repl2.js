@@ -38,7 +38,6 @@ function popElementFromHistory(dir, current) {
 }
 
 function getError(e){
-  console.log('getError given '+e.toString());
   try{
     var err =  JSON.parse(e),
         structuredErr = JSON.parse(err['structured-error']);
@@ -66,7 +65,6 @@ function readFromRepl(event) {
       console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+plt.compiler.sexpToString(sexp));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      console.log(e);
       console.log(getError(e));
       throw Error("LEXING ERROR\n"+getError(e).toString());
     }

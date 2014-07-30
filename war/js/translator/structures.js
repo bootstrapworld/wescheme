@@ -4,8 +4,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
  - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
- - better handling of other modules
- - add modules for foreign, world-effects, world-handlers
+ - rename bindingModule, bindingConstant and bindingFunction into moduleBinding, constantBinding and functionBinding
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -447,7 +446,6 @@ function bindingConstant(name, moduleSource, permissions, loc){
   this.permissions = permissions;
   this.loc = loc;
   this.toString = function(){return this.name;};
-  if(permissions===undefined)console.log(name+' was given undefined permissions');
   return this;
 }
 
@@ -542,7 +540,7 @@ function bindingStructure(name, moduleSource, fields, constructor,
       }
     };
  
-    // traveree rthe bindings of the module
+    // traverse rthe bindings of the module
     this.extendEnv_moduleBinding = function(module){
       return module.bindings.reduceRight(function(env, binding){ return env.extend(binding);}, this);
     };
