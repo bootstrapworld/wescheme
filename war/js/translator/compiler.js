@@ -948,7 +948,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                                             modulePathIndexJoin(false, false))
                                         , new symbolExpr(b.name), -1, 0);
             };
- 
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),

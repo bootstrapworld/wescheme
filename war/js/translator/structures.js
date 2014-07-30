@@ -434,13 +434,20 @@ function isDefinition(node){
  *
  **************************************************************************/
 
-// bindingConstant: records an id and its associated Java implementation.
+// bindingModule: records an id and its associated JS implementation.
+function bindingModule(name, bindings){
+  this.name     = name;
+  this.bindings = bindings;
+}
+
+// bindingConstant: records an id and its associated JS implementation.
 function bindingConstant(name, moduleSource, permissions, loc){
   this.name = name;
   this.moduleSource = moduleSource;
   this.permissions = permissions;
   this.loc = loc;
   this.toString = function(){return this.name;};
+  if(permissions===undefined)console.log(name+' was given undefined permissions');
   return this;
 }
 
@@ -473,469 +480,6 @@ function bindingStructure(name, moduleSource, fields, constructor,
   this.toString = function(){return this.name;};
   return this;
 }
-
-// getTopLevelEnv: symbol -> env
-function getTopLevelEnv(lang){
-  // fixme: use the language to limit what symbols get in the toplevel.
-  var baseConstantsEnv = ["null", "empty", "#t"//effect:do-nothing
-                         , "false", "eof", "pi", "e","js-undefined"
-                         , "js-null"].reduce(function(env, id){
-                                             return env.extendConstant(id.toString(), '"moby/toplevel"', false)
-                                             }, new plt.compiler.emptyEnv());
-
-  // runtime symbols
-  var runtimeBindings = [["verify-boolean-branch-value", 2]
-                         ,["throw-cond-exhausted-error", 1 ]
-                         ,["'check-operator-is-function", 3]
-                         ,["print-values", 0]];
-  
-  // core defined symbols
-  var coreBindings = [["<", 2, true] // Numerics
-                     ,["<=", 2, true]
-                     ,["=", 2, true]
-                     ,[">", 2, true]
-                     ,[">=", 2, true]
-                     
-                     ,["=~", 3]
-                     ,["number->string", 1]
-                     ,["even?", 1]
-                     ,["odd?", 1]
-                     ,["positive?", 1]
-                     ,["negative?", 1]
-                     ,["number?", 1]
-                     ,["rational?", 1]
-                     ,["quotient", 2]
-                     ,["remainder", 2]
-                     ,["numerator", 1]
-                     ,["denominator", 1]
-                     ,["integer?", 1]
-                     ,["real?", 1]
-                     ,["abs", 1]
-                     ,["acos", 1]
-                     ,["add1", 1]
-                     ,["angle", 1]
-                     ,["asin", 1]
-                     ,["atan", 1, true]           // arity is either 1 or 2
-                     ,["ceiling", 1]
-                     ,["complex?", 1]
-                     ,["conjugate", 1]
-                     ,["cos", 1]
-                     ,["cosh", 1]
-                     ,["denominator", 1]
-                     ,["even?", 1]
-                     ,["exact->inexact", 1]
-                     ,["exact?", 1]               // *
-                     ,["exp", 1]
-                     ,["expt", 2]
-                     ,["floor", 1]
-                     ,["gcd", 1, true]
-                     ,["imag-part", 1]
-                     ,["inexact->exact", 1]
-                     ,["inexact?", 1]
-                     ,["integer->char", 1]
-                     ,["integer-sqrt", 1]         // *
-                     ,["integer?", 1]
-                     ,["lcm", 1, true]
-                     ,["log", 1]
-                     ,["magnitude", 1]
-                     ,["make-polar", 2]           // *
-                     ,["make-rectangular", 2]     // *
-                     ,["max", 1, true]
-                     ,["min", 1, true]
-                     ,["modulo", 2]
-                     ,["negative?", 1]
-                     ,["number?", 1]
-                     ,["numerator", 1]
-                     ,["odd?", 1]
-                     ,["positive?", 1]
-                     ,["random", 1]
-                     ,["rational?", 1]
-                     ,["real-part", 1]
-                     ,["real?", 1]
-                     ,["round", 1]
-                     ,["sgn", 1]
-                     ,["sin", 1]
-                     ,["sinh", 1]
-                     ,["sq", 1]
-                     ,["sqr", 1]
-                     ,["sqrt", 1]
-                     ,["sub1", 1]
-                     ,["tan", 1]
-                     ,["zero?", 1]
-                     
-                     ,["+", 0, true]
-                     ,["-", 1, true]
-                     ,["*", 0, true]
-                     ,["/", 1, true]
-                     
-                     // Logic
-                     ,["not", 1]
-                     ,["false?", 1]
-                     ,["boolean?", 1]
-                     ,["boolean=?", 2]
-                     
-                     // Symbols
-                     ,["symbol->string", 1]
-                     ,["symbol=?", 2]
-                     ,["symbol?", 1]
-                     
-                     // Lists
-                     ,["append", 0, true]
-                     ,["assq", 2]                 // *
-                     ,["assv", 2]                 // *
-                     ,["assoc", 2]                 // *
-                     ,["caaar", 1]
-                     ,["caadr", 1]
-                     ,["caar", 1]
-                     ,["cadar", 1]
-                     ,["cadddr", 1]
-                     ,["caddr", 1]
-                     ,["cadr", 1]
-                     ,["car", 1]
-                     ,["cddar", 1]
-                     ,["cdddr", 1]
-                     ,["cddr", 1]
-                     ,["cdr", 1]
-                     ,["cdaar", 1]
-                     ,["cdadr", 1]
-                     ,["cdar", 1]
-                     ,["cons?", 1]
-                     ,["list?", 1]
-                     ,["cons", 2]
-                     ,["empty?", 1]
-                     ,["length", 1]
-                     ,["list", 0, true]
-                     ,["list*", 1, true]
-                     ,["list-ref", 2]
-                     ,["remove", 2]
-                     ,["member", 2]
-                     ,["member?", 2]
-                     ,["memq", 2]
-                     ,["memv", 2]
-                     ,["null?", 1]
-                     ,["pair?", 1]
-                     ,["rest", 1]
-                     ,["reverse", 1]
-                     ,["first", 1]
-                     ,["second", 1]
-                     ,["third", 1]
-                     ,["fourth", 1]
-                     ,["fifth", 1]
-                     ,["sixth", 1]
-                     ,["seventh", 1]
-                     ,["eighth", 1]
-                     
-                     // We're commenting out the mutation operation on pairs
-                     // because they're not supported in ISL/ASL anymore.
-                     //;,["set-car! 2]
-                     //;,["set-cdr! 2]
-                     
-                     // Box
-                     ,["box", 1]
-                     ,["unbox", 1]
-                     ,["set-box!", 2]
-                     ,["box?", 1]
-                     
-                     // Posn
-                     ,["make-posn", 2]
-                     ,["posn-x", 1]
-                     ,["posn-y", 1]
-                     ,["posn?", 1]
-                     
-                     // Characters
-                     ,["char->integer", 1]
-                     ,["char-alphabetic?", 1]
-                     ,["char-ci<=?", 2, true]
-                     ,["char-ci<?", 2, true]
-                     ,["char-ci=?", 2, true]
-                     ,["char-ci>=?", 2, true]
-                     ,["char-ci>?", 2, true]
-                     ,["char-downcase", 1]
-                     ,["char-lower-case?", 1]
-                     ,["char-numeric?", 1]
-                     ,["char-upcase", 1]
-                     ,["char-upper-case?", 1]
-                     ,["char-whitespace?", 1]
-                     ,["char<=?", 2, true]
-                     ,["char<?", 2, true]
-                     ,["char=?", 2, true]
-                     ,["char>=?", 2, true]
-                     ,["char>?", 2, true]
-                     ,["char?", 1]
-                     
-                     // Strings
-                     ,["format", 1, true]
-                     ,["list->string", 1]
-                     ,["make-string", 2]
-                     ,["replicate", 2]
-                     ,["string", 0, true]
-                     ,["string->list", 1]
-                     ,["string->number", 1]
-                     ,["string->symbol", 1]
-                     ,["string-alphabetic?", 1]
-                     ,["string-append", 0, true]
-                     ,["string-ci<=?", 2, true]
-                     ,["string-ci<?", 2, true]
-                     ,["string-ci=?", 2, true]
-                     ,["string-ci>=?", 2, true]
-                     ,["string-ci>?", 2, true]
-                     ,["string-copy", 1]
-                     ,["string-length", 1]
-                     ,["string-lower-case?", 1]   // *
-                     ,["string-numeric?", 1]      // *
-                     ,["string-ref", 2]
-                     ,["string-upper-case?", 1]   // *
-                     ,["string-whitespace?", 1]   // *
-                     ,["string<=?", 2, true]
-                     ,["string<?", 2, true]
-                     ,["string=?", 2, true]
-                     ,["string>=?", 2, true]
-                     ,["string>?", 2, true]
-                     ,["string?", 1]
-                     ,["substring", 3 ]
-                     ,["string-ith", 2]
-                     ,["int->string", 1]
-                     ,["string->int", 1]
-                     ,["explode", 1]
-                     ,["implode", 1]
-                     
-                     // Eof
-                     ,["eof-object?", 1]
-                     
-                     // Misc
-                     ,["=~", 3]
-                     ,["eq?", 2]
-                     ,["equal?", 2]
-                     ,["equal~?", 3]
-                     ,["eqv?", 2]
-                     ,["error", 2]
-                     
-                     ,["identity", 1]
-                     ,["struct?", 1]
-                     ,["current-seconds", 0]
-                     
-                     // Higher-Order Functions
-                     ,["andmap", 1, true]
-                     ,["apply", 2, true]           // *
-                     ,["argmax", 2]               // *
-                     ,["argmin", 2]               // *
-                     ,["build-list", 2]
-                     ,["build-string", 2]         // *
-                     ,["compose", 0, true]         // *
-                     ,["filter", 2]               // *
-                     ,["foldl", 2, true]
-                     ,["foldr", 2, true]                // *
-                     ,["map", 1, true]
-                     ,["for-each", 1, true]
-                     ,["memf", 2]                 // *
-                     ,["ormap", 1, true]                // *
-                     ,["procedure?", 1]           // *
-                     ,["quicksort", 2]            // *
-                     ,["sort", 2]                 // *
-                     
-                     ,["void", 0, true]
-                       
-                     // Parsing
-                     ,["xml->s-exp", 1]
-                     
-                     // Vectors
-                       
-                     ,["build-vector", 2]
-                     // FIXME: should only take one or two arguments", not vararity
-                     ,["make-vector", 1, true]
-                     ,["vector", 0, true]
-                     ,["vector-length", 1]
-                     ,["vector-ref", 2]
-                     ,["vector-set!", 3]
-                     ,["vector->list", 1]
-                     ,["list->vector", 1]
-                     ,["vector?", 1]
-                     
-                     ,["printf", 1, true]
-                     ,["display", 1]
-                     ,["write", 1]
-                     ,["newline", 0]
-                     ,["call/cc", 1]
-                     ,["procedure-arity", 1]
-                     
-                     
-                     // Testing functions.
-                     // NOTE: the desugar.ss module converts use of check-expect into ones that
-                     // thunk its arguments", and pass an additional location argument.
-                     ,["check-expect", 2]
-                     ,["EXAMPLE", 2]
-                     ,["check-within", 3]
-                     ,["check-error", 2]
-                     ,["make-hasheq", 0]
-                     ,["make-hash", 0]
-                     ,["hash-set!", 3 ]
-                     ,["hash-ref", 3]
-                     ,["hash-remove!", 2]
-                     ,["hash-map", 2]
-                     ,["hash-for-each", 2]
-                     ,["hash?", 1]
-                     
-                     // Exception raising
-                     ,["raise", 1]
-                     
-                     // Checking for undefined
-                     ,["undefined?", 1]
-                     
-                     // values for multiple value definition
-                     ,["values", 0, true]
-                     
-                     // structures
-                     ,["make-struct-type", 4, true]
-                     ,["make-struct-field-accessor", 2, true]
-                     ,["make-struct-field-mutator", 2, true]
-                     
-                     // continuation mark stuff
-                     // FIXME: add support for prompt optional argument
-                     ,["current-continuation-marks", 0, false]
-                     ,["continuation-mark-set->list", 2, false]
-                     
-                     // Things for javascript FFI and world
-                     ,["scheme->prim-js", 1, false]
-                     ,["prim-js->scheme", 1, false]
-                     ,["procedure->cps-js-fun", 1, false]
-                     ,["procedure->void-js-fun", 1, false]
-                     ,["js-===", 2, false]
-                     ,["js-get-named-object", 1, false]
-                     ,["js-get-field", 2, true]
-                     //,["get-js-array-field", 2, false]
-                     ,["js-set-field!", 3, false]
-                     //,["js-set-array-field!", 3, false]
-                     ,["js-typeof", 1, false]
-                     ,["js-instanceof", 2, false]
-                     ,["js-call", 2, true]
-                     ,["js-new", 1, true]
-                     ,["js-make-hash", 0, true]
-                     
-                     ,["make-world-config", 2, true]
-                     ,["make-bb-info", 2, false]
-                     ,["bb-info?", 1, false]
-                     ,["bb-info-change-world", 1, false]
-                     ,["bb-info-toplevel-node", 1, false]
-                     
-                     ,["make-effect-type", 4, true]
-                     ,["effect?", 1, false]
-                     ,["world-with-effects", 2, false]
-                     //,["coerce-world-handler", 1, false]
-                     ,["make-render-effect-type", 4, true]
-                     ,["render-effect-type?", 1]
-                     ,["render-effect?", 1]
-                     
-                     //,["make-effect:do-nothing 0, false]
-                     //,["effect:do-nothing? 1, false]
-                     
-                     ,["make-render-effect-type", 4, true]
-                     //,["render-effect-name 1, false]
-                     //,["render-effect-dom-node 1, false]
-                     //,["render-effect-effects 1, false]
-                     //,["render-effect? 1, false]
-                     
-                     ,["values", 0, true]
-                     ,["sleep", 0, true]
-                     ,["current-inexact-milliseconds", 0, false]
-                     
-                     ,["make-exn", 2, false]
-                     ,["exn-message", 1, false]
-                     ,["exn-continuation-marks", 1, false]
-                      
-                      // image functions
-                      ,["image?", 1, false]
-                      ,["image=?", 2, false]
-                      ,["make-color", 3, false]
-                      ,["color-red", 1, false]
-                      ,["color-green", 1, false]
-                      ,["color-blue", 1, false]
-                      ,["color-alpha", 1, false]
-                      ,["empty-scene", 2, false]
-                      ,["circle", 3, false]
-                      ,["triangle", 3, false]
-                      ,["triangle/sas", 5, false]
-                      ,["triangle/sss", 5, false]
-                      ,["triangle/ass", 5, false]
-                      ,["triangle/ssa", 5, false]
-                      ,["triangle/aas", 5, false]
-                      ,["triangle/asa", 3, false]
-                      ,["triangle/saa", 3, false]
-                      ,["right-triangle", 4, false]
-                      ,["radial-star", 5, false]
-                      ,["square", 3, false]
-                      ,["rectangle", 4, false]
-                      ,["ellipse", 4, false]
-                      ,["rhombus", 4, false]
-                      ,["regular-polygon", 4, false]
-                      ,["star", 3, false]
-                      ,["star-polygon", 5, false]
-                      ,["overlay", 2, true]
-                      ,["overlay/xy", 4, false]
-                      ,["overlay/align", 4, false]
-                      ,["underlay", 2, true]
-                      ,["underlay/xy", 4, false]
-                      ,["underlay/align", 4, false]
-                      ,["beside", 2, false]
-                      ,["beside/align", 3, false]
-                      ,["above", 2, false]
-                      ,["above/align", 3, false]
-                      ,["put-image", 4, false]
-                      ,["place-image", 4, false]
-                      ,["place-image/align", 6, false]
-                      ,["line", 3, false]
-                      ,["add-line", 6, false]
-                      ,["scene+line", 6, false]
-                      ,["put-pinhole", 3, false]
-                      ,["rotate", 2, false]
-                      ,["scale", 2, false]
-                      ,["scale/xy", 3, false]
-                      ,["crop", 5, false]
-                      ,["frame", 1, false]
-                      ,["flip-vertical", 1, false]
-                      ,["flip-horizontal", 1, false]
-                      ,["text", 3, false]
-                      ,["text/font", 8, false]
-                      ,["bitmap/url", 1, false]
-                      ,["video/url", 1, false]
-                      ,["image-width", 1, false]
-                      ,["image-height", 1, false]
-                      ,["image-baseline", 1, false]
-                      ,["image->color-list", 1, false]
-                      ,["color-list->image", 5, false]
-                      ,["color-list->bitmap", 3, false]
-                      ,["mode?", 1, false]
-                      ,["image-color?", 1, false]
-                      ,["name->color", 1, false]
-                      ,["x-place?", 1, false]
-                      ,["y-place?", 1, false]
-                      ,["angle?", 1, false]
-                      ,["side-count?", 1, false]
-                      ,["step-count?", 1, false]
-                      
-                      ];
-  // Registers a new toplevel function for given env, munging the name
-  var r = function(env, moduleName, name, arity, vararity){
-    return env.extendFunction(name, moduleName, arity, vararity, false);
-  };
-  
-  // The core environment includes bindings to Javascript-written functions.
-  var addCoreEnv = coreBindings.reduce(function (env, nameAndArity){
-                   if(nameAndArity.length === 2 ){
-                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], false);
-                   } else if(nameAndArity.length === 3 ){
-                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
-                   }
-                }, baseConstantsEnv),
-      addRuntimeEnv = runtimeBindings.reduce(function (env, nameAndArity){
-                   if(nameAndArity.length === 2 ){
-                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], false);
-                   } else if(nameAndArity.length === 3 ){
-                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
-                   }
-                }, addCoreEnv);
-  return addRuntimeEnv;
-}
-
 
 (function (){
   var makeHash = types.makeLowLevelEqHash;
@@ -998,8 +542,9 @@ function getTopLevelEnv(lang){
       }
     };
  
+    // traveree rthe bindings of the module
     this.extendEnv_moduleBinding = function(module){
-      throw "extendEnv_moduleBinding not implemented yet! (see Structures.js)";
+      return module.bindings.reduceRight(function(env, binding){ return env.extend(binding);}, this);
     };
  
     this.toString = function(){
@@ -1240,17 +785,14 @@ function getTopLevelEnv(lang){
     // permissions: -> (listof permission)
     // Given a pinfo, collect the list of permissions.
     this.permissions = function(){
-      // unique : listof X -> listof X
-      function unique(lst){
-        if(lst.length === 0) return lst;
-        else if(lst.slice(1).indexOf(lst[0]) > -1) return unique.slice(1)
-        else return [lst[0]].concat(unique.slice(1));
-      }
+      // onlyUnique : v, idx, arr -> arr with unique elts
+      // from http://stackoverflow.com/questions/1960473/unique-values-in-an-array
+      function onlyUnique(value, index, self) { return self.indexOf(value) === index; }
       function reducePermissions(permissions, b){
         if((b instanceof bindingFunction)
         || (b instanceof bindingConstant)) return permissions.concat(b.permissions);
       }
-      return unique(this.usedBindings().reduce(reducePermissions, []));
+      return this.usedBindings().reduce(reducePermissions, []).filter(onlyUnique);
     }
 
     // getExposedBindings:  -> (listof binding)
@@ -1330,12 +872,21 @@ function getTopLevelEnv(lang){
  // 'base
  // 'moby
  function getBasePinfo(language){
-    var pinfo = new plt.compiler.pinfo();
+    // fixme: use the language to limit what symbols get in the toplevel.
+    var baseConstantsEnv = ["null", "empty", "#t"//effect:do-nothing
+                           , "false", "eof", "pi", "e","js-undefined"
+                           , "js-null"].reduce(function(env, id){
+                                               return env.extendConstant(id.toString(), '"moby/toplevel"', false)
+                                               }, new plt.compiler.emptyEnv());
+
+    var pinfo = new plt.compiler.pinfo(),
+        topLevelEnv = plt.compiler.topLevelModules.reduceRight(function(env, mod){
+                                                               return env.extendEnv_moduleBinding(mod);
+                                                               }, baseConstantsEnv);
     if(language === "moby"){
-      pinfo.env = extendEnv_moduleBinding(getTopLevelEnv(language),
-                                          mobyModuleBinding);
+      pinfo.env = topLevelEnv.extendEnv_moduleBinding(mobyModuleBinding);
     } else if(language === "base"){
-      pinfo.env = getTopLevelEnv(language);
+      pinfo.env = topLevelEnv;
     }
     return pinfo;
  }

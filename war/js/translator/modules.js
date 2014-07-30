@@ -1,0 +1,596 @@
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+/*
+ TODO
+ -
+ */
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////// MODULE BINDINGS //////////////////////////
+(function (){
+ 
+  // given a moduleName, return a function that converts binding specs into function bindings
+  function makeBindingFunction(modulePath){
+    return function(binding){
+            binding[3] = binding[3] || [];      // permissions default to none
+            binding[4] = binding[4] || false;   // isCps defaults to false
+            binding[5] = binding[5] || false;   // loc defaults to false
+            return new bindingFunction(binding[0], modulePath, binding[1], binding[2], binding[3], binding[4], binding[5]);
+           };
+  }
+  
+  // kernel-misc-module
+  var kernelMiscModule  = new bindingModule("moby/runtime/kernel/misc",
+                                           [["verify-boolean-branch-value", 2]
+                                            ,["throw-cond-exhausted-error", 1 ]
+                                            ,["'check-operator-is-function", 3]
+                                            ,["print-values", 0]
+                                           ].map(makeBindingFunction('"moby/runtime/kernel/misc"'))
+  );
+  
+  // foreign-module
+  var foreignModule     = new bindingModule("moby/foreign",
+                                           [["get-js-object", 2, false, ["PERMISSION:FOREIGN-FUNCTION-INTERFACE"]]
+                                           ].map(makeBindingFunction('"moby/foreign"'))
+  );
+  
+  // world-effects-module
+  var worldEffectsModule= new bindingModule("world-effects",
+                                            [["make-effect:none", 0, false]
+                                             ,["make-effect:beep", 0, false, ["PERMISSION:VIBRATE"]]
+                                             ,["make-effect:play-dtmf-tone", 2, false]
+                                             ,["make-effect:send-sms", 2, false, ["PERMISSION:SEND-SMS"]]
+                                             ,["make-effect:play-sound", 1, false, ["PERMISSION:INTERNET"]]
+                                             ,["make-effect:stop-sound", 1, false]
+                                             ,["make-effect:pause-sound", 1, false]
+                                             ,["make-effect:set-sound-volume", 1, false]
+                                             ,["make-effect:set-beep-volume", 1, false]
+                                             ,["make-effect:raise-sound-volume", 0, false]
+                                             ,["make-effect:lower-sound-volume", 1, false]
+                                             ,["make-effect:set-wake-lock", 1, false, ["PERMISSION:WAKE-LOCK"]]
+                                             ,["make-effect:release-wake-lock", 1, false, ["PERMISSION:WAKE-LOCK"]]
+                                             ,["make-effect:pick-playlist", 1, false]
+                                             ,["make-effect:pick-random", 2, false]
+                                             ].map(makeBindingFunction('"moby/world-effects"'))
+  );
+  
+  // world-handlers-module
+  var worldHandlersModule=new bindingModule("world-config",
+                                           [["on-tick", 1, true]
+                                            ,["initial-effect", 1, false]
+                                            ,["on-key", 1, false]
+                                            ,["on-key!", 2, false]
+                                            ,["on-tap", 1, false]
+                                            ,["on-tilt", 1, false]
+                                            ,["on-redraw", 1, false]
+                                            ,["to-draw", 1, false]
+                                            ,["on-draw", 2, false]
+                                            ,["stop-when", 1, false]
+                                           ].map(makeBindingFunction('"moby/world-handlers"'))
+  );
+  
+  // bootstrap-teachpack
+  var bootstrapTeachpack = new bindingModule("bootstrap/bootstrap-teachpack",
+                                            [["START", 14, false]
+                                             ,["test-frame", 1, false]
+                                             ,["sine", 1, false]
+                                             ,["cosine", 1, false]
+                                             ,["tangent", 1, false]
+                                             ].map(makeBindingFunction('"bootstrap/bootstrap-teachpack"'))
+  );
+
+  // cage-teachpack
+  var cageTeachpack     = new bindingModule("bootstrap/cage-teachpack",
+                                             [["start", 1, false]
+                                              ].map(makeBindingFunction('"bootstrap/cage-teachpack"'))
+  );
+
+  // function-teachpack
+  var functionTeachpack  = new bindingModule("bootstrap/function-teachpack",
+                                             [["start", 1, false]
+                                              ].map(makeBindingFunction('"bootstrap/function-teachpack"'))
+  );
+  
+  // location module
+  var locationModule     = new bindingModule("location",
+                                             [["get-latitude",      0, false, ["PERMISSION:LOCATION"]]
+                                              ,["get-longitude",    0, false, ["PERMISSION:LOCATION"]]
+                                              ,["get-altitude",     0, false, ["PERMISSION:LOCATION"]]
+                                              ,["get-bearing",      0, false, ["PERMISSION:LOCATION"]]
+                                              ,["get-speed",        0, false, ["PERMISSION:LOCATION"]]
+                                              ,["location-distance", 0, false, ["PERMISSION:LOCATION"]]
+                                              ].map(makeBindingFunction('"moby/geolocation"'))
+  );
+
+  // accelerometer library
+  var tiltModule        = new bindingModule("tilt",
+                                             [["get-x-acceleration",  0, false, ["PERMISSION:TILT"]]
+                                              ,["get-y-acceleration", 0, false, ["PERMISSION:TILT"]]
+                                              ,["get-z-acceleration", 0, false, ["PERMISSION:TILT"]]
+                                              ,["get-azimuth",        0, false, ["PERMISSION:TILT"]]
+                                              ,["get-pitch",          0, false, ["PERMISSION:TILT"]]
+                                              ,["get-roll",           0, false, ["PERMISSION:TILT"]]
+                                              ].map(makeBindingFunction('"moby/tilt"'))
+  );
+
+  // telephony module
+  var telephonyModule    = new bindingModule("telephony",
+                                             [["get-signal-strength",  0, false, ["PERMISSION:TELEPHONY"]]
+                                             ].map(makeBindingFunction('"moby/net"'))
+  );
+
+  // net module
+  var netModule         = new bindingModule("net",
+                                             [["get-url",  1, false, ["INTERNET"]]
+                                             ].map(makeBindingFunction('"moby/net"'))
+  );
+                                              
+  // parser module
+  var parserModule      = new bindingModule("parser",
+                                             [["xml->s-sexp",  1, false]
+                                             ].map(makeBindingFunction('"moby/parser"'))
+  );
+
+  // js-world module
+  var jsWorldModule     = new bindingModule("jsworld",
+                                            [["js-big-bang",  1, false]
+                                             ,["big-bang",    1, false]
+                                             ,["js-div",      0, false]
+                                             ,["js-p",        0, false]
+                                             ,["js-button",   2, false]
+                                             ,["js-button!",  2, false]
+                                             ,["js-node",     1, false]
+                                             ,["js-select",   2, false]
+                                             ,["js-img",      1, false, ["PERMISSION:INTERNET"]]
+                                             ].map(makeBindingFunction('"moby/jsworld"'))
+  );
+  
+  // world
+  var worldModule       = new bindingModule("world",
+                                           worldHandlersModule.bindings.concat(worldEffectsModule.bindings,
+                                           ["key=?"
+                                            ,"big-bang"
+                                            
+                                            ,"make-color"
+                                            ,"color-red"
+                                            ,"color-green"
+                                            ,"color-blue"
+                                            ,"color-alpha"
+                                            ,"empty-scene"
+                                            ,"scene+line"
+                                            ,"put-image"
+                                            ,"place-image"
+                                            ,"place-image/align"
+                                            ,"put-pinhole"
+                                            ,"circle"
+                                            ,"star"
+                                            ,"radial-star"
+                                            ,"star-polygon"
+                                            ,"nw:rectangle"
+                                            ,"rectangle"
+                                            ,"regular-polygon"
+                                            ,"rhombus"
+                                            ,"square"
+                                            ,"triangle"
+                                            ,"triangle/sas"
+                                            ,"triangle/sss"
+                                            ,"triangle/ass"
+                                            ,"triangle/ssa"
+                                            ,"triangle/aas"
+                                            ,"triangle/asa"
+                                            ,"triangle/saa"
+                                            ,"right-triangle"
+                                            ,"isosceles-triangle"
+                                            ,"ellipse"
+                                            ,"line"
+                                            ,"add-line"
+                                            ,"overlay"
+                                            ,"overlay/xy"
+                                            ,"overlay/align"
+                                            ,"underlay"
+                                            ,"underlay/xy"
+                                            ,"underlay/align"
+                                            ,"beside"
+                                            ,"beside/align"
+                                            ,"above"
+                                            ,"above/align"
+                                            ,"rotate"
+                                            ,"scale"
+                                            ,"scale/xy"
+                                            ,"crop"
+                                            ,"frame"
+                                            ,"flip-horizontal"
+                                            ,"flip-vertical"
+                                            ,"text"
+                                            ,"text/font"
+                                            ,"video-url"       // needs network
+                                            ,"video/url"       // needs network
+                                            ,"bitmap/url"      // needs network
+                                            ,"image-url"       // needs network
+                                            ,"open-image-url"  // needs network
+                                            ,"image?"
+                                            ,"image=?"
+                                            ,"image-width"
+                                            ,"image-height"
+                                            
+                                            ,"image->color-list"
+                                            ,"color-list->image"
+                                            ,"color-list->bitmap"
+                                            
+                                            ,"image-baseline"
+                                            ,"mode?"
+                                            ,"image-color?"
+                                            ,"name->color"
+                                            ,"x-place?"
+                                            ,"y-place?"
+                                            ,"angle?"
+                                            ,"side-count?"
+                                            ,"step-count?"
+                                            ].map(function(binding){
+                                                    var needsPermission = ["video/url", "bitmap/url", "image-url", "open-image-url"];
+                                                    binding[1] = (needsPermission.indexOf(binding.name) > -1)? ["PERMISSION:INTERENT"] : [];
+                                                    return new bindingConstant(binding, '"moby/world"', binding[1], false);
+                                                  }))
+  );
+
+  // top-level
+  var topLevelModule = new bindingModule("moby/topLevel",
+                                         [["<", 2, true] // Numerics
+                                         ,["<=", 2, true]
+                                         ,["=", 2, true]
+                                         ,[">", 2, true]
+                                         ,[">=", 2, true]
+                                         
+                                         ,["=~", 3]
+                                         ,["number->string", 1]
+                                         ,["even?", 1]
+                                         ,["odd?", 1]
+                                         ,["positive?", 1]
+                                         ,["negative?", 1]
+                                         ,["number?", 1]
+                                         ,["rational?", 1]
+                                         ,["quotient", 2]
+                                         ,["remainder", 2]
+                                         ,["numerator", 1]
+                                         ,["denominator", 1]
+                                         ,["integer?", 1]
+                                         ,["real?", 1]
+                                         ,["abs", 1]
+                                         ,["acos", 1]
+                                         ,["add1", 1]
+                                         ,["angle", 1]
+                                         ,["asin", 1]
+                                         ,["atan", 1, true]           // arity is either 1 or 2
+                                         ,["ceiling", 1]
+                                         ,["complex?", 1]
+                                         ,["conjugate", 1]
+                                         ,["cos", 1]
+                                         ,["cosh", 1]
+                                         ,["denominator", 1]
+                                         ,["even?", 1]
+                                         ,["exact->inexact", 1]
+                                         ,["exact?", 1]               // *
+                                         ,["exp", 1]
+                                         ,["expt", 2]
+                                         ,["floor", 1]
+                                         ,["gcd", 1, true]
+                                         ,["imag-part", 1]
+                                         ,["inexact->exact", 1]
+                                         ,["inexact?", 1]
+                                         ,["integer->char", 1]
+                                         ,["integer-sqrt", 1]         // *
+                                         ,["integer?", 1]
+                                         ,["lcm", 1, true]
+                                         ,["log", 1]
+                                         ,["magnitude", 1]
+                                         ,["make-polar", 2]           // *
+                                         ,["make-rectangular", 2]     // *
+                                         ,["max", 1, true]
+                                         ,["min", 1, true]
+                                         ,["modulo", 2]
+                                         ,["negative?", 1]
+                                         ,["number?", 1]
+                                         ,["numerator", 1]
+                                         ,["odd?", 1]
+                                         ,["positive?", 1]
+                                         ,["random", 1]
+                                         ,["rational?", 1]
+                                         ,["real-part", 1]
+                                         ,["real?", 1]
+                                         ,["round", 1]
+                                         ,["sgn", 1]
+                                         ,["sin", 1]
+                                         ,["sinh", 1]
+                                         ,["sq", 1]
+                                         ,["sqr", 1]
+                                         ,["sqrt", 1]
+                                         ,["sub1", 1]
+                                         ,["tan", 1]
+                                         ,["zero?", 1]
+                                         
+                                         ,["+", 0, true]
+                                         ,["-", 1, true]
+                                         ,["*", 0, true]
+                                         ,["/", 1, true]
+                                         
+                                         // Logic
+                                         ,["not", 1]
+                                         ,["false?", 1]
+                                         ,["boolean?", 1]
+                                         ,["boolean=?", 2]
+                                         
+                                         // Symbols
+                                         ,["symbol->string", 1]
+                                         ,["symbol=?", 2]
+                                         ,["symbol?", 1]
+                                         
+                                         // Lists
+                                         ,["append", 0, true]
+                                         ,["assq", 2]                 // *
+                                         ,["assv", 2]                 // *
+                                         ,["assoc", 2]                 // *
+                                         ,["caaar", 1]
+                                         ,["caadr", 1]
+                                         ,["caar", 1]
+                                         ,["cadar", 1]
+                                         ,["cadddr", 1]
+                                         ,["caddr", 1]
+                                         ,["cadr", 1]
+                                         ,["car", 1]
+                                         ,["cddar", 1]
+                                         ,["cdddr", 1]
+                                         ,["cddr", 1]
+                                         ,["cdr", 1]
+                                         ,["cdaar", 1]
+                                         ,["cdadr", 1]
+                                         ,["cdar", 1]
+                                         ,["cons?", 1]
+                                         ,["list?", 1]
+                                         ,["cons", 2]
+                                         ,["empty?", 1]
+                                         ,["length", 1]
+                                         ,["list", 0, true]
+                                         ,["list*", 1, true]
+                                         ,["list-ref", 2]
+                                         ,["remove", 2]
+                                         ,["member", 2]
+                                         ,["member?", 2]
+                                         ,["memq", 2]
+                                         ,["memv", 2]
+                                         ,["null?", 1]
+                                         ,["pair?", 1]
+                                         ,["rest", 1]
+                                         ,["reverse", 1]
+                                         ,["first", 1]
+                                         ,["second", 1]
+                                         ,["third", 1]
+                                         ,["fourth", 1]
+                                         ,["fifth", 1]
+                                         ,["sixth", 1]
+                                         ,["seventh", 1]
+                                         ,["eighth", 1]
+                                         
+                                         // We're commenting out the mutation operation on pairs
+                                         // because they're not supported in ISL/ASL anymore.
+                                         //;,["set-car! 2]
+                                         //;,["set-cdr! 2]
+                                         
+                                         // Box
+                                         ,["box", 1]
+                                         ,["unbox", 1]
+                                         ,["set-box!", 2]
+                                         ,["box?", 1]
+                                         
+                                         // Posn
+                                         ,["make-posn", 2]
+                                         ,["posn-x", 1]
+                                         ,["posn-y", 1]
+                                         ,["posn?", 1]
+                                         
+                                         // Characters
+                                         ,["char->integer", 1]
+                                         ,["char-alphabetic?", 1]
+                                         ,["char-ci<=?", 2, true]
+                                         ,["char-ci<?", 2, true]
+                                         ,["char-ci=?", 2, true]
+                                         ,["char-ci>=?", 2, true]
+                                         ,["char-ci>?", 2, true]
+                                         ,["char-downcase", 1]
+                                         ,["char-lower-case?", 1]
+                                         ,["char-numeric?", 1]
+                                         ,["char-upcase", 1]
+                                         ,["char-upper-case?", 1]
+                                         ,["char-whitespace?", 1]
+                                         ,["char<=?", 2, true]
+                                         ,["char<?", 2, true]
+                                         ,["char=?", 2, true]
+                                         ,["char>=?", 2, true]
+                                         ,["char>?", 2, true]
+                                         ,["char?", 1]
+                                         
+                                         // Strings
+                                         ,["format", 1, true]
+                                         ,["list->string", 1]
+                                         ,["make-string", 2]
+                                         ,["replicate", 2]
+                                         ,["string", 0, true]
+                                         ,["string->list", 1]
+                                         ,["string->number", 1]
+                                         ,["string->symbol", 1]
+                                         ,["string-alphabetic?", 1]
+                                         ,["string-append", 0, true]
+                                         ,["string-ci<=?", 2, true]
+                                         ,["string-ci<?", 2, true]
+                                         ,["string-ci=?", 2, true]
+                                         ,["string-ci>=?", 2, true]
+                                         ,["string-ci>?", 2, true]
+                                         ,["string-copy", 1]
+                                         ,["string-length", 1]
+                                         ,["string-lower-case?", 1]   // *
+                                         ,["string-numeric?", 1]      // *
+                                         ,["string-ref", 2]
+                                         ,["string-upper-case?", 1]   // *
+                                         ,["string-whitespace?", 1]   // *
+                                         ,["string<=?", 2, true]
+                                         ,["string<?", 2, true]
+                                         ,["string=?", 2, true]
+                                         ,["string>=?", 2, true]
+                                         ,["string>?", 2, true]
+                                         ,["string?", 1]
+                                         ,["substring", 3 ]
+                                         ,["string-ith", 2]
+                                         ,["int->string", 1]
+                                         ,["string->int", 1]
+                                         ,["explode", 1]
+                                         ,["implode", 1]
+                                         
+                                         // Eof
+                                         ,["eof-object?", 1]
+                                         
+                                         // Misc
+                                         ,["=~", 3]
+                                         ,["eq?", 2]
+                                         ,["equal?", 2]
+                                         ,["equal~?", 3]
+                                         ,["eqv?", 2]
+                                         ,["error", 2]
+                                         
+                                         ,["identity", 1]
+                                         ,["struct?", 1]
+                                         ,["current-seconds", 0]
+                                         
+                                         // Higher-Order Functions
+                                         ,["andmap", 1, true]
+                                         ,["apply", 2, true]           // *
+                                         ,["argmax", 2]               // *
+                                         ,["argmin", 2]               // *
+                                         ,["build-list", 2]
+                                         ,["build-string", 2]         // *
+                                         ,["compose", 0, true]         // *
+                                         ,["filter", 2]               // *
+                                         ,["foldl", 2, true]
+                                         ,["foldr", 2, true]                // *
+                                         ,["map", 1, true]
+                                         ,["for-each", 1, true]
+                                         ,["memf", 2]                 // *
+                                         ,["ormap", 1, true]                // *
+                                         ,["procedure?", 1]           // *
+                                         ,["quicksort", 2]            // *
+                                         ,["sort", 2]                 // *
+                                         
+                                         ,["void", 0, true]
+                                           
+                                         // Parsing
+                                         ,["xml->s-exp", 1]
+                                         
+                                         // Vectors
+                                           
+                                         ,["build-vector", 2]
+                                         // FIXME: should only take one or two arguments", not vararity
+                                         ,["make-vector", 1, true]
+                                         ,["vector", 0, true]
+                                         ,["vector-length", 1]
+                                         ,["vector-ref", 2]
+                                         ,["vector-set!", 3]
+                                         ,["vector->list", 1]
+                                         ,["list->vector", 1]
+                                         ,["vector?", 1]
+                                         
+                                         ,["printf", 1, true]
+                                         ,["display", 1]
+                                         ,["write", 1]
+                                         ,["newline", 0]
+                                         ,["call/cc", 1]
+                                         ,["procedure-arity", 1]
+                                         
+                                         
+                                         // Testing functions.
+                                         // NOTE: the desugar.ss module converts use of check-expect into ones that
+                                         // thunk its arguments", and pass an additional location argument.
+                                         ,["check-expect", 2]
+                                         ,["EXAMPLE", 2]
+                                         ,["check-within", 3]
+                                         ,["check-error", 2]
+                                         ,["make-hasheq", 0]
+                                         ,["make-hash", 0]
+                                         ,["hash-set!", 3 ]
+                                         ,["hash-ref", 3]
+                                         ,["hash-remove!", 2]
+                                         ,["hash-map", 2]
+                                         ,["hash-for-each", 2]
+                                         ,["hash?", 1]
+                                         
+                                         // Exception raising
+                                         ,["raise", 1]
+                                         
+                                         // Checking for undefined
+                                         ,["undefined?", 1]
+                                         
+                                         // values for multiple value definition
+                                         ,["values", 0, true]
+                                         
+                                         // structures
+                                         ,["make-struct-type", 4, true]
+                                         ,["make-struct-field-accessor", 2, true]
+                                         ,["make-struct-field-mutator", 2, true]
+                                         
+                                         // continuation mark stuff
+                                         // FIXME: add support for prompt optional argument
+                                         ,["current-continuation-marks", 0, false]
+                                         ,["continuation-mark-set->list", 2, false]
+                                         
+                                         // Things for javascript FFI and world
+                                         ,["scheme->prim-js", 1, false]
+                                         ,["prim-js->scheme", 1, false]
+                                         ,["procedure->cps-js-fun", 1, false]
+                                         ,["procedure->void-js-fun", 1, false]
+                                         ,["js-===", 2, false]
+                                         ,["js-get-named-object", 1, false]
+                                         ,["js-get-field", 2, true]
+                                         //,["get-js-array-field", 2, false]
+                                         ,["js-set-field!", 3, false]
+                                         //,["js-set-array-field!", 3, false]
+                                         ,["js-typeof", 1, false]
+                                         ,["js-instanceof", 2, false]
+                                         ,["js-call", 2, true]
+                                         ,["js-new", 1, true]
+                                         ,["js-make-hash", 0, true]
+                                         
+                                         ,["make-world-config", 2, true]
+                                         ,["make-bb-info", 2, false]
+                                         ,["bb-info?", 1, false]
+                                         ,["bb-info-change-world", 1, false]
+                                         ,["bb-info-toplevel-node", 1, false]
+                                         
+                                         ,["make-effect-type", 4, true]
+                                         ,["effect?", 1, false]
+                                         ,["world-with-effects", 2, false]
+                                         //,["coerce-world-handler", 1, false]
+                                         ,["make-render-effect-type", 4, true]
+                                         ,["render-effect-type?", 1]
+                                         ,["render-effect?", 1]
+                                         
+                                         //,["make-effect:do-nothing 0, false]
+                                         //,["effect:do-nothing? 1, false]
+                                         
+                                         ,["make-render-effect-type", 4, true]
+                                         //,["render-effect-name 1, false]
+                                         //,["render-effect-dom-node 1, false]
+                                         //,["render-effect-effects 1, false]
+                                         //,["render-effect? 1, false]
+                                         
+                                         ,["values", 0, true]
+                                         ,["sleep", 0, true]
+                                         ,["current-inexact-milliseconds", 0, false]
+                                         
+                                         ,["make-exn", 2, false]
+                                         ,["exn-message", 1, false]
+                                         ,["exn-continuation-marks", 1, false]
+                                        ].map(makeBindingFunction('"moby/toplevel"'))
+  );
+
+  // The core environment includes the baseConstants, the topLevel bindings, and the world bindings
+  // NOTE: worldModule *includes* worldEffects and worldHandlers, according to Danny's modules.ss file
+ plt.compiler.topLevelModules = [topLevelModule, kernelMiscModule, worldModule];
+})();

@@ -24,12 +24,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     return call_exp;
  }
 
-// forceBooleanContext: stx, loc, bool -> stx
-// Force a boolean runtime test on the given expression.
+ // forceBooleanContext: stx, loc, bool -> stx
+ // Force a boolean runtime test on the given expression.
  function forceBooleanContext(stx, loc, boolExpr){
     stx = '"'+stx+'"'; // add quotes to the stx
     var verifyCall  = new symbolExpr("verify-boolean-branch-value"),
-        stxQuote    = new quotedExpr(new symbolExpr(stx)),
+        stxQuote    = new quotedExpr(stx),
         locQuote    = new quotedExpr(loc.toVector()),
         boolLocQuote= new quotedExpr(boolExpr.location.toVector()),
         runtimeCall = new callExpr(verifyCall
@@ -280,7 +280,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
           exprLoc = expr.location,
           tmpSym = pinfoAndTempSym[1],
           orSym = new symbolExpr("or"),
-          expr = forceBooleanContext("or", that.stx.location, expr), // force a boolean context on the value
+          expr = forceBooleanContext(orSym, that.stx.location, expr), // force a boolean context on the value
           tmpBinding = new couple(tmpSym, expr);           // (let (tmpBinding) (if tmpSym tmpSym (...))
       tmpSym.location = that.location;
       tmpBinding.location = exprLoc;
