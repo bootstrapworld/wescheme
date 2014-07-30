@@ -918,7 +918,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    };
  
    quotedExpr.prototype.compile = function(env, pinfo){
-      return [new literal(this.val), pinfo];
+      return [(this.val instanceof literal)? this.val : new literal(this.val), pinfo];
    };
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(env, pinfo){
