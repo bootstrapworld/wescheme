@@ -225,7 +225,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                  p === '"'                  ? readString(str, i) :
                  p === '#'                  ? readPoundSExp(str, i) :
                  p === ';'                  ? readLineComment(str, i) :
-                 quotes.test(p)             ? readQuote(str, i, false) :
+                 quotes.test(p)             ? readQuote(str, i) :
                   /* else */                   readSymbolOrNumber(str, i);
        return sexp;
     }
@@ -512,7 +512,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
             // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
             case '`':
             case ',':
-            case '\'': datum = readQuote(str, i, true);
+            case '\'': datum = readQuote(str, i);
                       datum.location.offset--; datum.location.span++; // expand the datum to include leading '#'
                       endOfError = i+datum.location.span;
                       throwError(new types.Message([source, ":", sLine.toString()
@@ -732,9 +732,21 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                 
       // move the read head and column tracker forward
       i+=chunk.length; column+=chunk.length;
+      
+      // split the chunk at each |
+      var chunks = chunk.split("|");
                                 
-      // split by |, and enforce case-sensitivity for non-verbatim sections. Remove all escape characters
-      var filtered = chunk.split("|").reduce(function(acc, str, i){
+      // check for balanced |'s
+      if(((chunks.length%2) === 0)){
+          endOfError = i;
+          throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
+                                        ": read: unbalanced `|'"])
+                       ,new Location(sCol, sLine, iStart, i-iStart)
+                       ,"Error-GenericReadError");
+      }
+                                
+      // enforce case-sensitivity for non-verbatim sections. Remove all escape characters
+      var filtered = chunks.reduce(function(acc, str, i){
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "").replace(/\\/g,'');
