@@ -718,8 +718,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     function readSymbolOrNumber(str, i){
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
-      // non-whitespace characters that do not include:  ( ) [ ] { } " , ' ` ; # | \\
-      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"])+/mg.exec(str.slice(i))[0];
+      // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
+      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"\;])+/mg.exec(str.slice(i))[0];
       // if the chunk *and the string* end with an escape, throw an error
       if((chunk.charAt(chunk.length-1)==="\\") && (i+chunk.length+1 > str.length)){
             i = str.length; // jump to the end of the string
