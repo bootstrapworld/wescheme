@@ -11,32 +11,32 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 (function (){
  
   // given a moduleName, return a function that converts binding specs into function bindings
-  function makeBindingFunction(modulePath){
+  function makeFunctionBinding(modulePath){
     return function(binding){
             binding[3] = binding[3] || [];      // permissions default to none
             binding[4] = binding[4] || false;   // isCps defaults to false
             binding[5] = binding[5] || false;   // loc defaults to false
-            return new bindingFunction(binding[0], modulePath, binding[1], binding[2], binding[3], binding[4], binding[5]);
+            return new functionBinding(binding[0], modulePath, binding[1], binding[2], binding[3], binding[4], binding[5]);
            };
   }
   
   // kernel-misc-module
-  var kernelMiscModule  = new bindingModule("moby/runtime/kernel/misc",
+  var kernelMiscModule  = new moduleBinding("moby/runtime/kernel/misc",
                                            [["verify-boolean-branch-value", 2]
                                             ,["throw-cond-exhausted-error", 1 ]
                                             ,["'check-operator-is-function", 3]
                                             ,["print-values", 0]
-                                           ].map(makeBindingFunction('"moby/runtime/kernel/misc"'))
+                                           ].map(makeFunctionBinding('"moby/runtime/kernel/misc"'))
   );
   
   // foreign-module
-  var foreignModule     = new bindingModule("moby/foreign",
+  var foreignModule     = new moduleBinding("moby/foreign",
                                            [["get-js-object", 2, false, ["PERMISSION:FOREIGN-FUNCTION-INTERFACE"]]
-                                           ].map(makeBindingFunction('"moby/foreign"'))
+                                           ].map(makeFunctionBinding('"moby/foreign"'))
   );
   
   // world-effects-module
-  var worldEffectsModule= new bindingModule("world-effects",
+  var worldEffectsModule= new moduleBinding("world-effects",
                                             [["make-effect:none", 0, false]
                                              ,["make-effect:beep", 0, false, ["PERMISSION:VIBRATE"]]
                                              ,["make-effect:play-dtmf-tone", 2, false]
@@ -52,11 +52,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                              ,["make-effect:release-wake-lock", 1, false, ["PERMISSION:WAKE-LOCK"]]
                                              ,["make-effect:pick-playlist", 1, false]
                                              ,["make-effect:pick-random", 2, false]
-                                             ].map(makeBindingFunction('"moby/world-effects"'))
+                                             ].map(makeFunctionBinding('"moby/world-effects"'))
   );
   
   // world-handlers-module
-  var worldHandlersModule=new bindingModule("world-config",
+  var worldHandlersModule=new moduleBinding("world-config",
                                            [["on-tick", 1, true]
                                             ,["initial-effect", 1, false]
                                             ,["on-key", 1, false]
@@ -67,73 +67,73 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                             ,["to-draw", 1, false]
                                             ,["on-draw", 2, false]
                                             ,["stop-when", 1, false]
-                                           ].map(makeBindingFunction('"moby/world-handlers"'))
+                                           ].map(makeFunctionBinding('"moby/world-handlers"'))
   );
   
   // bootstrap-teachpack
-  var bootstrapTeachpack = new bindingModule("bootstrap/bootstrap-teachpack",
+  var bootstrapTeachpack = new moduleBinding("bootstrap/bootstrap-teachpack",
                                             [["START", 14, false]
                                              ,["test-frame", 1, false]
                                              ,["sine", 1, false]
                                              ,["cosine", 1, false]
                                              ,["tangent", 1, false]
-                                             ].map(makeBindingFunction('"bootstrap/bootstrap-teachpack"'))
+                                             ].map(makeFunctionBinding('"bootstrap/bootstrap-teachpack"'))
   );
 
   // cage-teachpack
-  var cageTeachpack     = new bindingModule("bootstrap/cage-teachpack",
+  var cageTeachpack     = new moduleBinding("bootstrap/cage-teachpack",
                                              [["start", 1, false]
-                                              ].map(makeBindingFunction('"bootstrap/cage-teachpack"'))
+                                              ].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))
   );
 
   // function-teachpack
-  var functionTeachpack  = new bindingModule("bootstrap/function-teachpack",
+  var functionTeachpack  = new moduleBinding("bootstrap/function-teachpack",
                                              [["start", 1, false]
-                                              ].map(makeBindingFunction('"bootstrap/function-teachpack"'))
+                                              ].map(makeFunctionBinding('"bootstrap/function-teachpack"'))
   );
   
   // location module
-  var locationModule     = new bindingModule("location",
+  var locationModule     = new moduleBinding("location",
                                              [["get-latitude",      0, false, ["PERMISSION:LOCATION"]]
                                               ,["get-longitude",    0, false, ["PERMISSION:LOCATION"]]
                                               ,["get-altitude",     0, false, ["PERMISSION:LOCATION"]]
                                               ,["get-bearing",      0, false, ["PERMISSION:LOCATION"]]
                                               ,["get-speed",        0, false, ["PERMISSION:LOCATION"]]
                                               ,["location-distance", 0, false, ["PERMISSION:LOCATION"]]
-                                              ].map(makeBindingFunction('"moby/geolocation"'))
+                                              ].map(makeFunctionBinding('"moby/geolocation"'))
   );
 
   // accelerometer library
-  var tiltModule        = new bindingModule("tilt",
+  var tiltModule        = new moduleBinding("tilt",
                                              [["get-x-acceleration",  0, false, ["PERMISSION:TILT"]]
                                               ,["get-y-acceleration", 0, false, ["PERMISSION:TILT"]]
                                               ,["get-z-acceleration", 0, false, ["PERMISSION:TILT"]]
                                               ,["get-azimuth",        0, false, ["PERMISSION:TILT"]]
                                               ,["get-pitch",          0, false, ["PERMISSION:TILT"]]
                                               ,["get-roll",           0, false, ["PERMISSION:TILT"]]
-                                              ].map(makeBindingFunction('"moby/tilt"'))
+                                              ].map(makeFunctionBinding('"moby/tilt"'))
   );
 
   // telephony module
-  var telephonyModule    = new bindingModule("telephony",
+  var telephonyModule    = new moduleBinding("telephony",
                                              [["get-signal-strength",  0, false, ["PERMISSION:TELEPHONY"]]
-                                             ].map(makeBindingFunction('"moby/net"'))
+                                             ].map(makeFunctionBinding('"moby/net"'))
   );
 
   // net module
-  var netModule         = new bindingModule("net",
+  var netModule         = new moduleBinding("net",
                                              [["get-url",  1, false, ["INTERNET"]]
-                                             ].map(makeBindingFunction('"moby/net"'))
+                                             ].map(makeFunctionBinding('"moby/net"'))
   );
                                               
   // parser module
-  var parserModule      = new bindingModule("parser",
+  var parserModule      = new moduleBinding("parser",
                                              [["xml->s-sexp",  1, false]
-                                             ].map(makeBindingFunction('"moby/parser"'))
+                                             ].map(makeFunctionBinding('"moby/parser"'))
   );
 
   // js-world module
-  var jsWorldModule     = new bindingModule("jsworld",
+  var jsWorldModule     = new moduleBinding("jsworld",
                                             [["js-big-bang",  1, false]
                                              ,["big-bang",    1, false]
                                              ,["js-div",      0, false]
@@ -143,11 +143,11 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                              ,["js-node",     1, false]
                                              ,["js-select",   2, false]
                                              ,["js-img",      1, false, ["PERMISSION:INTERNET"]]
-                                             ].map(makeBindingFunction('"moby/jsworld"'))
+                                             ].map(makeFunctionBinding('"moby/jsworld"'))
   );
   
   // world
-  var worldModule       = new bindingModule("world",
+  var worldModule       = new moduleBinding("world",
                                            worldHandlersModule.bindings.concat(worldEffectsModule.bindings,
                                            ["key=?"
                                             ,"big-bang"
@@ -230,12 +230,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                             ].map(function(binding){
                                                     var needsPermission = ["video/url", "bitmap/url", "image-url", "open-image-url"];
                                                     binding[1] = (needsPermission.indexOf(binding.name) > -1)? ["PERMISSION:INTERENT"] : [];
-                                                    return new bindingConstant(binding, '"moby/world"', binding[1], false);
+                                                    return new constantBinding(binding, '"moby/world"', binding[1], false);
                                                   }))
   );
 
   // top-level
-  var topLevelModule = new bindingModule("moby/topLevel",
+  var topLevelModule = new moduleBinding("moby/topLevel",
                                          [["<", 2, true] // Numerics
                                          ,["<=", 2, true]
                                          ,["=", 2, true]
@@ -587,7 +587,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                                          ,["make-exn", 2, false]
                                          ,["exn-message", 1, false]
                                          ,["exn-continuation-marks", 1, false]
-                                        ].map(makeBindingFunction('"moby/toplevel"'))
+                                        ].map(makeFunctionBinding('"moby/toplevel"'))
   );
 
   // The core environment includes the baseConstants, the topLevel bindings, and the world bindings

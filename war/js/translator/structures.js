@@ -3,8 +3,7 @@ if(typeof(plt) === "undefined")          plt = {};
 if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 /*
  TODO
- - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
- - rename bindingModule, bindingConstant and bindingFunction into moduleBinding, constantBinding and functionBinding
+-
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -433,14 +432,14 @@ function isDefinition(node){
  *
  **************************************************************************/
 
-// bindingModule: records an id and its associated JS implementation.
-function bindingModule(name, bindings){
+// moduleBinding: records an id and its associated JS implementation.
+function moduleBinding(name, bindings){
   this.name     = name;
   this.bindings = bindings;
 }
 
-// bindingConstant: records an id and its associated JS implementation.
-function bindingConstant(name, moduleSource, permissions, loc){
+// constantBinding: records an id and its associated JS implementation.
+function constantBinding(name, moduleSource, permissions, loc){
   this.name = name;
   this.moduleSource = moduleSource;
   this.permissions = permissions;
@@ -449,8 +448,8 @@ function bindingConstant(name, moduleSource, permissions, loc){
   return this;
 }
 
-// bindingFunction: try to record more information about the toplevel-bound function
-function bindingFunction(name, moduleSource, minArity, isVarArity, permissions, isCps, loc){
+// functionBinding: try to record more information about the toplevel-bound function
+function functionBinding(name, moduleSource, minArity, isVarArity, permissions, isCps, loc){
   this.name = name;
   this.moduleSource = moduleSource;
   this.minArity = minArity;
@@ -521,12 +520,12 @@ function bindingStructure(name, moduleSource, fields, constructor,
     // extendFunction : symbol (or/c string false) number boolean? Loc -> env
     // Extends the environment with a new function binding
     this.extendFunction = function(id, moduleSource, minArity, isVarArity, loc){
-      return this.extend(new bindingFunction(id, moduleSource, minArity, isVarArity, [], false, loc));
+      return this.extend(new functionBinding(id, moduleSource, minArity, isVarArity, [], false, loc));
     };
  
     // extendConstant : string (modulePath || false) Loc -> env
     this.extendConstant = function(id, moduleSource, loc){
-      return this.extend(new bindingConstant(id, moduleSource, [], loc));
+      return this.extend(new constantBinding(id, moduleSource, [], loc));
     };
  
     // lookup_context: identifier -> (binding | false)
@@ -787,8 +786,8 @@ function bindingStructure(name, moduleSource, fields, constructor,
       // from http://stackoverflow.com/questions/1960473/unique-values-in-an-array
       function onlyUnique(value, index, self) { return self.indexOf(value) === index; }
       function reducePermissions(permissions, b){
-        if((b instanceof bindingFunction)
-        || (b instanceof bindingConstant)) return permissions.concat(b.permissions);
+        if((b instanceof functionBinding)
+        || (b instanceof constantBinding)) return permissions.concat(b.permissions);
       }
       return this.usedBindings().reduce(reducePermissions, []).filter(onlyUnique);
     }
@@ -875,7 +874,7 @@ function bindingStructure(name, moduleSource, fields, constructor,
                            , "false", "eof", "pi", "e","js-undefined"
                            , "js-null"].reduce(function(env, id){
                                                return env.extendConstant(id.toString(), '"moby/toplevel"', false)
-                                               }, new plt.compiler.emptyEnv());
+                                               }, new emptyEnv());
 
     var pinfo = new plt.compiler.pinfo(),
         topLevelEnv = plt.compiler.topLevelModules.reduceRight(function(env, mod){

@@ -7,6 +7,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  - assign location in constructors
  - fix and uncomment uses of 'tagApplicationOperator_Module'
  - test cases get desugared into native calls 
+ - figure out quotedExpr representation, creation of stx during desugaring
  - how to add struct binding when define-struct is desugared away?
 */
 
@@ -391,7 +392,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // bf: symbol path number boolean string -> binding:function
  // Helper function.
  function bf(name, modulePath, arity, vararity, loc){
-    return new bindingFunction(name, modulePath, arity, vararity, [], false, loc);
+    return new functionBinding(name, modulePath, arity, vararity, [], false, loc);
  }
  defFunc.prototype.collectDefinitions = function(pinfo){
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
@@ -400,13 +401,13 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  defVar.prototype.collectDefinitions = function(pinfo){
     var binding = (this.expr instanceof lambdaExpr)?
                     bf(this.name.val, false, this.expr.args.length, false, this.name.location)
-                  : new bindingConstant(this.name.val, false, [], this.name.location);
+                  : new constantBinding(this.name.val, false, [], this.name.location);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVars.prototype.collectDefinitions = function(pinfo){
     var that = this;
     return this.names.reduce(function(pinfo, id){
-      var binding = new bindingConstant(id.val, false, [], id.location);
+      var binding = new constantBinding(id.val, false, [], id.location);
       return pinfo.accumulateDefinedBinding(binding, that.location);
     }, pinfo);
  };
@@ -523,7 +524,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // extend the env to include the function binding, then add each arg as a constant binding
     var env1 = env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
         env2 = this.args.reduce(function(env, arg){
-                                  return env.extend(new bindingConstant(arg.val, false, [], arg.location));
+                                  return env.extend(new constantBinding(arg.val, false, [], arg.location));
                                 }, env1);
     pinfo.env = env1;
     return this.body.analyzeUses(pinfo, env2);
@@ -534,7 +535,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
     var env1 = pinfo.env,
         env2 = this.args.reduce(function(env, arg){
-          return env.extend(new bindingConstant(arg.val, false, [], arg.location));
+          return env.extend(new constantBinding(arg.val, false, [], arg.location));
         }, env1);
     return this.body.analyzeUses(pinfo, env2);
  };

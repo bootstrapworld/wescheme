@@ -72,7 +72,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
 
   // (define ...)
   function isValueDefinition(sexp) {
-    return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define", sexp[0]));
+    return (isCons(sexp) && isSymbol(sexp[0]) &&
+            (isSymbolEqualTo("define", sexp[0]) || isSymbolEqualTo("define-values", sexp[0])));
   }
 
   // is it any kind of definition?

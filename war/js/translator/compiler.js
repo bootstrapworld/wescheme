@@ -606,12 +606,12 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     };
     simpleNominalPath.prototype = heir(Bytecode.prototype);
 
-    // moduleBinding
+/*    // moduleBinding
     function moduleBinding() {
       Bytecode.call(this);
     };
     moduleBinding.prototype = heir(Bytecode.prototype);
-
+*/
     // phasedModuleBinding
     function phasedModuleBinding(path, phase, exportName, nominalPath, nominalExportName) {
       this.path       = path;       // modulePathIndex
