@@ -1,10 +1,9 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt   || {};
+plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
  - someday, get rid of convertToBytecode()
@@ -932,9 +931,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // Create a prefix that refers to those values
       // Create an environment that maps to the prefix
       function makeModulePrefixAndEnv(pinfo){
-        var extractModuleBindings = function(m){return m.moduleBindings;},
-            requiredModuleBindings = pinfo.modules.reduce(extractModuleBindings, []),
- 
+        var requiredModuleBindings = pinfo.modules.reduce(function(acc, m){return acc.concat(m.bindings);}, []),
             isNotRequiredModuleBinding = function(b){ return b.moduleSource && (requiredModuleBindings.indexOf(b) === -1)},
             moduleOrTopLevelDefinedBindings = pinfo.usedBindingsHash.values().filter(isNotRequiredModuleBinding),
  

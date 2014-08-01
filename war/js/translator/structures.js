@@ -1,9 +1,9 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt   || {};
+plt.compiler = plt.compiler || {};
 /*
  TODO
--
+ - have modulePathResolver return the proper name!
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -637,6 +637,11 @@ function bindingStructure(name, moduleSource, fields, constructor,
   // default-module-path-resolver: module-path module-path -> module-name
   // Provides a default module resolver.
   plt.compiler.defaultModulePathResolver = function(path, parentPath){
+/*    var name = (path instanceof symbolExpr)? path : modulePathJoin(parentPath, path)),
+        moduleName = knownModules.reduceRight(function(name, km){
+              return (km.source === modulePathJoin(parentPath, path))? km.name : name;}
+                                              , name);
+*/ 
     // anything of the form wescheme/w+, or that has a known collection AND module
     var parts = path.toString().split("/"),
         collectionName = parts[0],
@@ -747,7 +752,8 @@ function bindingStructure(name, moduleSource, fields, constructor,
     // Adds a list of module-imported bindings to the pinfo's known set of bindings, without
     // including them within the set of defined names.
     this.accumulateModuleBindings = function(bindings){
-      bindings.forEach(function(b){this.env.extend(binding);});
+      var that = this;
+      bindings.forEach(function(b){that.env.extend(b);});
       return this;
     };
    

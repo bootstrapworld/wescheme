@@ -1,10 +1,11 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt   || {};
+plt.compiler = plt.compiler || {};
 
 /*
  TODO
  - assign location in constructors
+ - have modulePathResolver return the proper name!
  - fix and uncomment uses of 'tagApplicationOperator_Module'
  - test cases get desugared into native calls 
  - figure out quotedExpr representation, creation of stx during desugaring
@@ -416,28 +417,42 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  // bindings provided by that module.
  requireExpr.prototype.collectDefinitions = function(pinfo){
     var errorMessage =  ["require", ": ", "moby-error-type:Unknown-Module: ", this.spec],
-        moduleName = pinfo.modulePathResolver(this.spec.val, this.currentModulePath);
+        moduleName = pinfo.modulePathResolver(this.spec.val, this.currentModulePath),
+        that = this;
  
     // if it's an invalid moduleName, throw an error
     if(!moduleName){
-      throwError(new types.Message(["Found require of the module "
-                                    , this.spec
+      throwError(new types.Message(["Found require of the module " , this.spec
                                     , ", but this module is unknown."])
                  , this.spec.location
                  ,"Error-UnknownModule");
     }
-
-/*    var moduleBinding = pinfo.moduleResolver(moduleName);
-    // if it's an invalid moduleBinding, throw an error
-    if(!moduleBinding){
-      throwError(errorMessage, this.location);
+ 
+    // FIXME: we currently override moduleName, which SHOULD just give us the proper name
+    if(types.isString(this.spec.val)) moduleName = this.spec.val.toDisplayedString();
+ 
+    // processModule : JS -> pinfo
+    // given the JS that assigns a module to window.COLLECTIONS, evaluate it, pull out the bindings
+    // and then add them to pinfo
+    function processModule(js){
+      var module = eval(js);
+      var provides = window.COLLECTIONS[moduleName].provides,
+          strToBinding = function(p){ return new constantBinding(new symbolExpr(p), new symbolExpr(moduleName), false); },
+          provideBindings = provides.map(strToBinding),
+          binding = new moduleBinding(new symbolExpr(moduleName), provideBindings);
+      return pinfo.accumulateModule(binding).accumulateModuleBindings(provideBindings);
     }
  
-    // if everything is okay, add the module bindings to this pinfo and return
-    pinfo.accumulateModule(pinfo.accumulateModuleBindings(moduleBinding.bindings));
- */
-    return pinfo;
+    // open a *synchronous* GET request -- FIXME to use callbacks?
+    var client = new XMLHttpRequest(),
+        url = window.location.protocol+"//"+window.location.host+"/js/mzscheme-vm/collects/"+moduleName+".js"
+    client.open('GET', url, false);
+    client.send()
+    // if it's successful return the pinfo with all the module bindings
+    if (client.status === 200) { return processModule(client.responseText); }
+    else { console.log('ERROR LOADING MODULE:'+client.status+'\n'+client.responseText); }
  };
+ 
  localExpr.prototype.collectDefinitions = function(pinfo){
     // remember previously defined names, so we can revert to them later
     // in the meantime, scan the body
@@ -602,25 +617,19 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
    function collectDefinitions(programs, pinfo){
      // FIXME: this does not yet say anything if a definition is introduced twice
      // in the same lexical scope.  We must do this error check!
-     return programs.reduce((function(pinfo, p){
-                             return p.collectDefinitions(pinfo);
-                             })
+     return programs.reduce((function(pinfo, p){ return p.collectDefinitions(pinfo); })
                             , pinfo);
    }
    // collectProvides: [listof Programs] pinfo -> pinfo
    // Walk through the program and collect all the provide statements.
    function collectProvides(programs, pinfo){
-      return programs.reduce((function(pinfo, p){
-                                return p.collectProvides(pinfo)
-                              })
+      return programs.reduce((function(pinfo, p){ return p.collectProvides(pinfo); })
                              , pinfo);
    }
    // analyzeUses: [listof Programs] pinfo -> pinfo
    // Collects the uses of bindings that this program uses.
     function analyzeUses(programs, pinfo){
-      return programs.reduce((function(pinfo, p){
-                                return p.analyzeUses(pinfo, pinfo.env);
-                              })
+      return programs.reduce((function(pinfo, p){ return p.analyzeUses(pinfo, pinfo.env); })
                              , pinfo);
     }
     var pinfo1 = collectDefinitions(programs, pinfo);
