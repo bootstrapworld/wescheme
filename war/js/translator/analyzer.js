@@ -235,8 +235,8 @@ plt.compiler = plt.compiler || {};
 
     // This is the predicate we'll be applying using ormap: (lambda (x) (equal? x val))
     var equalStx = new symbolExpr('equal?'),
-        equalTestStx = new callExpr(equalStx, [xStx, valStx], that.stx),
-        predicateStx = new lambdaExpr([xStx], equalTestStx, that.stx);
+        equalTestStx = new callExpr(equalStx, [xStx, valStx], caseStx),
+        predicateStx = new lambdaExpr([xStx], equalTestStx, caseStx);
     stxs = stxs.concat([equalStx, equalTestStx, predicateStx]);
  
     // generate (if (ormap <predicate> (quote clause.first)) clause.second base)
@@ -252,13 +252,14 @@ plt.compiler = plt.compiler || {};
     // build the body of the let by decomposing cases into nested ifs
     var binding = new couple(valStx, this.expr),
         body = clauses.reduceRight(processClause, expr),
-        letExp = new letExpr([binding], body, that.stx);
+        letExp = new letExpr([binding], body, caseStx);
     stxs = stxs.concat([binding, body, letExp]);
  
     // assign location to every stx element we created
     stxs.forEach(function(stx){stx.location = that.location;});
     return letExp.desugar(updatedPinfo2);
  };
+ 
  // ands become nested ifs
  andExpr.prototype.desugar = function(pinfo){
     var expr = this.exprs[this.exprs.length-1];
