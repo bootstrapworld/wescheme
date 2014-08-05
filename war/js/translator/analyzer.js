@@ -210,7 +210,7 @@ plt.compiler = plt.compiler || {};
  caseExpr.prototype.desugar = function(pinfo){
     var that = this,
         caseStx = new symbolExpr("if"); // TODO: The server returns "if" here, but I am almost certain it should be "case"
-    caseStx.location = this.location;
+    caseStx.location = that.location;
 
     var pinfoAndValSym = pinfo.gensym('val'),      // create a symbol 'val'
         updatedPinfo1 = pinfoAndValSym[0],        // generate pinfo containing 'val'
@@ -271,9 +271,12 @@ plt.compiler = plt.compiler || {};
  // ors become nested lets-with-if-bodies
  orExpr.prototype.desugar = function(pinfo){
     // grab the last expr, and remove it from the list and desugar
-    var expr = forceBooleanContext(this.stx, this.stx.location, this.exprs.pop()),
-        that = this;
-    expr.location = this.location;
+    var that = this,
+        orSym = new symbolExpr("or"),
+        last = that.exprs.pop(),
+        expr = forceBooleanContext(that.stx, that.stx.location, last),
+        stxs = [orSym];   // list of stxs that will need their locations set to that.location
+    expr.location = last.location;
  
     // given a desugared chain, add this expr to the chain
     // we optimize the predicate/consequence by binding the expression to a temp symbol
@@ -281,19 +284,17 @@ plt.compiler = plt.compiler || {};
       var pinfoAndTempSym = pinfo.gensym('tmp'),
           exprLoc = expr.location,
           tmpSym = pinfoAndTempSym[1],
-          orSym = new symbolExpr("or"),
           expr = forceBooleanContext(orSym, that.stx.location, expr), // force a boolean context on the value
-          tmpBinding = new couple(tmpSym, expr);           // (let (tmpBinding) (if tmpSym tmpSym (...))
-      tmpSym.location = that.location;
-      tmpBinding.location = exprLoc;
+          tmpBinding = new couple(tmpSym, expr);                      // (let (tmpBinding) (if tmpSym tmpSym (...))
+      // create if and let expressions, using these new symbols and bindings
       var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0], new symbolExpr("if")),
-          let_exp = new letExpr([tmpBinding], if_exp, that.stx);
-      if_exp.stx.location = that.location;
-      if_exp.location = exprLoc;
-      let_exp.location = exprLoc;
+          let_exp = new letExpr([tmpBinding], if_exp, orSym);
+      stxs = stxs.concat([tmpSym, tmpBinding, if_exp, if_exp.stx, let_exp]);
       return [let_exp, restAndPinfo[1]];
     }
+    // generate nested ifs and lets, set location for stxs, then desugar
     var exprsAndPinfo = this.exprs.reduceRight(convertToNestedIf, [expr, pinfo]);
+    stxs.forEach(function(stx){return stx.location = that.location;});
     var desugared = exprsAndPinfo[0].desugar(exprsAndPinfo[1]);
     return [desugared[0], exprsAndPinfo[1]];
  };
