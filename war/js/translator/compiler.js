@@ -322,8 +322,8 @@ plt.compiler = plt.compiler || {};
                 +this.operatorAndRandLocs.map(convertToBytecode).join(',')+'],"flags":['
                 +this.flags.map(convertToBytecode).join(',')+'],"num-params":'+this.numParams
                 +',"param-types":['+this.paramTypes.map(convertToBytecode).join(',')+'],"rest?":'+this.rest
-                +',"closure-map":['+this.closureMap.map(convertToBytecode)+'],"closure-types":['
-                +this.closureTypes.map(convertToBytecode)+'],"max-let-depth":'+this.maxLetDepth
+                +',"closure-map":['+this.closureMap.join(",")+'],"closure-types":['
+                +this.closureTypes.join(",")+'],"max-let-depth":'+this.maxLetDepth
                 +',"body":'+this.body.toBytecode()+'}';
       };
     };
