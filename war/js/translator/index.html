@@ -76,6 +76,8 @@ function sameResults(x, y){
       // toplevel properties are equal if the sets of names are equal
       // WARNING: this may require stronger checking!
       if(p==="toplevels"){
+        console.log(x_toplevels);
+        console.log(y_toplevels);
         // if they're not the same length, bail
         if(x_toplevels.length !== y_toplevels.length) return false;
         // if they're not the same names, bail
@@ -85,15 +87,17 @@ function sameResults(x, y){
         y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
         x_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
         y_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
+        console.log(x_modVariables);
+        console.log(y_modVariables);
         return sameResults(x_modVariables, y_modVariables);
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
-      if(p==="pos"){
+      if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
         return x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])];
       }
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
-      else return false;
+      else{ return false;}
     }
     // does every property in y also exist in x?
     for (p in y) {
@@ -251,7 +255,7 @@ function runTests(verbose){
       if(sameResults((0,eval)('('+expected.bytecode+')'), (0,eval)('('+recieved.bytecode+')'))) {
         desugar.style.background = 'lightgreen'; return true;
       } else {
-                        console.log('compared\n'+expected.bytecode+'\nto\n'+recieved.bytecode);
+//                        console.log('compared\n'+expected.bytecode+'\nto\n'+recieved.bytecode);
         return setTestFailureLink(row, JSON.stringify(expected.bytecode), JSON.stringify(recieved.bytecode));
       }
 
