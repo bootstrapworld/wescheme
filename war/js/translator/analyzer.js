@@ -4,7 +4,6 @@ plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - assign location in constructors
  - have modulePathResolver return the proper name!
  - fix and uncomment uses of 'tagApplicationOperator_Module'
  - test cases get desugared into native calls 
@@ -29,7 +28,7 @@ plt.compiler = plt.compiler || {};
  // forceBooleanContext: stx, loc, bool -> stx
  // Force a boolean runtime test on the given expression.
  function forceBooleanContext(stx, loc, boolExpr){
-    stx = '"'+stx+'"'; // add quotes to the stx
+    stx = new literal(new types.string(stx.toString())); // turn the stx object into a string literal
     var verifyCall  = new symbolExpr("verify-boolean-branch-value"),
         stxQuote    = new quotedExpr(stx),
         locQuote    = new quotedExpr(loc.toVector()),
