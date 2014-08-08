@@ -121,7 +121,7 @@
             // maximum limits on width, and height/width ratios are specific to orientation
             keyWidth  = Math.min(Math.round(window.innerWidth/keyConfig.length), isLandscape? 85 : 65) - 13;
             keyHeight = Math.min(28, 0.75*keyWidth);
-            keyboardHeight = isLandscape? 380 : 290;
+            keyboardHeight = isLandscape? 400 : 290;
             for(i=0; i < keyList.childNodes.length; i++){
                 keyList.childNodes[i].style.width     = keyWidth+"px";
                 keyList.childNodes[i].style.lineHeight= keyHeight+"px";
