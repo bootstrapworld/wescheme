@@ -372,8 +372,8 @@ plt.compiler = plt.compiler || {};
       this.boxes   = boxes;   // boolean
       this.body    = body;    // expr, seq, indirect, any
       this.toBytecode = function(){
-        return '{"$":"let-void","count":'+this.count.toBytecode()+',"boxes":'
-                +this.boxes.toBytecode()+',"body":'+this.body.toBytecode()+'}';
+        return '{"$":"let-void","count":'+convertToBytecode(this.count)+',"boxes?":'
+                +convertToBytecode(this.boxes)+',"body":'+this.body.toBytecode()+'}';
       };
     };
     letVoid.prototype = heir(Bytecode.prototype);
@@ -398,8 +398,8 @@ plt.compiler = plt.compiler || {};
       this.rhs     = rhs;     // expr, seq, indirect, any
       this.body    = body;    // expr, seq, indirect, any -- set existing stack slot(s)
       this.toBytecode = function(){
-        return '{"$":"install-value","count":'+this.count.toBytecode()+',"pos":'+this.pos.toBytecode()
-                +',"boxes":'+this.boxes.toBytecode()+',"rhs":'+this.rhs.toBytecode()
+        return '{"$":"install-value","count":'+convertToBytecode(this.count)+',"pos":'+convertToBytecode(this.pos)
+                +',"boxes?":'+convertToBytecode(this.boxes)+',"rhs":'+this.rhs.toBytecode()
                 +',"body":'+this.body.toBytecode()+'}';
       };
     };
@@ -715,9 +715,7 @@ plt.compiler = plt.compiler || {};
    // [bytecodes, pinfo, env], Program -> [bytecodes, pinfo, env]
    // compile the program, then add the bytecodes and pinfo information to the acc
    function compilePrograms(acc, p){
-    var bytecodes = acc[0],
-        pinfo     = acc[1],
-        env       = acc[2],
+    var bytecodes = acc[0], pinfo = acc[1], env = acc[2],
         compiledProgramAndPinfo = p.compile(env, pinfo),
         compiledProgram = compiledProgramAndPinfo[0],
         pinfo     = compiledProgramAndPinfo[1];
@@ -802,9 +800,10 @@ plt.compiler = plt.compiler || {};
  
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
+ console.log(freeVariableRefs);
         // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
-          throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + "is bound.";
+          throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + " is bound.";
         // otherwise, compute the depts of all local and global free variables
         } else {
           var localStackRefs    = freeVariableRefs.filter(isLocalStackRef),
@@ -864,7 +863,51 @@ plt.compiler = plt.compiler || {};
    };
 
    localExpr.prototype.compile = function(env, pinfo){
-      throw new unimplementedException("localExpr.compile");
+     // if there are no definitions, just pull the body out and compile it.
+     if(this.defs.length === 0) return this.body.compile(env, pinfo);
+ 
+     // Otherwise...
+     // (1) create an environment where all defined names are given local, boxed stackrefs
+     var that = this,
+         definedNames = this.defs.reduce(getDefinedNames, []),
+         pushLocalBoxedFromSym = function(env, sym) { return new plt.compiler.localEnv(sym.val, true, env); }
+         envWithBoxedNames = definedNames.reverse().reduce(pushLocalBoxedFromSym, env);
+ 
+     // (2) process the definitions, starting with pinfo and our new environment as the base
+     var letVoidBodyAndPinfo = processDefns(this.defs, pinfo, envWithBoxedNames, 0),
+         letVoidBody = letVoidBodyAndPinfo[0],
+         pinfo = letVoidBodyAndPinfo[1];
+ 
+     // (3) return a new letVoid for the stack depth we require, then use the bytecode as the body
+     return [new letVoid(definedNames.length, true, letVoidBody), pinfo]
+
+     // getDefinedNames : [names], def -> names
+     // given a list of names and a defn, add defined name(s) to the list
+     function getDefinedNames(names, def){
+        return names.concat((def instanceof defVars)? def.names : def.name);
+     }
+ 
+     // processDefns : [defs], pinfo, numInstalled -> [bytecode, pinfo]
+     // create bytecode that will install each defn at the correct stack location
+     function processDefns(defs, pinfo, env, numInstalled){
+       if(defs.length===0) return that.body.compile(envWithBoxedNames, pinfo);
+ 
+        // compile the rhs of the first definition, in the current environment
+        var rhs                 = (defs[0] instanceof defFunc)? defs[0].body : defs[0].expr,
+            compiledRhsAndPInfo = rhs.compile(env, pinfo),
+            compiledRhs         = compiledRhsAndPInfo[0],
+            pinfo               = compiledRhsAndPInfo[1];
+
+        // figure out how much room we'll need on the stack for this defn
+        // compile the rest of the definitions, using the new pinfo and stack size
+        var numToInstall    = (defs[0] instanceof defVars)? defs[0].names.length : 1,
+            newBodyAndPinfo = processDefns(defs.slice(1), pinfo, env, numInstalled+numToInstall)
+            newBody         = newBodyAndPinfo[0],
+            pinfo           = newBodyAndPinfo[1];
+       // generate bytecode to install new values for the remaining body
+        var bytecode = new installValue(numToInstall, numInstalled, true, compiledRhs, newBody);
+        return [bytecode, pinfo];
+     }
    };
    
    callExpr.prototype.compile = function(env, pinfo){
@@ -905,7 +948,7 @@ plt.compiler = plt.compiler || {};
    symbolExpr.prototype.compile = function(env, pinfo){
      var stackReference = env.lookup(this.val, 0), bytecode;
       if(stackReference instanceof localStackReference){
-        bytecode = new localRef(stackReference.boxed, stackReference.depth, false, false, false);
+        bytecode = new localRef(stackReference.isBoxed, stackReference.depth, false, false, false);
       } else if(stackReference instanceof globalStackReference){
         bytecode = new topLevel(stackReference.depth, stackReference.pos, false, false, this.location);
       } else if(stackReference instanceof unboundStackReference){
