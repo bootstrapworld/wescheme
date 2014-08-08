@@ -102,9 +102,8 @@
         keyList.id = 'keys';
         keyList.className = iPad ? 'iPad' : 'iPhone';
         document.body.appendChild(keyList);
-
-        for(i in keyConfig){ keyList.appendChild(keyFactory(keyConfig[i])); }
-        
+        keyConfig.forEach(function(config){ keyList.appendChild(keyFactory(config)); });
+ 
         var intervalId;
 
         var drawKeyboard = function(){
