@@ -930,7 +930,7 @@ plt.compiler = plt.compiler || {};
  
         // compile the first definition in the current environment
         var compiledDefAndPInfo = defs[0].compile(env, pinfo),
-            compiledDef         = compiledDefAndPInfo[0].rhs, // important: all we need is the rhs!!
+            compiledRhs         = compiledDefAndPInfo[0].rhs, // important: all we need is the rhs!!
             pinfo               = compiledDefAndPInfo[1];
 
         // figure out how much room we'll need on the stack for this defn
@@ -941,7 +941,7 @@ plt.compiler = plt.compiler || {};
             pinfo           = newBodyAndPinfo[1];
  
        // generate bytecode to install new values for the remaining body
-        var bytecode = new installValue(numToInstall, numInstalled, true, compiledDef, newBody);
+        var bytecode = new installValue(numToInstall, numInstalled, true, compiledRhs, newBody);
         return [bytecode, pinfo];
      }
    };
