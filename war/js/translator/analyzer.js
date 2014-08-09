@@ -458,16 +458,12 @@ plt.compiler = plt.compiler || {};
     // remember previously defined names, so we can revert to them later
     // in the meantime, scan the body
     var prevKeys = pinfo.definedNames.keys(),
-        localPinfo= this.defs.reduce(function(pinfo, p){
-                                        return p.collectDefinitions(pinfo);
-                                        }
+        localPinfo= this.defs.reduce(function(pinfo, p){ return p.collectDefinitions(pinfo); }
                                         , pinfo),
         newPinfo  = this.body.collectDefinitions(localPinfo),
         newKeys = newPinfo.definedNames.keys();
     // now that the body is scanned, forget all the new definitions
-    newKeys.forEach(function(k){
-                  if(prevKeys.indexOf(k) === -1) newPinfo.definedNames.remove(k);
-                });
+    newKeys.forEach(function(k){ if(prevKeys.indexOf(k) === -1) newPinfo.definedNames.remove(k); });
     return newPinfo;
  };
  
@@ -556,25 +552,13 @@ plt.compiler = plt.compiler || {};
     return this.body.analyzeUses(pinfo, env2);
  };
  localExpr.prototype.analyzeUses = function(pinfo, env){
-    // remember previously used bindings, so we can revert to them later
-    // in the meantime, scan the body
-    var prevKeys = pinfo.usedBindingsHash.keys(),
-        localPinfo= this.defs.reduce(function(pinfo, p){
-                                        return p.analyzeUses(pinfo, env);
-                                        }
-                                        , pinfo),
-        newPinfo  = this.body.analyzeUses(localPinfo, env),
-        newKeys = newPinfo.usedBindingsHash.keys();
-    // now that the body is scanned, forget all the new definitions
-    newKeys.forEach(function(k){
-                  if(prevKeys.indexOf(k) === -1) newPinfo.usedBindingsHash.remove(k);
-                });
-    return newPinfo;
+    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
+    return this.body.analyzeUses(pinfoAfterDefs, env);
  };
  callExpr.prototype.analyzeUses = function(pinfo, env){
     return [this.func].concat(this.args).reduce(function(p, arg){
                             return (arg instanceof Array)?
-                                    // if arg is an array, reduce THAT
+                                    // if arg is a subexpression, reduce THAT
                                     arg.reduce((function(pinfo, p){return p.analyzeUses(pinfo, pinfo.env);})
                                                , pinfo)
                                     // otherwise analyze and return
@@ -597,7 +581,7 @@ plt.compiler = plt.compiler || {};
                                       , ", but found none"]),
                     this.location);
     }
-   if(env.lookup_context(this.val)){
+    if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);

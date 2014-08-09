@@ -210,7 +210,7 @@ function localExpr(defs, body, stx) {
   this.body = body;
   this.stx  = stx;
   this.toString = function(){
-    return "(local ("+this.defs.toString()+") ("+this.body.toString()+"))";
+    return "(local ["+this.defs.toString()+"] "+this.body.toString()+")";
   };
 };
 localExpr.prototype = heir(Program.prototype);

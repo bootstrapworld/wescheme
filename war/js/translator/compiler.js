@@ -6,6 +6,7 @@ plt.compiler = plt.compiler || {};
  TODO
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
+ - lambdaExpr.prototype.freeVariables
  - someday, get rid of convertToBytecode()
  */
 
@@ -677,6 +678,7 @@ plt.compiler = plt.compiler || {};
     };
     modulePath.prototype = heir(Bytecode.prototype);
  
+    // freeVariables : [listof symbols] env -> [list of symbols]
     Program.prototype.freeVariables   = function(acc, env){ return acc; }
     ifExpr.prototype.freeVariables    = function(acc, env){
       return this.alternative.freeVariables(this.consequence.freeVariables(this.predicate.freeVariables(acc, env), env), env);
@@ -687,13 +689,46 @@ plt.compiler = plt.compiler || {};
     symbolExpr.prototype.freeVariables= function(acc, env){
       return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this]) : acc;
     };
-    callExpr.prototype.freeVariables = function(acc, env){
-      return [this.func].concat(this.args).reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+    localExpr.prototype.freeVariables = function(acc, env){
+      // helper functions
+      var pushLocalBoxedFromSym = function(env, sym) { return new plt.compiler.localEnv(sym.val, true, env); },
+          pushLocalFromSym      = function(env, sym) { return new plt.compiler.localEnv(sym.val, false, env); };
+ 
+          // collect all the defined names in the local
+      var definedNames = this.defs.reduce(function(names, d){
+                                            return ((d instanceof defVars)? d.names : [d.name]).concat(names); }
+                                           , []),
+          // make an environment with those names added to the stack
+          updatedEnv = definedNames.reduce(pushLocalBoxedFromSym, env),
+          // use that env to find all free variables in the body
+          freeVarsInBody = this.body.freeVariables(acc, updatedEnv),
+ 
+          // given free variables and a definition, add the free variables from that definition...
+          // while *also* updating the stack to reflect defined names
+          addFreeVarsInDef = function(acc, d){
+             if(d instanceof defFunc){
+                var envWithArgs = d.args.reduce(function(env, arg){return pushLocalFromSym(env, arg);}, updatedEnv);
+                return d.body.freeVariables(acc, envWithArgs);
+             }
+             if(d instanceof defStruct){ return acc; }
+             else{ return d.expr.freeVariables(acc, updatedEnv); }
+          }
+ 
+      // collect free variables from all the definitions and the body, while simultaneously
+      // updating the environment to reflect defined names
+      return this.defs.reduce(addFreeVarsInDef, freeVarsInBody);
     };
-    localExpr.prototype.freeVariables = function(acc, env){ return acc; };
-    andExpr.prototype.freeVariables   = function(acc, env){ return acc; };
+    andExpr.prototype.freeVariables   = function(acc, env){
+       return this.exprs.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+    };
+    orExpr.prototype.freeVariables    = function(acc, env){
+       return this.exprs.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+    }
     lambdaExpr.prototype.freeVariables= function(acc, env){ return acc; };
     quotedExpr.prototype.freeVariables= function(acc, env){ return acc; };
+    callExpr.prototype.freeVariables  = function(acc, env){
+      return [this.func].concat(this.args).reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+    };
  
   /**************************************************************************
    *
@@ -800,7 +835,6 @@ plt.compiler = plt.compiler || {};
  
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
- console.log(freeVariableRefs);
         // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + " is bound.";
@@ -865,12 +899,12 @@ plt.compiler = plt.compiler || {};
    localExpr.prototype.compile = function(env, pinfo){
      // if there are no definitions, just pull the body out and compile it.
      if(this.defs.length === 0) return this.body.compile(env, pinfo);
- 
+
      // Otherwise...
      // (1) create an environment where all defined names are given local, boxed stackrefs
      var that = this,
          definedNames = this.defs.reduce(getDefinedNames, []),
-         pushLocalBoxedFromSym = function(env, sym) { return new plt.compiler.localEnv(sym.val, true, env); }
+         pushLocalBoxedFromSym = function(env, sym) { return new plt.compiler.localEnv(sym.val, true, env); },
          envWithBoxedNames = definedNames.reverse().reduce(pushLocalBoxedFromSym, env);
  
      // (2) process the definitions, starting with pinfo and our new environment as the base
@@ -888,15 +922,16 @@ plt.compiler = plt.compiler || {};
      }
  
      // processDefns : [defs], pinfo, numInstalled -> [bytecode, pinfo]
-     // create bytecode that will install each defn at the correct stack location
+     // fold-like function to that will generate bytecode to install each defn at the
+     // correct stack location in addition to compiling it, then move on to the rest
+     // of the definitions
      function processDefns(defs, pinfo, env, numInstalled){
-       if(defs.length===0) return that.body.compile(envWithBoxedNames, pinfo);
+        if(defs.length===0){ return that.body.compile(envWithBoxedNames, pinfo); }
  
-        // compile the rhs of the first definition, in the current environment
-        var rhs                 = (defs[0] instanceof defFunc)? defs[0].body : defs[0].expr,
-            compiledRhsAndPInfo = rhs.compile(env, pinfo),
-            compiledRhs         = compiledRhsAndPInfo[0],
-            pinfo               = compiledRhsAndPInfo[1];
+        // compile the first definition in the current environment
+        var compiledDefAndPInfo = defs[0].compile(env, pinfo),
+            compiledDef         = compiledDefAndPInfo[0].rhs, // important: all we need is the rhs!!
+            pinfo               = compiledDefAndPInfo[1];
 
         // figure out how much room we'll need on the stack for this defn
         // compile the rest of the definitions, using the new pinfo and stack size
@@ -904,8 +939,9 @@ plt.compiler = plt.compiler || {};
             newBodyAndPinfo = processDefns(defs.slice(1), pinfo, env, numInstalled+numToInstall)
             newBody         = newBodyAndPinfo[0],
             pinfo           = newBodyAndPinfo[1];
+ 
        // generate bytecode to install new values for the remaining body
-        var bytecode = new installValue(numToInstall, numInstalled, true, compiledRhs, newBody);
+        var bytecode = new installValue(numToInstall, numInstalled, true, compiledDef, newBody);
         return [bytecode, pinfo];
      }
    };
@@ -997,7 +1033,6 @@ plt.compiler = plt.compiler || {};
         return [new prefix(0, topLevels ,[])
                , new plt.compiler.globalEnv(globals, false, new plt.compiler.emptyEnv())];
       };
- 
       // The toplevel is going to include all of the defined identifiers in the pinfo
       // The environment will refer to elements in the toplevel.
       var toplevelPrefixAndEnv = makeModulePrefixAndEnv(pinfo),
