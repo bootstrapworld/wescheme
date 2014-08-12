@@ -1,6 +1,6 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt || {};
+plt.compiler = plt.compiler || {};
 
 /*
  
@@ -568,14 +568,15 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
     // reads a character encoded in the string and returns a representative datum
     function readChar(str, i) {
       var sCol = column, sLine = line, iStart = i;
-      i+=2;  column+=2; // skip over the #\\
+      i+=2;  column++; // skip over the #\\
       var datum = "";
-      while(i < str.length && !isDelim(str.charAt(i)) && !isWhiteSpace(str.charAt(i))) {
+      // read until we hit the end of the string, a delimiter, whitespace, or another char
+      while(i < str.length && !isDelim(str.charAt(i))
+            && !isWhiteSpace(str.charAt(i)) && (str.slice(i,i+2) !== "#\\")) {
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
         else { column++; }
         datum += str.charAt(i++);
-        column++;
       }
       datum = datum === 'nul' || datum === 'null' ? '\u0000' :
                           datum === 'backspace' ? '\b' :
@@ -760,7 +761,7 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
       // attempt to parse using jsnums.fromString(), assign to sexp and add location
       // if it's a bad number, throw an error
       try{
-        var numValue = jsnums.fromString(filtered),
+        var numValue = jsnums.fromString(filtered, true),
             node     = (numValue || numValue === 0)?  // don't interpret zero as 'false'
                             new literal(numValue) : new symbolExpr(filtered);
         node.location = new Location(sCol, sLine, iStart, i-iStart);
