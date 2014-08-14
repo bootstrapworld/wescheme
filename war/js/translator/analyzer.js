@@ -5,9 +5,7 @@ plt.compiler = plt.compiler || {};
 /*
  TODO
  - have modulePathResolver return the proper name!
- - fix and uncomment uses of 'tagApplicationOperator_Module'
- - test cases get desugared into native calls 
- - figure out quotedExpr representation, creation of stx during desugaring
+ - test cases get desugared into native calls
  - how to add struct binding when define-struct is desugared away?
 */
 
@@ -16,13 +14,13 @@ plt.compiler = plt.compiler || {};
  
  // tag-application-operator/module: Stx module-name -> Stx
  // Adjust the lexical context of the func so it refers to the environment of a particular module.
- function tagApplicationOperator_Module(call_exp, moduleName){
-    var func = call_exp.func,
-        operands = call_exp.args,
-        module = defaultModuleResolver(moduleName),
+ function tagApplicationOperator_Module(application, moduleName){
+    // get the module's env
+    var module = plt.compiler.defaultModuleResolver(moduleName),
         env = new plt.compiler.emptyEnv().extendEnv_moduleBinding(module);
-    call_exp.context = env;
-    return call_exp;
+    // assign it as the context of the function, and each of the arguments
+    [application.func].concat(application.args).forEach(function(expr){expr.context = env;});
+    return application;
  }
 
  // forceBooleanContext: stx, loc, bool -> stx
@@ -37,7 +35,7 @@ plt.compiler = plt.compiler || {};
                                    , [stxQuote, locQuote, boolExpr, boolLocQuote]);
     runtimeCall.location = verifyCall.location = boolExpr.location;
     stxQuote.location=locQuote.location=boolLocQuote.location = boolExpr.location;
-//    tagApplicationOperator_Module(runtimeCall, 'moby/runtime/kernel/misc');
+    tagApplicationOperator_Module(runtimeCall, 'moby/runtime/kernel/misc');
     return runtimeCall;
  }
  
@@ -53,11 +51,11 @@ plt.compiler = plt.compiler || {};
             // if it's an expression, insert a print-values call so it shows up in the repl
             if(plt.compiler.isExpression(p) && isTopLevelExpr){
               var printValues = new symbolExpr("print-values"),
-                  runtimeCall = new callExpr(printValues, [desugaredAndPinfo[0]]);
-               // set the location of the runtime call to that of the expression
-              printValues.location = runtimeCall.location = p.location;
-              desugaredAndPinfo[0] = runtimeCall;
-//              tagApplicationOperator_Module(runtimeCall,'moby/runtime/kernel/misc');
+                  printCall = new callExpr(printValues, [desugaredAndPinfo[0]]);
+               // set the location of the print-values call to that of the expression
+              printValues.location = printCall.location = p.location;
+              desugaredAndPinfo[0] = printCall;
+              tagApplicationOperator_Module(printCall,'moby/runtime/kernel/misc');
             }
             if(desugaredAndPinfo[0].length){
               acc[0] = acc[0].concat(desugaredAndPinfo[0]);
@@ -197,7 +195,8 @@ plt.compiler = plt.compiler || {};
     // base case is all-false
     var condExhausted = new symbolExpr("throw-cond-exhausted-error"),
         exhaustedLoc = new quotedExpr(this.location.toVector()),
-        expr = new callExpr(condExhausted, [exhaustedLoc]);
+        expr = tagApplicationOperator_Module(new callExpr(condExhausted, [exhaustedLoc])
+                                             , "moby/runtime/kernel/misc");
     expr.location = condExhausted.location = exhaustedLoc.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
       expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
@@ -238,10 +237,12 @@ plt.compiler = plt.compiler || {};
         predicateStx = new lambdaExpr([xStx], equalTestStx, caseStx);
     stxs = stxs.concat([equalStx, equalTestStx, predicateStx]);
  
-    // generate (if (ormap <predicate> (quote clause.first)) clause.second base)
+    // the parser will treat each clause.first as a function appled to some args
+    // remix it into a <list> of [func].concat[args]
+    // generate (if (ormap <predicate> (quote <list>)) clause.second base)
     function processClause(base, clause){
       var ormapStx = new symbolExpr('ormap'),
-          quoteStx = new quotedExpr(clause.first),
+          quoteStx = new quotedExpr([clause.first.func].concat(clause.first.args)),
           callStx = new callExpr(ormapStx, [predicateStx, quoteStx], that.stx),
           ifStx = new ifExpr(callStx, clause.second, base, caseStx);
       stxs = stxs.concat([ormapStx, callStx, quoteStx, ifStx]);

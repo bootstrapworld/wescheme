@@ -210,7 +210,7 @@ function localExpr(defs, body, stx) {
   this.body = body;
   this.stx  = stx;
   this.toString = function(){
-    return "(local ["+this.defs.toString()+"] "+this.body.toString()+")";
+    return "(local ("+this.defs.toString()+") "+this.body.toString()+")";
   };
 };
 localExpr.prototype = heir(Program.prototype);
@@ -589,47 +589,16 @@ function bindingStructure(name, moduleSource, fields, constructor,
     };
   }
   globalEnv.prototype = heir(env.prototype);
-  
+ 
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
-  var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"];
- 
-  // These modules are hardcoded.
-  var knownModules =  [ "world-module"
-                       ,"world-stub-module"
-                       ,"location-module"
-                       ,"tilt-module"
-                       ,"net-module"
-                       ,"parser-module"
-                       
-                       ,"autos"
-                       ,"bootstrap-gtp-teachpack"
-                       ,"bootstrap-teachpack-translated"
-                       ,"cage-teachpack-translated"
-                       ,"compass-teachpack-translated"
-                       ,"function-teachpack-translated"
-                       ,"cage-teachpack"
-                       ,"bootstrap-common"
-                       ,"bootstrap-teachpack"
-                       ,"cage-teachpack"
-                       ,"function-teachpack"
-                       ,"bootstrap-tilt-teachpack"
-                       
-                       ,"google-maps"
-                       ,"phonegap"
-                       
-                       ,"telephony-module"
-                       ,"moby-module-binding"
-                       
-                       ,"foreign-module"
-                       ,"kernel-misc-module"];
- 
-  var defaultCurrentModulePath = "";
+  var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"],
+      defaultCurrentModulePath = "";
  
   // default-module-resolver: symbol -> (module-binding | false)
   // loop through known modules and see if we know this name
   plt.compiler.defaultModuleResolver = function(name){
-    for(var i=0; i< knownModules.length; i++){
-//      if(moduleBindingName(knownModules[i]) === name.val) return knownModules[i];
+    for(var i=0; i<plt.compiler.knownModules.length; i++){
+      if(plt.compiler.knownModules[i].name === name) return plt.compiler.knownModules[i];
     }
     return false;
   }

@@ -1,6 +1,6 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt   || {};
+plt.compiler = plt.compiler || {};
 /*
  TODO
  -
@@ -593,4 +593,18 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   // The core environment includes the baseConstants, the topLevel bindings, and the world bindings
   // NOTE: worldModule *includes* worldEffects and worldHandlers, according to Danny's modules.ss file
  plt.compiler.topLevelModules = [topLevelModule, kernelMiscModule, worldModule];
+ 
+ plt.compiler.knownModules = [kernelMiscModule
+                              , foreignModule
+                              , worldModule
+                              , bootstrapTeachpack
+                              , cageTeachpack
+                              , functionTeachpack
+                              , locationModule
+                              , tiltModule
+                              , telephonyModule,
+                              , netModule
+                              , parserModule
+                              , jsWorldModule
+                              , topLevelModule];
 })();
