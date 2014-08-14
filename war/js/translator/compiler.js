@@ -6,7 +6,6 @@ plt.compiler = plt.compiler || {};
  TODO
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
- - lambdaExpr.prototype.freeVariables
  - someday, get rid of convertToBytecode()
  */
 
@@ -25,7 +24,7 @@ plt.compiler = plt.compiler || {};
     Vector.prototype.toBytecode = function(){
       return 'types.vector(['+this.elts.join(',')+'])';
     };
-    Array.prototype.toBytecode = function(){
+    Array.prototype.toBytecode = function(quoted){
       return 'types.'+(this.length===0? 'EMPTY':'list(['+this.map(convertToBytecode).join(',')+'])');
     };
     // Bytecode generation for jsnums types
@@ -673,7 +672,7 @@ plt.compiler = plt.compiler || {};
       this.base = base;
       Bytecode.call(this);
       this.toBytecode = function(){
-        return '{"$":"module-path","path":'+this.path+',"base":'+convertToBytecode(this.base)+'}';
+        return '{"$":"module-path","path":'+convertToBytecode(this.path)+',"base":'+convertToBytecode(this.base)+'}';
       };
     };
     modulePath.prototype = heir(Bytecode.prototype);
@@ -724,7 +723,12 @@ plt.compiler = plt.compiler || {};
     orExpr.prototype.freeVariables    = function(acc, env){
        return this.exprs.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
     }
-    lambdaExpr.prototype.freeVariables= function(acc, env){ return acc; };
+    lambdaExpr.prototype.freeVariables= function(acc, env){
+      var pushLocalFromSym  = function(env, sym) { return new plt.compiler.localEnv(sym.val, false, env); },
+          envWithArgs       = this.args.reverse().reduce(pushLocalFromSym, env);
+      return this.body.freeVariables(acc, envWithArgs);
+ 
+    };
     quotedExpr.prototype.freeVariables= function(acc, env){ return acc; };
     callExpr.prototype.freeVariables  = function(acc, env){
       return [this.func].concat(this.args).reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
@@ -835,13 +839,13 @@ plt.compiler = plt.compiler || {};
  
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
+
         // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + " is bound.";
         // otherwise, compute the depts of all local and global free variables
         } else {
-          var localStackRefs    = freeVariableRefs.filter(isLocalStackRef),
-              lexicalFreeRefs   = sortAndUnique(localStackRefs,
+          var lexicalFreeRefs   = sortAndUnique(freeVariableRefs.filter(isLocalStackRef),
                                                 function(x,y){return x.depth < y.depth;},
                                                 function(x,y){return x.depth === y.depth;}),
               lexicalFreeDepths = lexicalFreeRefs.map(getDepthFromRef),
@@ -849,6 +853,7 @@ plt.compiler = plt.compiler || {};
               globalDepths      = sortAndUnique(globalRefs.map(getDepthFromRef),
                                                 function(x,y){return x<y;},
                                                 function(x,y){return x===y;});
+
           // Add Function Arguments (in reverse order) to the environment
           var env1 = args.reverse().map(function(s){return s.val;}).reduce(pushLocal, originalEnv);
           // Add the lexical free variables (in reverse order)
@@ -862,38 +867,39 @@ plt.compiler = plt.compiler || {};
                            newGlobals  = maskUnusedGlobals(originalEnv.peek(depth).names, usedGlobals);
                        return pushGlobals(newGlobals, env);
                      }, env2);
+
           // return a vector of depths (global, then local), along with the environment
           return [globalDepths.concat(lexicalFreeDepths), env3];
         }
       }
+ 
+      // push each arg onto an empty Env, the compute the free variables in the function body with that Env
       var envWithArgs = this.args.map(function(s){return s.val;}).reduce(pushLocal, new plt.compiler.emptyEnv());
-          freeVars = this.body.freeVariables([], envWithArgs);
-      var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVars, env),
-          closureMap = closureVectorAndEnv[0],
+          freeVarsInBody = this.body.freeVariables([], envWithArgs);
+ 
+      // compute the closure information
+      var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVarsInBody, env),
+          closureVector = closureVectorAndEnv[0],
           extendedEnv = closureVectorAndEnv[1];
+ 
+      // compile the body using the closure's environent
       var compiledBodyAndPinfo = this.body.compile(extendedEnv, pinfo),
           compiledBody = compiledBodyAndPinfo[0],
-          pinfo = compiledBodyAndPinfo[1];
-      var lambdaArgs = new Array(this.args.length),
-          closureArgs = new Array(closureMap.length);
+          pinfo1 = compiledBodyAndPinfo[1];
  
-      var paramTypes = [], closureTypes = [];
-      for(var i=0; i < this.args.length; i++)  { paramTypes.push(new symbolExpr("val"));       }
-      for(var j=0; j < closureMap.length; j++) { closureTypes.push(new symbolExpr("val/ref")); }
-
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
                              [isUnnamedLambda? this.stx:name].concat(this.args.reverse()).map(getLocs),
-                             [],              // flags
-                             this.args.length,// numParams
-                             paramTypes,      // paramTypes
-                             false,           // rest
-                             closureMap,      // closureMap
-                             closureTypes,    // closureTypes
-                             0,               // maxLetDepth
-                             compiledBody);   // body
-      return [bytecode, pinfo];
+                             [],                                                          // flags
+                             this.args.length,                                            // numParams
+                             this.args.map( function(){ return new symbolExpr("val");}  ),  // paramTypes
+                             false,                                                       // rest
+                             closureVector,                                               // closureMap
+                             closureVector.map(function(){ return new symbolExpr("val/ref"); }  ), // closureTypes
+                             0,                                                           // maxLetDepth
+                             compiledBody);                                               // body
+      return [bytecode, pinfo1];
    };
 
    localExpr.prototype.compile = function(env, pinfo){
@@ -949,11 +955,11 @@ plt.compiler = plt.compiler || {};
    callExpr.prototype.compile = function(env, pinfo){
       // add space to the stack for each argument, then build the bytecode for the application itself
       var makeSpace = function(env, operand){return new plt.compiler.unnamedEnv(env);},
-          extendedEnv = this.args.reduce(makeSpace, env),
-          compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
+          extendedEnv = this.args.reduce(makeSpace, env);
+      var compiledOperatorAndPinfo = this.func.compile(extendedEnv, pinfo),
           compiledOperator = compiledOperatorAndPinfo[0],
-          pinfo1 = compiledOperatorAndPinfo[1],
-          compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, extendedEnv]),
+          pinfo1 = compiledOperatorAndPinfo[1];
+      var compiledOperandsAndPinfo = this.args.reduceRight(compilePrograms, [[], pinfo, extendedEnv]),
           compiledOperands = compiledOperandsAndPinfo[0],
           pinfo2 = compiledOperatorAndPinfo[1],
           app = new application(compiledOperator, compiledOperands);
@@ -995,9 +1001,15 @@ plt.compiler = plt.compiler || {};
       return [bytecode, pinfo];
    };
  
+   // a quotedExpr is a literal version of the raw stx object
    quotedExpr.prototype.compile = function(env, pinfo){
-      return [(this.val instanceof literal)? this.val : new literal(this.val), pinfo];
+      function unwrapLiterals(v){
+        return (v instanceof literal)? v.val : (v instanceof Array)? v.map(unwrapLiterals) : v;
+      }
+      result = new literal(unwrapLiterals(this.val));
+      return [result, pinfo];
    };
+ 
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(env, pinfo){
      return [new req(this.spec, new topLevel(0, 0, false, false, false)), pinfo];
@@ -1024,6 +1036,7 @@ plt.compiler = plt.compiler || {};
                                                             modulePathIndexJoin(false, false))
                                         , new symbolExpr(b.name), -1, 0);
             };
+
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),
@@ -1057,8 +1070,8 @@ plt.compiler = plt.compiler || {};
           pinfo = compiledExpressionsAndPinfo[1];
       // generate the bytecode for the program and return it, along with the program info
       var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
-          bytecode = new compilationTop(0, toplevelPrefix, forms),
-          response = {"bytecode" : "/* runtime-version: moby-colored-20120807 */\n" + bytecode.toBytecode(),
+          zo_bytecode = new compilationTop(0, toplevelPrefix, forms),
+          response = {"bytecode" : "/* runtime-version: moby-colored-20120807 */\n" + zo_bytecode.toBytecode(),
                       "permissions" : pinfo.permissions(),
                       "provides" : pinfo.providedNames.keys()};
           return response;
