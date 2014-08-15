@@ -546,10 +546,13 @@ plt.compiler = plt.compiler || {};
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
  };
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
-    var env1 = pinfo.env,
+//    var env1 = pinfo.env,
+    var env1 = plt.compiler.getBasePinfo("base").env,
         env2 = this.args.reduce(function(env, arg){
           return env.extend(new constantBinding(arg.val, false, [], arg.location));
         }, env1);
+ window.env1 = env1;
+ window.env2 = env2;
     return this.body.analyzeUses(pinfo, env2);
  };
  localExpr.prototype.analyzeUses = function(pinfo, env){

@@ -74,7 +74,6 @@ plt.compiler = plt.compiler || {};
   }
   // (define-values ...)
   function isMultiValueDefinition(sexp) {
- console.log(isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-values", sexp[0]))
     return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-values", sexp[0]));
   }
   // is it any kind of definition?

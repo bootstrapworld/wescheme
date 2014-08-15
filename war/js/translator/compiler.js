@@ -9,7 +9,6 @@ plt.compiler = plt.compiler || {};
  - someday, get rid of convertToBytecode()
  */
 
-
 (function (){
     literal.prototype.toBytecode = function(){
       var str = this.val.toBytecode? this.val.toBytecode()
