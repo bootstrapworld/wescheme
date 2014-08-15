@@ -1,6 +1,6 @@
 // if not defined, declare the compiler object as part of plt
-if(typeof(plt) === "undefined")          plt = {};
-if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+window.plt   = window.plt   || {};
+plt.compiler = plt.compiler || {};
 
 /*
  
@@ -16,7 +16,6 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
  TODO
  - assign location in constructors
  - JSLint
- - parse define-values
  */
 
 (function () {
@@ -69,16 +68,18 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
   function isStructDefinition(sexp) {
     return ((isCons(sexp)) && (isSymbol(sexp[0])) && (isSymbolEqualTo("define-struct", sexp[0])));
   }
-
   // (define ...)
   function isValueDefinition(sexp) {
-    return (isCons(sexp) && isSymbol(sexp[0]) &&
-            (isSymbolEqualTo("define", sexp[0]) || isSymbolEqualTo("define-values", sexp[0])));
+    return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define", sexp[0]));
   }
-
+  // (define-values ...)
+  function isMultiValueDefinition(sexp) {
+ console.log(isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-values", sexp[0]))
+    return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-values", sexp[0]));
+  }
   // is it any kind of definition?
   function isDefinition(sexp) {
-    return isStructDefinition(sexp) || isValueDefinition(sexp);
+    return isStructDefinition(sexp) || isValueDefinition(sexp) || isMultiValueDefinition(sexp);
   }
  
   // : parseDefinition : SExp -> AST (definition)
@@ -136,6 +137,39 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                      , sexp.location);
       }
       return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr), sexp[0]);
+    }
+    function parseMultiDef(sexp){
+      // is it just (define-values)?
+      if(sexp.length < 2){
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expects a list of variables and a body, but found neither"])
+                     , sexp.location);
+      }
+      // is it just (define-values ... )?
+      if(sexp.length < 3){
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expects a list of variables and a body, but found only "
+                                      , new types.ColoredPart("one part", sexp[1].location)])
+                     , sexp.location);
+      }
+      // is it (define-values <not a list> )?
+      if(!(sexp[1] instanceof Array)){
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expects a list of variables and a body, but found "
+                                      , new types.ColoredPart("something else", sexp[1].location)])
+                     , sexp.location);
+      }
+      // too many parts?
+      if(sexp.length > 3){
+          var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
+              wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                        , ": expects a list of variables and a body"
+                                        + ", but found "
+                                        , new types.MultiPart(wording, extraLocs, false)])
+                     , sexp.location);
+      }
+      return new defVars(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
     }
     function parseDef(sexp) {
       // is it just (define)?
@@ -218,7 +252,8 @@ if(typeof(plt.compiler) === "undefined") plt.compiler = {};
                          , sexp.location);
     }
     var def = isStructDefinition(sexp) ? parseDefStruct(sexp) :
-              isValueDefinition(sexp) ? parseDef(sexp) :
+              isValueDefinition(sexp)  ? parseDef(sexp) :
+              isMultiValueDefinition   ? parseMultiDef(sexp) :
               throwError(new types.Message([": expected to find a definition, but found: "+ sexp]),
                          sexp.location);
     def.location = sexp.location;
