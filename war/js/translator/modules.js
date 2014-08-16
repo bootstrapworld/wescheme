@@ -71,26 +71,35 @@ plt.compiler = plt.compiler || {};
   );
   
   // bootstrap-teachpack
+  var bootstrapTeachpackFunctions = [["START", 14, false] ,["test-frame", 1, false] ,["sine", 1, false]
+                                     ,["cosine", 1, false] ,["tangent", 1, false]];
   var bootstrapTeachpack = new moduleBinding("bootstrap/bootstrap-teachpack",
-                                            [["START", 14, false]
-                                             ,["test-frame", 1, false]
-                                             ,["sine", 1, false]
-                                             ,["cosine", 1, false]
-                                             ,["tangent", 1, false]
-                                             ].map(makeFunctionBinding('"bootstrap/bootstrap-teachpack"'))
-  );
-
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap/bootstrap-teachpack"'))),
+      bootstrapTeachpack2011 = new moduleBinding("bootstrap2011/bootstrap-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2011/bootstrap-teachpack"'))),
+      bootstrapTeachpack2012 = new moduleBinding("bootstrap2012/bootstrap-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2012/bootstrap-teachpack"'))),
+      bootstrapTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-teachpack"')));
+ 
   // cage-teachpack
-  var cageTeachpack     = new moduleBinding("bootstrap/cage-teachpack",
-                                             [["start", 1, false]
-                                              ].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))
-  );
-
+  var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",[["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
+      cageTeachpack2011 = new moduleBinding("bootstrap2011/cage-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap2011/cage-teachpack"'))),
+      cageTeachpack2012 = new moduleBinding("bootstrap2012/cage-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap2012/cage-teachpack"'))),
+      cageTeachpack2014 = new moduleBinding("bootstrap2013/cage-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap2013/cage-teachpack"')));
+ 
   // function-teachpack
-  var functionTeachpack  = new moduleBinding("bootstrap/function-teachpack",
-                                             [["start", 1, false]
-                                              ].map(makeFunctionBinding('"bootstrap/function-teachpack"'))
-  );
+  var functionTeachpack = new moduleBinding("bootstrap/function-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
+      functionTeachpack2011 = new moduleBinding("bootstrap2011/function-teachpack",
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
+      functionTeachpack2012 = new moduleBinding("bootstrap2012/function-teachpack",
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
+      functionTeachpack2014 = new moduleBinding("bootstrap2014/function-teachpack",
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"')));
   
   // location module
   var locationModule     = new moduleBinding("location",
@@ -598,11 +607,20 @@ plt.compiler = plt.compiler || {};
                               , foreignModule
                               , worldModule
                               , bootstrapTeachpack
+                              , bootstrapTeachpack2011
+                              , bootstrapTeachpack2012
+                              , bootstrapTeachpack2014
                               , cageTeachpack
+                              , cageTeachpack2011
+                              , cageTeachpack2012
+                              , cageTeachpack2014
                               , functionTeachpack
+                              , functionTeachpack2011
+                              , functionTeachpack2012
+                              , functionTeachpack2014
                               , locationModule
                               , tiltModule
-                              , telephonyModule,
+                              , telephonyModule
                               , netModule
                               , parserModule
                               , jsWorldModule
