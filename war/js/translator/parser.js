@@ -578,7 +578,9 @@ plt.compiler = plt.compiler || {};
                     isSymbolEqualTo("and", peek)     ? parseAndExpr(sexp) :
                     isSymbolEqualTo("or", peek)      ? parseOrExpr(sexp) :
                     isSymbolEqualTo("quote", peek)   ? parseQuotedExpr(sexp) :
-                    isSymbolEqualTo("quasiquote", peek) ? parseQuasiQuotedExpr(sexp, 1) :
+                    isSymbolEqualTo("quasiquote", peek)       ? parseQuasiQuotedExpr(sexp) :
+                    isSymbolEqualTo("unquote", peek)          ? parseUnquoteExpr(sexp) :
+                    isSymbolEqualTo("unquote-splicing", peek) ? parseUnquoteSplicingExpr(sexp) :
                     parseFuncCall(sexp);
           expr.location = sexp.location;
           return expr;
@@ -756,7 +758,23 @@ plt.compiler = plt.compiler || {};
                    sexp.location);
   }
 
-  function parseQuasiQuotedExpr(sexp, depth) {
+  function parseUnquoteExpr(sexp) {
+    if((sexp.length !== 2)){
+      throwError(new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
+                 , sexp.location);
+    }
+    return new unquotedExpr(parseExpr(sexp[1]));
+  }
+
+  function parseUnquoteSplicingExpr(sexp) {
+    if((sexp.length !== 2)){
+      throwError(new types.Message(["Inside an unquote-splicing, expected to find a single argument, but found "+(sexp.length-1)])
+                 , sexp.location);
+    }
+    return new unquoteSplice(parseExpr(sexp[1]));
+  }
+
+  function parseQuasiQuotedExpr(sexp) {
     // quasiquote must have exactly one argument
     if(sexp.length < 2){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -774,48 +792,15 @@ plt.compiler = plt.compiler || {};
     if(isCons(sexp[1]) && isSymbolEqualTo(sexp[1][0], "unquote-splicing")){
       throwError(new types.Message(["misuse of ,@ or `unquote-splicing' within a quasiquoting backquote"]), sexp.location);
     }
- 
-    // when parsing an element inside a quasiquoted list, check for use of quasiquote, unquote and unquote-splicing
-    // Track depth so we can throw parse errors
-    function parseQqListItem(sexp) {
-      if(isCons(sexp) && isSymbolEqualTo(sexp[0], "unquote-splicing")){
-        if((sexp.length !== 2)){
-          throwError(new types.Message(["Inside an unquote-splicing, expected to find a single argument, but found "+(sexp.length-1)])
-                     , sexp.location);
-        } else if(depth === 0){
-          throwError(new types.Message(["misuse of a , or 'unquote, not under a quasiquoting backquote"])
-                     , sexp.location);
-        }
-        // decrement depth no matter what. If, AFTER decrementing, we are at depth==0, return a real quasiquote
-        if((depth-1) === 0){
-          return new unquoteSplice(parseExpr(sexp[1]));
-        }
-      } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "unquote")){
-        if((sexp.length !== 2)){
-          throwError(new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
-                     , sexp.location);
-        } else if(depth === 0){
-          throwError(new types.Message(["misuse of a ,@ or 'unquote, not under a quasiquoting backquote"])
-                     , sexp.location);
-        }
-        if((depth-1) === 0){
-          return new unquotedExpr(parseExpr(sexp[1]));
-        }
-      } else if(isCons(sexp) && isSymbolEqualTo(sexp[0], "quasiquote")){
-        if((sexp.length !== 2))
-          throwError(new types.Message(["Inside an quasiquote, expected to find a single argument, but found "+(sexp.length-1)])
-                     , sexp.location);
-        // increment depth no matter what. If, AFTER incrementing, we are at depth==0, return a real quasiquote
-        depth++;
-        if(depth === 0){
-          return parseQuasiQuotedExpr(sexp, depth);
-        }
-      }
-      // otherwise, parse using standard behavior
-      if(isCons(sexp)) return sexp.map(parseQqListItem);
-      else return sexp;
-    }
-    var quoted = isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1];
+
+    var quoted = isCons(sexp[1]) && sexp[1][0].val === 'unquote' ?
+                   parseUnquoteExpr(sexp[1]) :
+                 isCons(sexp[1]) && sexp[1][0].val === 'unquote-splicing' ?
+                   parseUnquoteSplicingExpr(sexp[1]) :
+                 isCons(sexp[1]) ?
+                   sexp[1].map(parseExpr) :
+                 /* else */
+                   parseExpr(sexp[1])
     quoted.location = sexp[1].location;
     return new quasiquotedExpr(quoted);
   }
