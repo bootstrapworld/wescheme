@@ -758,23 +758,67 @@ plt.compiler = plt.compiler || {};
                    sexp.location);
   }
 
-  function parseUnquoteExpr(sexp) {
-    if((sexp.length !== 2)){
-      throwError(new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
-                 , sexp.location);
-    }
-    return new unquotedExpr(parseExpr(sexp[1]));
+  function parseUnquoteExpr(sexp, depth) {
+    if (typeof depth === 'undefined') {
+      throwError( new types.Message(["misuse of a comma or 'unquote, not under a quasiquoting backquote"])
+                , sexp.location
+                , "Error-GenericSyntacticError");
+    } else if((sexp.length !== 2)){
+     throwError( new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
+               , sexp.location);
+   } else if (depth === 1) {
+     return new unquotedExpr(parseExpr(sexp[1]));
+   } else if (depth > 1) {
+     return new unquotedExpr(parseQuasiQuotedItem(sexp[1], depth-1));
+   } else {
+     throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
+               , sexp.location);
+   }
   }
 
-  function parseUnquoteSplicingExpr(sexp) {
-    if((sexp.length !== 2)){
+  function parseUnquoteSplicingExpr(sexp, depth) {
+    if (typeof depth === 'undefined') {
+      throwError( new types.Message(["misuse of a ,@ or unquote-splicing, not under a quasiquoting backquote"])
+                , sexp.location
+                , "Error-GenericSyntacticError");
+    } else if((sexp.length !== 2)){
       throwError(new types.Message(["Inside an unquote-splicing, expected to find a single argument, but found "+(sexp.length-1)])
                  , sexp.location);
+    } else if (depth === 1) {
+      return new unquoteSplice(parseExpr(sexp[1]));
+    } else if (depth > 1) {
+      return new unquoteSplice(parseQuasiQuotedItem(sexp[1], depth-1));
+    } else {
+     throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
+               , sexp.location);
     }
-    return new unquoteSplice(parseExpr(sexp[1]));
   }
 
-  function parseQuasiQuotedExpr(sexp) {
+  /* This is what we use in place of `parseExpr` when we're in "data-mode",  */
+  /* i.e. there's an active quasiquote. Active is a bit awkward to describe, */
+  /* but basically it's an unmatch quasiquote, if we think of unquotes as    */
+  /* matching quasiquotes, so:                                               */
+  /*   ``,(+ 1 2)                                                            */
+  /* has an active quasiquote while reading (+ 1 2), whereas:                */
+  /*   ``,,(+ 1 2)                                                           */
+  /* does not.                                                               */
+  function parseQuasiQuotedItem(sexp, depth) {
+    return isCons(sexp) && sexp[0].val === 'unquote' ?
+             parseUnquoteExpr(sexp, depth) :
+           isCons(sexp) && sexp[0].val === 'unquote-splicing' ?
+             parseUnquoteSplicingExpr(sexp, depth) :
+           isCons(sexp) && sexp[0].val === 'quasiquote' ?
+             parseQuasiQuotedExpr(sexp, depth) :
+           isCons(sexp) ?
+             sexp.map(function (x) {return parseQuasiQuotedItem(x, depth)}) :
+           depth === 0 ?
+             parseExpr(sexp) :
+           /* else */
+             new quotedExpr(sexp)
+  }
+
+  function parseQuasiQuotedExpr(sexp, depth) {
+    depth = (typeof depth === 'undefined') ? 0 : depth;
     // quasiquote must have exactly one argument
     if(sexp.length < 2){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -793,14 +837,7 @@ plt.compiler = plt.compiler || {};
       throwError(new types.Message(["misuse of ,@ or `unquote-splicing' within a quasiquoting backquote"]), sexp.location);
     }
 
-    var quoted = isCons(sexp[1]) && sexp[1][0].val === 'unquote' ?
-                   parseUnquoteExpr(sexp[1]) :
-                 isCons(sexp[1]) && sexp[1][0].val === 'unquote-splicing' ?
-                   parseUnquoteSplicingExpr(sexp[1]) :
-                 isCons(sexp[1]) ?
-                   sexp[1].map(parseExpr) :
-                 /* else */
-                   parseExpr(sexp[1])
+    var quoted = parseQuasiQuotedItem(sexp[1], depth+1);
     quoted.location = sexp[1].location;
     return new quasiquotedExpr(quoted);
   }
