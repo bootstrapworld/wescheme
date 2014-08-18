@@ -199,6 +199,10 @@ plt.compiler = plt.compiler || {};
                                              , "moby/runtime/kernel/misc");
     expr.location = condExhausted.location = exhaustedLoc.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
+      // desugar else to true
+      if(this.clauses[i].first instanceof symbolExpr && this.clauses[i].first.val === "else"){
+        this.clauses[i].first.val = "true";
+      }
       expr = new ifExpr(this.clauses[i].first, this.clauses[i].second, expr, this.stx);
       expr.location = this.location;
     }
@@ -419,9 +423,9 @@ plt.compiler = plt.compiler || {};
  // bindings provided by that module.
  requireExpr.prototype.collectDefinitions = function(pinfo){
     var errorMessage =  ["require", ": ", "moby-error-type:Unknown-Module: ", this.spec],
-        moduleName = pinfo.modulePathResolver(this.spec.val, this.currentModulePath),
+        moduleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
         that = this;
- 
+
     // if it's an invalid moduleName, throw an error
     if(!moduleName){
       throwError(new types.Message(["Found require of the module " , this.spec
@@ -545,14 +549,14 @@ plt.compiler = plt.compiler || {};
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
  };
+ // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
+ // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
-//    var env1 = pinfo.env,
+//    var env1 = pinfo.env, // FIXME: this is what the line *should* be
     var env1 = plt.compiler.getBasePinfo("base").env,
         env2 = this.args.reduce(function(env, arg){
           return env.extend(new constantBinding(arg.val, false, [], arg.location));
         }, env1);
- window.env1 = env1;
- window.env2 = env2;
     return this.body.analyzeUses(pinfo, env2);
  };
  localExpr.prototype.analyzeUses = function(pinfo, env){
