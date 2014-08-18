@@ -767,9 +767,13 @@ plt.compiler = plt.compiler || {};
      throwError( new types.Message(["Inside an unquote, expected to find a single argument, but found "+(sexp.length-1)])
                , sexp.location);
    } else if (depth === 1) {
-     return new unquotedExpr(parseExpr(sexp[1]));
+     var result = new unquotedExpr(parseExpr(sexp[1]))
+     result.location = sexp[1].location
+     return result;
    } else if (depth > 1) {
-     return new unquotedExpr(parseQuasiQuotedItem(sexp[1], depth-1));
+     var result = new unquotedExpr(parseQuasiQuotedItem(sexp[1], depth-1))
+     result.location = sexp[1].location
+     return result;
    } else {
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , sexp.location);
@@ -785,9 +789,13 @@ plt.compiler = plt.compiler || {};
       throwError(new types.Message(["Inside an unquote-splicing, expected to find a single argument, but found "+(sexp.length-1)])
                  , sexp.location);
     } else if (depth === 1) {
-      return new unquoteSplice(parseExpr(sexp[1]));
+      var result =  new unquoteSplice(parseExpr(sexp[1]))
+      result.location = sexp[1].location
+      return result;
     } else if (depth > 1) {
-      return new unquoteSplice(parseQuasiQuotedItem(sexp[1], depth-1));
+      var result =  new unquoteSplice(parseQuasiQuotedItem(sexp[1], depth-1))
+      result.location = sexp[1].location
+      return result;
     } else {
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , sexp.location);
@@ -814,7 +822,10 @@ plt.compiler = plt.compiler || {};
            depth === 0 ?
              parseExpr(sexp) :
            /* else */
-             new quotedExpr(sexp)
+             (function () {
+               var res = new quotedExpr(sexp);
+               res.location=sexp.location;
+               return res;})()
   }
 
   function parseQuasiQuotedExpr(sexp, depth) {
@@ -839,7 +850,9 @@ plt.compiler = plt.compiler || {};
 
     var quoted = parseQuasiQuotedItem(sexp[1], depth+1);
     quoted.location = sexp[1].location;
-    return new quasiquotedExpr(quoted);
+    var result = new quasiquotedExpr(quoted);
+    result.location = sexp.location;
+    return result;
   }
  
   // replace all undefineds with the last sexp, and convert to a function call

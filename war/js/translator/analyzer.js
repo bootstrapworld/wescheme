@@ -314,7 +314,7 @@ plt.compiler = plt.compiler || {};
      if (this.val instanceof Array) {
        return desugarQuasiQuotedList(element, pinfo, depth-1);
      } else {
-       var uSym = new symbolExpr('unquote')
+       var uSym = new quotedExpr('unquote')
        var listSym = new symbolExpr('list')
        var listArgs = [uSym, this.val.desugar(pinfo, depth-1)[0]]
        var listCall = new callExpr(listSym, listArgs)
@@ -322,6 +322,7 @@ plt.compiler = plt.compiler || {};
        uSym.parent = listArgs
        listSym.location = this.location
        listSym.parent = listCall
+       listCall.location = this.location
        return [listCall, pinfo];
      }
    } else {
@@ -340,7 +341,7 @@ plt.compiler = plt.compiler || {};
      if (this.val instanceof Array) {
        return desugarQuasiQuotedList(element, pinfo, depth-1);
      } else {
-       var usSym = new symbolExpr('unquote-splicing')
+       var usSym = new quotedExpr('unquote-splicing')
        var listSym = new symbolExpr('list')
        var listArgs = [usSym, this.val.desugar(pinfo, depth-1)[0]]
        var listCall = new callExpr(listSym, listArgs)
@@ -348,6 +349,7 @@ plt.compiler = plt.compiler || {};
        usSym.parent = listArgs
        listSym.location = this.location
        listSym.parent = listCall
+       listCall.location = this.location
        return [listCall, pinfo];
      }
    } else {
@@ -364,9 +366,10 @@ plt.compiler = plt.compiler || {};
    } else {
      var listArgs = [element.desugar(pinfo, depth)[0]]
      var listSym = new symbolExpr('list')
-     listSym.location = element.location
      var listCall = new callExpr(listSym, listArgs)
      listSym.parent = listCall
+     listSym.location = element.location
+     listCall.location = element.location
      return [listCall, pinfo];
    }
  }
@@ -376,6 +379,7 @@ plt.compiler = plt.compiler || {};
    var appendSym = new symbolExpr('append')
    appendSym.location = element.location
    var appendCall = new callExpr(appendSym, appendArgs)
+   appendCall.location = element.location
    return [appendCall, pinfo];
  }
 
@@ -398,10 +402,17 @@ plt.compiler = plt.compiler || {};
    if (depth == 0) {
      return [result, pinfo];
    } else {
-     var qqSym = new symbolExpr('quasiquote');
+     var qqSym = new quotedExpr('quasiquote');
+     var listArgs = [qqSym, result]
+     var listSym = new symbolExpr('list')
+     var listCall = new callExpr(listSym, listArgs)
+     qqSym.parent = listArgs
      qqSym.location = this.location;
-     return [ new callExpr(qqSym, [result])
-            , pinfo]
+     result.parent = listArgs
+     listSym.parent = listCall
+     listSym.location = this.location
+     listCall.location = this.location
+     return [listCall, pinfo]
    }
  };
  symbolExpr.prototype.desugar = function(pinfo){
