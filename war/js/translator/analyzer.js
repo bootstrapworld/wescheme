@@ -299,55 +299,93 @@ plt.compiler = plt.compiler || {};
     var desugared = exprsAndPinfo[0].desugar(exprsAndPinfo[1]);
     return [desugared[0], exprsAndPinfo[1]];
  };
- 
-// quotedExprs desugar to themselves. Including this as a comment for documentation purposes:
-// quotedExpr.prototype.desugar = function(pinfo){  return [this, pinfo]; };
+
+ quotedExpr.prototype.desugar = function (pinfo) {
+   return [this, pinfo];
+ }
+
+ unquotedExpr.prototype.desugar = function (pinfo, depth) {
+   if (typeof depth === 'undefined') {
+     throwError( new types.Message(["misuse of a ', not under a quasiquoting backquote"])
+               , this.location);
+   } else if (depth === 0) {
+     return this.val.desugar(pinfo);
+   } else if (depth > 0) {
+     if (this.val instanceof Array) {
+       return desugarQuasiQuotedList(element, pinfo, depth-1);
+     } else {
+       return [ new callExpr( new symbolExpr('unquote')
+                            , this.val.desugar(pinfo, depth-1)[0])
+              , pinfo];
+     }
+   } else {
+     throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
+               , this.location);
+   }
+ }
+
+ unquoteSplice.prototype.desugar = function (pinfo, depth) {
+   if (typeof depth === 'undefined') {
+     throwError( new types.Message(["misuse of a ,@, not under a quasiquoting backquote"])
+               , this.location);
+   } else if (depth === 0) {
+     return this.val.desugar(pinfo);
+   } else if (depth > 0) {
+     if (this.val instanceof Array) {
+       return desugarQuasiQuotedList(element, pinfo, depth-1);
+     } else {
+       return [ new callExpr( new symbolExpr('unquote-splicing')
+                            , this.val.desugar(pinfo, depth-1)[0])
+              , pinfo];
+     }
+   } else {
+     throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
+               , this.location);
+   }
+ }
+
+ function desugarQuasiQuotedListElement(element, pinfo, depth) {
+   if (depth === 0 && element instanceof unquoteSplice) {
+     return element.desugar(pinfo, depth);
+   } else if (element instanceof Array) {
+     return desugarQuasiQuotedList(element, depth, depth);
+   } else {
+     var listArgs = [element.desugar(pinfo, depth)[0]],
+         listCall = new callExpr(new symbolExpr('list'), listArgs);
+     return [listCall, pinfo];
+   }
+ }
+
+ function desugarQuasiQuotedList(element, pinfo, depth) {
+   var appendArgs = element.map(function(x){return desugarQuasiQuotedListElement(x, pinfo, depth)[0]}),
+       appendCall = new callExpr(new symbolExpr('append'), appendArgs),
+       listArgs = [appendCall],
+       listCall = new callExpr(new symbolExpr('list'), listArgs);
+   return [listCall, pinfo];
+ }
+
 
  // go through each item in search of unquote or unquoteSplice
- quasiquotedExpr.prototype.desugar = function(pinfo){
-    var listSym   = new symbolExpr('list'),
-        appendSym = new symbolExpr('append'),
-        stxs = [listSym, appendSym],
-        that = this;
- 
-    function desugarQuasiQuotedElements(element) {
-      if(element instanceof unquoteSplice){
-        return element.val.desugar(pinfo)[0];
-      } else if(element instanceof unquotedExpr){
-        var listArgs = [element.val.desugar(pinfo)[0]],
-            listCall = new callExpr(listSym, listArgs);
-        stxs = stxs.concat([listArgs, listCall]);
-        return listCall;
-      } else if(element instanceof quasiquotedExpr){
-        /* we first must exit the regime of quasiquote by calling desugar on the
-         * list a la unquote or unquoteSplice */
-        throwError("ASSERT: we should never parse a quasiQuotedExpr within an existing quasiQuotedExpr")
-      } else if(element instanceof Array){
-        var appendArgs = element.map(desugarQuasiQuotedElements),
-            appendCall = new callExpr(appendSym, appendArgs),
-            listArgs = [appendCall],
-            listCall = new callExpr(listSym, listArgs);
-        stxs = stxs.concat([appendArgs, appendCall, listArgs, listCall]);
-        return listCall;
-      } else {
-        var quoted = new quotedExpr(element.toString()),
-            listArgs = [quoted],
-            listCall = new callExpr(listSym, listArgs);
-        stxs = stxs.concat([quoted, listArgs, listCall]);
-        return listCall;
-      }
-    }
+ quasiquotedExpr.prototype.desugar = function(pinfo, depth){
+   depth = (typeof depth === 'undefined') ? 0 : depth;
+   if (depth >= 0) {
+     var result;
+     if(this.val instanceof Array){
+       result = desugarQuasiQuotedList(this.val, pinfo, depth+1)[0];
+     } else {
+       result = this.val.desugar(pinfo, depth+1)[0];
+     }
+   } else {
+     throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
+               , this.location);
+   }
 
-    if(this.val instanceof Array){
-      var appendArgs = this.val.map(desugarQuasiQuotedElements),
-          result = new callExpr(appendSym, appendArgs);
-      stxs = stxs.concat(appendArgs, result);
-    } else {
-      var result = new quotedExpr(this.val.toString());
-      stxs.push(result);
-    }
-    stxs.forEach(function(stx){stx.location = that.val.location;});
-    return [result, pinfo];
+   if (depth == 0) {
+     return [result, pinfo];
+   } else {
+     return [ new callExpr(new symbolExpr('quasiquote'), [result])
+            , pinfo]
+   }
  };
  symbolExpr.prototype.desugar = function(pinfo){
     // if we're not in a clause, we'd better not see an "else"...
