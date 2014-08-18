@@ -616,7 +616,7 @@ function bindingStructure(name, moduleSource, fields, constructor,
         collectionName = parts[0],
         moduleName = parts.slice(1).join();
     return ((knownCollections.indexOf(collectionName) > -1)
-            && (knownModules.indexOf(moduleName) > -1))
+            && plt.compiler.defaultModuleResolver(path.toString()))
           || /^wescheme\/\w+$/.exec(path);
   }
  
@@ -845,7 +845,7 @@ function bindingStructure(name, moduleSource, fields, constructor,
  // 'moby
  function getBasePinfo(language){
     // fixme: use the language to limit what symbols get in the toplevel.
-    var baseConstantsEnv = ["null", "empty", "#t"//effect:do-nothing
+    var baseConstantsEnv = ["null", "empty", "true"//effect:do-nothing
                            , "false", "eof", "pi", "e","js-undefined"
                            , "js-null"].reduce(function(env, id){
                                                return env.extendConstant(id.toString(), '"moby/toplevel"', false)
