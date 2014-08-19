@@ -246,7 +246,7 @@ plt.compiler = plt.compiler || {};
                                         , new types.ColoredPart("something else", sexp.location)])
                       , sexp.location);
         }
-        list = list.concat(sexp);              // if it IS, splice it into this one
+        sexp.forEach(function(item){list.push(item);});  // if it IS, push each item into this one
         i = sexp.location.end().offset+1;
       } else if(!(sexp instanceof Comment)){     // if it's not a comment, add it to the list
         sexp.parent = list;                     // set this list as it's parent
