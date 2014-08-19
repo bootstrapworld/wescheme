@@ -1070,7 +1070,7 @@ plt.compiler = plt.compiler || {};
       // generate the bytecode for the program and return it, along with the program info
       var forms = new seq([].concat(compiledRequires, compiledDefinitions, compiledExpressions)),
           zo_bytecode = new compilationTop(0, toplevelPrefix, forms),
-          response = {"bytecode" : "/* runtime-version: moby-colored-20120807 */\n" + zo_bytecode.toBytecode(),
+          response = {"bytecode" : "/* runtime-version: local-compiler-summer2014 */\n" + zo_bytecode.toBytecode(),
                       "permissions" : pinfo.permissions(),
                       "provides" : pinfo.providedNames.keys()};
           return response;
