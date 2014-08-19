@@ -6,7 +6,8 @@ plt.compiler = plt.compiler || {};
  
  Follows WeScheme's current implementation of Advanced Student
  http://docs.racket-lang.org/htdp-langs/advanced.html
- NOT SUPPORTED BY WESCHEME: define-datatype, begin0, set!, time, delay, shared, recur,
+
+ NOT SUPPORTED BY MOBY, WESCHEME, OR THIS COMPILER: define-datatype, begin0, set!, time, delay, shared, recur,
     match, check-member-of, check-range, (require planet), byetstrings (#"Apple"),
     regexps (#rx or #px), hashtables (#hash), graphs (#1=100 #1# #1#), #reader and #lang
  
@@ -16,6 +17,7 @@ plt.compiler = plt.compiler || {};
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
  - treat syntax and unsyntax as errors
+ - perf: try to remove uses of try/catch
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -229,9 +231,33 @@ plt.compiler = plt.compiler || {};
                   /* else */                   readSymbolOrNumber(str, i);
        return sexp;
     }
-
+                            
+    // read a single list item
+    // To allow optimization in v8, this function is broken out into its own (named) function, rather than
+    // embedded inside readList: see http://www.html5rocks.com/en/tutorials/speed/v8/#toc-topic-compilation
+    function readListItem(str, i, list){
+      var sexp = readSExpByIndex(str, i);       // read the next s-exp
+      i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
+      // if it's a dot, treat it as a cons
+      if(sexp instanceof symbolExpr && sexp.val == '.'){
+        sexp = readSExpByIndex(str, i);        // read the next sexp
+        if(!(sexp instanceof Array)){           // if it's not a list, throw an error
+           throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
+                                        , new types.ColoredPart("something else", sexp.location)])
+                      , sexp.location);
+        }
+        list = list.concat(sexp);              // if it IS, splice it into this one
+        i = sexp.location.end().offset+1;
+      } else if(!(sexp instanceof Comment)){     // if it's not a comment, add it to the list
+        sexp.parent = list;                     // set this list as it's parent
+        list.push(sexp);                        // and add the sexp to the list
+      }
+      return i;
+    }
+                            
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
+    // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readList(str, i) {
       var sCol=column, sLine=line, iStart=i, innerError=false,
           errorLocation = new Location(sCol, sLine, iStart, 1),
@@ -240,40 +266,28 @@ plt.compiler = plt.compiler || {};
       var sexp, list = [];
       delims.push(openingDelim);
       i = chewWhiteSpace(str, i);
+         
+      // if we see an error while reading a listItem
+      function handleError(e){
+        // If the error is brace or dot error, throw it. Otherwise swallow it and keep reading
+        if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e) || /syntax list/.exec(e)){
+          throw e;
+        } else {
+          var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
+          errorLocation = new Location(Number(eLoc.column), Number(eLoc.line),
+                                       Number(eLoc.offset)-1, Number(eLoc.span));
+          i = endOfError;// keep reading from the last error location
+          innerError = e;
+        }
+        return i;
+      }
                             
       // read forward until we see a closing delim, saving the last known-good location
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
-        try{
-          sexp = readSExpByIndex(str, i);           // try to read the next s-exp
-          i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
-          // if it's a dot, treat it as a cons
-          if(sexp instanceof symbolExpr && sexp.val == '.'){
-            sexp = readSExpByIndex(str, i);        // read the next sexp
-            if(!(sexp instanceof Array)){           // if it's not a list, throw an error
-               throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
-                                            , new types.ColoredPart("something else", sexp.location)])
-                          , sexp.location);
-            }
-            list = list.concat(sexp);              // if it IS, splice it into this one
-            i = sexp.location.end().offset+1;
-          } else if(!(sexp instanceof Comment)){     // if it's not a comment, add it to the list
-            sexp.parent = list;                     // set this list as it's parent
-            list.push(sexp);                        // and add the sexp to the list
-          }
-        } catch (e){                            // try to keep reading from endOfError...
-          // If the error is brace or dot error, throw it. Otherwise swallow it and keep reading
-          if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e) || /syntax list/.exec(e)){
-            throw e;
-          } else {
-            var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
-            errorLocation = new Location(Number(eLoc.column), Number(eLoc.line),
-                                         Number(eLoc.offset)-1, Number(eLoc.span));
-            i = endOfError;// keep reading from the last error location
-            innerError = e;
-          }
-        }
+        try  {     i = readListItem(str, i, list); }  // read a list item, hopefully without error
+        catch (e){ var i = handleError(e);   }        // try to keep reading from endOfError...
         // move reader to the next token
         i = chewWhiteSpace(str, i);
       }
@@ -660,6 +674,7 @@ plt.compiler = plt.compiler || {};
 
     // readQuote : String Number -> SExp
     // reads a quote, quasiquote, or unquote encoded as a string
+    // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readQuote(str, i) {
       var sCol = column, sLine = line, iStart = i, nextSExp;
       var p = str.charAt(i);
@@ -716,6 +731,7 @@ plt.compiler = plt.compiler || {};
                    
                                                                 
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
+    // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readSymbolOrNumber(str, i){
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
