@@ -228,7 +228,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 #inter .CodeMirror, #definitions>.CodeMirror {background: none;}
 #inter .CodeMirror-lines, #definitions .CodeMirror-lines {
   background: white; /* fall back to white on old browsers */
-  background: linear-gradient(to right, rgba(255,255,255,1) 75%, rgba(255,255,255,0))
+  background: linear-gradient(to right, rgba(255,255,255,1) 60%, rgba(255,255,255,.5))
 }
 
 #defn {
@@ -278,7 +278,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
    amount of left-padding, with each replOutput element
    separated by a single pixel */
 #inter > * {padding-left: 5px;}
-.replOutput{margin-bottom: 1px;}
+.replOutput{margin-bottom: 1px; width: 100%; display:inline-block;}
  
  #inter input{
     width:              90%;
