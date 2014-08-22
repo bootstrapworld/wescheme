@@ -14,7 +14,7 @@ plt.compiler = plt.compiler || {};
  * see structures.js for Program Objects and Error throwing
  
  TODO
- - assign location in constructors
+ - Perf: give location information to all AST nodes as constructor argument
  - JSLint
  */
 

@@ -4,6 +4,7 @@ plt.compiler = plt.compiler || {};
 /*
  TODO
  - have modulePathResolver return the proper name!
+ - Perf: take location information for all AST nodes as constructor argument
  */
 
 //////////////////////////////////////////////////////////////////////////////

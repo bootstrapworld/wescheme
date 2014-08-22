@@ -69,31 +69,32 @@ function sameResults(x, y){
     // does every property in x also exist in y?
     for (var p in x) {
       // log error if a property is not defined
-      if ( ! x.hasOwnProperty(p) ){ return false; }
-      if ( ! y.hasOwnProperty(p) ){ return false; }
+      if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
+      if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
       // toplevel properties are equal if the sets of names are equal
       // WARNING: this may require stronger checking!
       if(p==="toplevels"){
-        console.log(x_toplevels);
-        console.log(y_toplevels);
         // if they're not the same length, bail
-        if(x_toplevels.length !== y_toplevels.length) return false;
+        if(x_toplevels.length !== y_toplevels.length){
+          console.log('different number of toplevels'); return false;
+        }
         // if they're not the same names, bail
-        if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})) return false;
+        if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})){
+          console.log('different toplevel names'); return false;
+        }
         // build sorted lists of all module variables, return true if they are identical
         x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
         y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
         x_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
         y_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
-        console.log(x_modVariables);
-        console.log(y_modVariables);
         return sameResults(x_modVariables, y_modVariables);
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
       if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
-        return x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])];
+        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ return true; }
+        else { console.log('different indices for '+x_toplevels[Number(x[p])]); return false; }
       }
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
@@ -106,7 +107,10 @@ function sameResults(x, y){
     }
   // 4)if they are literals, they must be identical
   } else {
-      if (x !== y){ return false; }
+      if (x !== y){
+        console.log('(expexted, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
+        return false;
+      }
   }
   return true;
 }

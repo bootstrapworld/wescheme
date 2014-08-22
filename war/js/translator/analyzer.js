@@ -421,6 +421,7 @@ plt.compiler = plt.compiler || {};
 
  // When we hit a require, we have to extend our environment to include the list of module
  // bindings provided by that module.
+ // FIXME: we currently override moduleName, which SHOULD just give us the proper name
  requireExpr.prototype.collectDefinitions = function(pinfo){
     var errorMessage =  ["require", ": ", "moby-error-type:Unknown-Module: ", this.spec],
         moduleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
@@ -434,8 +435,8 @@ plt.compiler = plt.compiler || {};
                  ,"Error-UnknownModule");
     }
  
-    // FIXME: we currently override moduleName, which SHOULD just give us the proper name
-    if(types.isString(this.spec.val)) moduleName = this.spec.val.toDisplayedString();
+    // if it's a literal, pull out the actual value. if it's a symbol use it as-is
+    moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString();
  
     // processModule : JS -> pinfo
     // given the JS that assigns a module to window.COLLECTIONS, evaluate it, pull out the bindings
