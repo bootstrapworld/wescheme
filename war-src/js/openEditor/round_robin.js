@@ -152,7 +152,7 @@ goog.provide("plt.wescheme.RoundRobin");
        // try client-side parsing first
        try{
           var sexp, AST, ASTandPinfo, local_error = false,
-              lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0;
+              lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0, compileTime = 0;
           try { //////////////////// LEX ///////////////////
             console.log("// LEXING: ///////////////////////////////////\nraw:");
             var start     = new Date().getTime(),
@@ -220,8 +220,7 @@ goog.provide("plt.wescheme.RoundRobin");
                 end         = new Date().getTime(),
             compileTime     = Math.floor(end-start);
             console.log("Compiled in "+compileTime+"ms");
-            console.log("response:");
-            console.log(response);
+            console.log(JSON.stringify(response));
           } catch (e) {
             if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
             throw Error("COMPILATION ERROR\n"+getError(e).toString());
@@ -229,14 +228,15 @@ goog.provide("plt.wescheme.RoundRobin");
 */
       } catch (e) {
           local_error = getError(e).toString();
-//          onDoneError(local_error);
+          onDoneError(local_error);
       }
 
       writeLocalCompilerCookie("true");
-      var localTime = lexTime+parseTime+desugarTime+analysisTime;
+      var localTime = lexTime+parseTime+desugarTime+analysisTime;//+compileTime;
       console.log("// SUMMARY: /////////////////////////////////\n"
                   + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                   + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
+//                  + "Compiling:  " + compileTime + "ms\n"
                   + "TOTAL:      " + localTime +"ms");
  }
         // hit the server
@@ -259,14 +259,13 @@ goog.provide("plt.wescheme.RoundRobin");
                          console.log("OK: LOCAL AND SERVER BOTH PASSED");
                        }
                     }
+                    console.log('EXECUTING SERVER BYTECODES!!!');
                     onDone(bytecode);
-/*
- //                 console.log('SERVER bytecode is:\n'+bytecode+'\n\n');
+
                     // execute using locally-compiled bytecodes!!
-                    console.log('LOCAL bytecode is:\n'+JSON.stringify(response)+'\n\n');
-                    try{ onDone(JSON.stringify(response));}
-                    catch(e){console.log(e);}
- */
+//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(response));}
+//                    catch(e){console.log(e);}
+ 
                 },
                 // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
@@ -310,7 +309,7 @@ goog.provide("plt.wescheme.RoundRobin");
                           console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
                         }
                     }
-                    onDoneError(errorStruct.message);
+//                    onDoneError(errorStruct.message);
                 });
         } else {
             onAllCompilationServersFailing(onDoneError);
