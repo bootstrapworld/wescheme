@@ -18,6 +18,7 @@ plt.compiler = plt.compiler || {};
  - collect all regexps into RegExp objects
  - treat syntax and unsyntax as errors
  - perf: try to remove uses of try/catch
+ - perf: factor out readNumber into it's own function, removing try/catch from hot readSymbol code
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -753,12 +754,20 @@ plt.compiler = plt.compiler || {};
       // split the chunk at each |
       var chunks = chunk.split("|");
                                 
-      // check for balanced |'s
+      // check for unbalanced |'s
       if(((chunks.length%2) === 0)){
           endOfError = i;
-          throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
+          var sizeOfLastChunk = chunks[chunks.length-1].length+1, // add 1 for the starting '|'
+              strBeforeLastChunk = chunk.slice(0, chunk.length-sizeOfLastChunk);
+          // We need to go back and get more precise location information
+          column = sCol;
+          for(var j=0; j<strBeforeLastChunk.length; j++){
+            if(str.charAt(i) === "\n"){line++; column = 0;}
+            else { column++; }
+          }
+          throwError(new types.Message([source, ":", line.toString(), ":", column.toString(),
                                         ": read: unbalanced `|'"])
-                       ,new Location(sCol, sLine, iStart, i-iStart)
+                       ,new Location(column, line, iStart+strBeforeLastChunk.length, sizeOfLastChunk)
                        ,"Error-GenericReadError");
       }
                                 
