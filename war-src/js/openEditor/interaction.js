@@ -405,17 +405,32 @@ WeSchemeInteractions = (function () {
     var makeFreshEvaluator = function(that, afterInit) {         
         var evaluator = new Evaluator({
             write: function(thing) {
-                // if it's a canvas element, make double-clicking generate a PNG file in a new window
-                if(thing.nodeName === "CANVAS"){
+                // if it's a canvas element, make double-clicking generate an image file in a new window
+                // use Blobs instead of dataURL, since some browser/OS combos choke on Very Long URLs
+                // see https://code.google.com/p/chromium/issues/detail?id=69227
+                if(thing.nodeName === "CANVAS" && window.Blob !== undefined){
                     thing.ondblclick = function(){
-                                        var link = document.createElement("a");
-                                        link.href = thing.toDataURL("image/png");
-                                        // if download is supported, use it. Otherwise (IE/Safari), open in a new tab
-                                        if(link.download != undefined) link.download = "WeScheme Image";
-                                        else link.target = "WeScheme Image";
-                                        document.body.appendChild(link);  // for firefox
-                                        link.click();
-                                        document.body.removeChild(link);  // clean up firefox
+                                        var dataURL = thing.toDataURL(),
+                                            parts = dataURL.match(/data:([^;]*)(;base64)?,([0-9A-Za-z+/]+)/),
+                                            binStr = atob(parts[3]),              // assume base64 encoding
+                                            buf = new ArrayBuffer(binStr.length), // initialize a blob
+                                            view = new Uint8Array(buf);
+                                          // copy the dataURL into the blob
+                                          for(var i = 0; i < view.length; i++){ view[i] = binStr.charCodeAt(i); }
+                                          var blob = new Blob([view], {'type': parts[1]});
+                                      
+                                        // if msSaveBlob is supported (IE10+), use that
+                                        if(window.navigator.msSaveBlob != undefined){
+                                          window.navigator.msSaveBlob(blob, "WeScheme Image");
+                                        // try to download, or at least open in a new tab (Safari/FF/Chrome)
+                                        } else {
+                                          var link = document.createElement("a");
+                                          link.href = (URL || webkitURL).createObjectURL(blob);
+                                          link.target = link.download = "WeScheme Image";
+                                          document.body.appendChild(link);  // for firefox
+                                          link.click();
+                                          document.body.removeChild(link);  // clean up firefox
+                                        }
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
                 }
