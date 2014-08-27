@@ -145,11 +145,12 @@ goog.provide("plt.wescheme.RoundRobin");
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL);
  
+ // BEGIN LOCAL COMPILER CODE
  if(TEST_LOCAL){
        // Be conservative, and shut off the local compiler for future requests
        // This allows us to gracefully recover from a browser-hanging bug
        writeLocalCompilerCookie("false");
-       // try client-side parsing first
+       // try client-side compilation first
        try{
           var sexp, AST, ASTandPinfo, local_error = false,
               lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0, compileTime = 0;
@@ -228,17 +229,20 @@ goog.provide("plt.wescheme.RoundRobin");
 */
       } catch (e) {
           local_error = getError(e).toString();
-          onDoneError(local_error);
+//            onDoneError(local_error);
       }
 
       writeLocalCompilerCookie("true");
-      var localTime = lexTime+parseTime+desugarTime+analysisTime;//+compileTime;
+      var localTime = lexTime+parseTime+desugarTime+analysisTime+compileTime;
       console.log("// SUMMARY: /////////////////////////////////\n"
                   + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                   + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
 //                  + "Compiling:  " + compileTime + "ms\n"
                   + "TOTAL:      " + localTime +"ms");
  }
+// END LOCAL COMPILER CODE
+ 
+ 
         // hit the server
         var start = new Date().getTime();
         if (n < liveServers.length) {
@@ -250,6 +254,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     var end = new Date().getTime(),
                         serverTime = Math.floor(end-start),
                         factor =  Math.ceil(100*serverTime/localTime)/100;
+                    // If the local compiler is running, check to see that no errors were generated
                     if(TEST_LOCAL){
                        console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                        if(local_error){
@@ -259,7 +264,7 @@ goog.provide("plt.wescheme.RoundRobin");
                          console.log("OK: LOCAL AND SERVER BOTH PASSED");
                        }
                     }
-                    console.log('EXECUTING SERVER BYTECODES!!!');
+                    // execute server bytecode
                     onDone(bytecode);
 
                     // execute using locally-compiled bytecodes!!
@@ -295,6 +300,7 @@ goog.provide("plt.wescheme.RoundRobin");
                                        onDone,
                                        onDoneError);
                         }
+                    // If the local compiler is running, compare the results
                     } else if(TEST_LOCAL){
                         console.log("Server round-trip in "+serverTime+"ms. Local compilation was "+factor+"x faster");
                         if(!local_error){
@@ -309,7 +315,8 @@ goog.provide("plt.wescheme.RoundRobin");
                           console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
                         }
                     }
-//                    onDoneError(errorStruct.message);
+                    // use the server's error message
+                    onDoneError(errorStruct.message);
                 });
         } else {
             onAllCompilationServersFailing(onDoneError);
