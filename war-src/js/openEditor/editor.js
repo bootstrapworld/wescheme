@@ -570,31 +570,6 @@ var WeSchemeEditor;
 		var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
 		var data;
 
-		// Deprecated
-		function handleAuthResult(authResult) {
-		    if (authResult){
-				// fileId: the unique id of the image in Google Drive.                                                                                               
-				var fileId = this.data.docs[0].id;
-
-				// Setting the permissions for the image url so that the image is                                                                                                           // made public.                                                                                                                                                
-				var body =
-				{
-				    "role": "reader",
-				    "type": "anyone",
-				    "value": "default",
-				    "withLink": true
-				};
-			    
-				gapi.client.load('drive', 'v2', setPermissionsAndInsertCode.bind(this, fileId, body));
-
-				oauthToken = authResult.access_token;
-				createPicker();
-		    }
-		    else {
-				// console.log("There has been an error with the authorisation.");
-		    }
-		}
-
 		// Get the OAuth token for authenticating the picker
 		function authenticatePicker() {
 			var SCOPES = [
@@ -606,8 +581,13 @@ var WeSchemeEditor;
 				'scope': SCOPES.join(' '),
 				'immediate': false
 			}, function(authResult) {
-				oauthToken = authResult.access_token;
-				createPicker();
+				if (authResult && !authResult.error) {
+					oauthToken = authResult.access_token;
+					createPicker();
+				}
+				else {
+					alert("There was an error authenticating.  Please make sure you're still logged in to Google.");
+				}
 			});
 		}
 
