@@ -311,7 +311,7 @@ plt.compiler = plt.compiler || {};
                                          ,["sgn", 1]
                                          ,["sin", 1]
                                          ,["sinh", 1]
-                                         ,["sq", 1]
+                                         //,["sq", 1]
                                          ,["sqr", 1]
                                          ,["sqrt", 1]
                                          ,["sub1", 1]
