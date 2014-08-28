@@ -30,11 +30,12 @@ goog.require('plt.wescheme.cookies');
     var fullySupportedVersions = [{browser: 'Safari', greaterThanOrEqual: '6'},
                                   {browser: 'Chrome', greaterThanOrEqual: '5'},
                                   {browser: 'Firefox', greaterThanOrEqual: '4'},
+                                  {browser: 'Mozilla', greaterThanOrEqual: '10'},
                                   {browser: 'Explorer', greaterThanOrEqual: '9'}];
 
-    var knownBadBrowsers = [ {browser: 'Explorer', lessThan: '8'},
-			     {browser: 'Safari', lessThan: '5'},
-			     {browser: 'Firefox', lessThan: '3.6'} ];
+    var knownBadBrowsers = [{browser: 'Explorer', lessThan: '8'},
+                            {browser: 'Safari', lessThan: '5'},
+                            {browser: 'Firefox', lessThan: '3.6'} ];
 
 
 

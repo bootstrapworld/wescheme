@@ -1,5 +1,8 @@
-/* 
- 
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+
+/*
  
  //////////////////////////////////////////////////////////////////////////////
  ///////////////////////////////// PARSER OBJECT //////////////////////////////
@@ -11,18 +14,18 @@
  * see structures.js for Program Objects and Error throwing
  
  TODO
+ - assign location in constructors
  - JSLint
+ - parse define-values
  */
 
 (function () {
  'use strict';
  
  //////////////////////////////////// UTILITY FUNCTIONS //////////////////////////////
- function isString(x) { return x instanceof stringExpr; }
- function isNumber(x) { return x instanceof numberExpr; }
+ function isVector(x) { return types.isVector(x.val); }
  function isSymbol(x) { return x instanceof symbolExpr; }
- function isChar(x)   { return x instanceof charExpr;   }
- function isVector(x) { return x instanceof vectorExpr; }
+ function isLiteral(x){ return x instanceof literal; }
  function isUnsupported(x){ return x instanceof unsupportedExpr;}
  
  // isSymbolEqualTo : symbolExpr symbolExpr -> Boolean
@@ -130,7 +133,7 @@
                                       , new types.MultiPart(wording2, extraLocs, false)])
                      , sexp.location);
       }
-      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr));
+      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr), sexp[0]);
     }
     function parseDef(sexp) {
       // is it just (define)?
@@ -204,7 +207,7 @@
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]));
+          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]), sexp);
       }
       // If it's (define <invalid> ...)
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -245,7 +248,14 @@
                    , sexp.location
                    , "Error-GenericSyntacticError");
       }
-      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr)) :
+      if(isSymbolEqualTo(sexp[0], "else")){
+        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp.location)
+                                      , ": not allowed "
+                                      , new types.ColoredPart("here", sexp.location)
+                                      , ", because this is not a question in a clause"])
+                   , sexp.location);
+      }
+      return isCons(sexp)? new callExpr(parseExpr(sexp[0]), rest(sexp).map(parseExpr), sexp[0]) :
                             throwError(new types.Message(["function call sexp"]), sexp.location);
     }
     function parseLambdaExpr(sexp) {
@@ -286,7 +296,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
+      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLocalExpr(sexp) {
       // is it just (local)?
@@ -327,7 +337,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new localExpr(sexp[1].map(parseDefinition), parseExpr(sexp[2]));
+      return new localExpr(sexp[1].map(parseDefinition), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLetrecExpr(sexp) {
       // is it just (letrec)?
@@ -367,8 +377,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new letrecExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
-
+      return new letrecExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
     }
     function parseLetExpr(sexp) {
       // is it just (let)?
@@ -408,7 +417,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                      sexp.location);
       }
-      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
+      return new letExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp);
     }
     function parseLetStarExpr(sexp) {
       // is it just (let*)?
@@ -448,7 +457,7 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new letStarExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]));
+      return new letStarExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
     }
     function parseIfExpr(sexp) {
       // Does it have too few parts?
@@ -466,7 +475,7 @@
                                       , new types.MultiPart("more than three of these", extraLocs, false)]),
                     sexp.location);
       }
-      return new ifExpr(parseExpr(sexp[1]), parseExpr(sexp[2]), parseExpr(sexp[3]));
+      return new ifExpr(parseExpr(sexp[1]), parseExpr(sexp[2]), parseExpr(sexp[3]), sexp[0]);
     }
     function parseBeginExpr(sexp) {
       // is it just (begin)?
@@ -475,7 +484,7 @@
                                       , ": Inside a begin, expected to find a body, but nothing was found."]),
                     sexp.location);
       }
-      return new beginExpr(rest(sexp).map(parseExpr));
+      return new beginExpr(rest(sexp).map(parseExpr), sexp[0]);
     }
     function parseAndExpr(sexp) {
       // and must have 2+ arguments
@@ -486,7 +495,7 @@
                                                                                        sexp[1].location)]),
                     sexp.location);
       }
-      return new andExpr(rest(sexp).map(parseExpr));
+      return new andExpr(rest(sexp).map(parseExpr), sexp[0]);
     }
     function parseOrExpr(sexp) {
       // or must have 2+ arguments
@@ -497,7 +506,8 @@
                                                                                        sexp[1].location)]),
                     sexp.location);
       }
-      return new orExpr(rest(sexp).map(parseExpr));
+      var orEx = new orExpr(rest(sexp).map(parseExpr), sexp[0]);
+      return orEx;
     }
     function parseQuotedExpr(sexp) {
       // quote must have exactly one argument
@@ -550,7 +560,7 @@
  
     function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else"); }
  
-    function parseCondCouple(clause) {
+    function checkCondCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       // is it (cond ...<not-a-clause>..)?
       if(!(clause instanceof Array)){
@@ -583,31 +593,36 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     clause.location);
       }
-      if(sexpIsCouple(clause)){
+    }
+ 
+ 
+    function parseCondCouple(clause) {
         var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
-      }
     }
+
+    // first check the couples, then parse if there's no problem
+    rest(sexp).forEach(checkCondCouple);
     var numClauses = rest(sexp).length,
         parsedClauses = rest(sexp).reduce(function (rst, couple) {
                                             return rst.concat([parseCondCouple(couple)]);
                                           }, []);
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-    rest(sexp).reduce(function(rst, couple){
-     if(isElseClause(couple) && (rst.length < (numClauses-1))){
+    rest(sexp).forEach(function(couple, idx){
+     if(isElseClause(couple) && (idx < (numClauses-1))){
        throwError(new types.Message([new types.MultiPart("cond", condLocs, true)
                                      , ": ", "found an "
                                      , new types.ColoredPart("else clause", couple.location)
                                      , " that isn't the last clause in its cond expression; there is "
-                                     , new types.ColoredPart("another clause", sexp[rst.length+2].location)
+                                     , new types.ColoredPart("another clause", sexp[idx+2].location)
                                      , " after it"]),
                   couple.location);
       }
-    }, []);
-    return new condExpr(parsedClauses);
+    });
+    return new condExpr(parsedClauses, sexp[0]);
   }
 
    function parseCaseExpr(sexp) {
@@ -627,7 +642,7 @@
                                                                   
     function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
 
-    function parseCaseCouple(clause) {
+    function checkCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       if(!(clause instanceof Array)){
         throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
@@ -666,31 +681,35 @@
                                       , new types.MultiPart(wording, extraLocs, false)]),
                    sexp.location);
       }
-      if(sexpIsCouple(clause)){
+    }
+ 
+    function parseCaseCouple(clause) {
         var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
-      }
     }
+ 
+    // first check the couples, then parse if there's no problem
+    sexp.slice(2).forEach(checkCaseCouple);
     var numClauses = sexp.slice(2).length,
         parsedClauses = sexp.slice(2).reduce(function (rst, couple) {
                                             return rst.concat([parseCaseCouple(couple)]);
                                           }, []);
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-    sexp.slice(2).reduce(function(rst, couple){
-     if(isElseClause(couple) && (rst.length < (numClauses-1))){
+    sexp.slice(2).forEach(function(couple, idx){
+     if(isElseClause(couple) && (idx < (numClauses-1))){
             throwError(new types.Message([new types.MultiPart("case", caseLocs, true)
                                           , ": found an "
                                           , new types.ColoredPart("else clause", couple.location)
                                           , "that isn't the last clause in its case expression; there is "
-                                          , new types.ColoredPart("another clause", sexp[rst.length+3].location)
+                                          , new types.ColoredPart("another clause", sexp[idx+2].location)
                                           , " after it"]),
                        sexp.location);
       }
-    }, []);
-    return new caseExpr(parseExpr(sexp[1]), parsedClauses);
+    });
+    return new caseExpr(parseExpr(sexp[1]), parsedClauses, sexp[0]);
   }
  
   function parseBinding(sexp) {
@@ -753,7 +772,6 @@
         // increment depth no matter what. If, AFTER incrementing, we are at depth==0, return a real quasiquote
         depth++;
         if(depth === 0){
-          //return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
           return parseQuasiQuotedExpr(sexp, depth);
         }
       }
@@ -764,41 +782,25 @@
     return new quasiquotedExpr(isCons(sexp[1])? sexp[1].map(parseQqListItem) : sexp[1]);
   }
  
+  // replace all undefineds with the last sexp, and convert to a function call
   function parseVector(sexp){
-    sexp.vals = parseStar(sexp.vals);
-    sexp.size = Math.max(sexp.size, sexp.vals.length);
-    if(sexp.vals.length < sexp.size){
-      for(var i=sexp.vals.length-1; i < sexp.size; i++)
-        sexp.vals[i] = sexp.vals[sexp.vals.length-1] || 0;
-    }
-    return new callExpr(new symbolExpr("vector"), sexp.vals);
+    var unParsedVector = sexp.val,
+        vals = parseStar(unParsedVector.elts.filter(function(e){return e!==undefined;})),
+        last = (vals.length===0)? new literal(0) : vals[vals.length-1], // if they're all undefined, use 0
+        elts = unParsedVector.elts.map(function(v){return (v===undefined)? last : v;});
+    var vectorFunc = new symbolExpr("vector"),
+        buildVector = new callExpr(vectorFunc, elts);
+    vectorFunc.location = buildVector.location = sexp.location;
+    return buildVector;
   }
- 
-  // any keyword (except else) should generate an error
-  function checkIfSymbolIsKeyword(sexp){
-    if(!isSymbolEqualTo("else", sexp)
-       && !isSymbolEqualTo("define", sexp)
-       && (compilerStructs.keywords.indexOf(sexp.val) > -1)){
-      throwError(new types.Message([new types.ColoredPart(sexp.val, sexp.location)
-                                    , ": expected an open parenthesis before "
-                                    , sexp.val
-                                    , ", but found none"]),
-                  sexp.location);
-    } else {
-      return sexp;
-    }
-  }
- 
+  
   function parseExprSingleton(sexp) {
-    var singleton = isString(sexp)  ? sexp :
-                    isNumber(sexp)  ? sexp :
-                    isChar(sexp)    ? sexp :
-                    isSymbol(sexp)  ? checkIfSymbolIsKeyword(sexp) :
-                    isUnsupported(sexp) ? sexp :
-                    isPrimop(sexp)  ? new primop(sexp) :
+    var singleton = isUnsupported(sexp) ? sexp :
                     isVector(sexp)  ? parseVector(sexp) :
+                    isSymbol(sexp) ? sexp :
+                    isLiteral(sexp) ? sexp :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :
-                    isSymbolEqualTo("empty", sexp) ? new callExpr(new primop("list"), []) :
+                    isSymbolEqualTo("empty", sexp) ? new callExpr(new symbolExpr("list"), []) :
       throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
                                     , ": expected a function, but nothing's there"])
                  , sexp.location);
@@ -817,10 +819,6 @@
 
   function sexpIsCouple(sexp) {
     return ((isCons(sexp)) && ((sexp.length === 2)));
-  }
-
-  function isPrimop(sexp) {
-       return primitive.getPrimitive(sexp);
   }
 
   function sexpIsCondListP(sexp) {
@@ -854,7 +852,7 @@
         }
         // is it (require (lib not-strings))?
         rest(sexp[1]).forEach(function(str){
-          if (!(str instanceof stringExpr)){
+          if (!(types.isString(str))){
             throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                         , ": expected a string for a library collection, but found "
                                         , new types.ColoredPart("something else", str.location)]),
@@ -867,13 +865,13 @@
                                     , ": Importing PLaneT pacakges is not supported at this time"]),
                  sexp.location);
     // if it's (require <not-a-string-or-symbol>)
-    } else if(!((sexp[1] instanceof symbolExpr) || (sexp[1] instanceof stringExpr))){
+    } else if(!((sexp[1] instanceof symbolExpr) || types.isString(sexp[1]))){
       throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                     , ": expected a module name as a string or a `(lib ...)' form, but found "
                                     , new types.ColoredPart("something else", sexp[1].location)]),
                  sexp.location);
     }
-    var req = new requireExpr(sexp[1]);
+    var req = new requireExpr(sexp[1], sexp[0]);
     req.location = sexp.location;
     return req;
   }
@@ -898,7 +896,7 @@
                                     , new types.ColoredPart("clause", p.location)]),
                  sexp.location);
     });
-    var provide = new provideStatement(clauses);
+    var provide = new provideStatement(clauses, sexp[0]);
     provide.location = sexp.location;
     return provide;
   }
@@ -906,5 +904,5 @@
   /////////////////////
   /* Export Bindings */
   /////////////////////
- window.parse = parse;
+ plt.compiler.parse = parse;
 })();

@@ -4472,7 +4472,11 @@ if (typeof(exports) !== 'undefined') {
 
 	if (d === undefined) { d = 1; }
 
-	if (_integerLessThan(d, 0)) {
+	if (_integerIsZero(d)) {
+	    throwRuntimeError("division by zero: "+n+"/"+d);
+	}
+
+  if (_integerLessThan(d, 0)) {
 	    n = negate(n);
 	    d = negate(d);
 	}
@@ -5279,11 +5283,69 @@ if (typeof(exports) !== 'undefined') {
 
     var hashModifiersRegexp = new RegExp("^(#[ei]#[bodx]|#[bodx]#[ei]|#[bodxei])(.*)$")
     function rationalRegexp(digits) { return new RegExp("^([+-]?["+digits+"]+)/(["+digits+"]+)$"); }
-    function complexRegexp(digits) { return new RegExp("^([+-]?["+digits+"\\w/\\.]*)([+-])(["+digits+"\\w/\\.]*)i$"); }
+    function matchComplexRegexp(radix, x) {
+	var sign = "[+-]";
+	var maybeSign = "[+-]?";
+	var digits = digitsForRadix(radix)
+	var expmark = "["+expMarkForRadix(radix)+"]"
+	var digitSequence = "["+digits+"]+"
+
+	var unsignedRational = digitSequence+"/"+digitSequence
+	var rational = maybeSign + unsignedRational
+
+	var noDecimal = digitSequence
+	var decimalNumOnRight = "["+digits+"]*\\.["+digits+"]+"
+	var decimalNumOnLeft = "["+digits+"]+\\.["+digits+"]*"
+
+	var unsignedDecimal = "(?:" + noDecimal + "|" + decimalNumOnRight + "|" + decimalNumOnLeft + ")"
+
+	var special = "(?:inf\.0|nan\.0|inf\.f|nan\.f)"
+
+	var unsignedRealNoExp = "(?:" + unsignedDecimal + "|" + unsignedRational + ")"
+	var unsignedReal = unsignedRealNoExp + "(?:" + expmark + maybeSign + digitSequence + ")?"
+	var unsignedRealOrSpecial = "(?:" + unsignedReal + "|" + special + ")"
+	var real = "(?:" + maybeSign + unsignedReal + "|" + sign + special + ")"
+
+	var alt1 = new RegExp("^(" + rational + ")"
+                             + "(" + sign + unsignedRational + "?)"
+                             + "i$");
+	var alt2 = new RegExp("^(" + real + ")?"
+                             + "(" + sign + unsignedRealOrSpecial + "?)"
+                             + "i$");
+	var alt3 = new RegExp("^(" + real + ")@(" + real + ")$");
+
+	var match1 = x.match(alt1)
+	var match2 = x.match(alt2)
+	var match3 = x.match(alt3)
+
+	return match1 ? match1 :
+	       match2 ? match2 :
+	       match3 ? match3 :
+	     /* else */ false
+    }
+
     function digitRegexp(digits) { return new RegExp("^[+-]?["+digits+"]+$"); }
-    function flonumRegexp(digits) { return new RegExp("^([+-]?["+digits+"]*)\\.(["+digits+"]*)$"); }
-    function scientificPattern(digits, exp_mark)
-	{ return new RegExp("^([+-]?["+digits+"]*\\.?["+digits+"]*)["+exp_mark+"](\\+?["+digits+"]+)$"); }
+    /**
+    /* NB: !!!! flonum regexp only matches "X.", ".X", or "X.X", NOT "X", this
+    /* must be separately checked with digitRegexp.
+    /* I know this seems dumb, but the alternative would be that this regexp
+    /* returns six matches, which also seems dumb.
+    /***/
+    function flonumRegexp(digits) {
+	var decimalNumOnRight = "(["+digits+"]*)\\.(["+digits+"]+)"
+	var decimalNumOnLeft = "(["+digits+"]+)\\.(["+digits+"]*)"
+	return new RegExp("^(?:([+-]?)" +
+                          decimalNumOnRight+"|"+decimalNumOnLeft +
+                          ")$");
+    }
+    function scientificPattern(digits, exp_mark) {
+	var noDecimal = "["+digits+"]+"
+	var decimalNumOnRight = "["+digits+"]*\\.["+digits+"]+"
+	var decimalNumOnLeft = "["+digits+"]+\\.["+digits+"]*"
+	return new RegExp("^(?:([+-]?" +
+			  "(?:"+noDecimal+"|"+decimalNumOnRight+"|"+decimalNumOnLeft+")" +
+			  ")["+exp_mark+"](\\+?["+digits+"]+))$");
+    }
 
     function digitsForRadix(radix) {
 	return radix === 2  ? "01" :
@@ -5306,9 +5368,9 @@ if (typeof(exports) !== 'undefined') {
 	// unimplemented
 	var exactp = false
 
-	var hMatch = x.match(hashModifiersRegexp)
+	var hMatch = x.toLowerCase().match(hashModifiersRegexp)
 	if (hMatch) {
-	    var modifierString = hMatch[1];
+	    var modifierString = hMatch[1].toLowerCase();
 
 	    var exactFlag = modifierString.match(new RegExp("(#[ei])"))
 	    var radixFlag = modifierString.match(new RegExp("(#[bodx])"))
@@ -5316,16 +5378,16 @@ if (typeof(exports) !== 'undefined') {
 	    if (exactFlag) {
 		var f = exactFlag[1].charAt(1)
 		exactp = f === 'e' ? true :
-			 f === 'i' ? false :
+             f === 'i' ? false :
 			 // this case is unreachable
 			 throwRuntimeError("invalid exactness flag", this, r)
 	    }
 	    if (radixFlag) {
 		var f = radixFlag[1].charAt(1)
 		radix = f === 'b' ? 2 :
-			f === 'o' ? 8 :
-			f === 'd' ? 10 :
-			f === 'x' ? 16 :
+            f === 'o' ? 8 :
+            f === 'd' ? 10 :
+            f === 'x' ? 16 :
 			 // this case is unreachable
 			throwRuntimeError("invalid radix flag", this, r)
 	    }
@@ -5342,16 +5404,18 @@ if (typeof(exports) !== 'undefined') {
 
     function fromStringRaw(x, radix, exactp, mustBeANumberp) {
 	// exactp is currently unused
-	var cMatch = x.match(complexRegexp(digitsForRadix(radix)));
+	var cMatch = matchComplexRegexp(radix, x);
 	if (cMatch) {
-	    return Complex.makeInstance(fromStringRawNoComplex( cMatch[1] || "0"
-							      , radix
-							      , exactp
-							      ),
-					fromStringRawNoComplex( cMatch[2] + (cMatch[3] || "1")
-							      , radix
-							      , exactp
-							      ));
+	  return Complex.makeInstance( fromStringRawNoComplex( cMatch[1] || "0"
+							     , radix
+							     , exactp
+							     )
+				     , fromStringRawNoComplex( cMatch[2] === "+" ? "1"  :
+							       cMatch[2] === "-" ? "-1" :
+							       cMatch[2]
+							     , radix
+							     , exactp
+							     ));
 	}
 
         return fromStringRawNoComplex(x, radix, exactp, mustBeANumberp)
@@ -5378,7 +5442,9 @@ if (typeof(exports) !== 'undefined') {
 
 	var fMatch = x.match(flonumRegexp(digitsForRadix(radix)))
 	if (fMatch) {
-	    return parseFloat(fMatch[1], fMatch[2], radix)
+	    var integralPart = fMatch[2] !== undefined ? fMatch[2] : fMatch[4];
+	    var fractionalPart = fMatch[3] !== undefined ? fMatch[3] : fMatch[5];
+	    return parseFloat(fMatch[1], integralPart, fractionalPart, radix)
 	}
 
 	var sMatch = x.match(scientificPattern( digitsForRadix(radix)
@@ -5399,23 +5465,25 @@ if (typeof(exports) !== 'undefined') {
 		return n;
 	    }
 	} else if (mustBeANumberp) {
-	    throwRuntimeError("cannot parse " + x + " as an " +
-                              (exactp ? "exact" : "inexact") +
-                              " base " + radix + " number",
-                              this);
+      if(x.length===0) throwRuntimeError("no digits");
+//	    else
+            throwRuntimeError("bad number: " + x, this);
 	} else {
 	    return false;
 	}
     };
 
-    function parseFloat(integralPart, fractionalPart, radix) {
-	var integralPartValue = parseInt(integralPart, radix)
+    function parseFloat(sign, integralPart, fractionalPart, radix) {
+	var sign = (sign == "-" ? -1 : 1);
+	var integralPartValue = integralPart === ""  ? 0  :
+                                parseInt(integralPart, radix)
 
 	var fractionalNumerator = parseInt(fractionalPart, radix)
-        var fractionalDenominator = Math.pow(radix, fractionalPart.length)
-	var fractionalPartValue = fractionalNumerator / fractionalDenominator
+	var fractionalDenominator = Math.pow(radix, fractionalPart.length)
+	var fractionalPartValue = fractionalPart === "" ? 0 :
+				  fractionalNumerator / fractionalDenominator
 
-	return FloatPoint.makeInstance(integralPartValue + fractionalPartValue);
+	return FloatPoint.makeInstance(sign * (integralPartValue + fractionalPartValue));
     }
 
 
@@ -5978,7 +6046,7 @@ if (typeof(exports) !== 'undefined') {
     BigInteger.prototype.divRemTo = bnpDivRemTo;
     BigInteger.prototype.invDigit = bnpInvDigit;
     BigInteger.prototype.isEven = bnpIsEven;
-    BigInteger.prototype.exp = bnpExp;
+    BigInteger.prototype.bnpExp = bnpExp;
 
     // public
     BigInteger.prototype.toString = bnToString;
@@ -6329,7 +6397,7 @@ if (typeof(exports) !== 'undefined') {
     NullExp.prototype.sqrTo = nSqrTo;
 
     // (public) this^e
-    function bnPow(e) { return this.exp(e,new NullExp()); }
+    function bnPow(e) { return this.bnpExp(e,new NullExp()); }
 
     // (protected) r = lower n words of "this * a", a.t <= n
     // "this" should be the larger one if appropriate.
@@ -6632,6 +6700,7 @@ if (typeof(exports) !== 'undefined') {
     BigInteger.prototype.modPow = bnModPow;
     BigInteger.prototype.modInverse = bnModInverse;
     BigInteger.prototype.pow = bnPow;
+    BigInteger.prototype.expt = bnPow;
     BigInteger.prototype.gcd = bnGCD;
     BigInteger.prototype.isProbablePrime = bnIsProbablePrime;
 
@@ -6815,6 +6884,9 @@ if (typeof(exports) !== 'undefined') {
     })();
 
 
+    // sqrt: -> scheme-number
+    // http://en.wikipedia.org/wiki/Newton's_method#Square_root_of_a_number
+    // Produce the square root.
     (function() {	
 	// Get an approximation using integerSqrt, and then start another
 	// Newton-Ralphson search if necessary.
@@ -6838,14 +6910,6 @@ if (typeof(exports) !== 'undefined') {
 	};
     })();
 
-
-
-
-    
-    // sqrt: -> scheme-number
-    // http://en.wikipedia.org/wiki/Newton's_method#Square_root_of_a_number
-    // Produce the square root.
-
     // floor: -> scheme-number
     // Produce the floor.
     BigInteger.prototype.floor = function() {
@@ -6858,44 +6922,60 @@ if (typeof(exports) !== 'undefined') {
         return this;
     }
 
+
+    // Until we have a feature-complete Big Number implementation, we'll
+    // convert BigInteger objects into FloatPoint objects and perform
+    // unsupported operations there.
+    function temporaryAccuracyLosingWorkAroundForBigNums(function_name) {
+      return function () {
+	var inexact = this.toInexact();
+	return inexact[function_name].apply(inexact, arguments);
+      }
+    }
+
     // conjugate: -> scheme-number
     // Produce the conjugate.
+    BigInteger.prototype.conjugate = temporaryAccuracyLosingWorkAroundForBigNums("conjugate");
 
     // magnitude: -> scheme-number
     // Produce the magnitude.
+    BigInteger.prototype.magnitude = temporaryAccuracyLosingWorkAroundForBigNums("magnitude");
 
     // log: -> scheme-number
     // Produce the log.
+    BigInteger.prototype.log = temporaryAccuracyLosingWorkAroundForBigNums("log");
 
     // angle: -> scheme-number
     // Produce the angle.
+    BigInteger.prototype.angle = temporaryAccuracyLosingWorkAroundForBigNums("angle");
 
     // atan: -> scheme-number
     // Produce the arc tangent.
-
-    // cos: -> scheme-number
-    // Produce the cosine.
-
-    // sin: -> scheme-number
-    // Produce the sine.
-
-
-    // expt: scheme-number -> scheme-number
-    // Produce the power to the input.
-    BigInteger.prototype.expt = function(n) {
-	return bnPow.call(this, n);
-    };
-
-
-
-    // exp: -> scheme-number
-    // Produce e raised to the given power.
+    BigInteger.prototype.atan = temporaryAccuracyLosingWorkAroundForBigNums("atan");
 
     // acos: -> scheme-number
     // Produce the arc cosine.
+    BigInteger.prototype.acos = temporaryAccuracyLosingWorkAroundForBigNums("acos");
 
     // asin: -> scheme-number
     // Produce the arc sine.
+    BigInteger.prototype.asin = temporaryAccuracyLosingWorkAroundForBigNums("asin");
+
+    // tan: -> scheme-number
+    // Produce the tangent.
+    BigInteger.prototype.tan = temporaryAccuracyLosingWorkAroundForBigNums("tan");
+
+    // cos: -> scheme-number
+    // Produce the cosine.
+    BigInteger.prototype.cos = temporaryAccuracyLosingWorkAroundForBigNums("cos");
+
+    // sin: -> scheme-number
+    // Produce the sine.
+    BigInteger.prototype.sin = temporaryAccuracyLosingWorkAroundForBigNums("sin");
+
+    // exp: -> scheme-number
+    // Produce e raised to the given power.
+    BigInteger.prototype.exp = temporaryAccuracyLosingWorkAroundForBigNums("exp");
 
     BigInteger.prototype.imaginaryPart = function() {
 	    return 0;
@@ -6906,6 +6986,9 @@ if (typeof(exports) !== 'undefined') {
 
     // round: -> scheme-number
     // Round to the nearest integer.
+    BigInteger.prototype.round = function() {
+	    return this;
+    }
 
 
 
@@ -11632,34 +11715,32 @@ if (typeof(world) === 'undefined') {
      // See http://docs.racket-lang.org/teachpack/2htdpimage.html#(def._((lib._2htdp/image..rkt)._triangle))
      var TriangleImage = function(sideC, angleA, sideB, style, color) {
        BaseImage.call(this);
-       this.width = sideC;
-       this.height = sideB*Math.sin(angleA*Math.PI/180);
-       
-       var xs = [], ys = [];
-       // if angle < 180 start at the top of the canvas,
-       // otherwise start at the bottom and use negative height
-       if(angleA < 180){
-         xs = [0, sideC, sideB*Math.cos(angleA*Math.PI/180)];
-         ys = [0, 0, this.height];
-       } else {
-         xs = [0, sideC, Math.abs(sideB*Math.cos(angleA*Math.PI/180))];
-         ys = [-this.height, -this.height, 0];
-       }
-       this.vertices = zipVertices(xs, ys);
- 
-       // take obtuse triangles into account, which may have vertices out of the range of base
-       var xMin = Math.min.apply(Math, xs ), yMin = Math.min.apply(Math, ys),
-           xMax = Math.max.apply(Math, xs ), yMax = Math.max.apply(Math, ys);
-       this.width  = xMax-xMin;
-       this.height = yMax-yMin;
-       for(var i=0; i<this.vertices.length; i++){
-         this.vertices[i].x -= xMin; this.vertices[i].y -= yMin;
-       }
- 
-       this.style = style;
-       this.color = color;
-     };
-     TriangleImage.prototype = heir(BaseImage.prototype);
+          var thirdX = sideB * Math.cos(angleA * Math.PI/180);
+          var thirdY = sideB * Math.sin(angleA * Math.PI/180);
+
+          var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
+
+          this.width = Math.max(sideC, thirdX) + offsetX;
+          this.height = Math.abs(thirdY);
+          
+          var vertices = [];
+          // if angle < 180 start at the top of the canvas, otherwise start at the bottom
+          if(thirdY > 0){
+            vertices.push({x: offsetX + 0, y: 0});
+            vertices.push({x: offsetX + sideC, y: 0});
+            vertices.push({x: offsetX + thirdX, y: thirdY});
+          } else {
+            vertices.push({x: offsetX + 0, y: -thirdY});
+            vertices.push({x: offsetX + sideC, y: -thirdY});
+            vertices.push({x: offsetX + thirdX, y: 0});
+          }
+            console.log(vertices);
+          this.vertices = vertices;
+          
+          this.style = style;
+          this.color = color;
+    };
+    TriangleImage.prototype = heir(BaseImage.prototype);
 
     //////////////////////////////////////////////////////////////////////
     //Ellipse : Number Number Mode Color -> Image
@@ -13530,6 +13611,25 @@ var arrayEach = function(arr, f) {
 	}
 }
 
+// Useful trigonometric functions based on htdp teachpack
+
+// excess : compute the Euclidean excess
+//  Note: If the excess is 0, then C is 90 deg.
+//        If the excess is negative, then C is obtuse.
+//        If the excess is positive, then C is acuse.
+function excess(sideA, sideB, sideC) {
+   return sideA*sideA + sideB*sideB - sideC*sideC;
+}
+
+// return c^2 = a^2 + b^2 - 2ab cos(C)
+function cosRel(sideA, sideB, angleC) {
+    return (sideA*sideA) + (sideB*sideB) - (2*sideA*sideB*Math.cos(angleC * Math.PI/180));
+}
+ 
+var less = function(lhs, rhs) {
+    return (rhs - lhs) > 0.00001;
+}
+ 
 //var throwCheckError = helpers.throwCheckError;
 var check = helpers.check;
 var checkVarArity = helpers.checkVarArity;
@@ -14740,7 +14840,7 @@ PRIMITIVES['cosh'] =
 
 
 PRIMITIVES['sqr'] =
-    new PrimProc('sqr',
+ new PrimProc('sqr',
 		 1,
 		 false, false,
 		 function(aState, x) {
@@ -17822,9 +17922,8 @@ PRIMITIVES['triangle'] =
 			check(aState, m, isMode, "triangle", 'style ("solid" or "outline" or [0-255])', 2, arguments);
 			check(aState, c, isColor, "triangle", "color", 3, arguments);
 			if (colorDb.get(c)) {c = colorDb.get(c);}
-      return world.Kernel.triangleImage(jsnums.toFixnum(s),
-                                        jsnums.toFixnum(60+180), // add 180 to make the triangle point up
-                                        jsnums.toFixnum(s),
+      // Angle makes triangle point up
+      return world.Kernel.triangleImage(jsnums.toFixnum(s), jsnums.toFixnum(360-60), jsnums.toFixnum(s),
                                         m.toString(),
                                         c);
       });
@@ -17840,10 +17939,25 @@ PRIMITIVES['triangle/sas'] =
        check(aState, style, isMode, "triangle/sas", 'style ("solid" or "outline" or [0-255])', 4, arguments);
        check(aState, color, isColor, "triangle/sas", "color", 5, arguments);
        if (colorDb.get(color)) { color = colorDb.get(color); }
-       // law of cosines: s2 = sqrt( s1^2+s3^2 - 2*s1*s3*cos(a2) )
-       var sideB = Math.sqrt( (sideA*sideA + sideC*sideC) - 2*sideA*sideC*Math.cos(angleB*Math.PI/180) );
-       // law of sines: sin(a1)/s1 = sin(a2)/s2
-       var angleA = Math.asin(sideA*Math.sin(angleB*Math.PI/180)/sideB)*180/Math.PI;
+       // cast to fixnums
+       sideA = jsnums.toFixnum(sideA); angleB = jsnums.toFixnum(angleB); sideC = jsnums.toFixnum(sideC);
+       var sideB2 = cosRel(sideA, sideC, angleB);
+       var sideB  = Math.sqrt(sideB2);
+              
+       if (sideB2 <= 0) {
+         raise( types.incompleteExn(types.exnFailContract, "The given side, angle and side will not form a triangle: "
+                                    + sideA + ", " + angleB + ", " + sideC, []) );
+       } else {
+        if (less(sideA + sideC, sideB) ||
+            less(sideB + sideC, sideA) ||
+            less(sideA + sideB, sideC)) {
+         raise( types.incompleteExn(types.exnFailContract, "The given side, angle and side will not form a triangle: "
+                                    + sideA + ", " + angleB + ", " + sideC, []) );
+        }
+       }
+
+       var angleA = Math.acos(excess(sideB, sideC, sideA) / (2 * sideB * sideC)) * (180 / Math.PI);
+
        return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                          jsnums.toFixnum(angleA),
                                          jsnums.toFixnum(sideB),
@@ -17862,8 +17976,16 @@ PRIMITIVES['triangle/sss'] =
         check(aState, style, isMode, "triangle/sss", 'style ("solid" or "outline" or [0-255])', 4, arguments);
         check(aState, color, isColor, "triangle/sss", "color", 5, arguments);
         if (colorDb.get(color)) { color = colorDb.get(color); }
-        // law of cosines: cos A = (b^2 + c^2 - a^2)/2bc
-        var angleA = (Math.acos(((sideB*sideB + sideC*sideC) - sideA*sideA) / (2*sideB*sideC)))*180/Math.PI;
+        // cast to fixnums
+        sideA = jsnums.toFixnum(sideA); sideB = jsnums.toFixnum(sideB); sideC = jsnums.toFixnum(sideC);
+        if (less(sideA + sideB, sideC) ||
+            less(sideC + sideB, sideA) ||
+            less(sideA + sideC, sideB)) {
+         raise( types.incompleteExn(types.exnFailContract, "The given sides will not form a triangle: "
+                                    + sideA+", "+sideB+", "+sideC, []) );
+        }
+
+        var angleA = Math.acos(excess(sideB, sideC, sideA) / (2 * sideB * sideC)) * (180 / Math.PI);
         return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                          jsnums.toFixnum(angleA),
                                          jsnums.toFixnum(sideB),
@@ -17881,7 +18003,13 @@ PRIMITIVES['triangle/ass'] =
        check(aState, sideC, isNonNegativeReal, "triangle/ass", "non-negative number", 3, arguments);
        check(aState, style, isMode, "triangle/ass", 'style ("solid" or "outline" or [0-255])', 4, arguments);
        check(aState, color, isColor, "triangle/ass", "color", 5, arguments);
+       // cast to fixnums
+       angleA = jsnums.toFixnum(angleA); sideB = jsnums.toFixnum(sideB); sideC = jsnums.toFixnum(sideC);
        if (colorDb.get(color)) { color = colorDb.get(color); }
+       if (less(180, angleA)) {
+         raise( types.incompleteExn(types.exnFailContract, "The given angle, side and side will not form a triangle: "
+                                    + angleA + ", " + sideB + ", " + sideC, []) );
+       }
        return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                         jsnums.toFixnum(angleA),
                                         jsnums.toFixnum(sideB),
@@ -17900,11 +18028,29 @@ PRIMITIVES['triangle/ssa'] =
          check(aState, style, isMode, "triangle/ssa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/ssa", "color", 5, arguments);
          if (colorDb.get(color)) { color = colorDb.get(color); }
-         // law of cosines: s3 = sqrt( s1^2+s2^2 - 2*s1*s2*cos(a3) )
-         var sideC = Math.sqrt( sideA*sideA + sideB*sideB) - 2*sideA*sideB*Math.cos(angleC*Math.PI/180);
-         // law of sines: sin(a1)/s1 = sin(a3)/s3
-         var angleA = Math.asin(sideA*Math.sin(angleC*Math.PI/180)/sideC)*180/Math.PI;
-         return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
+         // cast to fixnums
+         sideA = jsnums.toFixnum(sideA); sideB = jsnums.toFixnum(sideB); angleC = jsnums.toFixnum(angleC);
+         if (less(180, angleC)) {
+           raise( types.incompleteExn(types.exnFailContract, "The given side, side and angle will not form a triangle: "
+                                      + sideA + ", " + sideB + ", " + angleC, []) );
+         }
+         var sideC2 = cosRel(sideA, sideB, angleC);
+         var sideC  = Math.sqrt(sideC2);
+        
+         if (sideC2 <= 0) {
+           raise( types.incompleteExn(types.exnFailContract, "The given side, side and angle will not form a triangle: "
+                                      + sideA + ", " + sideB + ", " + angleC, []) );
+         } else {
+           if (less(sideA + sideB, sideC) ||
+               less(sideC + sideB, sideA) ||
+               less(sideA + sideC, sideB)) {
+           raise( types.incompleteExn(types.exnFailContract, "The given side, side and angle will not form a triangle: "
+                                      + sideA + ", " + sideB + ", " + angleC, []) );
+           }
+         }
+
+         var angleA = Math.acos(excess(sideB, sideC, sideA) / (2 * sideB * sideC)) * (180 / Math.PI);
+              return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                           jsnums.toFixnum(angleA),
                                           jsnums.toFixnum(sideB),
                                           style.toString(),
@@ -17922,9 +18068,15 @@ PRIMITIVES['triangle/aas'] =
          check(aState, style, isMode, "triangle/aas", 'style ("solid" or "outline" or [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/aas", "color", 5, arguments);
         if (colorDb.get(color)) { color = colorDb.get(color); }
+        // cast to fixnums
+        angleA = jsnums.toFixnum(angleA); angleB = jsnums.toFixnum(angleB); sideC = jsnums.toFixnum(sideC);
         var angleC = (180 - angleA - angleB);
-         // law of sines: s2/sin(a2) = s3/sin(a3)
-        var sideB = Math.sin(angleA*Math.PI/180)*sideC/Math.sin(angleC*Math.PI/180);
+        if (less(angleC, 0)) {
+           raise( types.incompleteExn(types.exnFailContract, "The given angle, angle and side will not form a triangle: "
+                                      + angleA + ", " + angleB + ", " + sideC, []) );
+        }
+        var hypotenuse = sideC / (Math.sin(angleC*Math.PI/180))
+        var sideB = hypotenuse * Math.sin(angleB*Math.PI/180);
         return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                          jsnums.toFixnum(angleA),
                                          jsnums.toFixnum(sideB),
@@ -17943,9 +18095,15 @@ PRIMITIVES['triangle/asa'] =
             check(aState, style, isMode, "triangle/asa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
             check(aState, color, isColor, "triangle/asa", "color", 5, arguments);
             if (colorDb.get(color)) { color = colorDb.get(color); }
+            // cast to fixnums
+            angleA = jsnums.toFixnum(angleA); sideB = jsnums.toFixnum(sideB); angleC = jsnums.toFixnum(angleC);
             var angleB = (180 - angleA - angleC);
-            // law of sines: s3/sin(a3) = s2/sin(a2)
-            var sideC = sideB * Math.sin(angleC*Math.PI/180)/Math.sin(angleB*Math.PI/180);
+            if (less(angleB, 0)) {
+              raise( types.incompleteExn(types.exnFailContract, "The given angle, side and angle will not form a triangle: "
+                                         + angleA + ", " + sideB + ", " + angleC, []) );
+            }
+            var base = (sideB * Math.sin(angleA*Math.PI/180)) / (Math.sin(angleB*Math.PI/180));
+            var sideC = (sideB * Math.sin(angleC*Math.PI/180)) / (Math.sin(angleB*Math.PI/180));
             return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                              jsnums.toFixnum(angleA),
                                              jsnums.toFixnum(sideB),
@@ -17964,11 +18122,12 @@ PRIMITIVES['triangle/saa'] =
              check(aState, style, isMode, "triangle/saa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
              check(aState, color, isColor, "triangle/saa", "color", 5, arguments);
              if (colorDb.get(color)) { color = colorDb.get(color); }
-             var angleA = (180 - angleB - angleC);
-             // law of sines: s3/sin(a3) = s1/sin(a1)
-             var sideC = Math.sin(angleC*Math.PI/180)*sideA/Math.sin(angleA*Math.PI/180);
-             // law of sines: s2/sin(a2) = s1/sin(a1)
-             var sideB = Math.sin(angleB*Math.PI/180)*sideA/Math.sin(angleA*Math.PI/180);
+             // cast to fixnums
+             sideA = jsnums.toFixnum(sideA); angleB = jsnums.toFixnum(angleB); angleC = jsnums.toFixnum(angleC);
+             var angleA = (180 - angleC - angleB);
+             var hypotenuse = sideA / (Math.sin(angleA*Math.PI/180));
+             var sideC = hypotenuse * Math.sin(angleC*Math.PI/180);
+             var sideB = hypotenuse * Math.sin(angleB*Math.PI/180);
              return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
                                                jsnums.toFixnum(angleA),
                                                jsnums.toFixnum(sideB),
@@ -17985,11 +18144,9 @@ new PrimProc('right-triangle',
 			 check(aState, side2, isNonNegativeReal, "right-triangle", "non-negative number", 2, arguments);
 			 check(aState, s, isMode, "right-triangle", 'style ("solid" or "outline" or [0-255])', 3, arguments);
 			 check(aState, c, isColor, "right-triangle", "color", 4, arguments);
-			 if (colorDb.get(c)) {
-			 c = colorDb.get(c);
-			 }
+			 if (colorDb.get(c)) { c = colorDb.get(c); }
        return world.Kernel.triangleImage(jsnums.toFixnum(side1),
-                                         jsnums.toFixnum(90+180), // add 180 to make the triangle point up
+                                         jsnums.toFixnum(360-90),
                                          jsnums.toFixnum(side2),
                                          s.toString(),
                                          c);
@@ -18000,18 +18157,18 @@ PRIMITIVES['isosceles-triangle'] =
 new PrimProc('isosceles-triangle',
 			 4,
 			 false, false,
-			 function(aState, side, angle, s, c) {
+			 function(aState, side, angleC, s, c) {
 			 check(aState, side, isNonNegativeReal, "isosceles-triangle", "non-negative number", 1, arguments);
-			 check(aState, angle, isAngle, "isosceles-triangle", "finite real number between 0 and 360", 2, arguments);
+			 check(aState, angleC, isAngle, "isosceles-triangle", "finite real number between 0 and 360", 2, arguments);
 			 check(aState, s, isMode, "isosceles-triangle", 'style ("solid" or "outline" or [0-255])', 3, arguments);
 			 check(aState, c, isColor, "isosceles-triangle", "color", 4, arguments);
-			 if (colorDb.get(c)) {
-			 c = colorDb.get(c);
-			 }
-       var angleAB = (180-angle)/2;
-       var base = 2*side*Math.sin((angle*Math.PI/180)/2);
+			 if (colorDb.get(c)) { c = colorDb.get(c); }
+       // cast to fixnums
+       side = jsnums.toFixnum(side); angleC = jsnums.toFixnum(angleC);
+       var angleAB = (180-angleC)/2;
+       var base = 2*side*Math.sin((angleC*Math.PI/180)/2);
        return world.Kernel.triangleImage(jsnums.toFixnum(base),
-                                         jsnums.toFixnum(angleAB+180),// add 180 to make the triangle point up
+                                         jsnums.toFixnum(360-angleAB),// add 180 to make the triangle point up
                                          jsnums.toFixnum(side),
                                          s.toString(),
                                          c);
@@ -18297,7 +18454,7 @@ new PrimProc('rotate',
 			 check(aState, angle, isAngle, "rotate", "finite real number between 0 and 360", 1, arguments);
 			 check(aState, img, isImage, "rotate", "image", 2, arguments);
 				 // negate the angle, to make it a counterclockwise rotation
-			     return world.Kernel.rotateImage(jsnums.toFixnum(-angle), img);
+			     return world.Kernel.rotateImage(jsnums.toFixnum(jsnums.multiply(-1, angle)), img);
 			 });
 
 PRIMITIVES['scale/xy'] =
@@ -18305,11 +18462,10 @@ new PrimProc('scale/xy',
 			 3,
 			 false, false,
 			 function(aState, xFactor, yFactor, img) {
-			 check(aState, xFactor, isReal, "scale/xy", "finite real number", 1, arguments);
-			 check(aState, yFactor, isReal, "scale/xy", "finite real number", 2, arguments);
+			 check(aState, xFactor, isNonNegativeReal, "scale/xy", "finite real number", 1, arguments);
+			 check(aState, yFactor, isNonNegativeReal, "scale/xy", "finite real number", 2, arguments);
 			 check(aState, img, isImage, "scale/xy", "image", 3, arguments);
-			 
-			 return world.Kernel.scaleImage(jsnums.toFixnum(xFactor), 
+			 return world.Kernel.scaleImage(jsnums.toFixnum(xFactor),
 							jsnums.toFixnum(yFactor),
 							img);
 
@@ -18320,9 +18476,8 @@ new PrimProc('scale',
 			 2,
 			 false, false,
 			 function(aState, factor, img) {
-			 check(aState, factor, isReal, "scale", "finite real number", 1, arguments);
+			 check(aState, factor, isNonNegativeReal, "scale", "finite real number", 1, arguments);
 			 check(aState, img, isImage, "scale", "image", 2, arguments);
-			 
 			 return world.Kernel.scaleImage(jsnums.toFixnum(factor),
 											jsnums.toFixnum(factor),
 											img);
