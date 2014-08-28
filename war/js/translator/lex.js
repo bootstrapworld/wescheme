@@ -687,18 +687,19 @@ plt.compiler = plt.compiler || {};
         var action = p == "'" ? " quoting " :
                      p == "`" ? " quasiquoting " :
                      p == "," ? " unquoting " :
+                     p == ",@" ? " unquoting " :                                 
                      /* else */  "";
-        throwError(new types.Message([source, ":", sLine.toString(), ":", column.toString()
+        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
                                       , ": read: expected an element for" + action, p
                                       , " (found end-of-file)"])
-                   , new Location(column, sLine, iStart, 1)
+                   , new Location(sCol, sLine, iStart, p.length)
                    , "Error-GenericReadError");
       }
       if(i+1 >= str.length) { eofError(i); }
       i++; column++; // read forward one char
       if(p == ',') {
         if(str.charAt(i) == '@') {
-          i++; column++; // read forward one char
+          i++; column++; p+='@'; // read forward one char, and add @ to the option
           symbol = new symbolExpr("unquote-splicing");
         } else {
           symbol = new symbolExpr("unquote");
