@@ -563,94 +563,90 @@ var WeSchemeEditor;
     // call in the form (bitmap/url <image_url>).
     WeSchemeEditor.prototype.showPicker = function(defnInFocus) {
 
-		// Create and render a Picker object for searching images.
-		var APP_ID = plt.config.APP_ID;
-		var oauthToken;
+      // Create and render a Picker object for searching images.
+      var APP_ID = plt.config.APP_ID;
+      var oauthToken;
 
-		var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
-		var data;
+      var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
+      var data;
 
-		// Get the OAuth token for authenticating the picker
-		function authenticatePicker() {
-			var SCOPES = [
-					      'https://www.googleapis.com/auth/drive.file',
-					      'https://www.googleapis.com/auth/drive'
-					      ];
-			gapi.auth.authorize({
-				'client_id': plt.config.CLIENT_ID
-				'scope': SCOPES.join(' '),
-				'immediate': false
-			}, function(authResult) {
-				if (authResult && !authResult.error) {
-					oauthToken = authResult.access_token;
-					createPicker();
-				}
-				else {
-					alert("There was an error authenticating.  Please make sure you're still logged in to Google.");
-				}
-			});
-		}
+      // Get the OAuth token for authenticating the picker
+      function authenticatePicker() {
+        var SCOPES = [
+                  'https://www.googleapis.com/auth/drive.file',
+                  'https://www.googleapis.com/auth/drive'
+                  ];
+        gapi.auth.authorize({
+          'client_id': plt.config.CLIENT_ID,
+          'scope': SCOPES.join(' '),
+          'immediate': false
+        }, function(authResult) {
+          if (authResult && !authResult.error) {
+            oauthToken = authResult.access_token;
+            createPicker();
+          }
+          else {
+            alert("There was an error authenticating.  Please make sure you're still logged in to Google.");
+          }
+        });
+      }
 
-		// Create the picker window itself and display it.
-		function createPicker() {
-		    var view = new google.picker.View(google.picker.ViewId.DOCS);
-		    view.setMimeTypes("image/png,image/jpeg,image/jpg");
-		    var picker = new google.picker.PickerBuilder()
-			.enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-			.setAppId(APP_ID)
-			.addView(view)
-			.addView(new google.picker.DocsUploadView())
-			.setCallback(pickerCallback)
-			.setOAuthToken(oauthToken)
-			.build();
-		    picker.setVisible(true);
-		}
+      // Create the picker window itself and display it.
+      function createPicker() {
+          var view = new google.picker.View(google.picker.ViewId.DOCS);
+          view.setMimeTypes("image/png,image/jpeg,image/jpg");
+          var picker = new google.picker.PickerBuilder()
+        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+        .setAppId(APP_ID)
+        .addView(view)
+        .addView(new google.picker.DocsUploadView())
+        .setCallback(pickerCallback)
+        .setOAuthToken(oauthToken)
+        .build();
+          picker.setVisible(true);
+      }
 
 	      
-		// A simple callback implementation.
-		function pickerCallback(data) {
-		    if (data.action == google.picker.Action.PICKED) {
-				var doc = data[google.picker.Response.DOCUMENTS][0];
-				var url = doc[google.picker.Document.URL];
+      // A simple callback implementation.
+      function pickerCallback(data) {
+          if (data.action == google.picker.Action.PICKED) {
+            var doc = data[google.picker.Response.DOCUMENTS][0];
+            var url = doc[google.picker.Document.URL];
 
-				var permissions_body = {
-					'role': 'reader',
-					'type': 'anyone',
-					'value': 'default',
-					'withLink': true
-				};
-				gapi.client.load('drive', 'v2', setPermissionsAndInsertCode.bind(this, doc.id, permissions_body));
-				// console.log(url);
-		    }
-		}
+            var permissions_body = {
+              'role': 'reader',
+              'type': 'anyone',
+              'value': 'default',
+              'withLink': true
+            };
+            gapi.client.load('drive', 'v2', setPermissionsAndInsertCode.bind(this, doc.id, permissions_body));
+            // console.log(url);
+          }
+      }
 
-		// Setting the image permissions for anyone having 
-		// the link.
-        function setPermissionsAndInsertCode(fileId, body) {
-		    var request = gapi.client.drive.permissions.insert({
-			    'fileId': fileId,
-			    'resource': body
-			});
-	       
-		    request.execute(function(resp) { }); 
-	       
-		    // Insert the generated code for producing the image in the 
-		    // definitions console.
-		    var code = editor.getCode();
-		    var curPos = editor.getCursorStartPosition();
-		    var preCursorCode = code.slice(0, curPos);
-		    var postCursorCode = code.slice(curPos, code.length);
-		    var pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
-		    editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
-		}
+      // Setting the image permissions for anyone having
+      // the link.
+      function setPermissionsAndInsertCode(fileId, body) {
+          var request = gapi.client.drive.permissions.insert({
+            'fileId': fileId,
+            'resource': body
+        });
+           
+        request.execute(function(resp) { });
+         
+        // Insert the generated code for producing the image in the 
+        // definitions console.
+        var code = editor.getCode();
+        var curPos = editor.getCursorStartPosition();
+        var preCursorCode = code.slice(0, curPos);
+        var postCursorCode = code.slice(curPos, code.length);
+        var pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
+        editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
+      }
 
-		// Primary function call for creating picker         
-		if (oauthToken) {
-			createPicker();
-		}
-		else 
-			authenticatePicker();
-		}
+      // Primary function call for creating picker
+      if (oauthToken) { createPicker(); }
+      else { authenticatePicker(); }
     }
     
 
