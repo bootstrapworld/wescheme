@@ -570,6 +570,7 @@ var WeSchemeEditor;
 		var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
 		var data;
 
+		// Deprecated
 		function handleAuthResult(authResult) {
 		    if (authResult){
 				// fileId: the unique id of the image in Google Drive.                                                                                               
@@ -594,6 +595,23 @@ var WeSchemeEditor;
 		    }
 		}
 
+		// Get the OAuth token for authenticating the picker
+		function authenticatePicker() {
+			var SCOPES = [
+					      'https://www.googleapis.com/auth/drive.file',
+					      'https://www.googleapis.com/auth/drive'
+					      ];
+			gapi.auth.authorize({
+				'client_id': plt.config.CLIENT_ID
+				'scope': SCOPES.join(' '),
+				'immediate': false
+			}, function(authResult) {
+				oauthToken = authResult.access_token;
+				createPicker();
+			});
+		}
+
+		// Create the picker window itself and display it.
 		function createPicker() {
 		    var view = new google.picker.View(google.picker.ViewId.DOCS);
 		    view.setMimeTypes("image/png,image/jpeg,image/jpg");
@@ -647,20 +665,12 @@ var WeSchemeEditor;
 		}
 
 		// Primary function call for creating picker         
-		//createPicker();
-
-		var SCOPES = [
-				      'https://www.googleapis.com/auth/drive.file',
-				      'https://www.googleapis.com/auth/drive'
-				      ];
-		gapi.auth.authorize({
-			'client_id': plt.config.CLIENT_ID
-			'scope': SCOPES.join(' '),
-			'immediate': false
-		}, function(authResult) {
-			oauthToken = authResult.access_token;
+		if (oauthToken) {
 			createPicker();
-		});
+		}
+		else 
+			authenticatePicker();
+		}
     }
     
 
