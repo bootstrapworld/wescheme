@@ -1,3 +1,13 @@
+// if not defined, declare the compiler object as part of plt
+if(typeof(plt) === "undefined")          plt = {};
+if(typeof(plt.compiler) === "undefined") plt.compiler = {};
+/*
+ TODO
+ - move emptyEnv, unnamedEnv, localEnv and globalEnv into compiler.js
+ - better handling of other modules
+ - add modules for foreign, world-effects, world-handlers
+ */
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////// COMMON FUNCTIONS AND STRUCTURES //////////////////////////
 //////////////// used by multiple phases of the compiler/////////////////////
@@ -13,20 +23,20 @@ var unimplementedException = function(str){
  **************************************************************************/
 // encode the msg and location as a JSON error
 function throwError(msg, loc, errorClass) {
-  loc.source = loc.source || "<definitions>"; // FIXME -- we should have the source populated
+  loc.source = loc.source || "<unknown>"; // FIXME -- we should have the source populated
   // rewrite a ColoredPart to match the format expected by the runtime
   function rewritePart(part){
     if(typeof(part) === 'string'){
       return part;
     } else if(part instanceof symbolExpr){
-//      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
+      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
       return part.val;
     } else if(part.location !== undefined){
-      return {text: part.text, type: 'ColoredPart', loc: part.location.toJSON()
+      return {text: part.text, type: 'ColoredPart', loc: part.location.toBytecode()
             , toString: function(){return part.text;}};
     } else if(part.locations !== undefined){
       return {text: part.text, type: 'MultiPart', solid: part.solid
-            , locs: part.locations.map(function(l){return l.toJSON()})
+            , locs: part.locations.map(function(l){return l.toBytecode()})
             , toString: function(){return part.text;}};
     }
   }
@@ -60,7 +70,7 @@ function throwError(msg, loc, errorClass) {
                            ]
                         ]
                       ]
-    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toJSON() })
+    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toBytecode() })
   };
   throw JSON.stringify(json);
 }
@@ -74,10 +84,10 @@ function checkDuplicateIdentifiers(lst, stx, loc){
   for (var i = 0; i < lst.length; i++) {
     if(!(sorted_arr[i] instanceof symbolExpr)){
       throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
-    } else if(compilerStructs.keywords.indexOf(sorted_arr[i].val)>-1){
-      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
-                                " : this is a reserved keyword and cannot be used as a variable or function name"])
-                 , sorted_arr[i].location);
+//    } else if(plt.compiler.keywords.indexOf(sorted_arr[i].val)>-1){
+//      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
+//                                " : this is a reserved keyword and cannot be used as a variable or function name"])
+//                 , sorted_arr[i].location);
     } else if(results.indexOf(sorted_arr[i].toString()) > -1) {
       throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
                                 ": found ",
@@ -102,7 +112,12 @@ function couple(first, second) {
 function coupleFirst(x) { return x.first; };
 function coupleSecond(x) { return x.second; };
 
-// OBJECT HIERARCHY//////////////////////////////////////////
+/**************************************************************************
+ *
+ *    AST Nodes
+ *
+ **************************************************************************/
+
 // Inheritance from pg 168: Javascript, the Definitive Guide.
 var heir = function(p) {
   var f = function() {};
@@ -132,10 +147,11 @@ defFunc.prototype = heir(Program.prototype);
 
 
 // Variable definition
-function defVar(name, expr) {
+function defVar(name, expr, stx) {
   Program.call(this);
   this.name = name;
   this.expr = expr;
+  this.stx  = stx;
   this.toString = function(){
     return "(define "+this.name.toString()+" "+this.expr.toString()+")";
   };
@@ -143,21 +159,23 @@ function defVar(name, expr) {
 defVar.prototype = heir(Program.prototype);
 
 // Multi-Variable definition
-function defVars(names, expr) {
+function defVars(names, expr, stx) {
   Program.call(this);
-  this.names = names;
-  this.expr = expr;
+  this.names  = names;
+  this.expr   = expr;
+  this.stx    = stx;
   this.toString = function(){
-    return "(define ("+this.names.join(" ")+") "+this.expr.toString()+")";
+    return "(define-values ("+this.names.join(" ")+") "+this.expr.toString()+")";
   };
 };
 defVars.prototype = heir(Program.prototype);
 
 // Structure definition
-function defStruct(name, fields) {
+function defStruct(name, fields, stx) {
   Program.call(this);
-  this.name = name;
+  this.name   = name;
   this.fields = fields;
+  this.stx    = stx;
   this.toString = function(){
     return "(define-struct "+this.name.toString()+" ("+this.fields.toString()+"))";
   };
@@ -165,9 +183,10 @@ function defStruct(name, fields) {
 defStruct.prototype = heir(Program.prototype);
 
 // Begin expression
-function beginExpr(exprs) {
+function beginExpr(exprs, stx) {
   Program.call(this);
-  this.exprs = exprs;
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){
     return "(begin "+this.exprs.join(" ")+")";
   };
@@ -181,16 +200,17 @@ function lambdaExpr(args, body, stx) {
   this.body = body;
   this.stx  = stx;
   this.toString = function(){
-    return "(lambda ("+this.args.join(" ")+") ("+this.body.toString()+"))";
+    return "(lambda ("+this.args.join(" ")+") "+this.body.toString()+")";
   };
 };
 lambdaExpr.prototype = heir(Program.prototype);
 
 // Local expression
-function localExpr(defs, body) {
+function localExpr(defs, body, stx) {
   Program.call(this);
   this.defs = defs;
   this.body = body;
+  this.stx  = stx;
   this.toString = function(){
     return "(local ("+this.defs.toString()+") ("+this.body.toString()+"))";
   };
@@ -198,45 +218,50 @@ function localExpr(defs, body) {
 localExpr.prototype = heir(Program.prototype);
 
 // Letrec expression
-function letrecExpr(bindings, body) {
+function letrecExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(letrec ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // Let expression
-function letExpr(bindings, body) {
+function letExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(let ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // Let* expressions
-function letStarExpr(bindings, body) {
+function letStarExpr(bindings, body, stx) {
   this.bindings = bindings;
-  this.body = body;
+  this.body     = body;
+  this.stx      = stx;
   this.toString = function(){
     return "(let* ("+this.bindings.toString()+") ("+this.body.toString()+"))";
   };
 };
 
 // cond expression
-function condExpr(clauses) {
-  this.clauses = clauses;
+function condExpr(clauses, stx) {
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){
     return "(cond\n    "+this.clauses.join("\n    ")+")";
   };
 };
 
 // Case expression
-function caseExpr(expr, clauses) {
+function caseExpr(expr, clauses, stx) {
   Program.call(this);
-  this.expr = expr;
-  this.clauses = clauses;
+  this.expr     = expr;
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){
     return "(case "+this.expr.toString()+"\n    "+this.clauses.join("\n    ")+")";
   };
@@ -244,34 +269,38 @@ function caseExpr(expr, clauses) {
 caseExpr.prototype = heir(Program.prototype);
 
 // and expression
-function andExpr(exprs) {
-  this.exprs = exprs;
+function andExpr(exprs, stx) {
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){ return "(and "+this.exprs.join(" ")+")"; };
 };
 
 // or expression
-function orExpr(exprs) {
-  this.exprs = exprs;
+function orExpr(exprs, stx) {
+  this.exprs  = exprs;
+  this.stx    = stx;
   this.toString = function(){ return "(or "+this.exprs.toString()+")"; };
 };
 
 // application expression
-function callExpr(func, args) {
+function callExpr(func, args, stx) {
   Program.call(this);
-  this.func = func;
-  this.args = args;
+  this.func   = func;
+  this.args   = args;
+  this.stx    = stx;
   this.toString = function(){
-    return "("+this.func.toString()+" "+this.args.join(" ")+")";
+    return "("+[this.func].concat(this.args).join(" ")+")";
   };
 };
 callExpr.prototype = heir(Program.prototype);
 
 // if expression
-function ifExpr(predicate, consequence, alternative) {
+function ifExpr(predicate, consequence, alternative, stx) {
   Program.call(this);
   this.predicate = predicate;
   this.consequence = consequence;
   this.alternative = alternative;
+  this.stx = stx;
   this.toString = function(){
     return "(if "+this.predicate.toString()+" "+this.consequence.toString()+" "+this.alternative.toString()+")";
   };
@@ -279,46 +308,30 @@ function ifExpr(predicate, consequence, alternative) {
 ifExpr.prototype = heir(Program.prototype);
 
 // symbol expression (ID)
-function symbolExpr(val) {
+function symbolExpr(val, stx) {
   Program.call(this);
   this.val = val;
+  this.stx = stx;
 };
 symbolExpr.prototype = heir(Program.prototype);
 
-// number expression
-function numberExpr(val) {
+// Literal values (String, Char, Number, Vector)
+function literal(val) {
   Program.call(this);
   this.val = val;
-};
-numberExpr.prototype = heir(Program.prototype);
-
-// string expression
-function stringExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return "\""+this.val.toString()+"\""; };
-};
-stringExpr.prototype = heir(Program.prototype);
-
-// vector expression
-function vectorExpr(vals, size) {
-  Program.call(this);
-  this.vals = vals;
-  this.size = size;
   this.toString = function(){
-    var strVals = this.vals.map(function(v){return v.toString();});
-    return "#"+this.size.toString()+"("+strVals.join(" ")+")" ;
-  };
+    if(this.val===true) return "#t";
+    if(this.val===false) return "#f";
+    return types.toWrittenString(this.val);
+  }
 };
-vectorExpr.prototype = heir(Program.prototype);
+literal.prototype = heir(Program.prototype);
 
-// char expression
-function charExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return "#\\"+this.val.toString(); };
-};
-charExpr.prototype = heir(Program.prototype);
+Vector.prototype.toString = Vector.prototype.toWrittenString = function(){
+  var filtered = this.elts.filter(function(e){return e!==undefined;}),
+      last = filtered[filtered.length-1];
+  return "#("+this.elts.map(function(elt){return elt===undefined? last : elt;})+")";
+}
 
 // list expression
 function listExpr(val) {
@@ -366,25 +379,20 @@ function unquoteSplice(val) {
 };
 unquoteSplice.prototype = heir(Program.prototype);
 
-// primop expression
-function primop(val) {
-  Program.call(this);
-  this.val = val;
-};
-primop.prototype = heir(Program.prototype);
-
 // require expression
-function requireExpr(spec) {
+function requireExpr(spec, stx) {
   Program.call(this);
   this.spec = spec;
+  this.stx  = stx;
   this.toString = function(){ return "(require "+this.spec.toString()+")"; };
 };
 requireExpr.prototype = heir(Program.prototype);
 
 // provide expression
-function provideStatement(clauses) {
+function provideStatement(clauses, stx) {
   Program.call(this);
-  this.clauses = clauses;
+  this.clauses  = clauses;
+  this.stx      = stx;
   this.toString = function(){ return "(provide "+this.clauses.toString()+")" };
 };
 provideStatement.prototype = heir(Program.prototype);
@@ -400,9 +408,27 @@ function unsupportedExpr(val, errorMsg, errorSpan) {
 unsupportedExpr.prototype = heir(Program.prototype);
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////
-// STRUCTURES NEEDED BY THE COMPILER ////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////
+function isExpression(node){
+  return !(   (node instanceof defVar)
+           || (node instanceof defVars)
+           || (node instanceof defStruct)
+           || (node instanceof defFunc)
+           || (node instanceof provideStatement)
+           || (node instanceof unsupportedExpr));
+}
+
+function isDefinition(node){
+  return (node instanceof defVar)
+      || (node instanceof defVars)
+      || (node instanceof defStruct)
+      || (node instanceof defFunc);
+}
+
+/**************************************************************************
+ *
+ *    STRUCTURES NEEDED BY THE COMPILER
+ *
+ **************************************************************************/
 
 // bindingConstant: records an id and its associated Java implementation.
 function bindingConstant(name, moduleSource, permissions, loc){
@@ -447,17 +473,17 @@ function bindingStructure(name, moduleSource, fields, constructor,
 // getTopLevelEnv: symbol -> env
 function getTopLevelEnv(lang){
   // fixme: use the language to limit what symbols get in the toplevel.
-  var baseConstantsEnv = ["null", "empty", "true",//effect:do-nothing
+  var baseConstantsEnv = ["null", "empty", "#t"//effect:do-nothing
                          , "false", "eof", "pi", "e","js-undefined"
                          , "js-null"].reduce(function(env, id){
-                                             return env.extendConstant(id.toString(), "moby/toplevel", false)
-                                             }, compilerStructs.emptyEnv());
+                                             return env.extendConstant(id.toString(), '"moby/toplevel"', false)
+                                             }, new plt.compiler.emptyEnv());
 
-  // Registers a new toplevel function, munging the name
-  var r = function(env, name, arity, vararity){
-    return env.extendFunction(name, "moby/toplevel", arity, vararity, false);
-    return e;
-  };
+  // runtime symbols
+  var runtimeBindings = [["verify-boolean-branch-value", 2]
+                         ,["throw-cond-exhausted-error", 1 ]
+                         ,["'check-operator-is-function", 3]
+                         ,["print-values", 0]];
   
   // core defined symbols
   var coreBindings = [["<", 2, true] // Numerics
@@ -526,6 +552,7 @@ function getTopLevelEnv(lang){
                      ,["sgn", 1]
                      ,["sin", 1]
                      ,["sinh", 1]
+                     ,["sq", 1]
                      ,["sqr", 1]
                      ,["sqrt", 1]
                      ,["sub1", 1]
@@ -830,7 +857,6 @@ function getTopLevelEnv(lang){
                       ,["triangle/asa", 3, false]
                       ,["triangle/saa", 3, false]
                       ,["right-triangle", 4, false]
-                      ,["right-triangle", 4, false]
                       ,["radial-star", 5, false]
                       ,["square", 3, false]
                       ,["rectangle", 4, false]
@@ -883,24 +909,33 @@ function getTopLevelEnv(lang){
                       ,["step-count?", 1, false]
                       
                       ];
-                       
+  // Registers a new toplevel function for given env, munging the name
+  var r = function(env, moduleName, name, arity, vararity){
+    return env.extendFunction(name, moduleName, arity, vararity, false);
+  };
+  
   // The core environment includes bindings to Javascript-written functions.
-  var coreEnv = coreBindings.reduce(function (env, nameAndArity){
+  var addCoreEnv = coreBindings.reduce(function (env, nameAndArity){
                    if(nameAndArity.length === 2 ){
-                      return r(env, nameAndArity[0], nameAndArity[1], false);
+                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], false);
                    } else if(nameAndArity.length === 3 ){
-                      return r(env, nameAndArity[0], nameAndArity[1], nameAndArity[3]);
+                      return r(env, '"moby/toplevel"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
                    }
-                }, baseConstantsEnv);
-  return coreEnv;
+                }, baseConstantsEnv),
+      addRuntimeEnv = runtimeBindings.reduce(function (env, nameAndArity){
+                   if(nameAndArity.length === 2 ){
+                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], false);
+                   } else if(nameAndArity.length === 3 ){
+                      return r(env, '"moby/runtime/kernel/misc"', nameAndArity[0], nameAndArity[1], nameAndArity[3]);
+                   }
+                }, addCoreEnv);
+  return addRuntimeEnv;
 }
 
 
 (function (){
-   var compilerStructs = {};
-
   var makeHash = types.makeLowLevelEqHash;
-  compilerStructs.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",
+  plt.compiler.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",
                               "quasiquote", "unquote","unquote-splicing","local","begin",
                               "if","or","and","when","unless","lambda","λ","define",
                               "define-struct", "define-values"];
@@ -909,11 +944,18 @@ function getTopLevelEnv(lang){
   // Representation of the stack environment of the mzscheme vm, so we know where
   // things live.
   function env(bindings){
-    this.bindings = bindings;
+    this.bindings = bindings || types.makeLowLevelEqHash();
  
     // lookup : Symbol -> (or/c binding false)
     this.lookup = function(id){
       return (this.bindings.containsKey(id))? this.bindings.get(id) : false;
+    };
+ 
+    // peek: Number -> env
+    this.peek = function(depth){
+      return (depth==0)?                  this
+          :  (this instanceof emptyEnv)?  "IMPOSSIBLE - peeked at an emptyEnv!"
+           /* else */                   : this.parent.peek(depth-1);
     };
  
     // contains?: symbol -> boolean
@@ -927,7 +969,7 @@ function getTopLevelEnv(lang){
     // extend: binding -> env
     this.extend = function(binding){
       this.bindings.put(binding.name, binding);
-      return new env(this.bindings);
+      return new plt.compiler.env(this.bindings);
     };
  
     // extendFunction : symbol (or/c string false) number boolean? Loc -> env
@@ -961,40 +1003,47 @@ function getTopLevelEnv(lang){
         return s+"\n  |---"+b.name;}, "");
     };
   }
-
-  function emptyEnv(){ return new env(types.makeLowLevelEqHash());}
  
- // export
- compilerStructs.env = env;
-
- // STACKREF STRUCTS ////////////////////////////////////////////////////////////////
-  function stackReference(){}
-  function localStackReference(name, isBoxed, depth){
-    stackReference.call(this);
-    this.name = name;
-    this.isBoxed = isBoxed;
-    this.depth = depth;
+  // sub-classes of env
+  function emptyEnv(){
+    env.call(this);
+  this.lookup = function(name, depth){ return new plt.compiler.unboundStackReference(name); };
   }
-  localStackReference.prototype = heir(stackReference.prototype);
-  function globalStackReference(name, depth, pos){
-    stackReference.call(this);
-    this.name = name;
-    this.pos = pos;
-    this.depth = depth;
-  }
-  globalStackReference.prototype = heir(stackReference.prototype);
-  function unboundStackReference(name){
-    stackReference.call(this);
-    this.name = name;
-  }
-  unboundStackReference.prototype = heir(stackReference.prototype);
-
-  // position: symbol (listof symbol) -> (number || #f)
-  // Find position of element in list; return false if we can't find the element.
-  function position(x, lst){
-    return (lst.indexOf(x) > -1)? lst.indexOf(x) : false;
-  }
+  emptyEnv.prototype = heir(env.prototype);
  
+  function unnamedEnv(parent){
+    env.call(this);
+    this.parent = parent;
+    this.lookup = function(name, depth){ return this.parent.lookup(name, depth+1); };
+  }
+  unnamedEnv.prototype = heir(env.prototype);
+ 
+  function localEnv(name, boxed, parent){
+    env.call(this);
+    this.name   = name;
+    this.boxed  = boxed;
+    this.parent = parent;
+    this.lookup = function(name, depth){
+      return (name===this.name)? new plt.compiler.localStackReference(name, this.boxed, depth)
+                              : this.parent.lookup(name, depth+1);
+    };
+  }
+  localEnv.prototype = heir(env.prototype);
+ 
+  function globalEnv(names, boxed, parent){
+    env.call(this);
+    this.names  = names;
+    this.boxed  = boxed;
+    this.parent = parent;
+    var that = this;
+    this.lookup = function(name, depth){
+      var pos = this.names.indexOf(name);
+      return (pos > -1)? new plt.compiler.globalStackReference(name, depth, pos)
+                  : this.parent.lookup(name, depth+1);
+    };
+  }
+  globalEnv.prototype = heir(env.prototype);
+  
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
   var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"];
  
@@ -1032,7 +1081,7 @@ function getTopLevelEnv(lang){
  
   // default-module-resolver: symbol -> (module-binding | false)
   // loop through known modules and see if we know this name
-  compilerStructs.defaultModuleResolver = function(name){
+  plt.compiler.defaultModuleResolver = function(name){
     for(var i=0; i< knownModules.length; i++){
 //      if(moduleBindingName(knownModules[i]) === name.val) return knownModules[i];
     }
@@ -1041,7 +1090,7 @@ function getTopLevelEnv(lang){
  
   // default-module-path-resolver: module-path module-path -> module-name
   // Provides a default module resolver.
-  compilerStructs.defaultModulePathResolver = function(path, parentPath){
+  plt.compiler.defaultModulePathResolver = function(path, parentPath){
     // anything of the form wescheme/w+, or that has a known collection AND module
     var parts = path.split("/"),
         collectionName = parts[0],
@@ -1066,7 +1115,7 @@ function getTopLevelEnv(lang){
     this.freeVariables = freeVariables || [];               // (listof symbol)
     this.gensymCounter = gensymCounter || 0;                // number
     this.providedNames = providedNames || makeHash();       // (hashof symbol provide-binding)
-    this.definedNames = definedNames || makeHash();         // (hashof symbol binding)
+    this.definedNames  = definedNames  || makeHash();       // (hashof symbol binding)
  
     this.sharedExpressions = sharedExpressions || makeHash();// (hashof expression labeled-translation)
     // Maintains a mapping between expressions and a labeled translation.  Acts
@@ -1081,9 +1130,9 @@ function getTopLevelEnv(lang){
  
     // For the module system.
     // (module-name -> (module-binding | false))
-    this.moduleResolver = moduleResolver || compilerStructs.defaultModuleResolver;
+    this.moduleResolver = moduleResolver || plt.compiler.defaultModuleResolver;
     // (string module-path -> module-name)
-    this.modulePathResolver = modulePathResolver || compilerStructs.defaultModulePathResolver;
+    this.modulePathResolver = modulePathResolver || plt.compiler.defaultModulePathResolver;
     // module-path
     this.currentModulePath = currentModulePath || defaultCurrentModulePath;
  
@@ -1098,7 +1147,7 @@ function getTopLevelEnv(lang){
     this.usedBindings =  this.usedBindingsHash.values;
  
     this.accumulateDeclaredPermission = function(name, permission){
-      this.declaredPermissions = [[name, position]].concat(this.declaredPermissions);
+      this.declaredPermissions = [[name, permission]].concat(this.declaredPermissions);
       return this;
     };
  
@@ -1111,7 +1160,7 @@ function getTopLevelEnv(lang){
     // accumulateDefinedBinding: binding loc -> pinfo
     // Adds a new defined binding to a pinfo's set.
     this.accumulateDefinedBinding = function(binding, loc){
-      if(compilerStructs.keywords.indexOf(binding.name) > -1){
+      if(plt.compiler.keywords.indexOf(binding.name) > -1){
         throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                   ": this is a reserved keyword and cannot be used"+
                                   " as a variable or function name"])
@@ -1179,10 +1228,9 @@ function getTopLevelEnv(lang){
     };
    
     // gensym: symbol -> [pinfo, symbol]
-    // Generates a unique symbol.
+    // Generates a unique symbol
     this.gensym = function(label){
-      this.gensymCounter++;
-      return [this, new symbolExpr(label+this.gensymCounter)];
+      return [this, new symbolExpr(label+this.gensymCounter++)];
     };
  
     // permissions: -> (listof permission)
@@ -1194,9 +1242,9 @@ function getTopLevelEnv(lang){
         else if(lst.slice(1).indexOf(lst[0]) > -1) return unique.slice(1)
         else return [lst[0]].concat(unique.slice(1));
       }
-      function reducePermissions(permissions, binding){
-        if(binding.isFunction) return binding.functionPermissions.concat(permissions);
-        else if(binding.isConstant) return binding.constantPermissions.concat(permissions);
+      function reducePermissions(permissions, b){
+        if((b instanceof bindingFunction)
+        || (b instanceof bindingConstant)) return permissions.concat(b.permissions);
       }
       return unique(this.usedBindings().reduce(reducePermissions, []));
     }
@@ -1278,7 +1326,7 @@ function getTopLevelEnv(lang){
  // 'base
  // 'moby
  function getBasePinfo(language){
-    var pinfo = new compilerStructs.pinfo();
+    var pinfo = new plt.compiler.pinfo();
     if(language === "moby"){
       pinfo.env = extendEnv_moduleBinding(getTopLevelEnv(language),
                                           mobyModuleBinding);
@@ -1288,10 +1336,13 @@ function getTopLevelEnv(lang){
     return pinfo;
  }
  
-
- compilerStructs.emptyEnv = emptyEnv;
- compilerStructs.getBasePinfo = getBasePinfo;
- compilerStructs.pinfo = pinfo;
- // EXPORT ALL THE STRUCTS NEEDED BY THE COMPILER
- window.compilerStructs = compilerStructs;
- })();
+ plt.compiler.pinfo       = pinfo;
+ plt.compiler.getBasePinfo= getBasePinfo;
+ plt.compiler.isExpression= isExpression;
+ plt.compiler.isDefinition= isDefinition;
+ plt.compiler.env         = env;
+ plt.compiler.emptyEnv    = emptyEnv;
+ plt.compiler.localEnv    = localEnv;
+ plt.compiler.globalEnv   = globalEnv;
+ plt.compiler.unnamedEnv  = unnamedEnv;
+})();

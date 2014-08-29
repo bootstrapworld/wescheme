@@ -1,16 +1,22 @@
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Repl 2.0</title>
+
+<style>
+  td {min-width: 10px; max-width: 300px; overflow: hidden;}
+</style>
 <script type="text/javascript" src="../mzscheme-vm/support.js"></script>
 <script type="text/javascript" src="structures.js"></script>
 <script type="text/javascript" src="compiler.js"></script>
+<script type="text/javascript" src="analyzer.js"></script>
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="lex.js"></script>
 <script type="text/javascript" src="repl2.js"></script>
   
 <script>
-var rows = [];
-var tests = [];
-var passed = 0;
+var rows    = [];
+var tests   = [];
+var passed  = 0;
+var testsRun= 0;
 
 // sameResults : local server -> boolean
 // compare entities using a 3-step process
@@ -50,6 +56,8 @@ function sameResults(x, y){
       // log error if a property is not defined
       if ( ! x.hasOwnProperty(p) ){ return false; }
       if ( ! y.hasOwnProperty(p) ){ return false; }
+      // ignore the hashcode property
+      if(p==="_eqHashCode") continue;
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
       else return false;
@@ -66,64 +74,186 @@ function sameResults(x, y){
   return true;
 }
 
+// set the parent row to pink, and add a link that will load
+// a diff of the expected and recieved output
+function setTestFailureLink(test, expected, recieved){
+  test.style.background = 'pink';
+  test.style.cursor     = 'pointer';
+  test.onclick = function(){compareText(expected,recieved);}
+  return false;
+}
+
+function compareText(expected, recieved){
+  document.getElementById('text1').value = expected;
+  document.getElementById('text2').value = recieved;
+  document.getElementById('compareText').submit();
+}
+
+function loadTests(){
+  var testButton = document.getElementById('runTests'),
+      script  = document.createElement('script'),
+      head    = document.getElementsByTagName('head')[0];
+  testButton.disabled = true;
+  testButton.value = "Loading tests...";
+  head.appendChild(script);
+  script.type = "text/javascript";
+  script.src = "https://spreadsheets.google.com/feeds/list/0AjzMl1BJlJDkdDI2c0VUSHNZMnR6ZVR5S2hXZEdtd1E/1/public/basic?alt=json-in-script&callback=loadSuite";
+}
 
 function loadSuite(json){
+  var which   = document.getElementById('whichTests');
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
-    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: /);
+    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
-               difference = chunks[4], reason = chunks[6];
+               difference = chunks[4], reason = chunks[5], desugar = chunks[6], bytecode = chunks[7],
+        opt = document.createElement('option');
     expr = expr.replace(/^\'\'/,"'");
-    tests.push({expr: expr, local: local, server: server, reason: reason});
+    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar, bytecode: bytecode});
+    opt.value=opt.innerHTML = Number(i)+1;
+    which.appendChild(opt);
   }
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
-  document.getElementById('runTests').value="Run test-suite";
+  document.getElementById('runTests').value="Run test:";
+  document.getElementById('runTests').onclick=function(){runTests(true);};
+  document.getElementById('memoryTest').disabled=false;
   console.log('Test Suite data retrieved from Google Drive: '+tests.length+' tests loaded');
+  which.style.display = 'inline-block';
 }
 
-
-function runTests(){
-  function test(expr, expected){
-    console.log('expecting: '+expected);
-    try {
-      var sexp      = lex(expr,"<definitions>"), // lex
-          AST       = parse(sexp),              // parse
-          desugared = desugar(AST),             // desugar
-          program   = desugared[0],
-          pinfo     = desugared[1],
-          pinfo2    = analyze(program);         // analyze
-    } catch(e) {
-      console.log('recieved: '+e);
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      if(expected === "LOCAL IS BETTER") return true;
-      if(expected === "PASS") return false;
-      return sameResults(JSON.parse(e), JSON.parse(expected));
-    }
-    console.log('recieved: PASS');
-    return (expected === "PASS" || expected === "LOCAL IS BETTER");
-  }
-  
-    console.log('running tests');
-    for(var i=0; i<tests.length; i++){
-      // run the test
-      console.log('///// TEST '+ (i+1) +' ////////////////');
-      console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server);
-      if(result) passed++;
-      document.getElementById('status').innerHTML = passed+'/'+(i+1)+' passed';
+function runTests(verbose){
+  function test(expr, expected, desugarRef, bytecodeRef, generateBytecode){
       // show the result
-      var table = document.getElementById('testResults'),
-          row = document.createElement('tr'),
-          expr  = document.createElement('td');
-      row.style.background = result? 'lightgreen' : 'pink';
-      expr.style.fontFamily = 'monospace';
-      expr.style.width = '500px';
-      row.appendChild(document.createTextNode((i+1)+') '));
-      row.appendChild(expr);
-      expr.innerHTML = tests[i].expr;
+      var row   = document.createElement('tr'),
+          num   = document.createElement('td'),
+          test  = document.createElement('td'),
+          lex   = document.createElement('td'),
+          parse = document.createElement('td'),
+          desugar=document.createElement('td'),
+          bytecode=document.createElement('td');
+      num.innerHTML  = (i+1)+')'; // make test nums 1-aligned, instead of 0-aligned
+      test.innerHTML = expr;      // show which expr we're testing
+      row.appendChild(num);
+      row.appendChild(test);
+      row.appendChild(lex);
+      row.appendChild(parse);
+      row.appendChild(desugar);
+      row.appendChild(bytecode);
       table.appendChild(row);
+      row.style.background = 'lightgreen';
+                        
+      // LEX: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      lex.innerHTML = 'lex';
+      try{
+        var sexp = plt.compiler.lex(expr,"<definitions>");
+      } catch (recieved) {
+        if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
+        else{
+          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+          else{ return setTestFailureLink(row, expected, recieved);}
+        }
+      }
+      lex.style.background = 'lightgreen';
+
+      // PARSE: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      parse.innerHTML = 'parse';
+      try{
+        var AST = plt.compiler.parse(sexp);
+      } catch (recieved) {
+        if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
+        else{
+          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
+          else{ return setTestFailureLink(row, expected, recieved);}
+        }
+      }
+      parse.style.background = 'lightgreen';
+
+      // DESUGAR AND ANALYZE: If we pass when we shouldn't, set to pink and return false.
+      // Catch: If we fail better than the server, set to blue and return true.
+      // Catch: If we fail equal to the server, set to green and return true.
+      // Catch: If we fail when we shoulnd't, set to pink and return false
+      desugar.innerHTML = 'desugar';
+      try{
+        var desugared = plt.compiler.desugar(AST),
+            recieved  = program=desugared[0],
+            pinfo     = desugared[1],
+            pinfo2    = plt.compiler.analyze(program);
+      } catch (recieved) {
+        if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
+        if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
+        else if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
+        else{ return setTestFailureLink(row, expected, recieved);}
+      }
+      // if we don't have a desugarRef for this test, call it a questinonable pass move on
+      if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
+      expected = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
+      recieved = recieved.toString().replace(/\s*/g,"");// remove whitespace from test output
+      if(expected !== recieved) { return setTestFailureLink(row, expected, recieved);}
+      desugar.style.background = 'lightgreen';
+
+if(generateBytecode){
+      bytecode.innerHTML = 'bytecode';
+      try {
+        console.log("// COMPILATION: //////////////////////////////\n");
+        var recieved    = JSON.stringify(plt.compiler.compile(program, pinfo2));
+      } catch (recieved) {
+        if(recieved instanceof unimplementedException){throw recieved.str + " NOT IMPLEMENTED";}
+        throw Error("COMPILATION ERROR\n"+getError(recieved).toString());
+      }
+      // if we don't have a bytecodeRef for this test, call it a questinonable pass move on
+      if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
+      expected = JSON.parse(bytecodeRef);
+      recieved = JSON.parse(recieved);
+      console.log((0,eval)('('+expected.bytecode+')'));
+      try { console.log((0,eval)('('+recieved.bytecode+')'));}
+      catch(e){console.log('MALFORMED BYTECODE:\n'+recieved.bytecode); return setTestFailureLink(row, expected.bytecode, recieved.bytecode); }
+      if(sameResults((0,eval)('('+expected.bytecode+')'), (0,eval)('('+recieved.bytecode+')'))) {
+        desugar.style.background = 'lightgreen'; return true;
+      } else {
+                        console.log('compared\n'+expected.bytecode+'\nto\n'+recieved.bytecode);
+        return setTestFailureLink(row, JSON.stringify(expected.bytecode), JSON.stringify(recieved.bytecode));
+      }
+
+      // EVERYTHING PASSED! WHOOPIE!
+      bytecode.style.background = 'lightgreen';
+}
+      return true;
+ 
     }
+ 
+    if(verbose) console.log('running tests');
+    var table = document.getElementById('testResults'),
+        generateBytecode = document.getElementById('generateBytecode').checked,
+        start = 0, end = tests.length;
+    var whichValue = document.getElementById('whichTests').value;
+    if(whichValue !== "all"){start=Number(whichValue)-1; end=start+1;}
+    for(var i=start; i<end; i++){
+      // run the test
+      if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
+      if(verbose) console.log('testing :'+tests[i].expr);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode, generateBytecode);
+      if(result) passed++;
+      testsRun++;
+      document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
+    }
+}
+                        
+function runMemoryTest(){
+  var runs = prompt("How many runs of the test suite would you like to do?"
+                    +"This could take a while depending on how many runs are entered,"
+                    +"and your computer may become unresponsive."
+                    , 20);
+  for(i=0; i<runs; i++) runTests(false);
+  console.log('Memory test complete');
 }
 </script>
 
@@ -131,12 +261,24 @@ function runTests(){
 <body onload="repl2_setup()">
 <textarea cols="80" rows="5" type="text" name="repl-input" id="repl-input" onkeypress="readFromRepl(event)"></textarea>
 <hr>
-<input type="button" disabled="true" value="Loading test-suite" id="runTests" onclick="runTests()"/>
+<input type="button" value="Load test-suite" id="runTests" onclick="loadTests();"/>
+<select id="whichTests" style="display: none;">
+  <option value="all">all</option>
+</select>
+<input type="checkbox" id="generateBytecode" />Generate bytecode during tests
+<br/>
+<input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
 <br/>
 <span id="status"></span>
-<table id="testResults">
+<table id="testResults" style="font-family:monospace;">
 </table>
-<script type="text/javascript" src="https://spreadsheets.google.com/feeds/list/0AjzMl1BJlJDkdDI2c0VUSHNZMnR6ZVR5S2hXZEdtd1E/1/public/basic?alt=json-in-script&callback=loadSuite"></script>
+
+<form id="compareText" target="_blank" method="post" action="http://text-compare.com/" style="display: none;">
+	<textarea name="text1" id="text1"></textarea>
+	<textarea name="text2" id="text2"></textarea>
+	<button type="submit" id="compareButton">Compare!</button>
+</form>
+
 
 </body>
 </html>

@@ -10,7 +10,7 @@ function formatOutput(x) {
   var res = [];
 
   for(var i = 0; i < x.length; i++) {
-    res[i] = sexpToString(x[i]);
+    res[i] = plt.compiler.sexpToString(x[i]);
   }
   return res;
 }
@@ -21,17 +21,6 @@ function repl2_setup(__nenv, __venv) {
   output_list = document.getElementById("output-list");
   __history_front = [];
   __history_back = [];
-}
-
-// adds an element to the history
-function addToHistory(val) {
-  while(__history_back.length > 0) {
-    var temp = __history_back.pop();
-
-    if(temp != "")
-      __history_front.push(temp);
-  }
-  __history_front.push(val);
 }
 
 // returns the element in the history at the current index.
@@ -48,6 +37,17 @@ function popElementFromHistory(dir, current) {
   return current;
 }
 
+function getError(e){
+  try{
+    var err =  JSON.parse(e),
+        structuredErr = JSON.parse(err['structured-error']);
+    return structuredErr.message;
+  } catch (JSONerror){
+    console.log('!!!!!!!!!!!! FATAL ERROR !!!!!!!!!!!!!!!');
+    throw(e);
+  }
+}
+
 function readFromRepl(event) {
   var key = event.keyCode;
 
@@ -56,38 +56,38 @@ function readFromRepl(event) {
     var progres;
     try {
       console.log("// LEXING: ///////////////////////////////////\nraw:");
-      var start = new Date().getTime(),
-          sexp = lex(aSource),
-          end = new Date().getTime(),
-          lexTime = Math.floor(end-start);
+      var start     = new Date().getTime(),
+          sexp      = plt.compiler.lex(aSource),
+          end       = new Date().getTime(),
+          lexTime   = Math.floor(end-start);
       console.log(sexp);
-      console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+sexpToString(sexp));
+      console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+plt.compiler.sexpToString(sexp));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       console.log(e);
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("LEXING ERROR\n"+e.toString());
+      console.log(getError(e));
+      throw Error("LEXING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// PARSING: //////////////////////////////////\nraw:");
-      var start = new Date().getTime(),
-          AST = parse(sexp);
-          end = new Date().getTime(),
+      var start     = new Date().getTime(),
+          AST       = plt.compiler.parse(sexp);
+          end       = new Date().getTime(),
           parseTime = Math.floor(end-start);
       console.log(AST);
       console.log("Parsed in "+parseTime+"ms. Parsed as:\n"+AST.join("\n"));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("PARSING ERROR\n"+e);
+      console.log(getError(e));
+      throw Error("PARSING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// DESUGARING: //////////////////////////////\nraw");
-      var start = new Date().getTime(),
-          ASTandPinfo = desugar(AST),
-          program = ASTandPinfo[0],
-          pinfo = ASTandPinfo[1],
-          end = new Date().getTime(),
+      var start       = new Date().getTime(),
+          ASTandPinfo = plt.compiler.desugar(AST),
+          program     = ASTandPinfo[0],
+          pinfo       = ASTandPinfo[1],
+          end         = new Date().getTime(),
           desugarTime = Math.floor(end-start);
       console.log(program);
       console.log("Desugared in "+desugarTime+"ms. Desugared to:\n"+program.join("\n"));
@@ -96,49 +96,46 @@ function readFromRepl(event) {
     } catch (e) {
       console.log(e);
       if(e instanceof unimplementedException){ throw e.str + " NOT IMPLEMENTED";}
-      console.log(JSON.parse(JSON.parse(e)['structured-error']).message);
-      throw Error("DESUGARING ERROR\n"+e);
+      console.log(getError(e));
+      throw Error("DESUGARING ERROR\n"+getError(e).toString());
     }
     try {
       console.log("// ANALYSIS: //////////////////////////////\n");
-      var start = new Date().getTime();
-      window.pinfo = analyze(program);
-      var end = new Date().getTime(),
-      analysisTime = Math.floor(end-start);
+      var start       = new Date().getTime(),
+          pinfo       = plt.compiler.analyze(program);
+      var end         = new Date().getTime(),
+      analysisTime    = Math.floor(end-start);
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("ANALYSIS ERROR\n"+e);
+      throw Error("ANALYSIS ERROR\n"+getError(e).toString());
     }
-    try {
+    
+    var compileTime = 0;
+/*    try {
       console.log("// COMPILATION: //////////////////////////////\n");
-      var start = new Date().getTime();
-      window.pinfo = compile(program, pinfo);
-      var end = new Date().getTime(),
-      compileTime = Math.floor(end-start);
+      var start       = new Date().getTime(),
+          response    = plt.compiler.compile(program, pinfo),
+          end         = new Date().getTime(),
+      compileTime     = Math.floor(end-start);
       console.log("Compiled in "+compileTime+"ms");
+      console.log("response:");
+      console.log(JSON.stringify(response));
     } catch (e) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("COMPILATION ERROR\n"+e);
+      throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
+ */
+ 
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                 + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-                + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime)+"ms");
+                + "Compiling:  " + compileTime + "ms\n"
+                + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime+compileTime)+"ms");
     
-    
-/*    try {
-      var program = compile(AST);
-    } catch (e) {
-      console.log("COMPILE ERROR:\n");
-      console.log(e);
-    }
-*/
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
-    output_list.insertBefore(temp, repl_input_li);
-    addToHistory(aSource);
 
   } else if(key === 38) {
     repl_input.value = popElementFromHistory(1, repl_input.value);
