@@ -594,9 +594,8 @@ var WeSchemeEditor;
       // Create the picker window itself and display it.
       function createPicker() {
           var view = new google.picker.View(google.picker.ViewId.DOCS);
-          view.setMimeTypes("image/png,image/jpeg,image/jpg");
+          view.setMimeTypes("image/png,image/jpeg,image/jpg,image/gif");
           var picker = new google.picker.PickerBuilder()
-        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
         .setAppId(APP_ID)
         .addView(view)
         .addView(new google.picker.DocsUploadView())
