@@ -481,29 +481,30 @@ WeSchemeInteractions = (function () {
 
                     var supportsFullScreen = function() {
                         var elem = document.createElement("div");
-                        return ((elem.webkitRequestFullscreen ||
-                                 elem.mozRequestFullScreen || 
-                                 elem.requestFullscreen) !== undefined);
+                        return ((elem.webkitRequestFullscreen
+                                || elem.mozRequestFullScreen
+                                || elem.msRequestFullscreen
+                                || elem.requestFullscreen) !== undefined);
                     };
 
                     var toggleFullScreen = function() {
                         var elem;
+                                             
+                        // If there's a unique canvas, highlight that one.
                         if (innerArea.find("canvas").length === 1) {
-                            // If there's a unique canvas, highlight that one.
                             elem = innerArea.find("canvas").get(0);
-                        } else { 
-                            // Otherwise, just highlight the whole toplevel node.
+                        // Otherwise, just highlight the whole toplevel node.
+                        } else {
                             elem = innerArea.get(0);
                         }
-                        if (elem.webkitRequestFullscreen) {
-                            elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                        } else {
-                            if (elem.mozRequestFullScreen) {
-                                elem.mozRequestFullScreen();
-                            } else {
-                                elem.requestFullscreen();
-                            }
-                        }
+                                       
+                        // assign fullscreen requester to be be native, or the vendor-prefixed function
+                        elem.requestFullscreen = elem.requestFullscreen
+                                              || elem.mozRequestFullScreen // firefox capitalizes the 'S'
+                                              || elem.webkitRequestFullscreen
+                                              || elem.msRequestFullscreen;
+                        // get fullscreen access
+                        elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
                     };
 
                     if (supportsFullScreen()) {
