@@ -106,9 +106,10 @@ var nextToken = (function() {
 			var word = source.current();
 			if (looksLikeNumber(word)) {
 				return {type: "number", style: "scheme-number", content: word};
-			} else {
-				var ret = {type: "variable", style: "scheme-symbol", content: word};
-				return ret;
+			} else if(word==="true" || word==="false"){
+				return {type: "variable", style: "scheme-boolean", content: word};
+      }	else {
+        return {type: "variable", style: "scheme-symbol", content: word};
 			}
 		};
 
