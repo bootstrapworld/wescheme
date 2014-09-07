@@ -5,8 +5,6 @@ plt.compiler = plt.compiler || {};
 /*
  TODO
  - have modulePathResolver return the proper name!
- - test cases get desugared into native calls
- - how to add struct binding when define-struct is desugared away?
 */
 
 (function () {
@@ -31,8 +29,7 @@ plt.compiler = plt.compiler || {};
         stxQuote    = new quotedExpr(stx),
         locQuote    = new quotedExpr(loc.toVector()),
         boolLocQuote= new quotedExpr(boolExpr.location.toVector()),
-        runtimeCall = new callExpr(verifyCall
-                                   , [stxQuote, locQuote, boolExpr, boolLocQuote]);
+        runtimeCall = new callExpr(verifyCall, [stxQuote, locQuote, boolExpr, boolLocQuote]);
     runtimeCall.location = verifyCall.location = boolExpr.location;
     stxQuote.location=locQuote.location=boolLocQuote.location = boolExpr.location;
     tagApplicationOperator_Module(runtimeCall, 'moby/runtime/kernel/misc');
@@ -106,7 +103,9 @@ plt.compiler = plt.compiler || {};
         makeStructTypeCall = new callExpr(makeStructTypeFunc, makeStructTypeArgs);
     // set location for all of these nodes
     [makeStructTypeCall, makeStructTypeFunc].concat(idSymbols, makeStructTypeArgs).forEach(function(p){p.location = that.location});
-    var defineValuesStx = [new defVars([this.name].concat(idSymbols), makeStructTypeCall)],
+ 
+    // make the define-values stx object, but store the original stx for define-struct
+    var defineValuesStx = [new defVars([this.name].concat(idSymbols), makeStructTypeCall, this.stx)],
         selectorStx = [];
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
@@ -168,13 +167,18 @@ plt.compiler = plt.compiler || {};
     function bindingToDefn(b){
       var def = new defVar(b.first, b.second);
       def.location = b.location;
-      return def};
+      return def
+    };
     var localAndPinfo = new localExpr(this.bindings.map(bindingToDefn), this.body).desugar(pinfo);
     localAndPinfo[0].location = this.location;
     return localAndPinfo;
  };
  // lets become calls
  letExpr.prototype.desugar = function(pinfo){
+    // utility functions for accessing first and second
+    function coupleFirst(x) { return x.first; };
+    function coupleSecond(x) { return x.second; };
+
     var ids   = this.bindings.map(coupleFirst),
         exprs = this.bindings.map(coupleSecond),
         lambda= new lambdaExpr(ids, this.body, this.stx),
@@ -412,11 +416,36 @@ plt.compiler = plt.compiler || {};
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVars.prototype.collectDefinitions = function(pinfo){
-    var that = this;
-    return this.names.reduce(function(pinfo, id){
-      var binding = new constantBinding(id.val, false, [], id.location);
-      return pinfo.accumulateDefinedBinding(binding, that.location);
-    }, pinfo);
+    var that = this,
+        fieldToAccessor = function(f){return that.stx[1].val+"-"+f.val;},
+        fieldToMutator = function(f){return "set-"+that.stx[1].val+"-"+f.val+"!";};
+    // if it's define-struct, create a struct binding
+    if(that.stx[0].val === "define-struct"){
+      var id      = that.stx[1].val,
+          fields  = that.stx[2],
+          constructorId = "make-"+id,
+          predicateId   = id+"?",
+          selectorIds   = fields.map(fieldToAccessor),
+          mutatorIds    = fields.map(fieldToMutator),
+          // build bindings out of these ids
+          structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
+                                               selectorIds, mutatorIds, null, that.location),
+          constructorBinding = bf(constructorId, false, fields.length, false, that.location),
+          predicateBinding   = bf(predicateId, false, 1, false, that.location),
+          mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
+          mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
+// COMMENTED OUT ON PURPOSE:
+// these iss are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
+// selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
+          // assemble all the bindings together
+          bindings = [structureBinding, constructorBinding, predicateBinding, mutatorBinding].concat(mutatorBindings);
+          return pinfo.accumulateDefinedBindings(bindings, that.location);
+    } else {
+      return this.names.reduce(function(pinfo, id){
+        var binding = new constantBinding(id.val, false, [], id.location);
+        return pinfo.accumulateDefinedBinding(binding, that.location);
+      }, pinfo);
+    }
  };
 
  // When we hit a require, we have to extend our environment to include the list of module
@@ -482,17 +511,18 @@ plt.compiler = plt.compiler || {};
 
  // extend the Program class to collect provides
  // Program.collectProvides: pinfo -> pinfo
- Program.prototype.collectProvides = function(pinfo){
-    return pinfo;
- };
+ Program.prototype.collectProvides = function(pinfo){ return pinfo; };
  provideStatement.prototype.collectProvides = function(pinfo){
     var that = this;
+ 
+    function addProvidedName(id){ pinfo.providedNames.put(id, new provideBindingId(id)); }
+ 
     // collectProvidesFromClause : pinfo clause -> pinfo
     function collectProvidesFromClause(pinfo, clause){
       // if it's a symbol, make sure it's defined (otherwise error)
       if (clause instanceof symbolExpr){
         if(pinfo.definedNames.containsKey(clause.val)){
-          pinfo.providedNames.put(clause.val, new provideBindingId(clause));
+          addProvidedName(clause.val);
           return pinfo;
         } else {
           throwError(new types.Message(["The name '"
@@ -504,14 +534,15 @@ plt.compiler = plt.compiler || {};
       // NOTE: ONLY (struct-out id) IS SUPPORTED AT THIS TIME
       } else if(clause instanceof Array){
           if(pinfo.definedNames.containsKey(clause[1].val) &&
-             (pinfo.definedNames.get(clause[1].val) instanceof bindingStructure)){
-              // add the entire bindingStructure to the provided binding, so we
+             (pinfo.definedNames.get(clause[1].val) instanceof structBinding)){
+              // add the entire structBinding to the provided binding, so we
               // can access fieldnames, predicates, and permissions later
-              var b = new provideBindingStructId(clause[1], pinfo.definedNames.get(clause[1].val));
-              pinfo.providedNames.put(clause.val, b);
+              var b = pinfo.definedNames.get(clause[1].val),
+                  fns = [b.name, b.constructor, b.predicate].concat(b.accessors, b.mutators);
+                  fns.forEach(addProvidedName);
               return pinfo;
           } else {
-            throwError(new types.Message(["The name '"
+            throwError(new types.Message(["The struct '"
                                           , new types.ColoredPart(clause[1].toString(), clause[1].location)
                                           , "', is not defined in the program, and cannot be provided"])
                        , clause.location);
@@ -636,4 +667,6 @@ plt.compiler = plt.compiler || {};
  /////////////////////
  plt.compiler.desugar = function(p, pinfo){return desugarProgram(p, pinfo, true)};
  plt.compiler.analyze = analyze;
+ plt.compiler.provideBindingId = provideBindingId;
+ plt.compiler.provideBindingStructId = provideBindingStructId;
 })();

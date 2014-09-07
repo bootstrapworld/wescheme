@@ -1,6 +1,7 @@
 // if not defined, declare the compiler object as part of plt
 window.plt   = window.plt   || {};
 plt.compiler = plt.compiler || {};
+
 /*
  TODO
  - have modulePathResolver return the proper name!
@@ -100,7 +101,7 @@ function checkDuplicateIdentifiers(lst, stx, loc){
   }
 }
 
-// couples = pair
+// couple = pair
 function couple(first, second) {
   this.first = first;
   this.second = second;
@@ -108,8 +109,6 @@ function couple(first, second) {
     return "("+this.first.toString() +" "+this.second.toString()+")";
   };
 };
-function coupleFirst(x) { return x.first; };
-function coupleSecond(x) { return x.second; };
 
 /**************************************************************************
  *
@@ -462,10 +461,10 @@ function functionBinding(name, moduleSource, minArity, isVarArity, permissions, 
   return this;
 }
 
-// bindingStructue: A binding to a structure.
-// bindingStructue : symbol, ?, (listof symbol), symbol, symbol, (listof symbol) (listof symbol) (listof permission), location -> Binding
-function bindingStructure(name, moduleSource, fields, constructor,
-                          predicate, accessors, mutators, permissions, loc){
+// structBinding: A binding to a structure.
+// structBinding : symbol, ?, (listof symbol), symbol, symbol, (listof symbol) (listof symbol) (listof permission), location -> Binding
+function structBinding(name, moduleSource, fields, constructor,
+                      predicate, accessors, mutators, permissions, loc){
   this.name = name;
   this.moduleSource = moduleSource;
   this.fields = fields;
@@ -713,7 +712,8 @@ function bindingStructure(name, moduleSource, fields, constructor,
     // accumulateBindings: (listof binding) Loc -> pinfo
     // Adds a list of defined bindings to the pinfo's set.
     this.accumulateDefinedBindings = function(bindings, loc){
-      bindings.forEach(function(b){this.accumulateDefinedBinding(b, loc);});
+      var that = this;
+      bindings.forEach(function(b){that.accumulateDefinedBinding(b, loc);});
       return this;
     };
  
@@ -771,25 +771,26 @@ function bindingStructure(name, moduleSource, fields, constructor,
     // getExposedBindings:  -> (listof binding)
     // Extract the list of the defined bindings that are exposed by provide.
     this.getExposedBindings = function(){
+      var that = this;
       // lookupProvideBindingInDefinitionBindings: provide-binding compiled-program -> (listof binding)
       // Lookup the provided bindings.
       function lookupProvideBindingInDefinitionBindings(provideBinding){
-        var binding;
-        if(this.definedNames.containsKey(provideBinding.stx)){
-          binding = checkBindingCompatibility(binding, this.definedNames.get(provideBinding.stx));
-        } else {
-          throwError(new types.Message(["provided-name-not-defined: ", provideBinding.stx]));
+        // if it's not defined, throw an error
+        if(!that.definedNames.containsKey(provideBinding.symbl)){
+          throwError(new types.Message(["provided-name-not-defined: ", provideBinding.symbl]));
         }
+        // if it IS defined, let's examine it and make sure it is what it claims to be
+        var binding = checkBindingCompatibility(binding, that.definedNames.get(provideBinding.symbl));
 
         // ref: symbol -> binding
         // Lookup the binding, given the symbolic identifier.
-        function ref(id){ return this.definedNames.get(id); }
- 
+        function ref(id){ return that.definedNames.get(id); }
+
         // if it's a struct provide, return a list containing the constructor and predicate,
         // along with all the accessor and mutator functions
-        if(provideBinding instanceof structId){
-          [binding, ref(binding.structureConstructor), ref(binding.structurePredicate)].concat(
-              binding.structureAccessors.map(ref), binding.structureMutators.map(ref));
+        if(provideBinding instanceof plt.compiler.provideBindingStructId){
+          return [ref(binding.constructor), ref(binding.predicate)].concat(
+              binding.accessors.map(ref), binding.mutators.map(ref));
         } else {
           return [binding];
         }
@@ -798,33 +799,27 @@ function bindingStructure(name, moduleSource, fields, constructor,
       // decorateWithPermissions: binding -> binding
       // HACK!
       function decorateWithPermissions(binding){
-        var bindingEntry = function(entry){return entry[0]===binding.id;},
-            filteredPermissions = this.declaredPermissions.filter(bindingEntry);
-        binding.updatePermissions(filteredPermissions.map(function(p){return p[1];}));
+        var bindingEntry = function(entry){return entry[0]===binding.name;},
+            filteredPermissions = that.declaredPermissions.filter(bindingEntry);
+        binding.permissions = filteredPermissions.map(function(p){return p[1];});
         return binding;
       }
 
       // Make sure that if the provide says "struct-out ...", that the exported binding
       // is really a structure.
       function checkBindingCompatibility(binding, exportedBinding){
-        if(binding instanceof structureId){
-          if(exportedBinding instanceof structure){
-            return exportedBinding;
-          } else {
-            throwError(new types.Message(["provided-structure-not-structure: ", exportedBinding.stx]));
-          }
+        if(  (binding instanceof plt.compiler.provideBindingStructId)
+          && (!(exportedBinding instanceof structBinding))){
+            throwError(new types.Message(["provided-structure-not-structure: ", exportedBinding.symbl]));
         } else {
           return exportedBinding;
         }
       }
  
-      var keys = this.providedNames.keys, bindings = this.providedNames.values;
       // for each provide binding, ensure it's defined and then decorate with permissions
       // concat all the permissions and bindings together, and return
-      return bindings.reduce(function(acc, b){
-         acc.concat(decorateWithPermissions(lookupProvideBindingInDefinitionBindings(b)));
-        }, []);
- 
+      bindings = bindings.reduce(function(acc, b){ return acc.concat(lookupProvideBindingInDefinitionBindings(b)); }, []);
+      return bindings.map(decorateWithPermissions);
     };
  
     this.toString = function(){

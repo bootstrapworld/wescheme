@@ -494,7 +494,6 @@ plt.compiler = plt.compiler || {};
                                          ,["xml->s-exp", 1]
                                          
                                          // Vectors
-                                           
                                          ,["build-vector", 2]
                                          // FIXME: should only take one or two arguments", not vararity
                                          ,["make-vector", 1, true]
