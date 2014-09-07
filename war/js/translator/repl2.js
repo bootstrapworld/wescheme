@@ -103,6 +103,7 @@ function readFromRepl(event) {
       console.log("// ANALYSIS: //////////////////////////////\n");
       var start       = new Date().getTime(),
           pinfo       = plt.compiler.analyze(program);
+      window.pinfo = pinfo;
       var end         = new Date().getTime(),
       analysisTime    = Math.floor(end-start);
       console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");

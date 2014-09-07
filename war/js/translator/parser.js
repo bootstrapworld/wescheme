@@ -135,7 +135,7 @@ plt.compiler = plt.compiler || {};
                                       , new types.MultiPart(wording2, extraLocs, false)])
                      , sexp.location);
       }
-      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr), sexp[0]);
+      return new defStruct(parseIdExpr(sexp[1]), sexp[2].map(parseIdExpr), sexp);
     }
     function parseMultiDef(sexp){
       // is it just (define-values)?
