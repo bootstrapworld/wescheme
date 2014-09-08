@@ -353,7 +353,7 @@
 	    <% if (userSession != null) { %>
 	    <li><a id="save"><span>Save</span></a></li>
 	    <li><a id="share"><span>Share</span></a></li>
-      <li><a id="images"><span>Images</span></a></li>
+<!---      <li><a id="images"><span>Images</span></a></li> --->
 	    <% } %>
         <li><a id="recipe"><span>Recipe</span></a></li>
 	  </ul>
