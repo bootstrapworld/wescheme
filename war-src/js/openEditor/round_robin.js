@@ -6,6 +6,8 @@ goog.provide("plt.wescheme.RoundRobin");
 
 (function() {
     "use strict";
+ 
+    if(!console) {console={}; console.log = function(){};}
     //////////////////////////////////////////////////////////////////////
 
 
