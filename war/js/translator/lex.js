@@ -688,6 +688,9 @@ plt.compiler = plt.compiler || {};
           symbol = new symbolExpr("unquote");
         }
       }
+
+      symbol.location = new Location(column, sLine, iStart, i - iStart + 1);
+
       // read the next non-comment sexp
       while(!nextSExp || (nextSExp instanceof Comment)){
         i = chewWhiteSpace(str, i);

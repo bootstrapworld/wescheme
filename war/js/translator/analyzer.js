@@ -361,15 +361,15 @@ plt.compiler = plt.compiler || {};
  function desugarQuasiQuotedListElement(element, pinfo, depth) {
    if (depth === 0 && element instanceof unquoteSplice) {
      return element.desugar(pinfo, depth);
-   } else if (element instanceof Array) {
-     return desugarQuasiQuotedList(element, depth, depth);
    } else {
-     var listArgs = [element.desugar(pinfo, depth)[0]]
+     var argument = (element instanceof Array) ?
+       desugarQuasiQuotedList(element, depth, depth)[0] :
+       element.desugar(pinfo, depth)[0]
      var listSym = new symbolExpr('list')
-     var listCall = new callExpr(listSym, listArgs)
+     var listCall = new callExpr(listSym, [argument])
      listSym.parent = listCall
-     listSym.location = element.location
-     listCall.location = element.location
+     listSym.location = argument.location
+     listCall.location = argument.location
      return [listCall, pinfo];
    }
  }
@@ -377,9 +377,13 @@ plt.compiler = plt.compiler || {};
  function desugarQuasiQuotedList(element, pinfo, depth) {
    var appendArgs = element.map(function(x){return desugarQuasiQuotedListElement(x, pinfo, depth)[0]})
    var appendSym = new symbolExpr('append')
-   appendSym.location = element.location
+   var loc = (typeof element.location != 'undefined') ? element.location :
+             ((element instanceof Array) && (typeof element[0].location != 'undefined')) ? element[0].location :
+             (throwError( types.Message(["ASSERTION FAILURE: couldn't find a usable location"])
+                        , new Location(0,0,0,0)))
+   appendSym.location = loc
    var appendCall = new callExpr(appendSym, appendArgs)
-   appendCall.location = element.location
+   appendCall.location = loc
    return [appendCall, pinfo];
  }
 
