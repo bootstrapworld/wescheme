@@ -44,6 +44,10 @@ function sameResults(x, y){
     for (var i=0;i<fields.length; i++) { obj2[fields[i]] = obj[fields[i]]; }
     return obj2;
   }
+  
+  function canonicalizeLiteral(lit){
+    return lit.toString().replace(/\s*/g,"").toLowerCase();
+  }
 
   // if either one is a JSON string, convert it to an object
   try{ var x = JSON.parse(x); }
@@ -107,7 +111,7 @@ function sameResults(x, y){
     }
   // 4)if they are literals, they must be identical
   } else {
-      if (x !== y){
+      if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
         console.log('(expexted, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
         return false;
       }
