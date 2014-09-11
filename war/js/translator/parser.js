@@ -636,6 +636,14 @@ plt.compiler = plt.compiler || {};
  
     function parseCondCouple(clause) {
         var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
+        // the only un-parenthesized keyword allowed in the first slot is 'else'
+        if((plt.compiler.keywords.indexOf(test.val) > -1) && (test.val !== "else")){
+          throwError(new types.Message([new types.ColoredPart(test.val, test.location)
+                                        , ": expected an open parenthesis before "
+                                        , test.val
+                                        , ", but found none"]),
+                     test.location);
+        }
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
