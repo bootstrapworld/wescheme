@@ -161,12 +161,13 @@ plt.compiler = plt.compiler || {};
       // too many parts?
       if(sexp.length > 3){
           var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
-              wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
-          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                        , ": expects a list of variables and a body"
+              wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts"),
+              msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                       , ": expects a list of variables and a body"
                                         + ", but found "
-                                        , new types.MultiPart(wording, extraLocs, false)])
-                     , sexp.location);
+                                       , new types.MultiPart(wording, extraLocs, false)]);
+          msg.betterThanServer = true;
+          throwError(msg, sexp.location);
       }
       return new defVars(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
     }
@@ -311,10 +312,11 @@ plt.compiler = plt.compiler || {};
       // is it a list of not-all-symbols?
       sexp[1].forEach(function(arg){
         if (!(arg instanceof symbolExpr)){
-          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                        , ": expected a list of variables after lambda, but found "
-                                        , new types.ColoredPart("something else", arg.location)]),
-                    sexp.location);
+          var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                       , ": expected a list of variables after lambda, but found "
+                                       , new types.ColoredPart("something else", arg.location)]);
+          msg.betterThanServer = true;
+          throwError(msg, sexp.location);
         }
       });
       // is it just (lambda (x))?
@@ -326,11 +328,12 @@ plt.compiler = plt.compiler || {};
       // too many expressions?
       if(sexp.length > 3){
         var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
-            wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+            wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts"),
+            msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                       , ": expected only one expression for the function body, but found "
-                                      , new types.MultiPart(wording, extraLocs, false)]),
-                    sexp.location);
+                                     , new types.MultiPart(wording, extraLocs, false)]);
+            msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp[0]);
     }
@@ -464,10 +467,11 @@ plt.compiler = plt.compiler || {};
       }
       // is it just (let* <not-list>)?
       if(!(sexp[1] instanceof Array)){
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                      , ": expected sequence of key/value pairs, but given "
-                                      , new types.ColoredPart("something else", sexp[1].location)]),
-                     sexp.location);
+        var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                     , ": expected sequence of key/value pairs, but given "
+                                     , new types.ColoredPart("something else", sexp[1].location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       // is it a list of not-all-bindings?
       sexp[1].forEach(function(binding){
@@ -516,9 +520,10 @@ plt.compiler = plt.compiler || {};
     function parseBeginExpr(sexp) {
       // is it just (begin)?
       if(sexp.length < 2){
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                      , ": Inside a begin, expected to find a body, but nothing was found."]),
-                    sexp.location);
+        var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                     , ": Inside a begin, expected to find a body, but nothing was found."]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       return new beginExpr(rest(sexp).map(parseExpr), sexp[0]);
     }
@@ -674,16 +679,18 @@ plt.compiler = plt.compiler || {};
    function parseCaseExpr(sexp) {
     // is it just (case)?
     if(sexp.length === 1){
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                      , ": expected at least one clause after case, but nothing's there"]),
-                    sexp.location);
+        var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                     , ": expected at least one clause after case, but nothing's there"]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
     }
     var caseLocs = [sexp[0].location, sexp.location.start(), sexp.location.end()];
     if(sexp.length === 2){
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected a clause with at least one choice (in parentheses)"
-                                      + " and an answer after the expression, but nothing's there"]),
-                    sexp.location);
+        var msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                    , ": expected a clause with at least one choice (in parentheses)"
+                                     + " and an answer after the expression, but nothing's there"]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
     }
                                                                   
     function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
@@ -691,41 +698,46 @@ plt.compiler = plt.compiler || {};
     function checkCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       if(!(clause instanceof Array)){
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected a clause with at least one choice (in parentheses), but found "
-                                      , new types.ColoredPart("something else", clause.location)]),
-                    sexp.location);
+        var msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                     , ": expected a clause with at least one choice (in parentheses), but found "
+                                     , new types.ColoredPart("something else", clause.location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       if(clause.length === 0){
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected at least one choice (in parentheses) and an answer, but found an "
-                                      , new types.ColoredPart("empty part", clause.location)]),
-                    sexp.location);
+        var msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                     , ": expected at least one choice (in parentheses) and an answer, but found an "
+                                     , new types.ColoredPart("empty part", clause.location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       if(!( (clause[0] instanceof Array) ||
             ((clause[0] instanceof symbolExpr) && isSymbolEqualTo(clause[0], "else")))){
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected 'else', or at least one choice in parentheses, but found "
-                                      , new types.ColoredPart("something else", clause.location)]),
-                    sexp.location);
+        var msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                     , ": expected 'else', or at least one choice in parentheses, but found "
+                                     , new types.ColoredPart("something else", clause.location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       if(clause.length === 1){
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected a clause with a question and an answer, but found a "
-                                      , new types.MultiPart("clause", clauseLocations, true)
-                                      , " with only "
-                                      , new types.ColoredPart("one part", clause[0].location)]),
-                    sexp.location);
+        var msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                     , ": expected a clause with a question and an answer, but found a "
+                                     , new types.MultiPart("clause", clauseLocations, true)
+                                     , " with only "
+                                     , new types.ColoredPart("one part", clause[0].location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
       if(clause.length > 2){
         var extraLocs = clause.map(function(sexp){ return sexp.location; }),
-            wording = extraLocs.length+" parts";
-        throwError(new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
-                                      , ": expected only one expression for the answer in the case clause, but found a "
-                                      , new types.MultiPart("clause", clauseLocations, true)
-                                      , " with "
-                                      , new types.MultiPart(wording, extraLocs, false)]),
-                   sexp.location);
+            wording = extraLocs.length+" parts",
+            msg = new types.Message([new types.MultiPart(sexp[0].val, caseLocs, true)
+                                     , ": expected only one expression for the answer in the case clause, but found a "
+                                     , new types.MultiPart("clause", clauseLocations, true)
+                                     , " with "
+                                     , new types.MultiPart(wording, extraLocs, false)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
     }
  
@@ -746,13 +758,14 @@ plt.compiler = plt.compiler || {};
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
     sexp.slice(2).forEach(function(couple, idx){
      if(isElseClause(couple) && (idx < (numClauses-1))){
-            throwError(new types.Message([new types.MultiPart("case", caseLocs, true)
-                                          , ": found an "
-                                          , new types.ColoredPart("else clause", couple.location)
-                                          , "that isn't the last clause in its case expression; there is "
-                                          , new types.ColoredPart("another clause", sexp[idx+2].location)
-                                          , " after it"]),
-                       sexp.location);
+        var msg = new types.Message([new types.MultiPart("case", caseLocs, true)
+                                     , ": found an "
+                                     , new types.ColoredPart("else clause", couple.location)
+                                     , "that isn't the last clause in its case expression; there is "
+                                     , new types.ColoredPart("another clause", sexp[idx+2].location)
+                                     , " after it"]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
       }
     });
     return new caseExpr(parseExpr(sexp[1]), parsedClauses, sexp[0]);
@@ -914,43 +927,48 @@ plt.compiler = plt.compiler || {};
   function parseRequire(sexp) {
     // is it (require)?
     if(sexp.length < 2){
-      throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                    , ": expected a module name after `require', but found nothing"]),
-                 sexp.location);
+      var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                   , ": expected a module name after `require', but found nothing"]);
+      msg.betterThanServer = true;
+      throwError(msg, sexp.location);
     }
     // if it's (require (lib...))
     if((sexp[1] instanceof Array) && isSymbolEqualTo(sexp[1][0], "lib")){
         // is it (require (lib)) or (require (lib <string>))
         if(sexp[1].length < 3){
           var partsNum = sexp[1].slice(1).length,
-              partsStr = partsNum + ((partsNum===1)? " part" : " parts");
-          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                        , ": expected at least two strings after "
-                                        , new types.ColoredPart("lib", sexp[1][0].location)
-                                        , " but found only "
-                                        , partsStr]),
-                     sexp.location);
+              partsStr = partsNum + ((partsNum===1)? " part" : " parts"),
+              msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected at least two strings after "
+                                      , new types.ColoredPart("lib", sexp[1][0].location)
+                                      , " but found only "
+                                      , partsStr]);
+           msg.betterThanServer = true;
+           throwError(msg, sexp.location);
         }
         // is it (require (lib not-strings))?
         rest(sexp[1]).forEach(function(lit){
           if (!(isString(lit))){
-            throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+            var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                         , ": expected a string for a library collection, but found "
-                                        , new types.ColoredPart("something else", str.location)]),
-                       sexp.location);
+                                        , new types.ColoredPart("something else", str.location)]);
+            msg.betterThanServer = true;
+            throwError(msg, sexp.location);
           }
          });
     // if it's (require (planet...))
     } else if((sexp[1] instanceof Array) && isSymbolEqualTo(sexp[1][0], "planet")){
-      throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                    , ": Importing PLaneT pacakges is not supported at this time"]),
-                 sexp.location);
+      var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                   , ": Importing PLaneT pacakges is not supported at this time"]);
+      msg.betterThanServer = true;
+      throwError(msg, sexp.location);
     // if it's (require <not-a-string-or-symbol>)
     } else if(!((sexp[1] instanceof symbolExpr) || isString(sexp[1]))){
-      throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                    , ": expected a module name as a string or a `(lib ...)' form, but found "
-                                    , new types.ColoredPart("something else", sexp[1].location)]),
-                 sexp.location);
+      var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                   , ": expected a module name as a string or a `(lib ...)' form, but found "
+                                   , new types.ColoredPart("something else", sexp[1].location)]);
+      msg.betterThanServer = true;
+      throwError(msg, sexp.location);
     }
     var req = new requireExpr(sexp[1], sexp[0]);
     req.location = sexp.location;
@@ -972,10 +990,11 @@ plt.compiler = plt.compiler || {};
           return p;
         }
         // everything else is NOT okay
-        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                    , ": I don't recognize the syntax of this "
-                                    , new types.ColoredPart("clause", p.location)]),
-                 sexp.location);
+        var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                     , ": I don't recognize the syntax of this "
+                                     , new types.ColoredPart("clause", p.location)]);
+        msg.betterThanServer = true;
+        throwError(msg, sexp.location);
     });
     var provide = new provideStatement(clauses, sexp[0]);
     provide.location = sexp.location;

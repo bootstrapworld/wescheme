@@ -437,6 +437,13 @@ plt.compiler = plt.compiler || {};
                                       , ", because this is not a question in a clause"]),
                    loc);
     }
+    // if this is a define without a parent, or if it's not the first child of the parent
+    if((this.parent && this.parent[0] !== this) && (this.val === "define")){
+        var msg = new types.Message([new types.ColoredPart(this.val, this.location)
+                                     , ": not allowed inside an expression"]);
+        msg.betterThanServer = true;
+        throwError(msg, this.location);
+    }
     // if this is a keyword without a parent, or if it's not the first child of the parent
     if(!this.parent &&
        (plt.compiler.keywords.indexOf(this.val) > -1) && (this.val !== "else")){
@@ -448,10 +455,12 @@ plt.compiler = plt.compiler || {};
     }
     // the dot operator is not supported by WeScheme
     if(this.val === "."){
-     throwError(new types.Message([this.location.source, ":",
+     var msg = new types.Message([this.location.source, ":",
                                    this.location.sLine.toString(), ":",
                                    this.location.sCol.toString()
-                                , ": read: '.' is not supported as a symbol in WeScheme"])
+                                  , ": read: '.' is not supported as a symbol in WeScheme"]);
+     msg.betterThanServer = true;
+     throwError(msg
                  , this.location
                  , "Error-GenericReadError");
     }
@@ -597,10 +606,11 @@ plt.compiler = plt.compiler || {};
           addProvidedName(clause.val);
           return pinfo;
         } else {
-          throwError(new types.Message(["The name '"
-                                        , new types.ColoredPart(clause.toString(), clause.location)
-                                        , "', is not defined in the program, and cannot be provided."])
-                     , clause.location);
+          var msg = new types.Message(["The name '"
+                                       , new types.ColoredPart(clause.toString(), clause.location)
+                                       , "', is not defined in the program, and cannot be provided."]);
+          msg.betterThanServer = true;
+          throwError(msg, clause.location);
         }
       // if it's an array, make sure the struct is defined (otherwise error)
       // NOTE: ONLY (struct-out id) IS SUPPORTED AT THIS TIME
@@ -686,7 +696,7 @@ plt.compiler = plt.compiler || {};
  symbolExpr.prototype.analyzeUses = function(pinfo, env){
     // if this is a keyword without a parent, or if it's not the first child of the parent
     if((plt.compiler.keywords.indexOf(this.val) > -1) &&
-       (!this.parent || this.parent[0]!== this)){
+       (!this.parent || this.parent[0]!== this) || (this.parent instanceof couple)){
         throwError(new types.Message([new types.ColoredPart(this.val, this.location)
                                       , ": expected an open parenthesis before "
                                       , this.val

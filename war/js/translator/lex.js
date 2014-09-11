@@ -18,7 +18,6 @@ plt.compiler = plt.compiler || {};
  - collect all regexps into RegExp objects
  - treat syntax and unsyntax as errors
  - perf: try to remove uses of try/catch
- - perf: factor out readNumber into it's own function, removing try/catch from hot readSymbol code
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -416,11 +415,13 @@ plt.compiler = plt.compiler || {};
                             
       // throwUnsupportedError : ErrorString token -> Error
       function throwUnsupportedError(errorStr, token){
-        throwError(new types.Message([source, ":", line.toString()
-                                           , ":", (column-1).toString()
-                                           , errorStr])
-                        , new Location(sCol, sLine, iStart, token.length+1)
-                        , "Error-GenericReadError");
+        var msg = new types.Message([source, ":", line.toString()
+                                     , ":", (column-1).toString()
+                                     , errorStr]);
+        msg.betterThanServer = true;
+        throwError(msg
+                   , new Location(sCol, sLine, iStart, token.length+1)
+                   , "Error-GenericReadError");
       }
                
       if(i < str.length) {
@@ -453,6 +454,7 @@ plt.compiler = plt.compiler || {};
             }
             var error = new types.Message([source, ":", line.toString(), ":", "0"
                                            , ": read-syntax: literal "+ kind + " not allowed"]);
+            error.betterThanServer = true;
             datum = new unsupportedExpr(sexp, error, span);
             datum.location = new Location(sCol, sLine, iStart, unsupportedTest[0].length+sexp.location.span);
             return datum;
@@ -475,7 +477,8 @@ plt.compiler = plt.compiler || {};
              var msg = new types.Message(["read: vector length "+len+" is too small, ",
                                           elts.length+" value" + ((elts.length>1)? "s" : ""),
                                           " provided"]);
-             throwError(msg, sexp.location);
+             msg.betterThanServer = true;
+             throwError(msg, new Location(sCol, sLine, iStart, vectorTest[0].length));
           }
 
           i+=elts.location.span;
@@ -530,11 +533,12 @@ plt.compiler = plt.compiler || {};
             case '\'': datum = readQuote(str, i);
                       datum.location.offset--; datum.location.span++; // expand the datum to include leading '#'
                       endOfError = i+datum.location.span;
-                      throwError(new types.Message([source, ":", sLine.toString()
-                                                    , ":", (column-1).toString()
-                                                    , " read: WeScheme does not support the '#"+p+"' notation for "
-                                                    , (p===","? "unsyntax" : p==="'"? "syntax" : "quasisyntax")])
-                                  , datum.location);
+                      var msg = new types.Message([source, ":", sLine.toString()
+                                                   , ":", (column-1).toString()
+                                                   , " read: WeScheme does not support the '#"+p+"' notation for "
+                                                   , (p===","? "unsyntax" : p==="'"? "syntax" : "quasisyntax")]);
+                      msg.betterThanServer = true;
+                      throwError(msg, datum.location);
                       break;
             // STRINGS
             case '<<': datum = readString(str, i-1);
@@ -559,9 +563,11 @@ plt.compiler = plt.compiler || {};
                 }
             default:
               endOfError = i; // HACK - remember where we are, so readList can pick up reading
-              throwError(new types.Message([source, ":", line.toString()
+              var msg = new types.Message([source, ":", line.toString()
                                            , ":", (column-1).toString()
-                                           , ": read: bad syntax `#", (chunk+nextChar),"'"])
+                                           , ": read: bad syntax `#", (chunk+nextChar),"'"]);
+              msg.betterThanServer = true;
+              throwError(msg
                         , new Location(sCol, sLine, iStart, (chunk+nextChar).length+1)
                         , "Error-GenericReadError");
            }
@@ -800,9 +806,11 @@ plt.compiler = plt.compiler || {};
         // if it's not a number OR a symbol
         } catch(e) {
             endOfError = i; // HACK - remember where we are, so readList can pick up reading
-            throwError(new types.Message([source, ":", sLine.toString()
-                                          , ":" , sCol.toString()
-                                          , ": read: "+e.message])
+            var msg = new types.Message([source, ":", sLine.toString()
+                                         , ":" , sCol.toString()
+                                         , ": read: "+e.message]);
+            msg.betterThanServer = true;
+            throwError(msg
                        , new Location(sCol, sLine, iStart, i-iStart)
                        , "Error-GenericReadError");
         }
