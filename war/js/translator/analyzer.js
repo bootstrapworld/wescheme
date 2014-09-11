@@ -503,12 +503,14 @@ plt.compiler = plt.compiler || {};
           constructorBinding = bf(constructorId, false, fields.length, false, that.location),
           predicateBinding   = bf(predicateId, false, 1, false, that.location),
           mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
-          mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
-// COMMENTED OUT ON PURPOSE:
-// these iss are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
-// selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
+ // COMMENTED OUT ON PURPOSE:
+ // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
+ //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
+ // AND WOULD YOU BELIEVE IT:
+ //  these symbols aren't exposed by the compiler either (maybe since set! isn't supported?)
+ //        mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
           // assemble all the bindings together
-          bindings = [structureBinding, constructorBinding, predicateBinding, mutatorBinding].concat(mutatorBindings);
+          bindings = [structureBinding, constructorBinding, predicateBinding, mutatorBinding];
           return pinfo.accumulateDefinedBindings(bindings, that.location);
     } else {
       return this.names.reduce(function(pinfo, id){
