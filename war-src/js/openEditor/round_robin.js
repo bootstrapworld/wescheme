@@ -309,15 +309,21 @@ goog.provide("plt.wescheme.RoundRobin");
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
-                        // if the results are different, we should log them to the server
-                        else if(!sameResults(JSON.parse(local_error), JSON.parse(errorStruct.message))){
-                            console.log("FAIL: LOCAL AND SERVER RETURNED DIFFERENT ERRORS");
+                                              
+                        var localJSON = JSON.parse(local_error);
+                        
+                        // if it's not a known-better error, and if the results are different, we should log them to the server
+                        if((localJSON.betterThanServer===undefined || !localJSON.betterThanServer)
+                           && !sameResults(localJSON, JSON.parse(errorStruct.message))){
+                            console.log("FAIL: LOCAL RETURNED DIFFERENT ERROR FROM SERVER");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         } else {
-                          console.log("OK: LOCAL AND SERVER BOTH RETURNED THE SAME ERROR");
+                          console.log("OK: LOCAL RETURNED THE SAME (OR BETTER) ERROR AS SERVER");
+                          // use the local compiler's error message
+//                          onDoneError(local_error);
                         }
                     }
-                    // use the server's error message
+                    // use the server compiler's error message
                     onDoneError(errorStruct.message);
                 });
         } else {
@@ -372,6 +378,7 @@ goog.provide("plt.wescheme.RoundRobin");
       } else if(typeof(x)=="object" && typeof(x)=="object"){
         // does every property in x also exist in y?
         for (var p in x) {
+ 
           // log error if a property is not defined
           if ( ! x.hasOwnProperty(p) ){
             console.log('FAIL: x doesn\'t have property '+p);

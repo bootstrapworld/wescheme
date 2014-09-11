@@ -196,10 +196,12 @@ function runTests(verbose){
       try{
         var sexp = plt.compiler.lex(expr,"<definitions>");
       } catch (recieved) {
+        recieved = JSON.parse(recieved);
+        if(recieved.betterThanServer){ lex.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
-          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+          if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
@@ -213,10 +215,12 @@ function runTests(verbose){
       try{
         var AST = plt.compiler.parse(sexp);
       } catch (recieved) {
+        recieved = JSON.parse(recieved);
+        if(recieved.betterThanServer){ lex.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
-          if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ parse.style.background = 'lightgreen'; return true; }
+          if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
@@ -233,9 +237,11 @@ function runTests(verbose){
             pinfo     = desugared[1],
             pinfo2    = plt.compiler.analyze(program);
       } catch (recieved) {
+        recieved = JSON.parse(recieved);
+        if(recieved.betterThanServer){ lex.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
-        else if(sameResults(JSON.parse(recieved), JSON.parse(expected))){ desugar.style.background = 'lightgreen'; return true; }
+        if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
         else{ return setTestFailureLink(row, expected, recieved);}
       }
       // if we don't have a desugarRef for this test, call it a questinonable pass move on
