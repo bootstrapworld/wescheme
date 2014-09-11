@@ -313,8 +313,8 @@ goog.provide("plt.wescheme.RoundRobin");
                         var localJSON = JSON.parse(local_error);
                         
                         // if it's not a known-better error, and if the results are different, we should log them to the server
-                        if((localJSON.betterThanServer===undefined || !localJSON.betterThanServer)
-                           && !sameResults(localJSON, JSON.parse(errorStruct.message))){
+                        if(//(localJSON.betterThanServer===undefined || !localJSON.betterThanServer) &&
+                           !sameResults(localJSON, JSON.parse(errorStruct.message))){
                             console.log("FAIL: LOCAL RETURNED DIFFERENT ERROR FROM SERVER");
                             logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                         } else {
@@ -379,6 +379,9 @@ goog.provide("plt.wescheme.RoundRobin");
         // does every property in x also exist in y?
         for (var p in x) {
  
+          // for now, we ignore 'betterThanServer'
+          if(p === 'betterThanServer') continue;
+ 
           // log error if a property is not defined
           if ( ! x.hasOwnProperty(p) ){
             console.log('FAIL: x doesn\'t have property '+p);
@@ -396,6 +399,9 @@ goog.provide("plt.wescheme.RoundRobin");
         }
         // does every property in y also exist in x?
         for (p in y) {
+          // for now, we ignore 'betterThanServer'
+          if(p === 'betterThanServer') continue;
+ 
           // log error if a property is not defined
           if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){
             console.log('FAIL: x doesn\'t have property '+p);

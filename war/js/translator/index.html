@@ -216,7 +216,7 @@ function runTests(verbose){
         var AST = plt.compiler.parse(sexp);
       } catch (recieved) {
         recieved = JSON.parse(recieved);
-        if(recieved.betterThanServer){ lex.style.background = 'lightblue'; return true; }
+        if(recieved.betterThanServer){ parse.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
@@ -238,7 +238,7 @@ function runTests(verbose){
             pinfo2    = plt.compiler.analyze(program);
       } catch (recieved) {
         recieved = JSON.parse(recieved);
-        if(recieved.betterThanServer){ lex.style.background = 'lightblue'; return true; }
+        if(recieved.betterThanServer){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
