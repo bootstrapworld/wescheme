@@ -786,25 +786,29 @@ plt.compiler = plt.compiler || {};
                                 
       // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
-                   
-      // attempt to parse using jsnums.fromString(), assign to sexp and add location
-      // if it's a bad number, throw an error
-      try{
-        var numValue = jsnums.fromString(filtered, true),
-            node     = (numValue || numValue === 0)?  // don't interpret zero as 'false'
-                            new literal(numValue) : new symbolExpr(filtered);
-        node.location = new Location(sCol, sLine, iStart, i-iStart);
-        return node;
-      // if it's not a number OR a symbol
-      } catch(e) {
-          endOfError = i; // HACK - remember where we are, so readList can pick up reading
-          throwError(new types.Message([source, ":", sLine.toString()
-                                        , ":" , sCol.toString()
-                                        , ": read: "+e.message])
-                     , new Location(sCol, sLine, iStart, i-iStart)
-                     , "Error-GenericReadError");
+
+      // PERF: start out assuming it's a symbol...
+      var node = new symbolExpr(filtered);
+      // PERF: if it's not trivially a symbol, we take the hit of jsnums.fromString()
+      if(!/^[a-zA-Z\-\?]+$/.test(filtered)){
+        // attempt to parse using jsnums.fromString(), assign to sexp and add location
+        // if it's a bad number, throw an error
+        try{
+           var numValue = jsnums.fromString(filtered, true);
+           // If it's a number (don't interpret zero as 'false'), that's our node
+           if(numValue || numValue === 0){ node = new literal(numValue); }
+        // if it's not a number OR a symbol
+        } catch(e) {
+            endOfError = i; // HACK - remember where we are, so readList can pick up reading
+            throwError(new types.Message([source, ":", sLine.toString()
+                                          , ":" , sCol.toString()
+                                          , ": read: "+e.message])
+                       , new Location(sCol, sLine, iStart, i-iStart)
+                       , "Error-GenericReadError");
+        }
       }
-                            
+      node.location = new Location(sCol, sLine, iStart, i-iStart);
+      return node;
     }
     /////////////////////
     /* Export Bindings */
