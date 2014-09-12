@@ -105,8 +105,9 @@ plt.compiler = plt.compiler || {};
     [makeStructTypeCall, makeStructTypeFunc].concat(idSymbols, makeStructTypeArgs).forEach(function(p){p.location = that.location});
  
     // make the define-values stx object, but store the original stx for define-struct
-    var defineValuesStx = [new defVars([this.name].concat(idSymbols), makeStructTypeCall, this.stx)],
-        selectorStx = [];
+    var defineValuesStx = new defVars([this.name].concat(idSymbols), makeStructTypeCall, this.stx),
+        stxs = [defineValuesStx];
+    defineValuesStx.location = this.stx[1].location;
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
@@ -117,10 +118,10 @@ plt.compiler = plt.compiler || {};
           defineVar = new defVar(accessorSymbol, makeFieldCall);
       // set location for all of these nodes
       [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
-      selectorStx.push(defineVar);
+      stxs.push(defineVar);
     }
     this.fields.forEach(makeAccessorDefn);
-    return [defineValuesStx.concat(selectorStx), pinfo];
+    return [stxs, pinfo];
  };
  beginExpr.prototype.desugar = function(pinfo){
     var exprsAndPinfo = desugarProgram(this.exprs, pinfo);
@@ -507,7 +508,7 @@ plt.compiler = plt.compiler || {};
           selectorIds   = fields.map(fieldToAccessor),
           mutatorIds    = fields.map(fieldToMutator),
           // build bindings out of these ids
-          structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
+          structureBinding = new structBinding(id, this.location, fields, constructorId, predicateId,
                                                selectorIds, mutatorIds, null, that.location),
           constructorBinding = bf(constructorId, false, fields.length, false, that.location),
           predicateBinding   = bf(predicateId, false, 1, false, that.location),

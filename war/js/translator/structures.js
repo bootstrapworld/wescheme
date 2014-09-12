@@ -467,6 +467,7 @@ function functionBinding(name, moduleSource, minArity, isVarArity, permissions, 
 // structBinding : symbol, ?, (listof symbol), symbol, symbol, (listof symbol) (listof symbol) (listof permission), location -> Binding
 function structBinding(name, moduleSource, fields, constructor,
                       predicate, accessors, mutators, permissions, loc){
+  console.log(moduleSource);
   this.name = name;
   this.moduleSource = moduleSource;
   this.fields = fields;
@@ -689,6 +690,7 @@ function structBinding(name, moduleSource, fields, constructor,
                    ,binding.loc);
       } else if(!this.allowRedefinition && this.isRedefinition(binding.name)){
         var prevBinding = this.env.lookup(binding.name);
+ console.log(prevBinding);
         if(prevBinding.loc){
           throwError(new types.Message([new types.ColoredPart(binding.name, binding.loc),
                                     ": this name has a ",
