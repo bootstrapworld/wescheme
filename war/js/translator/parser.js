@@ -547,7 +547,7 @@ plt.compiler = plt.compiler || {};
     }
 
     function parseQuotedItem(sexp) {
-      return isCons(sexp) ? ls.map(parseQuotedItem)
+      return isCons(sexp) ? sexp.map(parseQuotedItem)
         : /* else */ parseExprSingleton(sexp);
     }
 
