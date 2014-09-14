@@ -642,7 +642,8 @@ plt.compiler = plt.compiler || {};
     // readSExpComment : String Number -> Atom
     // reads exactly one SExp and ignores it entirely
     function readSExpComment(str, i) {
-      var sCol = column, sLine = line;
+      var sCol = column, sLine = line, iStart = i;
+      i = chewWhiteSpace(str, i);
       if(i+1 >= str.length) {
         endOfError = i; // HACK - remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString()
@@ -650,10 +651,10 @@ plt.compiler = plt.compiler || {};
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
-      var ignore = readSExpByIndex(str, i); // we only read this to extract location
-      i =+ ignore.location.span;
-      var atom = new Comment();
-      atom.location = ignore.location;  // use the location for our new, empty sexp
+      var ignore = readSExpByIndex(str, i); // we only read this to extend i
+      i = i + ignore.location.span;
+      var atom = new Comment("("+ignore.toString()+")");
+      atom.location = new Location(sCol, sLine, iStart, i-iStart);
       return atom;
     }
 
