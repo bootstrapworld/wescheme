@@ -130,7 +130,7 @@ goog.provide("plt.wescheme.RoundRobin");
         structuredErr = JSON.parse(err['structured-error']);
         return e;
       } catch (JSONerror){
-        return '!! FATAL ERROR !!\n'+e.toString();
+        return "!! FATAL ERROR !!\n on "+(plt.wescheme.BrowserDetect.versionString)+'\n'+e.stack;
       }
     }
 
@@ -309,18 +309,24 @@ goog.provide("plt.wescheme.RoundRobin");
                           console.log("FAIL: SERVER RETURNED AN ERROR, LOCAL DID NOT");
                           logResults(code, "NO LOCAL ERROR", JSON.stringify(errorStruct.message));
                         }
-                                              
-                        var localJSON = JSON.parse(local_error);
+
+                        var localJSON;
+                        try{
+                          localJSON = JSON.parse(local_error);
                         
-                        // if it's not a known-better error, and if the results are different, we should log them to the server
-                        if(//(localJSON.betterThanServer===undefined || !localJSON.betterThanServer) &&
-                           !sameResults(localJSON, JSON.parse(errorStruct.message))){
-                            console.log("FAIL: LOCAL RETURNED DIFFERENT ERROR FROM SERVER");
-                            logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
-                        } else {
-                          console.log("OK: LOCAL RETURNED THE SAME (OR BETTER) ERROR AS SERVER");
-                          // use the local compiler's error message
-//                          onDoneError(local_error);
+                          // if it's not a known-better error, and if the results are different, we should log them to the server
+                          if(//(localJSON.betterThanServer===undefined || !localJSON.betterThanServer) &&
+                             !sameResults(localJSON, JSON.parse(errorStruct.message))){
+                              console.log("FAIL: LOCAL RETURNED DIFFERENT ERROR FROM SERVER");
+                              logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
+                          } else {
+                            console.log("OK: LOCAL RETURNED THE SAME (OR BETTER) ERROR AS SERVER");
+                            // use the local compiler's error message
+  //                          onDoneError(local_error);
+                          }
+                        } catch (e) {
+                                              console.log(e);
+                          logResults(code, local_error, JSON.stringify(errorStruct.message));
                         }
                     }
                     // use the server compiler's error message
