@@ -56,6 +56,7 @@ public class LoadProjectServlet extends HttpServlet {
             } else if (req.getParameter("publicId") != null) {
                 Program prog = getProgramByPublicId(pm, req.getParameter("publicId"));
                 if (isOwner(userSession, prog) || prog.getIsSourcePublic()) {
+                    resp.setCharacterEncoding("UTF-8");
                     resp.setContentType("text/json");
                     resp.getWriter().print(prog.toJSON(true, pm).toString());
                 } else {
