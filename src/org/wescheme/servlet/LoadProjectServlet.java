@@ -42,6 +42,7 @@ public class LoadProjectServlet extends HttpServlet {
                 Program prog = getProgramByPid(pm, req.getParameter("pid"));
                 if( null != userSession ){
                     if (isOwner(userSession, prog) || userSession.isAdmin()) {
+                        resp.setCharacterEncoding("UTF-8");
                         resp.setContentType("text/json");
                         resp.getWriter().print(prog.toJSON(pm).toString());
                     } else {
