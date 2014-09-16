@@ -79,8 +79,12 @@ plt.compiler = plt.compiler || {};
                                              bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2011/bootstrap-teachpack"'))),
       bootstrapTeachpack2012 = new moduleBinding("bootstrap2012/bootstrap-teachpack",
                                              bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2012/bootstrap-teachpack"'))),
+      bootstrapTiltTeachpack2012 = new moduleBinding("bootstrap2012/bootstrap-tilt-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2012/bootstrap-tilt-teachpack"'))),
       bootstrapTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-teachpack",
-                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-teachpack"')));
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-teachpack"'))),
+      bootstrapTiltTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-tilt-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-tilt-teachpack"')));
  
   // cage-teachpack
   var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",[["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
@@ -609,6 +613,8 @@ plt.compiler = plt.compiler || {};
                               , bootstrapTeachpack2011
                               , bootstrapTeachpack2012
                               , bootstrapTeachpack2014
+                              , bootstrapTiltTeachpack2012
+                              , bootstrapTiltTeachpack2014
                               , cageTeachpack
                               , cageTeachpack2011
                               , cageTeachpack2012
