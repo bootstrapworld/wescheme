@@ -842,7 +842,7 @@ plt.compiler = plt.compiler || {};
         // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + " is bound.";
-        // otherwise, compute the depts of all local and global free variables
+        // otherwise, compute the depths of all local and global free variables
         } else {
           var lexicalFreeRefs   = sortAndUnique(freeVariableRefs.filter(isLocalStackRef),
                                                 function(x,y){return x.depth < y.depth;},
