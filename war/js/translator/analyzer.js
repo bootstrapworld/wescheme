@@ -539,10 +539,11 @@ plt.compiler = plt.compiler || {};
 
     // if it's an invalid moduleName, throw an error
     if(!moduleName){
-      var bestGuess = plt.compiler.moduleGuess(this.spec.val);
+      var bestGuess = plt.compiler.moduleGuess(this.spec.toString());
       var msg = new types.Message(["Found require of the module "
                                    , new types.ColoredPart(this.spec.toString(), this.spec.location)
-                                   , ", but this module is unknown. Did you mean '"+bestGuess.name+"'?"]);
+                                   , ", but this module is unknown."
+                                   , ((bestGuess.name===this.spec.toString())? "": " Did you mean '"+bestGuess.name+"'?")]);
       throwError(msg, this.spec.location, "Error-UnknownModule");
     }
  
