@@ -534,16 +534,16 @@ plt.compiler = plt.compiler || {};
  // bindings provided by that module.
  // FIXME: we currently override moduleName, which SHOULD just give us the proper name
  requireExpr.prototype.collectDefinitions = function(pinfo){
-    var errorMessage =  ["require", ": ", "moby-error-type:Unknown-Module: ", this.spec],
-        moduleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
+    var moduleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
         that = this;
 
     // if it's an invalid moduleName, throw an error
     if(!moduleName){
-      throwError(new types.Message(["Found require of the module " , this.spec
-                                    , ", but this module is unknown."])
-                 , this.spec.location
-                 ,"Error-UnknownModule");
+      var bestGuess = plt.compiler.moduleGuess(this.spec.val);
+      var msg = new types.Message(["Found require of the module "
+                                   , new types.ColoredPart(this.spec.toString(), this.spec.location)
+                                   , ", but this module is unknown. Did you mean '"+bestGuess.name+"'?"]);
+      throwError(msg, this.spec.location, "Error-UnknownModule");
     }
  
     // if it's a literal, pull out the actual value. if it's a symbol use it as-is
