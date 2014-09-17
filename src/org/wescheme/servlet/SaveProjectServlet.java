@@ -88,7 +88,7 @@ public class SaveProjectServlet extends HttpServlet{
             }
 
             resp.setContentType("text/plain");
-            resp.getWriter().println(prog.getId());					
+            resp.getWriter().println(prog.getId());
         } else {
             // FIXME: throw an error that the client can recognize!
             throw new RuntimeException("Cannot save program: either not owner, or program published");
