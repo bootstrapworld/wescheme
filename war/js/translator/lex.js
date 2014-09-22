@@ -51,6 +51,7 @@ plt.compiler = plt.compiler || {};
         quotes          = /[\'`,]/,
         hex2            = new RegExp("^([0-9a-f]{1,2})", "i"),
         hex4            = new RegExp("^([0-9a-f]{1,4})", "i"),
+        hex6            = new RegExp("^([0-9a-f]{1,6})", "i"),
         hex8            = new RegExp("^([0-9a-f]{1,8})", "i"),
         oct3            = new RegExp("^([0-7]{1,3})", "i");
 
@@ -587,33 +588,72 @@ plt.compiler = plt.compiler || {};
 
     // readChar : String Number -> types.char
     // reads a character encoded in the string and returns a representative datum
+    // see http://docs.racket-lang.org/reference/reader.html#%28part._parse-character%29
     function readChar(str, i) {
       var sCol = column, sLine = line, iStart = i;
       i+=2;  column++; // skip over the #\\
       var datum = "";
-      // read until we hit the end of the string, a delimiter, whitespace, or another char
-      while(i < str.length && !isDelim(str.charAt(i))
-            && !isWhiteSpace(str.charAt(i)) && (str.slice(i,i+2) !== "#\\")) {
-        // check for newlines
-        if(str.charAt(i) === "\n"){ line++; column = 0;}
-        else { column++; }
+      // read until we hit the end of the string, whitespace, or another char
+      while(i < str.length && !isWhiteSpace(str.charAt(i)) && (str.slice(i,i+2) !== "#\\")) {
+        column++;
         datum += str.charAt(i++);
       }
-      datum = datum === 'nul' || datum === 'null' ? '\u0000' :
-                          datum === 'backspace' ? '\b' :
-                          datum === 'tab'       ? '\t' :
-                          datum === 'newline'   ? '\n' :
-                          datum === 'vtab'      ? '\u000B' :
-                          datum === 'page'      ? '\u000C' :
-                          datum === 'return'    ? '\r' :
-                          datum === 'space'     ? '\u0020' :
-                          datum === 'rubout'    ? '\u007F' :
-                          datum === ' '         ? '\u0020' :
-                          datum.length === 1   ? datum :
-                            throwError(new types.Message(["read: Unsupported character: #\\",datum]),
-                                       new Location(sCol, sLine, iStart, i-iStart));
+                                                                
+      // a special char is one of the following, as long as the next char is not alphabetic
+      var special = new RegExp("(nul|null|backspace|tab|newline|vtab|page|return|space|rubout)[^a-zA-Z]", "i");
+                                                                console.log(datum);
+      // if the character begins with a digit, u, or U, use the character code
+      switch(true){
+         // check for special chars
+         case (special.test(datum)) :
+            var match = special.exec(datum)[1];
+            datum = match === 'nul' || match === 'null' ? '\u0000' :
+                    match === 'backspace' ? '\b' :
+                    match === 'tab'       ? '\t' :
+                    match === 'newline'   ? '\n' :
+                    match === 'vtab'      ? '\u000B' :
+                    match === 'page'      ? '\u000C' :
+                    match === 'return'    ? '\r' :
+                    datum === 'space'     ? '\u0020' :
+                    match === 'rubout'    ? '\u007F' :
+                   /* else */'\u0020'
+            i = iStart + 2 + match.length; // set the reader to the end of the char
+            break;
+                                                                
+         // check for oct
+         case oct3.test(datum) :
+            var match = oct3.exec(datum)[1];
+            datum = String.fromCharCode(parseInt(match, 8));
+            i = iStart + 2 + match.length; // set the reader to the end of the char
+            break;
+                                                                
+         // check for hex4
+         case /u/.test(datum)  :
+            var match = hex4.exec(datum.slice(1))[1];
+            datum = String.fromCharCode(parseInt(match, 16));
+            i = iStart + 2 + match.length; // set the reader to the end of the char
+            break;
+                                                                
+         // check for hex6
+         case /U/.test(datum)  :
+            var match = hex8.exec(datum.slice(1))[1];
+            datum = String.fromCharCode(parseInt(match, 16));
+            i = iStart + 2 + match.length; // set the reader to the end of the char
+            break;
+                                                                
+         // check for single characters of any kind, not followed by alphabetics
+         case (/.[^a-zA-Z]*/.test(datum)) :
+            datum = datum.charAt(0);
+            i = iStart + 2 + 1; // set the reader to the end of the char
+            break;
+                                                                
+         default:
+            throwError(new types.Message(["read: Unsupported character: #\\",datum]),
+                       new Location(sCol, sLine, iStart, i-iStart));
+      }
       var chr = new literal(new types['char'](datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
+                                                                console.log(chr);
       return chr;
     }
 
