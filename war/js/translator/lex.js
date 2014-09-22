@@ -598,10 +598,8 @@ plt.compiler = plt.compiler || {};
         column++;
         datum += str.charAt(i++);
       }
-                                                                
       // a special char is one of the following, as long as the next char is not alphabetic
       var special = new RegExp("(nul|null|backspace|tab|newline|vtab|page|return|space|rubout)[^a-zA-Z]", "i");
-                                                                console.log(datum);
       // if the character begins with a digit, u, or U, use the character code
       switch(true){
          // check for special chars
@@ -653,7 +651,6 @@ plt.compiler = plt.compiler || {};
       }
       var chr = new literal(new types['char'](datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
-                                                                console.log(chr);
       return chr;
     }
 
@@ -833,6 +830,7 @@ plt.compiler = plt.compiler || {};
                                 
       // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
+                   console.log(filtered);
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
