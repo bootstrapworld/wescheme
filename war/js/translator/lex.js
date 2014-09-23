@@ -270,8 +270,11 @@ plt.compiler = plt.compiler || {};
          
       // if we see an error while reading a listItem
       function handleError(e){
-        // If the error is brace or dot error, throw it. Otherwise swallow it and keep reading
-        if(/expected a .+ to (close|open)/.exec(e) || /unexpected/.exec(e) || /syntax list/.exec(e)){
+        // Some errors we throw immediately, without reading the rest of the list...
+        if(/expected a .+ to (close|open)/.exec(e) ||  // brace or dot errors
+           /unexpected/.exec(e)                    ||  // improper use of .
+           /syntax list/.exec(e)                   ||  // bad syntax
+           /bad syntax/.exec(e)){
           throw e;
         } else {
           var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
@@ -830,7 +833,6 @@ plt.compiler = plt.compiler || {};
                                 
       // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
-                   console.log(filtered);
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
