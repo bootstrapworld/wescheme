@@ -798,7 +798,7 @@ plt.compiler = plt.compiler || {};
                        ,new Location(sCol, sLine, iStart, i-iStart)
                        ,"Error-GenericReadError");
       }
-                                
+                                console.log("'"+chunk+"'");
       // move the read head and column tracker forward
       i+=chunk.length; column+=chunk.length;
       
@@ -809,7 +809,8 @@ plt.compiler = plt.compiler || {};
       if(((chunks.length%2) === 0)){
           endOfError = i;
           var sizeOfLastChunk = chunks[chunks.length-1].length+1, // add 1 for the starting '|'
-              strBeforeLastChunk = chunk.slice(0, chunk.length-sizeOfLastChunk);
+              strBeforeLastChunk = chunk.slice(0, chunk.length-sizeOfLastChunk),
+              lastVerbatimMarkerIndex = iStart+strBeforeLastChunk.length;
           // We need to go back and get more precise location information
           column = sCol;
           for(var j=0; j<strBeforeLastChunk.length; j++){
@@ -818,8 +819,8 @@ plt.compiler = plt.compiler || {};
           }
           throwError(new types.Message([source, ":", line.toString(), ":", column.toString(),
                                         ": read: unbalanced `|'"])
-                       ,new Location(column, line, iStart+strBeforeLastChunk.length, sizeOfLastChunk)
-                       ,"Error-GenericReadError");
+                      ,new Location(column, line, lastVerbatimMarkerIndex, str.length-lastVerbatimMarkerIndex)
+                      ,"Error-GenericReadError");
       }
                                 
       // enforce case-sensitivity for non-verbatim sections. Remove all escape characters
