@@ -798,7 +798,6 @@ plt.compiler = plt.compiler || {};
                        ,new Location(sCol, sLine, iStart, i-iStart)
                        ,"Error-GenericReadError");
       }
-                                console.log("'"+chunk+"'");
       // move the read head and column tracker forward
       i+=chunk.length; column+=chunk.length;
       
@@ -833,7 +832,7 @@ plt.compiler = plt.compiler || {};
       if(filtered==="\n"){line++; column=0;}
                                 
       // add bars if it's a symbol that needs those escape characters
-      filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
+      filtered = /^$|[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
