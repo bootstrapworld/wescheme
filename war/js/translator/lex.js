@@ -788,7 +788,7 @@ plt.compiler = plt.compiler || {};
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
-      var chunk = /(\|.*\||\\.|[^\(\)\{\}\[\]\,\'\`\s\"\;])+/mg.exec(str.slice(i))[0];
+      var chunk = /(\|(.|\n)*\||\\(.|\n)|[^\(\)\{\}\[\]\,\'\`\s\"\;])+/mg.exec(str.slice(i))[0];
       // if the chunk *and the string* end with an escape, throw an error
       if((chunk.charAt(chunk.length-1)==="\\") && (i+chunk.length+1 > str.length)){
             i = str.length; // jump to the end of the string
@@ -829,8 +829,8 @@ plt.compiler = plt.compiler || {};
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "").replace(/\\/g,'');
 
-      // special-case: if it's the empty string, than it should be read as a newline character
-      if(filtered===""){filtered = "\n"; i++; line++; column=0;}
+      // if it's a newline, adjust line and column trackers
+      if(filtered==="\n"){line++; column=0;}
                                 
       // add bars if it's a symbol that needs those escape characters
       filtered = /[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
