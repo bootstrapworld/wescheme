@@ -804,9 +804,10 @@ plt.compiler = plt.compiler || {};
       // split the chunk at each |
       var chunks = chunk.split("|");
                                 
-      // check for unbalanced |'s
+      // check for unbalanced |'s, and generate an error that begins at the last one
+      // and extends for the remainder of the string
       if(((chunks.length%2) === 0)){
-          endOfError = i;
+          endOfError = str.length;
           var sizeOfLastChunk = chunks[chunks.length-1].length+1, // add 1 for the starting '|'
               strBeforeLastChunk = chunk.slice(0, chunk.length-sizeOfLastChunk),
               lastVerbatimMarkerIndex = iStart+strBeforeLastChunk.length;
