@@ -87,7 +87,7 @@ plt.compiler = plt.compiler || {};
     function escapeSym(symName){
       var str = symName.toString().replace(/\|/g,''),  bcStr = "";
       // possible characters that need to be escaped
-      var escapes = ["(", ")", "{", "}", "[", "]", ",", "'", "`", " ", '"'];
+      var escapes = ["(", ")", "{", "}", "[", "]", ",", "'", "`", " ", "\\", '"'];
       for(var j=0; j<str.length; j++){
         bcStr += ((escapes.indexOf(str.charAt(j)) > -1)? '\\' : '') + str.charAt(j);
       }

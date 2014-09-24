@@ -271,10 +271,11 @@ plt.compiler = plt.compiler || {};
       // if we see an error while reading a listItem
       function handleError(e){
         // Some errors we throw immediately, without reading the rest of the list...
-        if(/expected a .+ to (close|open)/.exec(e) ||  // brace or dot errors
-           /unexpected/.exec(e)                    ||  // improper use of .
-           /syntax list/.exec(e)                   ||  // bad syntax
-           /bad syntax/.exec(e)){
+        if(/expected a .+ to (close|open)/.exec(e)   // brace or dot errors
+           || /unexpected/.exec(e)                   // unexpected delimiter
+           || /syntax list/.exec(e)                  // improper use of .
+           || /bad syntax/.exec(e)                   // bad syntax
+           ){
           throw e;
         } else {
           var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
@@ -790,7 +791,7 @@ plt.compiler = plt.compiler || {};
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
       var chunk = /(\|(.|\n)*\||\\(.|\n)|[^\(\)\{\}\[\]\,\'\`\s\"\;])+/mg.exec(str.slice(i))[0];
       // if the chunk *and the string* end with an escape, throw an error
-      if((chunk.charAt(chunk.length-1)==="\\") && (i+chunk.length+1 > str.length)){
+      if(/^([^\\]|\\\\)*\\$/.test(chunk) && (i+chunk.length+1 > str.length)){
             i = str.length; // jump to the end of the string
             endOfError = i; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
@@ -803,7 +804,7 @@ plt.compiler = plt.compiler || {};
       
       // split the chunk at each |
       var chunks = chunk.split("|");
-                                
+
       // check for unbalanced |'s, and generate an error that begins at the last one
       // and extends for the remainder of the string
       if(((chunks.length%2) === 0)){
@@ -822,18 +823,19 @@ plt.compiler = plt.compiler || {};
                       ,new Location(column, line, lastVerbatimMarkerIndex, str.length-lastVerbatimMarkerIndex)
                       ,"Error-GenericReadError");
       }
-                                
+
       // enforce case-sensitivity for non-verbatim sections. Remove all escape characters
       var filtered = chunks.reduce(function(acc, str, i){
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
-          }, "").replace(/\\/g,'');
+          }, "").replace(/\\(?!\\)/g,'');
+
 
       // if it's a newline, adjust line and column trackers
       if(filtered==="\n"){line++; column=0;}
                                 
       // add bars if it's a symbol that needs those escape characters
-      filtered = /^$|[\(\)\{\}\[\]\,\'\`\s\"]/g.test(filtered)? "|"+filtered+"|" : filtered;
+      filtered = /^$|[\(\)\{\}\[\]\,\'\`\s\"\\]/g.test(filtered)? "|"+filtered+"|" : filtered;
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
