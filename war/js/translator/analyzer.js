@@ -4,7 +4,7 @@ plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - have modulePathResolver return the proper name!
+ - stop using synchronous XmlHttpRequests
 */
 
 (function () {
@@ -556,7 +556,11 @@ plt.compiler = plt.compiler || {};
     function processModule(js){
       var module = eval(js);
       var provides = window.COLLECTIONS[moduleName].provides,
-          strToBinding = function(p){ return new constantBinding(new symbolExpr(p), new symbolExpr(moduleName), false); },
+          strToBinding = function(p){
+                            var b = new constantBinding(p, new symbolExpr(moduleName), false);
+                            b.imported = true; // WTF: Moby treats imported bindings differently, so we need to identify them
+                            return b;
+                          },
           provideBindings = provides.map(strToBinding),
           binding = new moduleBinding(new symbolExpr(moduleName), provideBindings);
       return pinfo.accumulateModule(binding).accumulateModuleBindings(provideBindings);
@@ -708,6 +712,7 @@ plt.compiler = plt.compiler || {};
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
+ console.log('accumulating free use of '+this.val);
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
  };

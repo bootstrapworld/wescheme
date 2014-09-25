@@ -730,7 +730,9 @@ plt.compiler = plt.compiler || {};
     };
     quotedExpr.prototype.freeVariables= function(acc, env){ return acc; };
     callExpr.prototype.freeVariables  = function(acc, env){
-      return [this.func].concat(this.args).reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
+      return this.func.freeVariables(acc, env).concat(this.args).reduceRight(function(acc, expr){
+                                                                                return expr.freeVariables(acc, env);
+                                                                              } , acc);
     };
  
   /**************************************************************************
@@ -875,7 +877,6 @@ plt.compiler = plt.compiler || {};
       // push each arg onto an empty Env, the compute the free variables in the function body with that Env
       var envWithArgs = this.args.map(function(s){return s.val;}).reduce(pushLocal, new plt.compiler.emptyEnv());
           freeVarsInBody = this.body.freeVariables([], envWithArgs);
- 
       // compute the closure information
       var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVarsInBody, env),
           closureVector = closureVectorAndEnv[0],
@@ -1030,12 +1031,12 @@ plt.compiler = plt.compiler || {};
             // utility functions for making globalBuckets and moduleVariables
             makeGlobalBucket = function(name){ return new globalBucket(name);},
             modulePathIndexJoin = function(path, base){return new modulePath(path, base);},
+            // Match Moby: if it's a module that was imported via 'require', we treat it differently for some reason (WTF)
             makeModuleVariablefromBinding = function(b){
               return new moduleVariable(modulePathIndexJoin(b.moduleSource,
-                                                            modulePathIndexJoin(false, false))
-                                        , new symbolExpr(b.name), -1, 0);
+                                                            (b.imported)? false : modulePathIndexJoin(false, false))
+                                      , new symbolExpr(b.name), -1, 0);
             };
-
         var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
                                       ,pinfo.definedNames.keys().map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),

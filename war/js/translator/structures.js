@@ -491,6 +491,7 @@ function structBinding(name, moduleSource, fields, constructor,
   // Representation of the stack environment of the mzscheme vm, so we know where
   // things live.
   function env(bindings){
+    var that = this;
     this.bindings = bindings || types.makeLowLevelEqHash();
  
     // lookup : Symbol -> (or/c binding false)
@@ -537,7 +538,7 @@ function structBinding(name, moduleSource, fields, constructor,
       if(id.context instanceof env){
         return id.context.contains(id)? id.context.lookup(id) : false;
       } else {
-        return this.contains(id)? this.lookup(id) : false;
+        return that.contains(id)? that.lookup(id) : false;
       }
     };
  
