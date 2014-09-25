@@ -688,7 +688,7 @@ plt.compiler = plt.compiler || {};
     // if it's an unbound variable that we haven't seen before, add it to acc
     symbolExpr.prototype.freeVariables= function(acc, env){
       return ((env.lookup(this.val, 0) instanceof unboundStackReference)
-              && (acc.indexOf(this.val) === -1))? acc.concat([this]) : acc;
+              && (acc.indexOf(this) == -1))? acc.concat([this]) : acc;
     };
     localExpr.prototype.freeVariables = function(acc, env){
       // helper functions
