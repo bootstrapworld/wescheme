@@ -7,6 +7,7 @@ plt.compiler = plt.compiler || {};
  - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
  - someday, get rid of convertToBytecode()
+ - PERF: Switch from array to hashtable for freeVariables search
  */
 
 (function (){
@@ -684,8 +685,10 @@ plt.compiler = plt.compiler || {};
     beginExpr.prototype.freeVariables = function(acc, env){
       return this.exprs.reduceRight(function(acc, expr){return expr.freeVariables(acc, env);}, acc);
     };
+    // if it's an unbound variable that we haven't seen before, add it to acc
     symbolExpr.prototype.freeVariables= function(acc, env){
-      return (env.lookup(this.val, 0) instanceof unboundStackReference)? acc.concat([this]) : acc;
+      return ((env.lookup(this.val, 0) instanceof unboundStackReference)
+              && (acc.indexOf(this.val) > -1))? acc.concat([this]) : acc;
     };
     localExpr.prototype.freeVariables = function(acc, env){
       // helper functions
@@ -830,14 +833,12 @@ plt.compiler = plt.compiler || {};
       function getClosureVectorAndEnv(args, freeVariables, originalEnv){
         // pull out the stack references for all variables that are free in this environment
         var freeVariableRefs = freeVariables.map(function(v){return originalEnv.lookup(v.val, 0);}),
- 
             // some utility functions
             ormap = function(f, l){return (l.length===0)? false : f(l[0])? l[0] : ormap(f, l.slice(1));},
             isLocalStackRef   = function(r){return r instanceof localStackReference;},
             isGlobalStackRef  = function(r){return r instanceof globalStackReference;},
             isUnboundStackRef = function(r){return r instanceof unboundStackReference;},
             getDepthFromRef   = function(r){return r.depth;},
- 
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
 
@@ -857,10 +858,12 @@ plt.compiler = plt.compiler || {};
 
           // Add Function Arguments (in reverse order) to the environment
           var env1 = args.reverse().map(function(s){return s.val;}).reduce(pushLocal, originalEnv);
+
           // Add the lexical free variables (in reverse order)
           var env2 = lexicalFreeRefs.reverse().reduce(function(env, ref){
                       return ref.boxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
                     }, env1);
+
           // Add the global free variables (in reverse order)
           var env3 = globalDepths.reverse().reduce(function(env, depth){
                        var refsAtDepth = globalRefs.filter(function(ref){return ref.depth===depth;}),
@@ -873,7 +876,6 @@ plt.compiler = plt.compiler || {};
           return [globalDepths.concat(lexicalFreeDepths), env3];
         }
       }
- 
       // push each arg onto an empty Env, the compute the free variables in the function body with that Env
       var envWithArgs = this.args.map(function(s){return s.val;}).reduce(pushLocal, new plt.compiler.emptyEnv());
           freeVarsInBody = this.body.freeVariables([], envWithArgs);
@@ -881,12 +883,10 @@ plt.compiler = plt.compiler || {};
       var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVarsInBody, env),
           closureVector = closureVectorAndEnv[0],
           extendedEnv = closureVectorAndEnv[1];
- 
       // compile the body using the closure's environent
       var compiledBodyAndPinfo = this.body.compile(extendedEnv, pinfo),
           compiledBody = compiledBodyAndPinfo[0],
           pinfo1 = compiledBodyAndPinfo[1];
- 
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),

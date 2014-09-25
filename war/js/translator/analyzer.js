@@ -563,7 +563,7 @@ plt.compiler = plt.compiler || {};
     // and then add them to pinfo
     function processModule(js){
       var module = eval(js);
-      var provides = window.COLLECTIONS[moduleName.toString()].provides,
+      var provides = window.COLLECTIONS[moduleName].provides,
           strToBinding = function(p){
                             var b = new constantBinding(p, new symbolExpr(moduleName), false);
                             b.imported = true; // WTF: Moby treats imported bindings differently, so we need to identify them
