@@ -467,7 +467,15 @@ plt.compiler = plt.compiler || {};
     }
     return [this, pinfo];
  };
- 
+ requireExpr.prototype.desugar = function(pinfo){
+    if(this.spec instanceof literal){   // rewrite strings as symbols
+      var symbolSpec = new symbolExpr(this.spec.val);
+      symbolSpec.location = this.spec.location;
+      this.spec = symbolSpec;
+    }
+    return [this, pinfo];
+ };
+
  unsupportedExpr.prototype.desugar = function(pinfo){
     this.location.span = this.errorSpan;
     throwError(this.errorMsg, this.location, "Error-GenericReadError");
@@ -555,14 +563,14 @@ plt.compiler = plt.compiler || {};
     // and then add them to pinfo
     function processModule(js){
       var module = eval(js);
-      var provides = window.COLLECTIONS[moduleName].provides,
+      var provides = window.COLLECTIONS[moduleName.toString()].provides,
           strToBinding = function(p){
                             var b = new constantBinding(p, new symbolExpr(moduleName), false);
                             b.imported = true; // WTF: Moby treats imported bindings differently, so we need to identify them
                             return b;
                           },
           provideBindings = provides.map(strToBinding),
-          binding = new moduleBinding(new symbolExpr(moduleName), provideBindings);
+          binding = new moduleBinding(moduleName, provideBindings);
       return pinfo.accumulateModule(binding).accumulateModuleBindings(provideBindings);
     }
  
