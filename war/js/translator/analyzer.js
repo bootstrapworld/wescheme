@@ -321,16 +321,13 @@ plt.compiler = plt.compiler || {};
        var res = new quotedExpr(x.val)
        res.location = loc
        return [res, pinfo]
-     } else {
-       /* There seem to be weird overloaded usages of `quotedExpr` */
-       /* (e.g. lex.js:467 "new literal(new Vector( ...") of which */
-       /* I'm not aware, so I'll leave this case as a catch all for those */
-       /* I'd really prefer this to be an error */
-       // throwError( new types.Message(["ASSERTION ERROR: Found an unexpected item in a quotedExpr"])
-       //           , loc)
+     } else if (x instanceof Vector) {
        var res = new quotedExpr(x)
        res.location = loc
        return [res, pinfo]
+     } else {
+       throwError( new types.Message(["ASSERTION ERROR: Found an unexpected item in a quotedExpr"])
+                 , loc)
      }
    }
  }
