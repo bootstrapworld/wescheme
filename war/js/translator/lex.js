@@ -460,7 +460,7 @@ plt.compiler = plt.compiler || {};
              var msg = new types.Message(["read: vector length "+len+" is too small, ",
                                           elts.length+" value" + ((elts.length>1)? "s" : ""),
                                           " provided"]);
-             throwError(msg, sexp.location);
+             throwError(msg, new Location(sCol, sLine, iStart, elts.length+1));
           }
 
           i+=elts.location.span;
