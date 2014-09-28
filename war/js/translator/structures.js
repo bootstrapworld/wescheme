@@ -776,9 +776,11 @@ function structBinding(name, moduleSource, fields, constructor,
     };
 
     // accumulateBindingUse: binding -> pinfo
-    // Adds a binding's use to a pinfo's set.
+    // Adds a binding's use to a pinfo's set, if it has not already been used as a global
+    // This qualifier allows a fn argument to shadow a global, without removing it from the environment
     this.accumulateBindingUse = function(binding){
-      this.usedBindingsHash.put(binding.name, binding);
+      var alreadyExists = this.usedBindingsHash.get(binding.name);
+      if(!(alreadyExists && alreadyExists.moduleSource)) this.usedBindingsHash.put(binding.name, binding);
       return this;
     };
    
