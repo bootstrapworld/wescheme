@@ -300,8 +300,47 @@ plt.compiler = plt.compiler || {};
     return [desugared[0], exprsAndPinfo[1]];
  };
 
+ function desugarQuotedItem(pinfo, loc){
+   return function (x) {
+     if (x instanceof Array) {
+       var listSym = new symbolExpr('list')
+       var listArgs = x.map(function (x) {return desugarQuotedItem(pinfo, loc)(x)[0]})
+       var listCall = new callExpr(listSym, listArgs)
+       listSym.location = loc
+       listSym.parent = listCall
+       listCall.location = loc
+       return [listCall, pinfo]
+     } else if (x instanceof literal) {
+       return [x, pinfo]
+     } else if (  x instanceof callExpr
+               || x instanceof quotedExpr
+               || x instanceof unsupportedExpr
+               ) {
+       return x.desugar(pinfo)
+     } else if (x instanceof symbolExpr) {
+       var res = new quotedExpr(x.val)
+       res.location = loc
+       return [res, pinfo]
+     } else {
+       /* There seem to be weird overloaded usages of `quotedExpr` */
+       /* (e.g. lex.js:467 "new literal(new Vector( ...") of which */
+       /* I'm not aware, so I'll leave this case as a catch all for those */
+       /* I'd really prefer this to be an error */
+       // throwError( new types.Message(["ASSERTION ERROR: Found an unexpected item in a quotedExpr"])
+       //           , loc)
+       var res = new quotedExpr(x)
+       res.location = loc
+       return [res, pinfo]
+     }
+   }
+ }
+
  quotedExpr.prototype.desugar = function (pinfo) {
-   return [this, pinfo];
+   if (typeof this.location === 'undefined') {
+     throwError( new types.Message(["ASSERTION ERROR: Every quotedExpr should have a location"])
+               , loc)
+   }
+   return desugarQuotedItem(pinfo, this.location)(this.val);
  }
 
  unquotedExpr.prototype.desugar = function (pinfo, depth) {
