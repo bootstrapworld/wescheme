@@ -318,7 +318,7 @@ plt.compiler = plt.compiler || {};
                ) {
        return x.desugar(pinfo)
      } else if (x instanceof symbolExpr) {
-       var res = new quotedExpr(x.val)
+       var res = new quotedExpr(x)
        res.location = loc
        return [res, pinfo]
      } else if (x instanceof Vector) {
