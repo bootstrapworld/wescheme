@@ -8,6 +8,7 @@ plt.compiler = plt.compiler || {};
  - compiled-indirects
  - someday, get rid of convertToBytecode()
  - PERF: Switch from array to hashtable for freeVariables search
+ - fix uniqueGlobalNames hack!
  */
 
 (function (){
@@ -1037,12 +1038,15 @@ plt.compiler = plt.compiler || {};
                                                             (b.imported)? false : modulePathIndexJoin(false, false))
                                       , new symbolExpr(b.name), -1, 0);
             };
-        var topLevels = [false].concat(pinfo.freeVariables.map(makeGlobalBucket)
-                                      ,pinfo.definedNames.keys().map(makeGlobalBucket)
+        var globalNames = pinfo.freeVariables.concat(pinfo.definedNames.keys()),
+        // FIXME: we have to make uniqueGlobalNames because a function name can also be a free variable,
+        // due to a bug in analyze-lambda-expression in which the base pinfo is used for the function body.
+            uniqueGlobalNames = sortAndUnique(globalNames, function(a,b){return a<b;}, function(a,b){return a==b;}),
+            topLevels = [false].concat(uniqueGlobalNames.map(makeGlobalBucket)
                                       ,allModuleBindings.map(makeModuleVariablefromBinding)),
-            globals   = [false].concat(pinfo.freeVariables
-                                      ,pinfo.definedNames.keys()
+            globals   = [false].concat(uniqueGlobalNames
                                       ,allModuleBindings.map(function(b){return b.name;}));
+
         return [new prefix(0, topLevels ,[])
                , new plt.compiler.globalEnv(globals, false, new plt.compiler.emptyEnv())];
       };

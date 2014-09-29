@@ -720,6 +720,8 @@ plt.compiler = plt.compiler || {};
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
+ console.log('could not find '+this.val+' in');
+ console.log(env);
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
  };
