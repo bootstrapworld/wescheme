@@ -212,7 +212,7 @@ plt.compiler = plt.compiler || {};
       i = chewWhiteSpace(str, i);
       var p = str.charAt(i);
       if(i >= str.length) {
-        endOfError = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":"
                                       , sLine.toString(), ":"
                                       , (sCol-1).toString()
@@ -380,7 +380,7 @@ plt.compiler = plt.compiler || {};
                 i += match.length-1; column += match.length-1;
                 break;
              default   :
-                // HACK - remember where we are, so readList can pick up reading
+                // remember where we are, so readList can pick up reading
                 endOfError = iStart+greedy.length+1;
                 throwError(new types.Message([source, ":"
                                               , sLine.toString(), ":"
@@ -395,7 +395,7 @@ plt.compiler = plt.compiler || {};
 
       // if the next char after iStart+openquote+greedy isn't a closing quote, it's an unclosed string
       if(!closedString) {
-        endOfError = iStart+greedy.length; // HACK - remember where we are, so readList can pick up reading
+        endOfError = iStart+greedy.length; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
                                       , sLine.toString(), ":"
                                       , sCol.toString()
@@ -567,7 +567,7 @@ plt.compiler = plt.compiler || {};
                   break;
                 }
             default:
-              endOfError = i; // HACK - remember where we are, so readList can pick up reading
+              endOfError = i; // remember where we are, so readList can pick up reading
               var msg = new types.Message([source, ":", line.toString()
                                            , ":", (column-1).toString()
                                            , ": read: bad syntax `#", (chunk+nextChar),"'"]);
@@ -579,7 +579,7 @@ plt.compiler = plt.compiler || {};
         }
       // only reached if # is the end of the string...
       } else {
-        endOfError = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":", line.toString()
                                      , ":" , (column-1).toString()
                                      , ": read: bad syntax `#'"])
@@ -686,7 +686,7 @@ plt.compiler = plt.compiler || {};
       var sCol = column, sLine = line, iStart = i;
       i = chewWhiteSpace(str, i);
       if(i+1 >= str.length) {
-        endOfError = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString()
                                       , ": read: expected a commented-out element for `#;' (found end-of-file)"])
                    ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
@@ -710,7 +710,7 @@ plt.compiler = plt.compiler || {};
         txt+=str.charAt(i); column++; i++;
       }
       if(i > str.length) {
-        endOfError = i; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message(["read: Unexpected EOF when reading a line comment"]),
                    new Location(sCol, sLine, iStart, i-iStart));
       }
@@ -731,7 +731,7 @@ plt.compiler = plt.compiler || {};
                    p == "`" ? new symbolExpr("quasiquote") :
                    /* else */  "";
       function eofError(i){
-        endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
+        endOfError = i+1; // remember where we are, so readList can pick up reading
         var action = p == "'" ? " quoting " :
                      p == "`" ? " quasiquoting " :
                      p == "," ? " unquoting " :
@@ -765,7 +765,7 @@ plt.compiler = plt.compiler || {};
           if(/read\: \(found end-of-file\)/.test(e)) eofError(i);
           var unexpected = /expected a .* to open \",\"(.)\"/.exec(e);
           if(unexpected){
-            endOfError = i+1; // HACK - remember where we are, so readList can pick up reading
+            endOfError = i+1; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", column.toString()
                                           , ": read: unexpected `" + unexpected[1] + "'"])
                        , new Location(column, line, i, 1)
@@ -849,7 +849,7 @@ plt.compiler = plt.compiler || {};
            if(numValue || numValue === 0){ node = new literal(numValue); }
         // if it's not a number OR a symbol
         } catch(e) {
-            endOfError = i; // HACK - remember where we are, so readList can pick up reading
+            endOfError = i; // remember where we are, so readList can pick up reading
             var msg = new types.Message([source, ":", sLine.toString()
                                          , ":" , sCol.toString()
                                          , ": read: "+e.message]);

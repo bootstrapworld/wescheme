@@ -840,7 +840,7 @@ function structBinding(name, moduleSource, fields, constructor,
       }
  
       // decorateWithPermissions: binding -> binding
-      // HACK!
+      // HACK (according to Danny's original sources...not sure why)
       function decorateWithPermissions(binding){
         var bindingEntry = function(entry){return entry[0]===binding.name;},
             filteredPermissions = that.declaredPermissions.filter(bindingEntry);
