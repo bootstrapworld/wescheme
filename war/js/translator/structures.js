@@ -641,7 +641,7 @@ function structBinding(name, moduleSource, fields, constructor,
     return plt.compiler.knownModules.reduce(function(best, module){
                                             var dist = levenshteinDistance(module.name, wrongName);
                                             return (dist < best.distance)? {name: module.name, distance: dist} : best;
-      }, {name: wrongName, distance: wrongName.length});
+      }, {name: wrongName, distance: 5});
   }
  
   // default-module-path-resolver: module-path module-path -> module-name
