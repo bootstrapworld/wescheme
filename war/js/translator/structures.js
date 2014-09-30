@@ -344,13 +344,36 @@ listExpr.prototype = heir(Program.prototype);
 function quotedExpr(val) {
   Program.call(this);
   this.val = val;
-  this.toString = function(){
-    function sexpToString(sexp) {
-      return (sexp instanceof Array)? "(" + sexp.map(sexpToString).toString() + ")"
-                                    : sexp.toString();
+  this.toString = function() {
+    function quoteLikePairP(v) {
+      return v instanceof Array
+        && v.length === 2
+        && v[0] instanceof symbolExpr
+        && (    v[0].val === 'quasiquote'
+                || v[0].val === 'quote'
+                || v[0].val === 'unquote'
+                || v[0].val === 'unquote-splicing'
+           ) }
+    function shortName(lexeme) {
+      var s = lexeme.val
+      return s === 'quasiquote' ? "`" :
+        s === 'quote' ? "'" :
+        s === 'unquote' ? "," :
+        s === 'unquote-splicing' ? ",@" :
+        (function () { throw "impossible quote-like string" })()
     }
-    return "'"+sexpToString(this.val);
-  };
+    function elementToString(v) {
+      if (quoteLikePairP(v)) {
+        return shortName(v[0]).concat(elementToString(v[1]))
+      } else if (v instanceof Array) {
+        return v.reduce(function (acc, x) { return acc.concat(elementToString(x)) }, "(").concat(")")
+      } else {
+        return v.toString()
+      }
+    }
+
+    return "'"+elementToString(this.val)
+  }
 };
 quotedExpr.prototype = heir(Program.prototype);
 

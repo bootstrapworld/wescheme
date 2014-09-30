@@ -551,6 +551,10 @@ plt.compiler = plt.compiler || {};
       return orEx;
     }
     function parseQuotedExpr(sexp) {
+      function parseQuotedItem(sexp) {
+        return isCons(sexp) ? sexp.map(parseQuotedItem)
+          : /* else */ parseExprSingleton(sexp);
+      }
       // quote must have exactly one argument
       if(sexp.length < 2){
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -564,7 +568,7 @@ plt.compiler = plt.compiler || {};
                                       , new types.MultiPart("more than one.", extraLocs, false)]),
                     sexp.location);
       }
-      return new quotedExpr(sexp[1]);
+      return new quotedExpr(parseQuotedItem(sexp[1]));
     }
 
     return (function () {

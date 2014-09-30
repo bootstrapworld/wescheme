@@ -27,8 +27,8 @@ plt.compiler = plt.compiler || {};
     stx = new literal(new types.string(stx.toString())); // turn the stx object into a string literal
     var verifyCall  = new symbolExpr("verify-boolean-branch-value"),
         stxQuote    = new quotedExpr(stx),
-        locQuote    = new quotedExpr(loc.toVector()),
-        boolLocQuote= new quotedExpr(boolExpr.location.toVector()),
+        locQuote    = new quotedExpr(new literal(loc.toVector())),
+        boolLocQuote= new quotedExpr(new literal(boolExpr.location.toVector())),
         runtimeCall = new callExpr(verifyCall, [stxQuote, locQuote, boolExpr, boolLocQuote]);
     runtimeCall.location = verifyCall.location = boolExpr.location;
     stxQuote.location=locQuote.location=boolLocQuote.location = boolExpr.location;
@@ -199,7 +199,7 @@ plt.compiler = plt.compiler || {};
  condExpr.prototype.desugar = function(pinfo){
     // base case is all-false
     var condExhausted = new symbolExpr("throw-cond-exhausted-error"),
-        exhaustedLoc = new quotedExpr(this.location.toVector()),
+        exhaustedLoc = new quotedExpr(new literal(this.location.toVector())),
         expr = tagApplicationOperator_Module(new callExpr(condExhausted, [exhaustedLoc])
                                              , "moby/runtime/kernel/misc");
     expr.location = condExhausted.location = exhaustedLoc.location = this.location;
@@ -310,8 +310,44 @@ plt.compiler = plt.compiler || {};
  };
 
  quotedExpr.prototype.desugar = function (pinfo) {
-   return [this, pinfo];
- }
+   if (typeof this.location === 'undefined') {
+     throwError( new types.Message(["ASSERTION ERROR: Every quotedExpr should have a location"])
+               , loc)
+   }
+ 
+   // Sexp-lists (arrays) become lists
+   // literals and symbols stay themselves
+   // everything else gets desugared
+   function desugarQuotedItem(pinfo, loc){
+     return function (x) {
+       if (x instanceof Array) {
+         var listSym = new symbolExpr('list'),
+             listArgs = x.map(function (x) {return desugarQuotedItem(pinfo, loc)(x)[0]}),
+             listCall = new callExpr(listSym, listArgs);
+         listSym.location = loc;
+         listSym.parent = listCall;
+         listCall.location = loc;
+         return [listCall, pinfo];
+       } else if (  x instanceof callExpr
+                 || x instanceof quotedExpr
+                 || x instanceof unsupportedExpr
+                 ) {
+         return x.desugar(pinfo);
+       } else if (  x instanceof symbolExpr
+                 || x instanceof literal
+                 ) {
+         var res = new quotedExpr(x);
+         res.location = loc;
+         return [res, pinfo];
+       } else {
+         throwError(new types.Message(["ASSERTION ERROR: Found an unexpected item in a quotedExpr"])
+                   , loc);
+       }
+     }
+   }
+ 
+   return desugarQuotedItem(pinfo, this.location)(this.val);
+ };
 
  unquotedExpr.prototype.desugar = function (pinfo, depth) {
    if (typeof depth === 'undefined') {
@@ -338,7 +374,7 @@ plt.compiler = plt.compiler || {};
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , this.location);
    }
- }
+ };
 
  unquoteSplice.prototype.desugar = function (pinfo, depth) {
    if (typeof depth === 'undefined') {
@@ -365,25 +401,26 @@ plt.compiler = plt.compiler || {};
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , this.location);
    }
- }
-
- function desugarQuasiQuotedListElement(element, pinfo, depth) {
-   if (depth === 0 && element instanceof unquoteSplice) {
-     return element.desugar(pinfo, depth);
-   } else {
-     var argument = (element instanceof Array) ?
-       desugarQuasiQuotedList(element, depth, depth)[0] :
-       element.desugar(pinfo, depth)[0]
-     var listSym = new symbolExpr('list')
-     var listCall = new callExpr(listSym, [argument])
-     listSym.parent = listCall
-     listSym.location = argument.location
-     listCall.location = argument.location
-     return [listCall, pinfo];
-   }
- }
+ };
 
  function desugarQuasiQuotedList(element, pinfo, depth) {
+    // helper function for a single QQ-list element
+    function desugarQuasiQuotedListElement(element, pinfo, depth) {
+     if (depth === 0 && element instanceof unquoteSplice) {
+       return element.desugar(pinfo, depth);
+     } else {
+       var argument = (element instanceof Array) ?
+         desugarQuasiQuotedList(element, depth, depth)[0] :
+         element.desugar(pinfo, depth)[0]
+       var listSym = new symbolExpr('list')
+       var listCall = new callExpr(listSym, [argument])
+       listSym.parent = listCall
+       listSym.location = argument.location
+       listCall.location = argument.location
+       return [listCall, pinfo];
+     }
+   }
+ 
    var appendArgs = element.map(function(x){return desugarQuasiQuotedListElement(x, pinfo, depth)[0]})
    var appendSym = new symbolExpr('append')
    var loc = (typeof element.location != 'undefined') ? element.location :
@@ -395,7 +432,6 @@ plt.compiler = plt.compiler || {};
    appendCall.location = loc
    return [appendCall, pinfo];
  }
-
 
  // go through each item in search of unquote or unquoteSplice
  quasiquotedExpr.prototype.desugar = function(pinfo, depth){
@@ -428,6 +464,7 @@ plt.compiler = plt.compiler || {};
      return [listCall, pinfo]
    }
  };
+ 
  symbolExpr.prototype.desugar = function(pinfo){
     // if we're not in a clause, we'd better not see an "else"...
     if(!this.isClause && (this.val === "else")){
@@ -720,8 +757,6 @@ plt.compiler = plt.compiler || {};
     if(env.lookup_context(this.val)){
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
- console.log('could not find '+this.val+' in');
- console.log(env);
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
  };
