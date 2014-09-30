@@ -91,8 +91,8 @@ function sameResults(x, y){
         // build sorted lists of all module variables, return true if they are identical
         x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
         y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
-        x_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
-        y_modVariables.sort(function(a,b){return (a.sym.val > b.sym.val)});
+        x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
+        y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
         return sameResults(x_modVariables, y_modVariables);
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
