@@ -310,14 +310,14 @@ plt.compiler = plt.compiler || {};
        listSym.parent = listCall
        listCall.location = loc
        return [listCall, pinfo]
-     } else if (x instanceof literal) {
-       return [x, pinfo]
      } else if (  x instanceof callExpr
                || x instanceof quotedExpr
                || x instanceof unsupportedExpr
                ) {
        return x.desugar(pinfo)
-     } else if (x instanceof symbolExpr) {
+     } else if (  x instanceof symbolExpr
+               || x instanceof literal
+               ) {
        var res = new quotedExpr(x)
        res.location = loc
        return [res, pinfo]
