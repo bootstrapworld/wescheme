@@ -50,7 +50,7 @@ plt.compiler = plt.compiler || {};
               var printValues = new symbolExpr("print-values"),
                   printCall = new callExpr(printValues, [desugaredAndPinfo[0]]);
                // set the location of the print-values call to that of the expression
-              printValues.location = printCall.location = p.location;
+              printValues.location = printCall.location = desugaredAndPinfo[0].location;
               desugaredAndPinfo[0] = printCall;
               tagApplicationOperator_Module(printCall,'moby/runtime/kernel/misc');
             }
@@ -320,7 +320,7 @@ plt.compiler = plt.compiler || {};
    // everything else gets desugared
    function desugarQuotedItem(pinfo, loc){
      return function (x) {
-       if (x instanceof Array) {
+/*       if (x instanceof Array) {
          var listSym = new symbolExpr('list'),
              listArgs = x.map(function (x) {return desugarQuotedItem(pinfo, loc)(x)[0]}),
              listCall = new callExpr(listSym, listArgs);
@@ -328,13 +328,15 @@ plt.compiler = plt.compiler || {};
          listSym.parent = listCall;
          listCall.location = loc;
          return [listCall, pinfo];
-       } else if (  x instanceof callExpr
-                 || x instanceof quotedExpr
-                 || x instanceof unsupportedExpr
-                 ) {
+       } else */
+       if (  x instanceof callExpr
+          || x instanceof quotedExpr
+          || x instanceof unsupportedExpr
+          ) {
          return x.desugar(pinfo);
        } else if (  x instanceof symbolExpr
                  || x instanceof literal
+                 || x instanceof Array
                  ) {
          var res = new quotedExpr(x);
          res.location = loc;
@@ -405,31 +407,30 @@ plt.compiler = plt.compiler || {};
 
  function desugarQuasiQuotedList(element, pinfo, depth) {
     // helper function for a single QQ-list element
-    function desugarQuasiQuotedListElement(element, pinfo, depth) {
+    function desugarQuasiQuotedListElement(element, pinfo, depth, loc) {
      if (depth === 0 && element instanceof unquoteSplice) {
        return element.desugar(pinfo, depth);
      } else {
        var argument = (element instanceof Array) ?
-         desugarQuasiQuotedList(element, depth, depth)[0] :
-         element.desugar(pinfo, depth)[0]
-       var listSym = new symbolExpr('list')
-       var listCall = new callExpr(listSym, [argument])
-       listSym.parent = listCall
-       listSym.location = argument.location
-       listCall.location = argument.location
+            desugarQuasiQuotedList(element, depth, depth)[0] :
+            element.desugar(pinfo, depth)[0],
+           listSym = new symbolExpr('list'),
+           listCall = new callExpr(listSym, [argument]);
+       listSym.parent = listCall;
+       listCall.location = listSym.location = loc;
        return [listCall, pinfo];
      }
    }
  
-   var appendArgs = element.map(function(x){return desugarQuasiQuotedListElement(x, pinfo, depth)[0]})
-   var appendSym = new symbolExpr('append')
    var loc = (typeof element.location != 'undefined') ? element.location :
-             ((element instanceof Array) && (typeof element[0].location != 'undefined')) ? element[0].location :
-             (throwError( types.Message(["ASSERTION FAILURE: couldn't find a usable location"])
-                        , new Location(0,0,0,0)))
+              ((element instanceof Array) && (typeof element[0].location != 'undefined')) ? element[0].location :
+              (throwError( types.Message(["ASSERTION FAILURE: couldn't find a usable location"])
+                          , new Location(0,0,0,0))),
+       appendArgs = element.map(function(x){ return desugarQuasiQuotedListElement(x, pinfo, depth, loc)[0]; }),
+       appendSym = new symbolExpr('append');
    appendSym.location = loc
-   var appendCall = new callExpr(appendSym, appendArgs)
-   appendCall.location = loc
+   var appendCall = new callExpr(appendSym, appendArgs);
+   appendCall.location = loc;
    return [appendCall, pinfo];
  }
 
@@ -451,16 +452,16 @@ plt.compiler = plt.compiler || {};
    if (depth == 0) {
      return [result, pinfo];
    } else {
-     var qqSym = new quotedExpr('quasiquote');
-     var listArgs = [qqSym, result]
-     var listSym = new symbolExpr('list')
-     var listCall = new callExpr(listSym, listArgs)
-     qqSym.parent = listArgs
+     var qqSym = new quotedExpr('quasiquote'),
+         listArgs = [qqSym, result],
+         listSym = new symbolExpr('list'),
+         listCall = new callExpr(listSym, listArgs);
+     qqSym.parent = listArgs;
      qqSym.location = this.location;
-     result.parent = listArgs
-     listSym.parent = listCall
-     listSym.location = this.location
-     listCall.location = this.location
+     result.parent = listArgs;
+     listSym.parent = listCall;
+     listSym.location = this.location;
+     listCall.location = this.location;
      return [listCall, pinfo]
    }
  };
