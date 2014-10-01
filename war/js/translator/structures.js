@@ -332,14 +332,6 @@ Vector.prototype.toString = Vector.prototype.toWrittenString = function(){
   return "#("+this.elts.map(function(elt){return elt===undefined? last : elt;})+")";
 }
 
-// list expression
-function listExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return "(list "+this.val.toString() + ")"; };
-};
-listExpr.prototype = heir(Program.prototype);
-
 // quoted expression
 function quotedExpr(val) {
   Program.call(this);
