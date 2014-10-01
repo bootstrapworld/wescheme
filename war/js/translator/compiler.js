@@ -79,17 +79,20 @@ plt.compiler = plt.compiler || {};
     // anything that behaves differently must provide their own toBytecode() function
     var Bytecode = function() {
       // -> JSON
-      this.toBytecode = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toBytecode method was called on"; };
+      this.toBytecode = function(){ console.log(this); throw "IMPOSSIBLE - generic bytecode toBytecode method was called"; };
     };
 
     // for mapping JSON conversion over an array
-    function convertToBytecode(bc){ return (bc.toBytecode)? bc.toBytecode() : bc; }
+    function convertToBytecode(bc){
+       if(types.isString(bc) && bc.chars!==undefined) return '"'+bc.toString()+'"';
+       return (bc.toBytecode)? bc.toBytecode() : bc;
+    }
  
     // convert a symbol-name into bytecode string
     function escapeSym(symName){
       var str = symName.toString().replace(/\|/g,''),  bcStr = "";
       // possible characters that need to be escaped
-      var escapes = ["(", ")", "{", "}", "[", "]", ",", "'", "`", " ", "\\", '"'];
+      var escapes = ["{", "}", "[", "]", ",", "'", "`", " ", "\\", '"'];
       for(var j=0; j<str.length; j++){
         bcStr += ((escapes.indexOf(str.charAt(j)) > -1)? '\\' : '') + str.charAt(j);
       }
@@ -929,9 +932,8 @@ plt.compiler = plt.compiler || {};
      }
  
      // processDefns : [defs], pinfo, numInstalled -> [bytecode, pinfo]
-     // fold-like function to that will generate bytecode to install each defn at the
-     // correct stack location in addition to compiling it, then move on to the rest
-     // of the definitions
+     // fold-like function that will generate bytecode to install each defn at the
+     // correct stack location , then move on to the rest of the definitions
      function processDefns(defs, pinfo, env, numInstalled){
         if(defs.length===0){ return that.body.compile(envWithBoxedNames, pinfo); }
  
@@ -1005,7 +1007,7 @@ plt.compiler = plt.compiler || {};
    // a quotedExpr is a literal version of the raw stx object
    quotedExpr.prototype.compile = function(env, pinfo){
       function unwrapLiterals(v){
-        return (v instanceof literal)? v.val : (v instanceof Array)? v.map(unwrapLiterals) : v;
+        return (v instanceof literal)? unwrapLiterals(v.val) : (v instanceof Array)? v.map(unwrapLiterals) : v;
       }
       result = new literal(unwrapLiterals(this.val));
       return [result, pinfo];
