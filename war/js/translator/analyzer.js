@@ -361,15 +361,15 @@ plt.compiler = plt.compiler || {};
      if (this.val instanceof Array) {
        return desugarQuasiQuotedList(element, pinfo, depth-1);
      } else {
-       var uSym = new quotedExpr('unquote')
-       var listSym = new symbolExpr('list')
-       var listArgs = [uSym, this.val.desugar(pinfo, depth-1)[0]]
-       var listCall = new callExpr(listSym, listArgs)
-       uSym.location = this.location
-       uSym.parent = listArgs
-       listSym.location = this.location
-       listSym.parent = listCall
-       listCall.location = this.location
+       var uSym = new quotedExpr(new symbolExpr('unquote')),
+           listSym = new symbolExpr('list'),
+           listArgs = [uSym, this.val.desugar(pinfo, depth-1)[0]],
+           listCall = new callExpr(listSym, listArgs);
+       uSym.location = this.location;
+       uSym.parent = listArgs;
+       listSym.location = this.location;
+       listSym.parent = listCall;
+       listCall.location = this.location;
        return [listCall, pinfo];
      }
    } else {
@@ -388,15 +388,15 @@ plt.compiler = plt.compiler || {};
      if (this.val instanceof Array) {
        return desugarQuasiQuotedList(element, pinfo, depth-1);
      } else {
-       var usSym = new quotedExpr('unquote-splicing')
-       var listSym = new symbolExpr('list')
-       var listArgs = [usSym, this.val.desugar(pinfo, depth-1)[0]]
-       var listCall = new callExpr(listSym, listArgs)
-       usSym.location = this.location
-       usSym.parent = listArgs
-       listSym.location = this.location
-       listSym.parent = listCall
-       listCall.location = this.location
+       var usSym = new quotedExpr(new symbolExpr('unquote-splicing')),
+           listSym = new symbolExpr('list'),
+           listArgs = [usSym, this.val.desugar(pinfo, depth-1)[0]],
+           listCall = new callExpr(listSym, listArgs);
+       usSym.location = this.location;
+       usSym.parent = listArgs;
+       listSym.location = this.location;
+       listSym.parent = listCall;
+       listCall.location = this.location;
        return [listCall, pinfo];
      }
    } else {
@@ -452,7 +452,7 @@ plt.compiler = plt.compiler || {};
    if (depth == 0) {
      return [result, pinfo];
    } else {
-     var qqSym = new quotedExpr('quasiquote'),
+     var qqSym = new quotedExpr(new symbolExpr('quasiquote')),
          listArgs = [qqSym, result],
          listSym = new symbolExpr('list'),
          listCall = new callExpr(listSym, listArgs);
