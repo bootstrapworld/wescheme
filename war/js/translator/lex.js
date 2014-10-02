@@ -754,7 +754,7 @@ plt.compiler = plt.compiler || {};
         }
       }
 
-      symbol.location = new Location(column, sLine, iStart, i - iStart + 1);
+      symbol.location = new Location(column-1, sLine, iStart, i - iStart);
 
       // read the next non-comment sexp
       while(!nextSExp || (nextSExp instanceof Comment)){

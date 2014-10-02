@@ -551,6 +551,7 @@ plt.compiler = plt.compiler || {};
       return orEx;
     }
     function parseQuotedExpr(sexp) {
+
       function parseQuotedItem(sexp) {
         return isCons(sexp) ? sexp.map(parseQuotedItem)
           : /* else */ parseExprSingleton(sexp);
@@ -836,21 +837,25 @@ plt.compiler = plt.compiler || {};
   /*   ``,,(+ 1 2)                                                           */
   /* does not.                                                               */
   function parseQuasiQuotedItem(sexp, depth) {
-    return isCons(sexp) && sexp[0].val === 'unquote' ?
-             parseUnquoteExpr(sexp, depth) :
-           isCons(sexp) && sexp[0].val === 'unquote-splicing' ?
-             parseUnquoteSplicingExpr(sexp, depth) :
-           isCons(sexp) && sexp[0].val === 'quasiquote' ?
-             parseQuasiQuotedExpr(sexp, depth) :
-           isCons(sexp) ?
-             sexp.map(function (x) {return parseQuasiQuotedItem(x, depth)}) :
-           depth === 0 ?
-             parseExpr(sexp) :
-           /* else */
-             (function () {
-               var res = new quotedExpr(sexp);
-               res.location=sexp.location;
-               return res;})()
+    if (isCons(sexp) && sexp[0].val === 'unquote'){
+      return parseUnquoteExpr(sexp, depth);
+    } else if(isCons(sexp) && sexp[0].val === 'unquote-splicing'){
+      return parseUnquoteSplicingExpr(sexp, depth);
+    } else if(isCons(sexp) && sexp[0].val === 'quasiquote'){
+      return parseQuasiQuotedExpr(sexp, depth);
+    } else if(isCons(sexp)){
+       var res = sexp.map(function (x) {return parseQuasiQuotedItem(x, depth)});
+       res.location = sexp.location;
+       return res;
+    } else if( depth === 0){
+      return parseExpr(sexp);
+    } else {
+      return (function () {
+              var res = new quotedExpr(sexp);
+              res.location=sexp.location;
+              return res;})()
+    }
+
   }
 
   function parseQuasiQuotedExpr(sexp, depth) {

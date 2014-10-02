@@ -406,16 +406,12 @@ plt.compiler = plt.compiler || {};
  };
 
  function desugarQuasiQuotedList(qqlist, pinfo, depth) {
-// console.log('desugaring the qq-list. span is '+qqlist.location.span+'\n'+qqlist.toString());
  
     // helper function for a single QQ-list element
     function desugarQuasiQuotedListElement(element, pinfo, depth, loc) {
- console.log('desugaring an element of the list: '+element.toString());
      if (depth === 0 && element instanceof unquoteSplice) {
        return element.desugar(pinfo, depth);
      } else {
- console.log('inside desugarQQListElement I was given '+loc.toString()+', saw a ');
- console.log(element);
        var argument = (element instanceof Array) ?
             desugarQuasiQuotedList(element, depth, depth)[0] :
             element.desugar(pinfo, depth)[0],
@@ -433,7 +429,6 @@ plt.compiler = plt.compiler || {};
                           , new Location(0,0,0,0))),
        appendArgs = qqlist.map(function(x){ return desugarQuasiQuotedListElement(x, pinfo, depth, loc)[0]; }),
        appendSym = new symbolExpr('append');
- console.log('determined loc to be'+loc.toString());
    appendSym.location = loc
    var appendCall = new callExpr(appendSym, appendArgs);
    appendCall.location = loc;
@@ -442,13 +437,10 @@ plt.compiler = plt.compiler || {};
 
  // go through each item in search of unquote or unquoteSplice
  quasiquotedExpr.prototype.desugar = function(pinfo, depth){
-// console.log('desugaring qq expression. span is '+this.location.span);
    depth = (typeof depth === 'undefined') ? 0 : depth;
    if (depth >= 0) {
      var result;
      if(this.val instanceof Array){
- console.log('it\'s an array, the contents of which are ');
- console.log(this.val);
        result = desugarQuasiQuotedList(this.val, pinfo, depth+1)[0];
      } else {
        result = this.val.desugar(pinfo, depth+1)[0];
