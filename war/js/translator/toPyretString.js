@@ -67,6 +67,7 @@ plt.compiler = plt.compiler || {};
     fnMap["log"] = "num-log";
     fnMap["expt"] = "num-expr";
     fnMap["number->string"] = "num-tostring";
+    fnMap["bitmap/url"] = "image-url";
  
     ////////////////////////// DEFINITIONS AND EXPRESSIONS /////////////
     // Function definition
