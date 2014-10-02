@@ -1,14 +1,13 @@
-// if not defined, declare the compiler object as part of plt
+// if not definedfnMap[ declare the compiler object as part of plt
 window.plt   = window.plt || {};
 plt.compiler = plt.compiler || {};
 
 /*
  
  BSL AST -> Pyret Source
- follows definition from XXXXX
+ follows definition from http://www.pyret.org/docs/latest/
  
  */
-
 
 (function () {
     'use strict';
@@ -20,145 +19,133 @@ plt.compiler = plt.compiler || {};
       return programs.reduceRight(foldToPyret, []);
     }
  
+ 
+    ////////////////////////// VALUES AND IDENTIFIERS ///////////////////
+ 
+    // if a symbol already has a (different) name in Pyret, use that
+    // otherwise, clean it up so it's a valid Pyret identifier
     symbolExpr.prototype.toPyret = function(){
-      return 'types.symbol("'+escapeSym(this.val)+'")';
-    };
-    Vector.prototype.toPyret = function(){
-      return 'types.vector(['+this.elts.join(',')+'])';
-    };
-    Array.prototype.toPyret = function(quoted){
-      return 'types.'+(this.length===0? 'EMPTY':'list(['+this.map(convertToBytecode).join(',')+'])');
-    };
-    // Bytecode generation for jsnums types
-    jsnums.Rational.prototype.toPyret = function(){
-      return 'types.rational('+this.n+', '+this.d+')';
-    };
-    jsnums.BigInteger.prototype.toPyret = function(){
-      return 'types.bignum('+this.toString()+')';
-    };
-    jsnums.FloatPoint.prototype.toPyret = function(){
-      return 'types["float"]('+this.toString()+')';
-    };
-    jsnums.Complex.prototype.toPyret = function(){
-      return 'types.complex('+this.r+', '+this.i+')';
-    };
-    Char.prototype.toPyret = function(){
-      return 'types[\'char\'](String.fromCharCode('+this.val.charCodeAt(0)+'))';
+      var sym = getPyretFn(this.val.toString());
+      return (sym.toString().replace(/\//g,'-').replace(/\?/g,'').replace(/\*/g,''));
     };
 
     // literals
-    // literal(String|Char|Number|Vector)
+    // literal(String|Char|Number)
     literal.prototype.toPyret = function(){
-      return "translation of Literals is not yet implemented";
+      return this.val.toWrittenString? this.val.toWrittenString() : this.val.toString();
     };
  
-
+    ////////////////////////// FUNCTION MAPPINGS ///////////////////////
+    // pyret functions that are infix
+    var infix = ["+","-","*","/","=",">","<",">=","<=","and","or"];
+                                                   
+    // given a BSL function name, produce the corresponding Pyret function name
+    // if there's a mapping defined, use it. Otherwise, use the given BSLfn as-is
+    function getPyretFn(BSLfn){
+      return (fnMap[BSLfn]==undefined)? BSLfn : fnMap[BSLfn];
+    }
+                                                   
+    // racket->pyret function name mapping
+    var fnMap = {};
+    fnMap["bitmap/url"] = "image-url";
+ 
+    ////////////////////////// DEFINITIONS AND EXPRESSIONS /////////////
     // Function definition
     // defFunc(name, args, body, stx)
     defFunc.prototype.toPyret = function(){
-      return "translation of Function Definitions is not yet implemented";
+      var str="fun "+this.name.toPyret()+"("+convertToPyret(this.args).join(",")+"):\n";
+      str+="  "+this.body.toPyret()+"\nend";
+      return str;
     };
 
     // Variable definition
-    // defVar(name, rhs, stx)
+    // defVar(name, expr, stx)
     defVar.prototype.toPyret = function(){
-      return "translation of Variable Definitions is not yet implemented";
-    };
-
-    // Multi-Variable definition
-    // defVars(names, rhs, stx)
-    defVars.prototype.toPyret = function(){
-      return "translation of Multi-Variable Definitions is not yet implemented";
+      var str = "var "+this.name.toPyret()+" = "+this.expr.toPyret();
+      return str;
     };
 
     // Structure definition
     // defStruct(name, fields, stx)
     defStruct.prototype.toPyret = function(){
-      return "translation of Structure Definitions is not yet implemented";
-    };
-
-    // Begin expression
-    // beginExpr(exprs, stx)
-    beginExpr.prototype.toPyret = function(){
-      return "translation of Begin Expressions is not yet implemented";
+      var str = "", name = this.name.toPyret(),
+          typeName = name.charAt(0).toUpperCase()+name.slice(1);
+      str+="data "+typeName+": "+name
+          +"("+convertToPyret(this.fields).join(", ")+")"+" end";
+      return str;
     };
 
     // Lambda expression
     // lambdaExpr(args, body, stx)
     lambdaExpr.prototype.toPyret = function(){
-      return "translation of Lambda Expressions is not yet implemented";
+      var str = "";
+      str+="lam("+convertToPyret(this.args).join(", ")+"):\n";
+      str+="  "+this.body.toPyret()+"\nend";
+      return str;
     };
  
-    // Local expression
-    // localExpr(args, body, stx)
-    localExpr.prototype.toPyret = function(){
-      return "translation of Local Expressions is not yet implemented";
-    };
- 
-    // Letrec expression
-    // letrecExpr(bindings, body, stx)
-    letrecExpr.prototype.toPyret = function(){
-      return "translation of Letrec Expressions is not yet implemented";
-    };
- 
-    // let expression
-    // letExpr(bindings, body, stx)
-    letExpr.prototype.toPyret = function(){
-      return "translation of Let Expressions is not yet implemented";
-    };
- 
-    // let* expression
-    // letStarExpr(bindings, body, stx)
-    letStarExpr.prototype.toPyret = function(){
-      return "translation of Let* Expressions is not yet implemented";
-    };
-
     // cond expression
     // condExpr(clauses, stx)
     condExpr.prototype.toPyret = function(){
-      return "translation of Cond Expressions is not yet implemented";
-    };
+      function convertClause(couple){
+        return " | "+((couple.first.toPyret()=="else")? " otherwise: "
+                        : couple.first.toPyret() + " then: ")
+                + couple.second.toPyret()+"\n";
+      }
  
-    // case expression
-    // caseExpr(expr, clauses, body, stx)
-    caseExpr.prototype.toPyret = function(){
-      return "translation of Case Expressions is not yet implemented";
+      var str = "ask:\n";
+      str+=this.clauses.map(convertClause)+"end";
+      return str;
     };
  
     // and expression
     // andExpr(exprs, stx)
-    letExpr.prototype.toPyret = function(){
-      return "translation of And Expressions is not yet implemented";
+    andExpr.prototype.toPyret = function(){
+      return this.exprs.slice(1).reduce(function(str, expr){
+        return "("+str+" and "+expr.toPyret()+")";
+                             }, this.exprs[0].toPyret());
     };
  
     // or expression
     // orExpr(exprs, stx)
     orExpr.prototype.toPyret = function(){
-      return "translation of Or Expressions is not yet implemented";
+      return this.exprs.slice(1).reduce(function(str, expr){
+        return "("+str+" or "+expr.toPyret()+")";
+                             }, this.exprs[0].toPyret());
     };
  
     // call expression
     // callExpr(func, args, stx)
+    // we need to treat infix operators specially
     callExpr.prototype.toPyret = function(){
-      return "translation of Call Expressions is not yet implemented";
+      var str = "";
+                                     
+      // special-case for check
+      if(this.func.toString()=="EXAMPLE"
+         || this.func.toString()=="check-expect"){
+        return "check:\n"+this.args[0].toPyret()+" is "+this.args[1].toPyret()+"\nend";
+      }
+                             
+      // special-case for infix operators
+      if(infix.indexOf(this.func.toPyret()) > -1){
+        return "("+this.args[0].toPyret()
+              +" "+this.func.toPyret()+" "
+              +this.args[1].toPyret()+")";
+      }
+                                     
+      // general case
+      return getPyretFn(this.func.toPyret())
+            +"("+convertToPyret(this.args).join(', ')+")";
     };
 
     // if expression
     // ifExpr(predicate, consequence, alternate, stx)
     ifExpr.prototype.toPyret = function(){
-      return "translation of If Expressions is not yet implemented";
-    };
- 
-    // symbol expression
-    // symbolExpr(val)
-    symbolExpr.prototype.toPyret = function(){
-      return "translation of Symbol Expressions is not yet implemented";
-    };
- 
-    // list expression
-    // listExpr(vals)
-    listExpr.prototype.toPyret = function(){
-      return "translation of List Expressions is not yet implemented";
+      var str = "";
+      str+="if "+this.predicate.toPyret() + ":\n";
+      str+=this.consequence.toPyret() + "\nelse:\n";
+      str+=this.alternate.toPyret() + ":\nend";
+                                                   
     };
  
     // require expression
@@ -167,12 +154,6 @@ plt.compiler = plt.compiler || {};
       return "translation of Require Expressions is not yet implemented";
     };
 
-    // provide statement
-    // provideStatement(clauses, stx)
-    letExpr.prototype.toPyret = function(){
-      return "translation of Provide Statements is not yet implemented";
-    };
- 
     /////////////////////
     /* Export Bindings */
     /////////////////////
