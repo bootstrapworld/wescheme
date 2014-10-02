@@ -81,6 +81,15 @@ function readFromRepl(event) {
       console.log(getError(e));
       throw Error("PARSING ERROR\n"+getError(e).toString());
     }
+
+    try {
+      console.log("// CONVERTING TO PYRET: //////////////////////////////\n");
+      var pyret    = plt.compiler.toPyretString(AST);
+      console.log(pyret.join("\n"));
+    } catch (e) {
+      throw Error("TRANSLATION ERROR\n"+getError(e).toString());
+    }
+
     try {
       console.log("// DESUGARING: //////////////////////////////\nraw");
       var start       = new Date().getTime(),
@@ -125,7 +134,6 @@ function readFromRepl(event) {
       if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
       throw Error("COMPILATION ERROR\n"+getError(e).toString());
     }
- 
  
     console.log("// SUMMARY: /////////////////////////////////\n"
                 + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
