@@ -47,7 +47,26 @@ plt.compiler = plt.compiler || {};
                                                    
     // racket->pyret function name mapping
     var fnMap = {};
-    fnMap["bitmap/url"] = "image-url";
+    fnMap["min"] = "num-min";
+    fnMap["max"] = "num-max";
+    fnMap["abs"] = "num-abs";
+    fnMap["sin"] = "num-sin";
+    fnMap["cos"] = "num-cos";
+    fnMap["tan"] = "num-tan";
+    fnMap["asin"] = "num-asin";
+    fnMap["acos"] = "num-acos";
+    fnMap["atan"] = "num-atan";
+    fnMap["num/url"] = "num-url";
+    fnMap["num/url"] = "num-url";
+    fnMap["num/url"] = "num-url";
+    fnMap["modulo"] = "num-modulo";
+    fnMap["sqrt"] = "num-sqrt";
+    fnMap["sqr"] = "num-url";
+    fnMap["ceiling"] = "num-ceiling";
+    fnMap["floor"] = "num-floor";
+    fnMap["log"] = "num-log";
+    fnMap["expt"] = "num-expr";
+    fnMap["number->string"] = "num-tostring";
  
     ////////////////////////// DEFINITIONS AND EXPRESSIONS /////////////
     // Function definition
@@ -127,9 +146,10 @@ plt.compiler = plt.compiler || {};
       }
                              
       // special-case for infix operators
-      if(infix.indexOf(this.func.toPyret()) > -1){
+      // use toString() because we want to compare the *original* racket string
+      if(infix.indexOf(this.func.toString()) > -1){
         return "("+this.args[0].toPyret()
-              +" "+this.func.toPyret()+" "
+              +" "+this.func.toString()+" "
               +this.args[1].toPyret()+")";
       }
                                      
@@ -142,10 +162,10 @@ plt.compiler = plt.compiler || {};
     // ifExpr(predicate, consequence, alternate, stx)
     ifExpr.prototype.toPyret = function(){
       var str = "";
-      str+="if "+this.predicate.toPyret() + ":\n";
-      str+=this.consequence.toPyret() + "\nelse:\n";
-      str+=this.alternate.toPyret() + ":\nend";
-                                                   
+      str+="if "+this.predicate.toPyret() + ":\n  ";
+      str+=this.consequence.toPyret() + "\nelse:\n  ";
+      str+=this.alternative.toPyret() + "\nend";
+      return str;
     };
  
     // require expression
