@@ -106,7 +106,7 @@ goog.provide("plt.wescheme.RoundRobin");
 
     function writeLocalCompilerCookie(using) {
       var date = new Date();
-      date.setTime(date.getTime()+(1*60*60*1000)); // expire in one hour
+      date.setTime(date.getTime()+(.50*60*60*1000)); // expire in half an hour
       var expires = "; expires="+date.toGMTString();
       document.cookie = 'use_local_compiler'+"="+using+expires+"; path=/";
       return using;
@@ -216,7 +216,7 @@ goog.provide("plt.wescheme.RoundRobin");
             console.log("ANALYSIS ERROR");
             throw e;
           }
-/*          try {
+          try {
             console.log("// COMPILATION: //////////////////////////////\n");
             var start       = new Date().getTime(),
                 response    = plt.compiler.compile(program, pinfo),
@@ -228,10 +228,10 @@ goog.provide("plt.wescheme.RoundRobin");
             if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
             throw Error("COMPILATION ERROR\n"+getError(e).toString());
           }
-*/
+
       } catch (e) {
           local_error = getError(e).toString();
-//            onDoneError(local_error);
+//          onDoneError(local_error);
       }
 
       writeLocalCompilerCookie("true");
@@ -239,7 +239,7 @@ goog.provide("plt.wescheme.RoundRobin");
       console.log("// SUMMARY: /////////////////////////////////\n"
                   + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
                   + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-//                  + "Compiling:  " + compileTime + "ms\n"
+                  + "Compiling:  " + compileTime + "ms\n"
                   + "TOTAL:      " + localTime +"ms");
  }
 // END LOCAL COMPILER CODE
@@ -322,10 +322,9 @@ goog.provide("plt.wescheme.RoundRobin");
                           } else {
                             console.log("OK: LOCAL RETURNED THE SAME (OR BETTER) ERROR AS SERVER");
                             // use the local compiler's error message
-  //                          onDoneError(local_error);
+//                            onDoneError(local_error);
                           }
                         } catch (e) {
-                                              console.log(e);
                           logResults(code, local_error, JSON.stringify(errorStruct.message));
                         }
                     }
