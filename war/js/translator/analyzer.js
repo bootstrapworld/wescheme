@@ -806,8 +806,39 @@ plt.compiler = plt.compiler || {};
  /////////////////////
  /* Export Bindings */
  /////////////////////
- plt.compiler.desugar = function(p, pinfo){return desugarProgram(p, pinfo, true)};
- plt.compiler.analyze = analyze;
+ plt.compiler.desugar = function(p, pinfo){
+       try {
+        console.log("// DESUGARING: //////////////////////////////\nraw");
+        var start       = new Date().getTime(),
+            ASTandPinfo = desugarProgram(p, pinfo, true), // do the actual work
+            program     = ASTandPinfo[0],
+            pinfo       = ASTandPinfo[1],
+            end         = new Date().getTime(),
+            desugarTime = Math.floor(end-start);
+        console.log(program);
+        console.log("Desugared in "+desugarTime+"ms");
+        console.log("pinfo:");
+        console.log(pinfo);
+        return ASTandPinfo;
+      } catch (e) {
+        console.log("DESUGARING ERROR");
+        throw e;
+      }
+  };
+ plt.compiler.analyze = function(program){
+       try {
+        console.log("// ANALYSIS: //////////////////////////////\n");
+        var start       = new Date().getTime(),
+            pinfo       = analyze(program),             // do the actual work
+            end         = new Date().getTime(),
+        analysisTime    = Math.floor(end-start);
+        console.log("Analyzed in "+analysisTime+"ms");
+        return pinfo;
+      } catch (e) {
+        console.log("ANALYSIS ERROR");
+        throw e;
+      }
+  };
  plt.compiler.provideBindingId = provideBindingId;
  plt.compiler.provideBindingStructId = provideBindingStructId;
 })();

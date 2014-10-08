@@ -130,6 +130,7 @@ goog.provide("plt.wescheme.RoundRobin");
         structuredErr = JSON.parse(err['structured-error']);
         return e;
       } catch (JSONerror){
+        writeLocalCompilerCookie("false"); // if the local compiler crashes, turn it off
         return "!! FATAL ERROR !!\n on "+(plt.wescheme.BrowserDetect.versionString)+'\n'+e.stack;
       }
     }
@@ -141,111 +142,52 @@ goog.provide("plt.wescheme.RoundRobin");
     var tryServerN = function(n, countFailures, 
                               programName, code, 
                               onDone, onDoneError) {
+ 
        // if no cookie exists, set it for one hour
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
-       console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL);
+       // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
+       var TRUST_LOCAL = 0.50;
  
- // BEGIN LOCAL COMPILER CODE
+       console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL
+                   +'. Server will be consulted '+(100*TRUST_LOCAL)+'% of the time');
+ 
  if(TEST_LOCAL){
        // Be conservative, and shut off the local compiler for future requests
        // This allows us to gracefully recover from a browser-hanging bug
        writeLocalCompilerCookie("false");
        // try client-side compilation first
        try{
-          var sexp, AST, ASTandPinfo, local_error = false,
-              lexTime = 0, parseTime = 0, desugarTime = 0, analysisTime = 0, compileTime = 0;
-          try { //////////////////// LEX ///////////////////
-            console.log("// LEXING: ///////////////////////////////////\nraw:");
-            var start     = new Date().getTime(),
-                sexp      = plt.compiler.lex(code, programName),
-                end       = new Date().getTime();
-            lexTime       = Math.floor(end-start);
-            console.log(sexp);
-            console.log("Lexed in "+lexTime+"ms");
-          } catch(e) {
-            var end = new Date().getTime();
-                lexTime = Math.floor(end-start);
-            console.log("LEXING ERROR");
-            throw e;
-          }
-          try{ //////////////////// PARSE ///////////////////
-            console.log("// PARSING: //////////////////////////////////\nraw:");
-            var start     = new Date().getTime(),
-                AST       = plt.compiler.parse(sexp);
-                end       = new Date().getTime();
-            parseTime     = Math.floor(end - start);
-            console.log(AST);
-            console.log("Parsed in "+parseTime+"ms");
-          } catch(e) {
-            var end = new Date().getTime();
-            parseTime = Math.floor(end - start);
-            console.log("PARSING ERROR");
-            throw e;
-          }
-
-          try { ////////////////// DESUGAR /////////////////////
-            console.log("// DESUGARING: //////////////////////////////\nraw");
-            var start       = new Date().getTime(),
-                ASTandPinfo = plt.compiler.desugar(AST),
-                program     = ASTandPinfo[0],
-                pinfo       = ASTandPinfo[1],
-                end         = new Date().getTime();
-                desugarTime = Math.floor(end-start);
-            console.log(program);
-            console.log("Desugared in "+desugarTime+"ms");
-            console.log("pinfo:");
-            console.log(pinfo);
-          } catch (e) {
-            var end = new Date().getTime();
-            desugarTime = Math.floor(end-start);
-            console.log("DESUGARING ERROR");
-            throw e;
-          }
-          try {
-            console.log("// ANALYSIS: //////////////////////////////\n");
-            var start       = new Date().getTime(),
-                pinfo       = plt.compiler.analyze(program),
-                end         = new Date().getTime(),
-            analysisTime    = Math.floor(end-start);
-            console.log("Analyzed in "+analysisTime+"ms");
-          } catch (e) {
-            var end = new Date().getTime(),
-            analysisTime = Math.floor(end-start);
-            console.log("ANALYSIS ERROR");
-            throw e;
-          }
-          try {
-            console.log("// COMPILATION: //////////////////////////////\n");
-            var start       = new Date().getTime(),
-                response    = plt.compiler.compile(program, pinfo),
-                end         = new Date().getTime(),
-            compileTime     = Math.floor(end-start);
-            console.log("Compiled in "+compileTime+"ms");
-            console.log(JSON.stringify(response));
-          } catch (e) {
-            if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-            throw Error("COMPILATION ERROR\n"+getError(e).toString());
-          }
-
+          var sexp, AST, ASTandPinfo, local_error = false, start = new Date().getTime();
+ 
+          var lexemes     = plt.compiler.lex(code, programName);
+          var AST         = plt.compiler.parse(lexemes);
+          var desugared   = plt.compiler.desugar(AST)[0];
+          var pinfo       = plt.compiler.analyze(desugared);
+          var response    = plt.compiler.compile(desugared, pinfo);
+          var end         = new Date().getTime();
+          var localTime   = Math.floor(end-start);
       } catch (e) {
           local_error = getError(e).toString();
-//          onDoneError(local_error);
       }
-
+ 
+      // we made it out alive, so we can keep the local compiler on
       writeLocalCompilerCookie("true");
-      var localTime = lexTime+parseTime+desugarTime+analysisTime+compileTime;
-      console.log("// SUMMARY: /////////////////////////////////\n"
-                  + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
-                  + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-                  + "Compiling:  " + compileTime + "ms\n"
-                  + "TOTAL:      " + localTime +"ms");
+      console.log("Compiled in: " + Math.floor(end-start) +"ms");
+ 
+      // At this point, the local compiler front-end has completed. If...
+      if( local_error                                                   // (1) it returned an error
+          && !(/FATAL ERROR/.test(local_error.toString()))              // (2) the error was non-fatal
+          && (Math.random() > TRUST_LOCAL) ) {                          // (3) it's being trusted
+        // Produce the error without ever bothering the server
+        console.log('returning local error without ever hitting the server.');
+        onDoneError(local_error);
+        return;
+      }
  }
-// END LOCAL COMPILER CODE
  
- 
-        // hit the server
+        // if there's no error, or if we don't trust the local compiler's output, hit the server
         var start = new Date().getTime();
         if (n < liveServers.length) {
             liveServers[n].xhr.compileProgram(
@@ -321,8 +263,6 @@ goog.provide("plt.wescheme.RoundRobin");
                               logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                           } else {
                             console.log("OK: LOCAL RETURNED THE SAME (OR BETTER) ERROR AS SERVER");
-                            // use the local compiler's error message
-//                            onDoneError(local_error);
                           }
                         } catch (e) {
                           logResults(code, local_error, JSON.stringify(errorStruct.message));
@@ -338,7 +278,7 @@ goog.provide("plt.wescheme.RoundRobin");
  
     // sameResults : local server -> boolean
     // compare entities using a 3-step process
-    // 1) Weak comparison on locations
+    // 1) Weak comparison on locations and toplevels
     // 2) Recursive comparison for objects
     // 3) Strong comparison for literals
     // if there's a difference, log a diff to the form and return false

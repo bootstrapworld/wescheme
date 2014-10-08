@@ -1090,5 +1090,19 @@ plt.compiler = plt.compiler || {};
   plt.compiler.localStackReference  = localStackReference;
   plt.compiler.globalStackReference = globalStackReference;
   plt.compiler.unboundStackReference= unboundStackReference;
-  plt.compiler.compile              = compileCompilationTop;
+  plt.compiler.compile              = function(program, pinfo){
+       try {
+          console.log("// COMPILATION: //////////////////////////////\n");
+          var start       = new Date().getTime(),
+              response    = compileCompilationTop(program, pinfo),  // do the actual work
+              end         = new Date().getTime(),
+          compileTime     = Math.floor(end-start);
+          console.log("Compiled in "+compileTime+"ms");
+          console.log(JSON.stringify(response));
+          return response;
+        } catch (e) {
+          console.log("COMPILATION ERROR");
+          throw e;
+        }
+   };
  })();
