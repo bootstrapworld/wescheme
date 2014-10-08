@@ -143,7 +143,7 @@ goog.provide("plt.wescheme.RoundRobin");
                               programName, code, 
                               onDone, onDoneError) {
  
-       // if no cookie exists, set it for one hour
+       // if no cookie exists, set it to true
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";

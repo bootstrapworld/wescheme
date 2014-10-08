@@ -68,7 +68,6 @@ function readFromRepl(event) {
     console.log("pinfo:");
     console.log(pinfo);
     var pinfo       = plt.compiler.analyze(program);
-    var end         = new Date().getTime(),
     var response    = plt.compiler.compile(program, pinfo);
     console.log((0,eval)('(' + response.bytecode + ')'));
     console.log("response:\n\n"+JSON.stringify(response));

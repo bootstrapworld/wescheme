@@ -1017,7 +1017,7 @@ plt.compiler = plt.compiler || {};
       try{
         console.log("// PARSING: //////////////////////////////////\nraw:");
         var start     = new Date().getTime(),
-            AST       = parse(sexp);                     // do the actual work
+            AST       = parse(sexp),                     // do the actual work
             end       = new Date().getTime(),
             parseTime = Math.floor(end - start);
         console.log(AST);
