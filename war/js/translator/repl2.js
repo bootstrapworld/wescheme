@@ -49,98 +49,30 @@ function getError(e){
 }
 
 function readFromRepl(event) {
-  var key = event.keyCode,
-      lexTime=parseTime=desugarTime=analysisTime=compileTime = 0;
+  var key = event.keyCode;
 
   if(key === 13) { // "\n"
     var aSource = repl_input.value;
     var progres;
-    try {
-      console.log("// LEXING: ///////////////////////////////////\nraw:");
-      var start     = new Date().getTime(),
-          sexp      = plt.compiler.lex(aSource),
-          end       = new Date().getTime(),
-          lexTime   = Math.floor(end-start);
-      console.log(sexp);
-      console.log("Lexed in "+lexTime+"ms. Lexed as:\n"+plt.compiler.sexpToString(sexp));
-    } catch (e) {
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      console.log(getError(e));
-      throw Error("LEXING ERROR\n"+getError(e).toString());
-    }
-    try {
-      console.log("// PARSING: //////////////////////////////////\nraw:");
-      var start     = new Date().getTime(),
-          AST       = plt.compiler.parse(sexp);
-          end       = new Date().getTime(),
-          parseTime = Math.floor(end-start);
-      console.log(AST);
-      console.log("Parsed in "+parseTime+"ms. Parsed as:\n"+AST.join("\n"));
-    } catch (e) {
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      console.log(getError(e));
-      throw Error("PARSING ERROR\n"+getError(e).toString());
-    }
-
-    try {
-      console.log("// CONVERTING TO PYRET: //////////////////////////////\n");
-      var pyret    = plt.compiler.toPyretString(AST);
-      console.log(pyret.join("\n"));
-    } catch (e) {
-      throw Error("TRANSLATION ERROR\n"+getError(e).toString());
-    }
-
-    try {
-      console.log("// DESUGARING: //////////////////////////////\nraw");
-      var start       = new Date().getTime(),
-          ASTandPinfo = plt.compiler.desugar(AST),
-          program     = ASTandPinfo[0],
-          pinfo       = ASTandPinfo[1],
-          end         = new Date().getTime(),
-          desugarTime = Math.floor(end-start);
-      console.log(program);
-      console.log("Desugared in "+desugarTime+"ms. Desugared to:\n"+program.join("\n"));
-      console.log("pinfo:");
-      console.log(pinfo);
-    } catch (e) {
-      console.log(e);
-      if(e instanceof unimplementedException){ throw e.str + " NOT IMPLEMENTED";}
-      console.log(getError(e));
-      throw Error("DESUGARING ERROR\n"+getError(e).toString());
-    }
-    try {
-      console.log("// ANALYSIS: //////////////////////////////\n");
-      var start       = new Date().getTime(),
-          pinfo       = plt.compiler.analyze(program);
-      window.pinfo = pinfo;
-      var end         = new Date().getTime(),
-      analysisTime    = Math.floor(end-start);
-      console.log("Analyzed in "+analysisTime+"ms. pinfo bound to window.pinfo");
-    } catch (e) {
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("ANALYSIS ERROR\n"+getError(e).toString());
-    }
-    
-    try {
-      console.log("// COMPILATION: //////////////////////////////\n");
-      var start       = new Date().getTime(),
-          response    = plt.compiler.compile(program, pinfo),
-          end         = new Date().getTime(),
-      compileTime     = Math.floor(end-start);
-      console.log("Compiled in "+compileTime+"ms");
-      console.log((0,eval)('(' + response.bytecode + ')'));
-      console.log("response:\n\n"+JSON.stringify(response));
-    } catch (e) {
-      if(e instanceof unimplementedException){throw e.str + " NOT IMPLEMENTED";}
-      throw Error("COMPILATION ERROR\n"+getError(e).toString());
-    }
+    // run the local compiler
+    var sexp      = plt.compiler.lex(aSource);
+    console.log(sexp);
+    var AST       = plt.compiler.parse(sexp);
+    console.log(AST);
+    var pyret    = plt.compiler.toPyretString(AST);
+    console.log(pyret.join("\n"));
+    var ASTandPinfo = plt.compiler.desugar(AST),
+        program     = ASTandPinfo[0],
+        pinfo       = ASTandPinfo[1];
+    console.log(program);
+    console.log("pinfo:");
+    console.log(pinfo);
+    var pinfo       = plt.compiler.analyze(program);
+    var end         = new Date().getTime(),
+    var response    = plt.compiler.compile(program, pinfo);
+    console.log((0,eval)('(' + response.bytecode + ')'));
+    console.log("response:\n\n"+JSON.stringify(response));
  
-    console.log("// SUMMARY: /////////////////////////////////\n"
-                + "Lexing:     " + lexTime    + "ms\nParsing:    " + parseTime + "ms\n"
-                + "Desugaring: " + desugarTime + "ms\nAnalysis:   " + analysisTime + "ms\n"
-                + "Compiling:  " + compileTime + "ms\n"
-                + "TOTAL:      " + (lexTime+parseTime+desugarTime+analysisTime+compileTime)+"ms");
-    
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
