@@ -17,7 +17,6 @@ plt.compiler = plt.compiler || {};
  - have every read function set i, then remove i-setting logic?
  - collect all regexps into RegExp objects
  - treat syntax and unsyntax as errors
- - perf: try to remove uses of try/catch
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -277,6 +276,7 @@ plt.compiler = plt.compiler || {};
            ){
           throw e;
         } else {
+                            console.log(e);
           var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
           errorLocation = new Location(Number(eLoc.column), Number(eLoc.line),
                                        Number(eLoc.offset)-1, Number(eLoc.span));
@@ -359,16 +359,40 @@ plt.compiler = plt.compiler || {};
              case /\\/.test(chr) : break;
              // if it's a charCode symbol, match with a regexp and move i forward
              case /x/.test(chr)  :
+                if(!hex2.test(str.slice(i))){
+                  // remember where we are, so readList can pick up reading
+                  endOfError = iStart+greedy.length+1;
+                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
+                                              , ": read: no hex digit following \\x in string"])
+                           , new Location(sCol, sLine, iStart, i-iStart+1)
+                           , "Error-GenericReadError");
+                }
                 var match = hex2.exec(str.slice(i))[1];
                 chr = String.fromCharCode(parseInt(match, 16));
                 i += match.length; column += match.length;
                 break;
              case /u/.test(chr)  :
+                if(!hex4.test(str.slice(i))){
+                  // remember where we are, so readList can pick up reading
+                  endOfError = iStart+greedy.length+1;
+                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
+                                              , ": read: no hex digit following \\u in string"])
+                           , new Location(sCol, sLine, iStart, i-iStart+1)
+                           , "Error-GenericReadError");
+                }
                 var match = hex4.exec(str.slice(i))[1];
                 chr = String.fromCharCode(parseInt(match, 16));
                 i += match.length; column += match.length;
                 break;
              case /U/.test(chr)  :
+                if(!hex8.test(str.slice(i))){
+                  // remember where we are, so readList can pick up reading
+                  endOfError = iStart+greedy.length+1;
+                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
+                                              , ": read: no hex digit following \\U in string"])
+                           , new Location(sCol, sLine, iStart, i-iStart+1)
+                           , "Error-GenericReadError");
+                }
                 var match = hex8.exec(str.slice(i))[1];
                 chr = String.fromCharCode(parseInt(match, 16));
                 i += match.length; column += match.length;
