@@ -806,38 +806,28 @@ plt.compiler = plt.compiler || {};
  /////////////////////
  /* Export Bindings */
  /////////////////////
- plt.compiler.desugar = function(p, pinfo){
-       try {
-        console.log("// DESUGARING: //////////////////////////////\nraw");
-        var start       = new Date().getTime(),
-            ASTandPinfo = desugarProgram(p, pinfo, true), // do the actual work
-            program     = ASTandPinfo[0],
-            pinfo       = ASTandPinfo[1],
-            end         = new Date().getTime(),
-            desugarTime = Math.floor(end-start);
-        console.log(program);
-        console.log("Desugared in "+desugarTime+"ms");
-        console.log("pinfo:");
-        console.log(pinfo);
-        return ASTandPinfo;
-      } catch (e) {
-        console.log("DESUGARING ERROR");
-        throw e;
-      }
+ plt.compiler.desugar = function(p, pinfo, debug){
+    var start       = new Date().getTime();
+    try {
+      var ASTandPinfo = desugarProgram(p, pinfo, true), // do the actual work
+          program     = ASTandPinfo[0],
+          pinfo       = ASTandPinfo[1];
+    } catch (e) { console.log("DESUGARING ERROR"); throw e; }
+    var end = new Date().getTime();
+    if(debug){
+      console.log(program);
+      console.log("Desugared in "+(Math.floor(end-start))+"ms");
+    }
+    return ASTandPinfo;
   };
- plt.compiler.analyze = function(program){
-       try {
-        console.log("// ANALYSIS: //////////////////////////////\n");
-        var start       = new Date().getTime(),
-            pinfo       = analyze(program),             // do the actual work
-            end         = new Date().getTime(),
-        analysisTime    = Math.floor(end-start);
-        console.log("Analyzed in "+analysisTime+"ms");
-        return pinfo;
-      } catch (e) {
-        console.log("ANALYSIS ERROR");
-        throw e;
-      }
+ plt.compiler.analyze = function(program, debug){
+    var start       = new Date().getTime();
+    try { var pinfo       = analyze(program); }             // do the actual work
+    catch (e) { console.log("ANALYSIS ERROR"); throw e; }
+    var end         = new Date().getTime();
+    if(debug){ console.log("Analyzed in "+(Math.floor(end-start))+"ms"); }
+    console.log(pinfo);
+    return pinfo;
   };
  plt.compiler.provideBindingId = provideBindingId;
  plt.compiler.provideBindingStructId = provideBindingStructId;

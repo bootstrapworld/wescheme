@@ -157,20 +157,19 @@ goog.provide("plt.wescheme.RoundRobin");
        // Be conservative, and shut off the local compiler for future requests
        // This allows us to gracefully recover from a browser-hanging bug
        writeLocalCompilerCookie("false");
+       var local_error = false, start = new Date().getTime();
+
        // try client-side compilation first
        try{
-          var sexp, AST, ASTandPinfo, local_error = false, start = new Date().getTime();
- 
           var lexemes     = plt.compiler.lex(code, programName);
           var AST         = plt.compiler.parse(lexemes);
           var desugared   = plt.compiler.desugar(AST)[0];
           var pinfo       = plt.compiler.analyze(desugared);
-          var response    = plt.compiler.compile(desugared, pinfo);
-          var end         = new Date().getTime();
-          var localTime   = Math.floor(end-start);
+          var bytecode    = plt.compiler.compile(desugared, pinfo);
       } catch (e) {
           local_error = getError(e).toString();
       }
+      var end         = new Date().getTime(), localTime   = Math.floor(end-start);
  
       // we made it out alive, so we can keep the local compiler on
       writeLocalCompilerCookie("true");
@@ -212,7 +211,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     onDone(bytecode);
 
                     // execute using locally-compiled bytecodes!!
-//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(response));}
+//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(bytecode));}
 //                    catch(e){console.log(e);}
  
                 },

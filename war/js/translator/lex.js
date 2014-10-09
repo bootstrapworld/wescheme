@@ -865,20 +865,16 @@ plt.compiler = plt.compiler || {};
     /////////////////////
     /* Export Bindings */
     /////////////////////
-    plt.compiler.lex = function(str, strSource){
-          try {
-            console.log("// LEXING: ///////////////////////////////////\nraw:");
-            var start     = new Date().getTime(),
-                sexp      = readProg(str, strSource),  // do the actual work
-                end       = new Date().getTime(),
-                lexTime   = Math.floor(end-start);
-            console.log(sexp);
-            console.log("Lexed in "+lexTime+"ms");
-            return sexp;
-          } catch(e) {
-            console.log("LEXING ERROR");
-            throw e;
-          }
+    plt.compiler.lex = function(str, strSource, debug){
+        var start = new Date().getTime();
+        try { var sexp      = readProg(str, strSource); }  // do the actual work
+        catch(e) { console.log("LEXING ERROR"); throw e; }
+        var end = new Date().getTime();
+        if(debug){
+          console.log("Lexed in "+(Math.floor(end-start))+"ms");
+          console.log(sexp);
+        }
+        return sexp;
     };
     plt.compiler.sexpToString = sexpToString;
 })();

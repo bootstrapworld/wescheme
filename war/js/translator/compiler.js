@@ -1062,15 +1062,15 @@ plt.compiler = plt.compiler || {};
           requires = program.filter((function(p){return (p instanceof requireExpr);})),
           provides = program.filter((function(p){return (p instanceof provideStatement);})),
           exprs    = program.filter(plt.compiler.isExpression);
-      console.log('compiling requires...');
+//      console.log('compiling requires...');
       var compiledRequiresAndPinfo = requires.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledRequires = compiledRequiresAndPinfo[0],
           pinfo = compiledRequiresAndPinfo[1];
-      console.log('compiling definitions...');
+//      console.log('compiling definitions...');
       var compiledDefinitionsAndPinfo = defns.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledDefinitions = compiledDefinitionsAndPinfo[0],
           pinfo = compiledDefinitionsAndPinfo[1];
-      console.log('compiling expressions...');
+//      console.log('compiling expressions...');
       var compiledExpressionsAndPinfo = exprs.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledExpressions = compiledExpressionsAndPinfo[0],
           pinfo = compiledExpressionsAndPinfo[1];
@@ -1090,19 +1090,15 @@ plt.compiler = plt.compiler || {};
   plt.compiler.localStackReference  = localStackReference;
   plt.compiler.globalStackReference = globalStackReference;
   plt.compiler.unboundStackReference= unboundStackReference;
-  plt.compiler.compile              = function(program, pinfo){
-       try {
-          console.log("// COMPILATION: //////////////////////////////\n");
-          var start       = new Date().getTime(),
-              response    = compileCompilationTop(program, pinfo),  // do the actual work
-              end         = new Date().getTime(),
-          compileTime     = Math.floor(end-start);
-          console.log("Compiled in "+compileTime+"ms");
-          console.log(JSON.stringify(response));
-          return response;
-        } catch (e) {
-          console.log("COMPILATION ERROR");
-          throw e;
-        }
+  plt.compiler.compile              = function(program, pinfo, debug){
+      var start = new Date().getTime();
+      try { var response = compileCompilationTop(program, pinfo); }  // do the actual work
+      catch (e) { console.log("COMPILATION ERROR"); throw e; }
+      var end = new Date().getTime();
+      if(debug){
+        console.log("Compiled in "+(Math.floor(end-start))+"ms");
+        console.log(JSON.stringify(response));
+      }
+      return response;
    };
  })();

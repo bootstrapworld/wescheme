@@ -55,22 +55,17 @@ function readFromRepl(event) {
     var aSource = repl_input.value;
     var progres;
     // run the local compiler
-    var sexp      = plt.compiler.lex(aSource);
-    console.log(sexp);
-    var AST       = plt.compiler.parse(sexp);
-    console.log(AST);
-    var pyret    = plt.compiler.toPyretString(AST);
+    var debug = true;
+    var sexp      = plt.compiler.lex(aSource, undefined, debug);
+    var AST       = plt.compiler.parse(sexp, debug);
+    var pyret    = plt.compiler.toPyretString(AST, debug);
     console.log(pyret.join("\n"));
-    var ASTandPinfo = plt.compiler.desugar(AST),
+    var ASTandPinfo = plt.compiler.desugar(AST, undefined, debug);
         program     = ASTandPinfo[0],
         pinfo       = ASTandPinfo[1];
-    console.log(program);
-    console.log("pinfo:");
-    console.log(pinfo);
-    var pinfo       = plt.compiler.analyze(program);
-    var response    = plt.compiler.compile(program, pinfo);
+    var pinfo       = plt.compiler.analyze(program, debug);
+    var response    = plt.compiler.compile(program, pinfo, debug);
     console.log((0,eval)('(' + response.bytecode + ')'));
-    console.log("response:\n\n"+JSON.stringify(response));
  
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element

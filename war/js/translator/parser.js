@@ -1013,20 +1013,15 @@ plt.compiler = plt.compiler || {};
   /////////////////////
   /* Export Bindings */
   /////////////////////
- plt.compiler.parse = function(sexp){
-      try{
-        console.log("// PARSING: //////////////////////////////////\nraw:");
-        var start     = new Date().getTime(),
-            AST       = parse(sexp),                     // do the actual work
-            end       = new Date().getTime(),
-            parseTime = Math.floor(end - start);
+ plt.compiler.parse = function(sexp, debug){
+      var start = new Date().getTime();
+      try{ var AST = parse(sexp); }                     // do the actual work
+      catch(e) { console.log("PARSING ERROR"); throw e; }
+      var end = new Date().getTime();
+      if(debug){
+        console.log("Parsed in "+(Math.floor(end-start))+"ms");
         console.log(AST);
-        console.log("Parsed in "+parseTime+"ms");
-        return AST;
-      } catch(e) {
-        var end = new Date().getTime();
-        console.log("PARSING ERROR");
-        throw e;
       }
+      return AST;
   };
 })();
