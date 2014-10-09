@@ -162,8 +162,7 @@ plt.compiler = plt.compiler || {};
     function readProg(str, strSource) {
       var i = 0; sCol = column = 0; sLine = line = 1; // initialize all position indices
       source = strSource || "<definitions>";
-      var sexp,
-          sexps = [];
+      var sexp, sexps = [];
       delims = [];
       // get rid of any whitespace at the start of the string
       i = chewWhiteSpace(str, 0);
@@ -432,16 +431,16 @@ plt.compiler = plt.compiler || {};
       if(i < str.length) {
         var p = str.charAt(i).toLowerCase();
         // fl and fx Vectors, structs, and hashtables are not supported
-        var unsupportedMatch = new RegExp("^(((fl|fx|s|hash|hasheq)[\[\(\{])|((rx|px)\#{0,1}\"))", "g"),
+        var unsupportedMatch = new RegExp("^(((fl|fx|s|hash|hasheq)[\[\(\{])|((rx|px)\#{0,1}\"))", 'g'),
             unsupportedTest = unsupportedMatch.exec(str.slice(i));
         // Reader or Language Extensions are not allowed
         var badExtensionMatch = /^(!(?!\/)|reader|lang[\s]{0,1})/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Case sensitivity flags ARE allowed
-        var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)", "g"),
+        var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)", 'g'),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
-        var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", "g"),
+        var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", 'g'),
             vectorTest = vectorMatch.exec(str.slice(i));
         if(unsupportedTest && unsupportedTest[0].length > 0){
             var sexp = readSExpByIndex(str, i+unsupportedTest[0].length-1),
@@ -492,8 +491,9 @@ plt.compiler = plt.compiler || {};
           return datum;
         } else {
           // match every valid (or *almost-valid*) sequence of characters, or the empty string
-          var chunk = /^(hasheq|hash|fl|fx|\d+|[tfeibdox]|\<\<|[\\\"\%\:\&\|\;\!\`\,\']|)/i.exec(str.slice(i))[0],
-          // match the next character
+          var poundChunk = new RegExp("^(hasheq|hash|fl|fx|\\d+|[tfeibdox]|\\<\\<|[\\\\\\\"\\%\\:\\&\\|\\;\\!\\`\\,\\']|)", 'i'),
+              chunk = poundChunk.exec(str.slice(i))[0],
+              // match the next character
               nextChar = str.charAt(i+chunk.length);
           // grab the first non-whitespace character
           var p = chunk.charAt(0).toLowerCase();
@@ -789,7 +789,9 @@ plt.compiler = plt.compiler || {};
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
-      var chunk = /(\|(.|\n)*\||\\(.|\n)|[^\(\)\{\}\[\]\,\'\`\s\"\;])+/mg.exec(str.slice(i))[0];
+      var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
+      var chunk = symOrNum.exec(str.slice(i))[0];
+
       // if the chunk *and the string* end with an escape, throw an error
       if(/^([^\\]|\\\\)*\\$/.test(chunk) && (i+chunk.length+1 > str.length)){
             i = str.length; // jump to the end of the string
@@ -835,7 +837,8 @@ plt.compiler = plt.compiler || {};
       if(filtered==="\n"){line++; column=0;}
                                 
       // add bars if it's a symbol that needs those escape characters
-      filtered = /^$|[\(\)\{\}\[\]\,\'\`\s\"\\]/g.test(filtered)? "|"+filtered+"|" : filtered;
+      var needsBars = new RegExp("^$|[\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\\\]", 'g');
+      filtered = needsBars.test(filtered)? "|"+filtered+"|" : filtered;
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
