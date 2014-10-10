@@ -358,42 +358,20 @@ plt.compiler = plt.compiler || {};
              case /\'/.test(chr)  : break;
              case /\\/.test(chr) : break;
              // if it's a charCode symbol, match with a regexp and move i forward
-             case /x/.test(chr)  :
-                if(!hex2.test(str.slice(i))){
+             case /[xuU]/.test(chr):
+                var regexp = chr === "x"? hex2
+                            :chr === "u"? hex4
+                            :chr === "u"? hex8
+                            /* else */   : throw "IMPOSSIBLE: matched a char that is not x, u or U";
+                if(!regexp.test(str.slice(i))){
                   // remember where we are, so readList can pick up reading
                   endOfError = iStart+greedy.length+1;
                   throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
-                                              , ": read: no hex digit following \\x in string"])
+                                              , ": read: no hex digit following \\"+chr+" in string"])
                            , new Location(sCol, sLine, iStart, i-iStart+1)
                            , "Error-GenericReadError");
                 }
-                var match = hex2.exec(str.slice(i))[1];
-                chr = String.fromCharCode(parseInt(match, 16));
-                i += match.length; column += match.length;
-                break;
-             case /u/.test(chr)  :
-                if(!hex4.test(str.slice(i))){
-                  // remember where we are, so readList can pick up reading
-                  endOfError = iStart+greedy.length+1;
-                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
-                                              , ": read: no hex digit following \\u in string"])
-                           , new Location(sCol, sLine, iStart, i-iStart+1)
-                           , "Error-GenericReadError");
-                }
-                var match = hex4.exec(str.slice(i))[1];
-                chr = String.fromCharCode(parseInt(match, 16));
-                i += match.length; column += match.length;
-                break;
-             case /U/.test(chr)  :
-                if(!hex8.test(str.slice(i))){
-                  // remember where we are, so readList can pick up reading
-                  endOfError = iStart+greedy.length+1;
-                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
-                                              , ": read: no hex digit following \\U in string"])
-                           , new Location(sCol, sLine, iStart, i-iStart+1)
-                           , "Error-GenericReadError");
-                }
-                var match = hex8.exec(str.slice(i))[1];
+                var match = regexp.exec(str.slice(i))[1];
                 chr = String.fromCharCode(parseInt(match, 16));
                 i += match.length; column += match.length;
                 break;
