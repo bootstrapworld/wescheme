@@ -354,15 +354,12 @@ plt.compiler = plt.compiler || {};
              case /f/.test(chr)  : chr = '\f'; break;
              case /r/.test(chr)  : chr = '\r'; break;
              case /e/.test(chr)  : chr = '\u0027'; break;
-             case /\"/.test(chr)  : break;
-             case /\'/.test(chr)  : break;
-             case /\\/.test(chr) : break;
+             case /[\"\'\\]/.test(chr)  : break;
              // if it's a charCode symbol, match with a regexp and move i forward
              case /[xuU]/.test(chr):
                 var regexp = chr === "x"? hex2
                             :chr === "u"? hex4
-                            :chr === "u"? hex8
-                            /* else */   : throw "IMPOSSIBLE: matched a char that is not x, u or U";
+                            /* else */   : hex8;
                 if(!regexp.test(str.slice(i))){
                   // remember where we are, so readList can pick up reading
                   endOfError = iStart+greedy.length+1;
@@ -564,7 +561,7 @@ plt.compiler = plt.compiler || {};
             case 't':  // true
             case 'f':  // false
                 if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
-                  datum = new literal(p=='t');       // create a Boolean literal
+                  datum = new literal(p==='t');      // create a Boolean literal
                   i++; column++;                     // move i/col ahead by the char
                   break;
                 }
@@ -630,30 +627,33 @@ plt.compiler = plt.compiler || {};
             datum = String.fromCharCode(parseInt(match, 8));
             i = iStart + 2 + match.length; // set the reader to the end of the char
             break;
-                                                                
-         // check for hex4
-         case /u/.test(datum)  :
-            var match = hex4.exec(datum.slice(1))[1];
-            datum = String.fromCharCode(parseInt(match, 16));
-            i = iStart + 2 + match.length; // set the reader to the end of the char
-            break;
-                                                                
-         // check for hex6
-         case /U/.test(datum)  :
-            var match = hex8.exec(datum.slice(1))[1];
-            datum = String.fromCharCode(parseInt(match, 16));
-            i = iStart + 2 + match.length; // set the reader to the end of the char
-            break;
-                                                                
+
          // check for single characters of any kind, not followed by alphabetics
-         case (/.[^a-zA-Z]*/.test(datum)) :
+         case (/.[^a-zA-Z]/.test(datum)) :
             datum = datum.charAt(0);
-            i = iStart + 2 + 1; // set the reader to the end of the char
+            i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) char
             break;
                                                                 
+         // check for hex4 or hex6
+         case /[uU]/.test(datum) :
+            var regexp = datum.charAt(0) === "u"? hex4 : hex6;
+            if(regexp.test(datum.slice(1))){
+                var match = regexp.exec(datum.slice(1))[0];
+                column += (match.length-datum.length)+1; // adjust column if only a subset of the datum matched
+                datum = String.fromCharCode(parseInt(match, 16));
+                i = iStart + 3 + match.length; // fast-forward past (1) hash, (2) backslash and (3) match
+                break;
+            }
+
          default:
-            throwError(new types.Message(["read: Unsupported character: #\\",datum]),
-                       new Location(sCol, sLine, iStart, i-iStart));
+            if(datum.length>1 && /[a-zA-Z]/.test(datum.charAt(1))){
+              throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
+                                            " : read: bad character constant: #\\",datum]),
+                         new Location(sCol-1, sLine, iStart, i-iStart),
+                         "Error-GenericReadError");
+            } else {
+               i = iStart + 2 + datum.length;
+            }
       }
       var chr = new literal(new types['char'](datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
