@@ -149,9 +149,10 @@ goog.provide("plt.wescheme.RoundRobin");
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
        var TRUST_LOCAL = 0.50;
+       // Is it an odd-numbered day?
+       var TEST_DAY = (new Date().getDay() % 2)==1;
  
-       console.log('for this compilation request, TEST_LOCAL is '+TEST_LOCAL
-                   +'. Server will be consulted '+(100*TRUST_LOCAL)+'% of the time');
+       console.log('TEST_LOCAL is '+TEST_LOCAL+'\nTEST_DAY is '+TEST_DAY+'\nTRUST_LOCAL is '+TRUST_LOCAL);
  
  if(TEST_LOCAL){
        // Be conservative, and shut off the local compiler for future requests
@@ -178,7 +179,8 @@ goog.provide("plt.wescheme.RoundRobin");
       // At this point, the local compiler front-end has completed. If...
       if( local_error                                                   // (1) it returned an error
           && !(/FATAL ERROR/.test(local_error.toString()))              // (2) the error was non-fatal
-          && (Math.random() > TRUST_LOCAL) ) {                          // (3) it's being trusted
+          && TEST_DAY                                                   // (3) it's a test day
+          && (Math.random() > TRUST_LOCAL) ) {                          // (4) it's being trusted
         // Produce the error without ever bothering the server
         console.log('returning local error without ever hitting the server.');
         onDoneError(local_error);
