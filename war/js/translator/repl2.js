@@ -58,8 +58,8 @@ function readFromRepl(event) {
     var debug = true;
     var sexp      = plt.compiler.lex(aSource, undefined, debug);
     var AST       = plt.compiler.parse(sexp, debug);
-    var pyret    = plt.compiler.toPyretString(AST, debug);
-    console.log(pyret.join("\n"));
+//    var pyret     = plt.compiler.toPyretString(AST, debug);
+//    console.log(pyret.join("\n"));
     var ASTandPinfo = plt.compiler.desugar(AST, undefined, debug);
         program     = ASTandPinfo[0],
         pinfo       = ASTandPinfo[1];

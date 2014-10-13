@@ -4,11 +4,11 @@ plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - figure out desugaring/compilation of quoted expressions
  - compiled-indirects
  - someday, get rid of convertToBytecode()
  - PERF: Switch from array to hashtable for freeVariables search
  - fix uniqueGlobalNames hack!
+ - deal with more complex module resolution (e.g. - rename-out, etc)
  */
 
 (function (){

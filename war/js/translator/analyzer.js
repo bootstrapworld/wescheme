@@ -781,8 +781,6 @@ plt.compiler = plt.compiler || {};
    // collectDefinitions: [listof Programs] pinfo -> pinfo
    // Collects the definitions either imported or defined by this program.
    function collectDefinitions(programs, pinfo){
-     // FIXME: this does not yet say anything if a definition is introduced twice
-     // in the same lexical scope.  We must do this error check!
      return programs.reduce((function(pinfo, p){ return p.collectDefinitions(pinfo); })
                             , pinfo);
    }
@@ -826,7 +824,6 @@ plt.compiler = plt.compiler || {};
     catch (e) { console.log("ANALYSIS ERROR"); throw e; }
     var end         = new Date().getTime();
     if(debug){ console.log("Analyzed in "+(Math.floor(end-start))+"ms"); }
-    console.log(pinfo);
     return pinfo;
   };
  plt.compiler.provideBindingId = provideBindingId;

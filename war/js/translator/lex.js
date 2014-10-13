@@ -648,7 +648,7 @@ plt.compiler = plt.compiler || {};
          default:
             if(datum.length>1 && /[a-zA-Z]/.test(datum.charAt(1))){
               throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
-                                            " : read: bad character constant: #\\",datum]),
+                                            ": read: bad character constant: #\\",datum]),
                          new Location(sCol-1, sLine, iStart, i-iStart),
                          "Error-GenericReadError");
             } else {
