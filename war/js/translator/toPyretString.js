@@ -149,6 +149,10 @@ plt.compiler = plt.compiler || {};
       // special-case for infix operators
       // use toString() because we want to compare the *original* racket string
       if(infix.indexOf(this.func.toString()) > -1){
+        if(this.args.length !== 2){
+          throw "PYRET TRANSLATION ERROR: an infix function was used with "
+                +this.args.length+" argument(s), which is not legal in Pyret."
+        }
         return "("+this.args[0].toPyret()
               +" "+this.func.toString()+" "
               +this.args[1].toPyret()+")";
