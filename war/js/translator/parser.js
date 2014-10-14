@@ -890,7 +890,7 @@ plt.compiler = plt.compiler || {};
     var unParsedVector = sexp.val,
         vals = parseStar(unParsedVector.elts.filter(function(e){return e!==undefined;})),
         last = (vals.length===0)? new literal(0) : vals[vals.length-1], // if they're all undefined, use 0
-        elts = unParsedVector.elts.map(function(v){return (v===undefined)? last : v;});
+        elts = unParsedVector.elts.map(function(v){return (v===undefined)? last : parseExpr(v);});
     var vectorFunc = new symbolExpr("vector"),
         buildVector = new callExpr(vectorFunc, elts);
     vectorFunc.location = buildVector.location = sexp.location;
