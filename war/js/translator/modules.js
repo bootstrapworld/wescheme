@@ -135,7 +135,7 @@ plt.compiler = plt.compiler || {};
 
   // net module
   var netModule         = new moduleBinding("net",
-                                             [["get-url",  1, false, ["INTERNET"]]
+                                             [["get-url",  1, false, ["PERMISSION:INTERNET"]]
                                              ].map(makeFunctionBinding('"moby/net"'))
   );
                                               
