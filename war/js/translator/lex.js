@@ -244,15 +244,17 @@ plt.compiler = plt.compiler || {};
       i = chewWhiteSpace(str, i);
          
       // read a single list item
-      // To allow optimization in v8, this function is broken out into its own (named) function, rather than
-      // embedded inside readList: see http://www.html5rocks.com/en/tutorials/speed/v8/#toc-topic-compilation
+      // To allow optimization in v8, this function is broken out into its own (named) function
+      // see http://www.html5rocks.com/en/tutorials/speed/v8/#toc-topic-compilation
       function readListItem(str, i, list){
         var sexp = readSExpByIndex(str, i);       // read the next s-exp
         i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
         // if it's a dot, treat it as a cons
         if(sexp instanceof symbolExpr && sexp.val == '.'){
           if(list.length === 0){                  // if the dot is the first element in the list, throw an error
-             throwError(new types.Message(["A `.' cannot be the first element in a syntax list"]), sexp.location);
+            var msg = new types.Message(["A `.' cannot be the first element in a syntax list"]);
+            msg.betterThanServer = true;
+            throwError(msg, sexp.location);
           }
           sexp = readSExpByIndex(str, i);        // read the next sexp
           if(!(sexp instanceof Array)){           // if the next sexp is not a list, throw an error
