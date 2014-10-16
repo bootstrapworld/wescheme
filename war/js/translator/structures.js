@@ -507,7 +507,7 @@ function structBinding(name, moduleSource, fields, constructor,
   // things live.
   function env(bindings){
     var that = this;
-    this.bindings = bindings || types.makeLowLevelEqHash();
+    this.bindings = bindings || makeHash();
  
     // lookup : Symbol -> (or/c binding false)
     this.lookup = function(id){
@@ -795,6 +795,7 @@ function structBinding(name, moduleSource, fields, constructor,
     // This qualifier allows a fn argument to shadow a global, without removing it from the environment
     this.accumulateBindingUse = function(binding){
       var alreadyExists = this.usedBindingsHash.get(binding.name);
+      // if it's a module binding, don't replace it with a different kind of binding
       if(!(alreadyExists && alreadyExists.moduleSource)) this.usedBindingsHash.put(binding.name, binding);
       return this;
     };

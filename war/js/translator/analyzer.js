@@ -813,8 +813,8 @@ plt.compiler = plt.compiler || {};
     } catch (e) { console.log("DESUGARING ERROR"); throw e; }
     var end = new Date().getTime();
     if(debug){
-      console.log(program);
       console.log("Desugared in "+(Math.floor(end-start))+"ms");
+      console.log(program);
     }
     return ASTandPinfo;
   };
