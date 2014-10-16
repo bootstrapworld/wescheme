@@ -208,7 +208,8 @@ var WeSchemeTextContainer;
            e.preventDefault(); }
         );
 
-        extendEditorWithIOSKeys(this.editor);
+// Disabled CM keyrow extension. Needs to be tested on CM 4.6 (ask Emmanuel)
+//        extendEditorWithIOSKeys(this.editor);
 
         // Under IE 7, some of these style settings appear to die.
         try { this.editor.getWrapperElement().style.width = options.width || "100%"; } catch (e) {}
