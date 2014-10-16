@@ -233,7 +233,6 @@ plt.compiler = plt.compiler || {};
                             
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
-    // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readList(str, i) {
       var sCol=column, sLine=line, iStart=i, innerError=false,
           errorLocation = new Location(sCol, sLine, iStart, 1),
@@ -358,6 +357,7 @@ plt.compiler = plt.compiler || {};
              case /f/.test(chr)  : chr = '\f'; break;
              case /r/.test(chr)  : chr = '\r'; break;
              case /e/.test(chr)  : chr = '\u0027'; break;
+             case /\n/.test(chr) : chr = '';   break; // newlines disappear
              case /[\"\'\\]/.test(chr)  : break;
              // if it's a charCode symbol, match with a regexp and move i forward
              case /[xuU]/.test(chr):
