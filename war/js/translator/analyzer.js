@@ -772,10 +772,8 @@ plt.compiler = plt.compiler || {};
                     this.location);
     }
     if(env.lookup_context(this.val)){
- console.log('found binding use of '+this.val);
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
- console.log('found free use of '+this.val);
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
  };
