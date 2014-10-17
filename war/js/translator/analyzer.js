@@ -711,13 +711,22 @@ plt.compiler = plt.compiler || {};
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defFunc.prototype.analyzeUses = function(pinfo, env){
-    // extend the env to include the function binding, then add each arg as a constant binding
+    // extend the env to include the function binding, then make a copy of all the bindings
     var env1 = env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
+        oldKeys = env1.bindings.keys(),
+        newBindings = types.makeLowLevelEqHash();
+    oldKeys.forEach(function(k){newBindings.put(k, env1.bindings.get(k));});
+ 
+    // make a copy of the environment, using the newly-copied bindings
+    // add the args to this environment
+    var env2 = new plt.compiler.env(newBindings),
         env2 = this.args.reduce(function(env, arg){
                                   return env.extend(new constantBinding(arg.val, false, [], arg.location));
-                                }, env1);
-    pinfo.env = env1;
-    return this.body.analyzeUses(pinfo, env2);
+                                }, env2);
+    pinfo.env = env2;                           // install the post-arg env into pinfo
+    pinfo = this.body.analyzeUses(pinfo, env2); // analyze the body
+    pinfo.env = env1;                           // install the pre-arg environment for pinfo
+    return pinfo;
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
@@ -763,8 +772,10 @@ plt.compiler = plt.compiler || {};
                     this.location);
     }
     if(env.lookup_context(this.val)){
+ console.log('found binding use of '+this.val);
       return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
     } else {
+ console.log('found free use of '+this.val);
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
  };
