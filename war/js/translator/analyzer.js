@@ -581,23 +581,25 @@ plt.compiler = plt.compiler || {};
  // bindings provided by that module.
  // FIXME: we currently override moduleName, which SHOULD just give us the proper name
  requireExpr.prototype.collectDefinitions = function(pinfo){
-    var moduleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
+    var resolvedModuleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
         returnPinfo,
         that = this;
- 
-    // if it's an invalid moduleName, throw an error
-    if(!moduleName){
-      var bestGuess = plt.compiler.moduleGuess(this.spec.toString());
+
+    function throwModuleError(moduleName){
+      var bestGuess = plt.compiler.moduleGuess(that.spec.toString());
       var msg = new types.Message(["Found require of the module "
-                                   , new types.ColoredPart(this.spec.toString(), this.spec.location)
+                                   , new types.ColoredPart(that.spec.toString(), that.spec.location)
                                    , ", but this module is unknown."
-                                   , ((bestGuess.name===this.spec.toString())? "": " Did you mean '"+bestGuess.name+"'?")]);
-      throwError(msg, this.spec.location, "Error-UnknownModule");
+                                   , ((bestGuess.name===that.spec.toString())? "": " Did you mean '"+bestGuess.name+"'?")]);
+      throwError(msg, that.spec.location, "Error-UnknownModule");
     }
  
-    // if it's a literal, pull out the actual value. if it's a symbol use it as-is
-    moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString();
+    // if it's an invalid moduleName, throw an error
+    if(!resolvedModuleName){ throwModuleError(moduleName); }
  
+    // if it's a literal, pull out the actual value. if it's a symbol use it as-is
+    var moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString();
+
     // processModule : JS -> pinfo
     // given the JS that assigns a module to window.COLLECTIONS, evaluate it, pull out the bindings
     // and then add them to pinfo
@@ -615,7 +617,8 @@ plt.compiler = plt.compiler || {};
     }
  
     // open a *synchronous* GET request -- FIXME to use callbacks?
-    var url = window.location.protocol+"//"+window.location.host+"/js/mzscheme-vm/collects/"+moduleName+".js";
+    var url = (/wescheme\//.test(moduleName))? "http://www.wescheme.org/loadProject?publicId="+(/wescheme\/(.+)/.exec(moduleName)[1])
+             : window.location.protocol+"//"+window.location.host+"/js/mzscheme-vm/collects/"+moduleName+".js";
  
     jQuery.ajax({
          url:    url,
@@ -623,6 +626,7 @@ plt.compiler = plt.compiler || {};
                     return result? processModule(result)
                             : console.log('ERROR LOADING MODULE:\n'+result.message);
                   },
+         error: function (error) { throwModuleError(moduleName); },
          async:   false
     });
  
