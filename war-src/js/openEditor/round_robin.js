@@ -148,7 +148,7 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL = 0.50;
+       var TRUST_LOCAL = 0.55;
        // Is it an odd-numbered day?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
