@@ -19,6 +19,10 @@ shell commands, including 'unzip' and 'git'.
 Note: Additionally, do not use python 3; use python 2. The file
 calcdeps.py is incompatible with python 3.
 
+You will also need to make sure that the DEFAULT_ENCODING environment variable 
+on your system is set to "UTF-8". On some systems, the build will fail if 
+the appengine.xml settings differ from those of the environment.
+
 ----------------------------------------------------------------------
 
 Installing WeScheme for local development
