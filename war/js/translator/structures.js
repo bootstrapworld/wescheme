@@ -820,9 +820,10 @@ function structBinding(name, moduleSource, fields, constructor,
       // onlyUnique : v, idx, arr -> arr with unique elts
       // from http://stackoverflow.com/questions/1960473/unique-values-in-an-array
       function onlyUnique(value, index, self) { return self.indexOf(value) === index; }
+      // if it's a function or constant binding, add its permissions to the list
       function reducePermissions(permissions, b){
-        if((b instanceof functionBinding)
-        || (b instanceof constantBinding)) return permissions.concat(b.permissions);
+        return ((b instanceof functionBinding) || (b instanceof constantBinding))?
+              permissions.concat(b.permissions) : permissions;
       }
       return this.usedBindings().reduce(reducePermissions, []).filter(onlyUnique);
     }

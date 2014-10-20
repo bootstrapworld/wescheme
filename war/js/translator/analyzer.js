@@ -5,6 +5,7 @@ plt.compiler = plt.compiler || {};
 /*
  TODO
  - stop using synchronous XmlHttpRequests
+ - use dynamicModuleLoader that's built into WeScheme
 */
 
 (function () {
@@ -555,11 +556,12 @@ plt.compiler = plt.compiler || {};
           selectorIds   = fields.map(fieldToAccessor),
           mutatorIds    = fields.map(fieldToMutator),
           // build bindings out of these ids
-          structureBinding = new structBinding(id, this.location, fields, constructorId, predicateId,
+          structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
                                                selectorIds, mutatorIds, null, that.location),
           constructorBinding = bf(constructorId, false, fields.length, false, that.location),
           predicateBinding   = bf(predicateId, false, 1, false, that.location),
           mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
+          refBinding         = bf(id+"-ref", false, 1, false, that.location),
  // COMMENTED OUT ON PURPOSE:
  // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
  //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
@@ -567,7 +569,7 @@ plt.compiler = plt.compiler || {};
  //  these symbols aren't exposed by the compiler either (maybe since set! isn't supported?)
  //        mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
           // assemble all the bindings together
-          bindings = [structureBinding, constructorBinding, predicateBinding, mutatorBinding];
+          bindings = [structureBinding, refBinding, constructorBinding, predicateBinding, mutatorBinding];
           return pinfo.accumulateDefinedBindings(bindings, that.location);
     } else {
       return this.names.reduce(function(pinfo, id){
@@ -624,7 +626,7 @@ plt.compiler = plt.compiler || {};
          url:    url,
          success: function(result) {
                     return result? processModule(result)
-                            : console.log('ERROR LOADING MODULE:\n'+result.message);
+                            : console.log('ERROR LOADING MODULE:\n'+result);
                   },
          error: function (error) { throwModuleError(moduleName); },
          async:   false
@@ -828,6 +830,7 @@ plt.compiler = plt.compiler || {};
     if(debug){
       console.log("Desugared in "+(Math.floor(end-start))+"ms");
       console.log(program);
+      console.log(program.toString());
     }
     return ASTandPinfo;
   };
