@@ -554,6 +554,7 @@ plt.compiler = plt.compiler || {};
 
       function parseQuotedItem(sexp) {
         return isCons(sexp) ? sexp.map(parseQuotedItem)
+          :  (sexp instanceof Array && sexp.length === 0)? sexp // the empty list is allowed inside quotes
           : /* else */ parseExprSingleton(sexp);
       }
       // quote must have exactly one argument

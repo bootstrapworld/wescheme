@@ -148,7 +148,7 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL = 0.55;
+       var TRUST_LOCAL = 0.60;
        // Is it an odd-numbered day?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
@@ -210,7 +210,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        var server_bytecode = JSON.parse(bytecode);
 /*                       if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')')
-                                       ,(0,eval)('('+recieved.bytecode+')'))){
+                                       ,(0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
                           logResults(code, "TOO LONG", server_bytecode);
                         } else {
