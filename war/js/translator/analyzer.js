@@ -4,8 +4,7 @@ plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - stop using synchronous XmlHttpRequests
- - use dynamicModuleLoader that's built into WeScheme
+ - stop using synchronous XmlHttpRequests -> probably only after the compiler is folder into the evaluator
 */
 
 (function () {
@@ -583,10 +582,18 @@ plt.compiler = plt.compiler || {};
  // bindings provided by that module.
  // FIXME: we currently override moduleName, which SHOULD just give us the proper name
  requireExpr.prototype.collectDefinitions = function(pinfo){
-    var resolvedModuleName = pinfo.modulePathResolver(this.spec.val, pinfo.currentModulePath),
+    // if it's a literal, pull out the actual value. if it's a symbol use it as-is
+    var moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString(),
+        resolvedModuleName = pinfo.modulePathResolver(moduleName, pinfo.currentModulePath),
         returnPinfo,
         that = this;
-
+ 
+    // is this a shared WeScheme program?
+    function getWeSchemeModule(name){
+      var m = name.match(/^wescheme\/(\w+)$/);
+      return m? m[1] : false;
+    }
+ 
     function throwModuleError(moduleName){
       var bestGuess = plt.compiler.moduleGuess(that.spec.toString());
       var msg = new types.Message(["Found require of the module "
@@ -597,16 +604,12 @@ plt.compiler = plt.compiler || {};
     }
  
     // if it's an invalid moduleName, throw an error
-    if(!resolvedModuleName){ throwModuleError(moduleName); }
+    if(!(resolvedModuleName || getWeSchemeModule(moduleName))){ throwModuleError(moduleName); }
  
-    // if it's a literal, pull out the actual value. if it's a symbol use it as-is
-    var moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString();
-
     // processModule : JS -> pinfo
-    // given the JS that assigns a module to window.COLLECTIONS, evaluate it, pull out the bindings
-    // and then add them to pinfo
-    function processModule(js){
-      var module = eval(js);
+    // assumes the module has been assigned to window.COLLECTIONS.
+    // pull out the bindings, and then add them to pinfo
+    function processModule(moduleName){
       var provides = window.COLLECTIONS[moduleName].provides,
           strToBinding = function(p){
                             var b = new constantBinding(p, new symbolExpr(moduleName), false);
@@ -619,14 +622,26 @@ plt.compiler = plt.compiler || {};
     }
  
     // open a *synchronous* GET request -- FIXME to use callbacks?
-    var url = (/wescheme\//.test(moduleName))? "http://www.wescheme.org/loadProject?publicId="+(/wescheme\/(.+)/.exec(moduleName)[1])
+    var url = getWeSchemeModule(moduleName)? "http://www.wescheme.org/loadProject?publicId="+(getWeSchemeModule(moduleName))
              : window.location.protocol+"//"+window.location.host+"/js/mzscheme-vm/collects/"+moduleName+".js";
  
     jQuery.ajax({
          url:    url,
          success: function(result) {
-                    return result? processModule(result)
-                            : console.log('ERROR LOADING MODULE:\n'+result);
+                    // if it's not a native module, manually assign it to window.COLLECTIONS
+                    if(getWeSchemeModule(moduleName)){
+                      var program = (0,eval)('(' + result + ')');
+                      window.COLLECTIONS[moduleName] = {
+                                  'name': moduleName,
+                                  'bytecode' : (0,eval)('(' + program.result + ')'),
+                                  'provides' : program.provides
+                              };
+                    // otherwise, simply evaluate the raw JS
+                    } else {
+                      eval(result);
+                    }
+                    if(result){processModule(moduleName);}
+                    else { throwModuleError(moduleName); }
                   },
          error: function (error) { throwModuleError(moduleName); },
          async:   false
