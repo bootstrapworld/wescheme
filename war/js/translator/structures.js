@@ -819,7 +819,8 @@ function structBinding(name, moduleSource, fields, constructor,
       function onlyUnique(value, index, self) { return self.indexOf(value) === index; }
       // if it's a function or constant binding, add its permissions to the list
       function reducePermissions(permissions, b){
-        return ((b instanceof functionBinding) || (b instanceof constantBinding))?
+        return (((b instanceof functionBinding) || (b instanceof constantBinding))
+                && (b.permissions.length > 0))?
               permissions.concat(b.permissions) : permissions;
       }
       return this.usedBindings().reduce(reducePermissions, []).filter(onlyUnique);
@@ -888,6 +889,7 @@ function structBinding(name, moduleSource, fields, constructor,
  s+= "\n**gensym counter**: "+this.gensymCounter;
  s+= "\n**provided names**: "+this.providedNames.values();
  s+= "\n**defined names**: "+this.definedNames.values();
+ s+= "\n**permissions**: "+this.permissions();
  return s;
     };
  }
