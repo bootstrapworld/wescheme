@@ -344,8 +344,8 @@ goog.provide("plt.wescheme.RoundRobin");
         // log error if a property is not defined
         if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
         if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
-        // ignore the hashcode property
-        if(p==="_eqHashCode") continue;
+        // ignore the hashcode and betterThanServer propertoes
+        if(p==="_eqHashCode" || p==="betterThanServer") continue;
  
         // toplevel properties are equal if the sets of names are equal
         // WARNING: this may require stronger checking!
