@@ -180,7 +180,7 @@ goog.provide("plt.wescheme.RoundRobin");
       if( local_error                                                   // (1) it returned an error
           && !(/FATAL ERROR/.test(local_error.toString()))              // (2) the error was non-fatal
           && TEST_DAY                                                   // (3) it's a test day
-          && (Math.random() > TRUST_LOCAL) ) {                          // (4) it's being trusted
+          && (Math.random() < TRUST_LOCAL) ) {                          // (4) it's being trusted
         // Produce the error without ever bothering the server
         console.log('returning local error without ever hitting the server.');
         onDoneError(local_error);
@@ -220,7 +220,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     }
                                               
                     // execute server bytecode
-                    onDone(bytecode);
+//                    onDone(bytecode);
 
                     // execute using locally-compiled bytecodes!!
 //                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(bytecode));}
