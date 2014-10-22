@@ -124,6 +124,9 @@ function sameResults(x, y){
 // set the parent row to pink, and add a link that will load
 // a diff of the expected and recieved output
 function setTestFailureLink(test, expected, recieved){
+  if(typeof recieved !== "string") recieved = JSON.stringify(recieved);
+  recieved = recieved.replace(/\s/g,'');
+  expected = expected.replace(/\s/g,'');
   test.style.background = 'pink';
   test.style.cursor     = 'pointer';
   test.onclick = function(){compareText(expected,recieved);}
