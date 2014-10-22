@@ -8,7 +8,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import java.io.BufferedInputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -99,14 +100,17 @@ public class Compiler extends HttpServlet
             while (true) {
                 try {
                     conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Accept-Charset", "UTF-8");
+                    conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
                     conn.setDoOutput(true);
-                    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
                     wr.write(data);
                     wr.flush();
                     if (conn.getResponseCode() == HttpURLConnection.HTTP_OK) {
                         try {
                             JSONObject obj = (JSONObject) jsonParser.parse(readStream(conn.getInputStream()));
                             String compiledCode = (String) obj.get("bytecode");
+                          
                             Set<String> perms = jsonStringArrayToSet((JSONArray) obj.get("permissions"));
                             Set<String> provides = jsonStringArrayToSet((JSONArray) obj.get("provides"));
                             return new GoodCompilationResult(compiledCode, perms, provides);
@@ -149,17 +153,20 @@ public class Compiler extends HttpServlet
 
 	
     private static String readStream(InputStream stream) {
-        BufferedInputStream bs = new BufferedInputStream(stream);
-        int nextChar;
         StringBuilder builder = new StringBuilder();
-        try {
-            while ((nextChar = bs.read()) != -1) {
-                builder.append((char) nextChar);
-            }
-            return builder.toString();
+        try{
+          InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+          BufferedReader br = new BufferedReader(inputStreamReader);
+          int nextChar;
+          while ((nextChar = br.read()) != -1) {
+              builder.append((char) nextChar);
+          }
+        } catch (UnsupportedEncodingException e){
+          throw new RuntimeException(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+          throw new RuntimeException(e);
         }
+        return builder.toString();
     }
 	
 }
