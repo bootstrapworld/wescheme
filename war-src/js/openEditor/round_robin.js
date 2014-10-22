@@ -220,7 +220,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     }
                                               
                     // execute server bytecode
-//                    onDone(bytecode);
+                    onDone(bytecode);
 
                     // execute using locally-compiled bytecodes!!
 //                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(bytecode));}
