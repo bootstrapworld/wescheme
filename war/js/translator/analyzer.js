@@ -622,8 +622,9 @@ plt.compiler = plt.compiler || {};
     }
  
     // open a *synchronous* GET request -- FIXME to use callbacks?
-    var url = getWeSchemeModule(moduleName)? "http://www.wescheme.org/loadProject?publicId="+(getWeSchemeModule(moduleName))
-             : window.location.protocol+"//"+window.location.host+"/js/mzscheme-vm/collects/"+moduleName+".js";
+    var url = window.location.protocol+"//"+window.location.host
+              + (getWeSchemeModule(moduleName)?  "/loadProject?publicId="+(getWeSchemeModule(moduleName))
+                                              : "/js/mzscheme-vm/collects/"+moduleName+".js");
  
     jQuery.ajax({
          url:    url,
@@ -631,10 +632,13 @@ plt.compiler = plt.compiler || {};
                     // if it's not a native module, manually assign it to window.COLLECTIONS
                     if(getWeSchemeModule(moduleName)){
                       var program = (0,eval)('(' + result + ')');
+                console.log('require is used with a user-defined program. JS object is:');
                 console.log(program);
+                console.log('bytecode from this file is:');
+                console.log((0,eval)('(' + program.object + ')'));
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
-                                  'bytecode' : (0,eval)('(' + program.result + ')'),
+                                  'bytecode' : (0,eval)('(' + program.object + ')'),
                                   'provides' : program.provides
                               };
                     // otherwise, simply evaluate the raw JS
