@@ -273,9 +273,13 @@ plt.compiler = plt.compiler || {};
  andExpr.prototype.desugar = function(pinfo){
     var expr = this.exprs[this.exprs.length-1];
     for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
-      expr = new ifExpr(this.exprs[i], expr, new symbolExpr("false"), this.stx);
+      expr = new ifExpr(this.exprs[i],
+                        forceBooleanContext(this.stx, this.stx.location, expr),
+                        new literal(false),
+                        this.stx);
       expr.location = this.location;
     }
+ console.log(expr);
     return expr.desugar(pinfo);
  };
  // ors become nested lets-with-if-bodies
