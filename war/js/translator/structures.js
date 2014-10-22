@@ -5,7 +5,6 @@ plt.compiler = plt.compiler || {};
 /*
  TODO
  - have modulePathResolver return the proper name!
- - Perf: take location information for all AST nodes as constructor argument
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -120,11 +119,13 @@ var heir = function(p) {
   return new f();
 };
 
-// all Programs, by default, print out their values and have no location
+// all Programs, by default, print out their values
 // anything that behaves differently must provide their own toString() function
 var Program = function() {
   // -> String
   this.toString = function(){ return this.val.toString(); };
+  // every Program has a location, but it's initialized to null
+  this.location = null;
 };
 
 // Function definition
