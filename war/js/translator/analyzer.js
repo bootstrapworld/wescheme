@@ -4,7 +4,7 @@ plt.compiler = plt.compiler || {};
 
 /*
  TODO
- - stop using synchronous XmlHttpRequests -> probably only after the compiler is folder into the evaluator
+ - stop using synchronous XmlHttpRequests -> probably only after the compiler is folded into the evaluator
 */
 
 (function () {
@@ -859,7 +859,11 @@ plt.compiler = plt.compiler || {};
     try { var pinfo       = analyze(program); }             // do the actual work
     catch (e) { console.log("ANALYSIS ERROR"); throw e; }
     var end         = new Date().getTime();
-    if(debug){ console.log("Analyzed in "+(Math.floor(end-start))+"ms"); }
+    if(debug){
+      console.log("Analyzed in "+(Math.floor(end-start))+"ms");
+      console.log(pinfo);
+      console.log(pinfo.toString());
+    }
     return pinfo;
   };
  plt.compiler.provideBindingId = provideBindingId;

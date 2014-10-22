@@ -31,25 +31,25 @@ plt.compiler = plt.compiler || {};
   
   // foreign-module
   var foreignModule     = new moduleBinding("moby/foreign",
-                                           [["get-js-object", 2, false, ["PERMISSION:FOREIGN-FUNCTION-INTERFACE"]]
+                                           [["get-js-object", 2, false, ["android.permission.FOREIGN-FUNCTION-INTERFACE"]]
                                            ].map(makeFunctionBinding('"moby/foreign"'))
   );
   
   // world-effects-module
   var worldEffectsModule= new moduleBinding("world-effects",
                                             [["make-effect:none", 0, false]
-                                             ,["make-effect:beep", 0, false, ["PERMISSION:VIBRATE"]]
+                                             ,["make-effect:beep", 0, false, ["android.permission.VIBRATE"]]
                                              ,["make-effect:play-dtmf-tone", 2, false]
-                                             ,["make-effect:send-sms", 2, false, ["PERMISSION:SEND-SMS"]]
-                                             ,["make-effect:play-sound", 1, false, ["PERMISSION:INTERNET"]]
+                                             ,["make-effect:send-sms", 2, false, ["android.permission.SEND-SMS"]]
+                                             ,["make-effect:play-sound", 1, false, ["android.permission.INTERNET"]]
                                              ,["make-effect:stop-sound", 1, false]
                                              ,["make-effect:pause-sound", 1, false]
                                              ,["make-effect:set-sound-volume", 1, false]
                                              ,["make-effect:set-beep-volume", 1, false]
                                              ,["make-effect:raise-sound-volume", 0, false]
                                              ,["make-effect:lower-sound-volume", 1, false]
-                                             ,["make-effect:set-wake-lock", 1, false, ["PERMISSION:WAKE-LOCK"]]
-                                             ,["make-effect:release-wake-lock", 1, false, ["PERMISSION:WAKE-LOCK"]]
+                                             ,["make-effect:set-wake-lock", 1, false, ["android.permission.WAKE-LOCK"]]
+                                             ,["make-effect:release-wake-lock", 1, false, ["android.permission.WAKE-LOCK"]]
                                              ,["make-effect:pick-playlist", 1, false]
                                              ,["make-effect:pick-random", 2, false]
                                              ].map(makeFunctionBinding('"moby/world-effects"'))
@@ -107,35 +107,35 @@ plt.compiler = plt.compiler || {};
   
   // location module
   var locationModule     = new moduleBinding("location",
-                                             [["get-latitude",      0, false, ["PERMISSION:LOCATION"]]
-                                              ,["get-longitude",    0, false, ["PERMISSION:LOCATION"]]
-                                              ,["get-altitude",     0, false, ["PERMISSION:LOCATION"]]
-                                              ,["get-bearing",      0, false, ["PERMISSION:LOCATION"]]
-                                              ,["get-speed",        0, false, ["PERMISSION:LOCATION"]]
-                                              ,["location-distance", 0, false, ["PERMISSION:LOCATION"]]
+                                             [["get-latitude",      0, false, ["android.permission.LOCATION"]]
+                                              ,["get-longitude",    0, false, ["android.permission.LOCATION"]]
+                                              ,["get-altitude",     0, false, ["android.permission.LOCATION"]]
+                                              ,["get-bearing",      0, false, ["android.permission.LOCATION"]]
+                                              ,["get-speed",        0, false, ["android.permission.LOCATION"]]
+                                              ,["location-distance", 0, false, ["android.permission.LOCATION"]]
                                               ].map(makeFunctionBinding('"moby/geolocation"'))
   );
 
   // accelerometer library
   var tiltModule        = new moduleBinding("tilt",
-                                             [["get-x-acceleration",  0, false, ["PERMISSION:TILT"]]
-                                              ,["get-y-acceleration", 0, false, ["PERMISSION:TILT"]]
-                                              ,["get-z-acceleration", 0, false, ["PERMISSION:TILT"]]
-                                              ,["get-azimuth",        0, false, ["PERMISSION:TILT"]]
-                                              ,["get-pitch",          0, false, ["PERMISSION:TILT"]]
-                                              ,["get-roll",           0, false, ["PERMISSION:TILT"]]
+                                             [["get-x-acceleration",  0, false, ["android.permission.TILT"]]
+                                              ,["get-y-acceleration", 0, false, ["android.permission.TILT"]]
+                                              ,["get-z-acceleration", 0, false, ["android.permission.TILT"]]
+                                              ,["get-azimuth",        0, false, ["android.permission.TILT"]]
+                                              ,["get-pitch",          0, false, ["android.permission.TILT"]]
+                                              ,["get-roll",           0, false, ["android.permission.TILT"]]
                                               ].map(makeFunctionBinding('"moby/tilt"'))
   );
 
   // telephony module
   var telephonyModule    = new moduleBinding("telephony",
-                                             [["get-signal-strength",  0, false, ["PERMISSION:TELEPHONY"]]
+                                             [["get-signal-strength",  0, false, ["android.permission.TELEPHONY"]]
                                              ].map(makeFunctionBinding('"moby/net"'))
   );
 
   // net module
   var netModule         = new moduleBinding("net",
-                                             [["get-url",  1, false, ["PERMISSION:INTERNET"]]
+                                             [["get-url",  1, false, ["android.permission.INTERNET"]]
                                              ].map(makeFunctionBinding('"moby/net"'))
   );
                                               
@@ -155,7 +155,7 @@ plt.compiler = plt.compiler || {};
                                              ,["js-button!",  2, false]
                                              ,["js-node",     1, false]
                                              ,["js-select",   2, false]
-                                             ,["js-img",      1, false, ["PERMISSION:INTERNET"]]
+                                             ,["js-img",      1, false, ["android.permission.INTERNET"]]
                                              ].map(makeFunctionBinding('"moby/jsworld"'))
   );
   
@@ -164,7 +164,6 @@ plt.compiler = plt.compiler || {};
                                            worldHandlersModule.bindings.concat(worldEffectsModule.bindings,
                                            ["key=?"
                                             ,"big-bang"
-                                            
                                             ,"make-color"
                                             ,"color-red"
                                             ,"color-green"
@@ -242,8 +241,8 @@ plt.compiler = plt.compiler || {};
                                             ,"step-count?"
                                             ].map(function(binding){
                                                     var needsPermission = ["video/url", "bitmap/url", "image-url", "open-image-url"];
-                                                    binding[1] = (needsPermission.indexOf(binding.name) > -1)? ["PERMISSION:INTERENT"] : [];
-                                                    return new constantBinding(binding, '"moby/world"', binding[1], false);
+                                                    var permissions = (needsPermission.indexOf(binding) > -1)? ["android.permission.INTERNET"] : [];
+                                                    return new constantBinding(binding, '"moby/world"', permissions, false);
                                                   }))
   );
 
