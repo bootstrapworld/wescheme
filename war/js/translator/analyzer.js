@@ -631,6 +631,7 @@ plt.compiler = plt.compiler || {};
                     // if it's not a native module, manually assign it to window.COLLECTIONS
                     if(getWeSchemeModule(moduleName)){
                       var program = (0,eval)('(' + result + ')');
+                console.log(program);
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
                                   'bytecode' : (0,eval)('(' + program.result + ')'),
