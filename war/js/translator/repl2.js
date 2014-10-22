@@ -65,7 +65,8 @@ function readFromRepl(event) {
         pinfo       = ASTandPinfo[1];
     var pinfo       = plt.compiler.analyze(program, debug);
     var response    = plt.compiler.compile(program, pinfo, debug);
-    console.log((0,eval)('(' + response.bytecode + ')'));
+    response.bytecode = (0,eval)('(' + response.bytecode + ')');
+    console.log(response);
  
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element

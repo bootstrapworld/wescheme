@@ -268,14 +268,13 @@ function runTests(verbose){
       if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       expected = JSON.parse(bytecodeRef);
       recieved = JSON.parse(recieved);
-      console.log((0,eval)('('+expected.bytecode+')'));
-      try { console.log((0,eval)('('+recieved.bytecode+')'));}
+      expected.bytecode = (0,eval)('('+expected.bytecode+')');
+      try { recieved.bytecode = (0,eval)('('+recieved.bytecode+')');}
       catch(e){console.log('MALFORMED BYTECODE:\n'+recieved.bytecode); return setTestFailureLink(row, expected.bytecode, recieved.bytecode); }
-      if(sameResults((0,eval)('('+expected.bytecode+')'), (0,eval)('('+recieved.bytecode+')'))) {
+      if(sameResults(expected, recieved)) {
         desugar.style.background = 'lightgreen'; return true;
       } else {
-//                        console.log('compared\n'+expected.bytecode+'\nto\n'+recieved.bytecode);
-        return setTestFailureLink(row, JSON.stringify(expected.bytecode), JSON.stringify(recieved.bytecode));
+        return setTestFailureLink(row, JSON.stringify(expected), JSON.stringify(recieved));
       }
 
       // EVERYTHING PASSED! WHOOPIE!
