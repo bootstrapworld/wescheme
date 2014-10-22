@@ -80,26 +80,22 @@ function throwError(msg, loc, errorClass) {
 // checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
 // sort the array, and throw errors for non-symbols, keywords or duplicates
 function checkDuplicateIdentifiers(lst, stx, loc){
-  var sorted_arr = lst.sort();
-  var results = [];
-  for (var i = 0; i < lst.length; i++) {
-    if(!(sorted_arr[i] instanceof symbolExpr)){
-      throwError("expected identifier "+sorted_arr[i].val, sorted_arr[i].location);
-//    } else if(plt.compiler.keywords.indexOf(sorted_arr[i].val)>-1){
-//      throwError(new types.Message([new types.ColoredPart(sorted_arr[i].val, sorted_arr[i].location),
-//                                " : this is a reserved keyword and cannot be used as a variable or function name"])
-//                 , sorted_arr[i].location);
-    } else if(results.indexOf(sorted_arr[i].toString()) > -1) {
-      throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
-                                ": found ",
-                                new types.ColoredPart("a variable", sorted_arr[i].location),
-                                " that is already used ",
-                                new types.ColoredPart("here", sorted_arr[i-1].location)])
-                 , sorted_arr[i].location);
-    } else {
-      results.push(sorted_arr[i].toString());
-    }
-  }
+  var visitedIds = {}; // initialize a dictionary of ids we've seen
+  lst.forEach(function(id){
+      if(!(id instanceof symbolExpr)){
+        throwError("expected identifier "+id.val, id.location);
+      } else if(visitedIds[id.val]) { // if we've seen this variable before, throw an error
+        throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
+                                  ": found ",
+                                  new types.ColoredPart("a variable", id.location),
+                                  " that is already used ",
+                                  new types.ColoredPart("here", visitedIds[id.val].location)])
+                   , id.location);
+      } else {
+        visitedIds[id.val] = id; // otherwise, record the identifier as being visited
+      }
+                       
+  });
 }
 
 // couple = pair
