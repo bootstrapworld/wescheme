@@ -635,10 +635,10 @@ plt.compiler = plt.compiler || {};
                 console.log('require is used with a user-defined program. JS object is:');
                 console.log(program);
                 console.log('bytecode from this file is:');
-                console.log((0,eval)('(' + program.object + ')'));
+                console.log((0,eval)('(' + program.object.obj + ')'));
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
-                                  'bytecode' : (0,eval)('(' + program.object + ')'),
+                                  'bytecode' : (0,eval)('(' + program.object.obj + ')'),
                                   'provides' : program.provides
                               };
                     // otherwise, simply evaluate the raw JS
