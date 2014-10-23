@@ -778,11 +778,16 @@ plt.compiler = plt.compiler || {};
   }
  
   function parseBinding(sexp) {
-    return sexpIsCouple(sexp) ? new couple(parseIdExpr(sexp[0]), parseExpr(sexp[1])) :
+    if(sexpIsCouple(sexp)){
+        var binding = new couple(parseIdExpr(sexp[0]), parseExpr(sexp[1]));
+        binding.location = sexp.location;
+        return binding;
+    } else {
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
                                       , ": expected a sequence of key/value pairs, but given "
                                       , new types.ColoredPart("something else", sexp[0].location)]),
                    sexp.location);
+    }
   }
 
   function parseUnquoteExpr(sexp, depth) {
