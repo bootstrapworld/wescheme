@@ -1062,15 +1062,12 @@ plt.compiler = plt.compiler || {};
           requires = program.filter((function(p){return (p instanceof requireExpr);})),
           provides = program.filter((function(p){return (p instanceof provideStatement);})),
           exprs    = program.filter(plt.compiler.isExpression);
-//      console.log('compiling requires...');
       var compiledRequiresAndPinfo = requires.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledRequires = compiledRequiresAndPinfo[0],
           pinfo = compiledRequiresAndPinfo[1];
-//      console.log('compiling definitions...');
       var compiledDefinitionsAndPinfo = defns.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledDefinitions = compiledDefinitionsAndPinfo[0],
           pinfo = compiledDefinitionsAndPinfo[1];
-//      console.log('compiling expressions...');
       var compiledExpressionsAndPinfo = exprs.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledExpressions = compiledExpressionsAndPinfo[0],
           pinfo = compiledExpressionsAndPinfo[1];
