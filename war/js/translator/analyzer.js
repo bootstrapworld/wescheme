@@ -192,6 +192,7 @@ plt.compiler = plt.compiler || {};
     var body = this.body;
     for(var i=0; i<this.bindings.length; i++){
       body = new letExpr([this.bindings[i]], body, this.stx);
+      body.location = this.bindings[i].location;
     }
     return body.desugar(pinfo);
  };
@@ -866,7 +867,7 @@ plt.compiler = plt.compiler || {};
     if(debug){
       console.log("Analyzed in "+(Math.floor(end-start))+"ms");
       console.log(pinfo);
-      console.log(pinfo.toString());
+//      console.log(pinfo.toString());
     }
     return pinfo;
   };
