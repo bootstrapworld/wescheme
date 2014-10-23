@@ -191,7 +191,7 @@ plt.compiler = plt.compiler || {};
  letStarExpr.prototype.desugar = function(pinfo){
     var body = this.body;
     for(var i=0; i<this.bindings.length; i++){
-      body = new letExpr([this.bindings[i]], body, this.stx);
+      body = new letExpr([this.bindings[i]], body, this.bindings[i].stx);
       body.location = this.bindings[i].location;
     }
     return body.desugar(pinfo);
@@ -280,7 +280,6 @@ plt.compiler = plt.compiler || {};
                         this.stx);
       expr.location = this.location;
     }
- console.log(expr);
     return expr.desugar(pinfo);
  };
  // ors become nested lets-with-if-bodies
@@ -866,7 +865,6 @@ plt.compiler = plt.compiler || {};
     var end         = new Date().getTime();
     if(debug){
       console.log("Analyzed in "+(Math.floor(end-start))+"ms");
-      console.log(pinfo);
 //      console.log(pinfo.toString());
     }
     return pinfo;

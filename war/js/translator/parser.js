@@ -497,7 +497,9 @@ plt.compiler = plt.compiler || {};
                                       , new types.MultiPart(wording, extraLocs, false)]),
                     sexp.location);
       }
-      return new letStarExpr(sexp[1].map(parseBinding), parseExpr(sexp[2]), sexp[0]);
+      var bindings = sexp[1].map(parseBinding);
+      bindings.location = sexp[1].location;
+      return new letStarExpr(bindings, parseExpr(sexp[2]), sexp[0]);
     }
     function parseIfExpr(sexp) {
       // Does it have too few parts?
@@ -781,6 +783,7 @@ plt.compiler = plt.compiler || {};
     if(sexpIsCouple(sexp)){
         var binding = new couple(parseIdExpr(sexp[0]), parseExpr(sexp[1]));
         binding.location = sexp.location;
+        binding.stx = sexp;
         return binding;
     } else {
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
