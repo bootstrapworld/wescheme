@@ -48,7 +48,7 @@ function sameResults(x, y){
   }
   
   function canonicalizeLiteral(lit){
-    return lit.toString().replace(/\s*/g,"").toLowerCase();
+    return lit.toString().replace(/\s*/g,"");
   }
 
   // if either one is a JSON string, convert it to an object
@@ -193,6 +193,9 @@ function runTests(verbose){
       table.appendChild(row);
       row.style.background = 'lightgreen';
                         
+      // reset all state used in compilation
+      var sexp=null, AST=null, desugared=null, recieved=null, pinfo=null, pinfo2=null;
+                        
       // LEX: If we pass when we shouldn't, set to pink and return false.
       // Catch: If we fail better than the server, set to blue and return true.
       // Catch: If we fail equal to the server, set to green and return true.
@@ -238,7 +241,7 @@ function runTests(verbose){
       desugar.innerHTML = 'desugar';
       try{
         var desugared = plt.compiler.desugar(AST),
-            recieved  = program=desugared[0],
+            recieved  = program = desugared[0],
             pinfo     = desugared[1],
             pinfo2    = plt.compiler.analyze(program);
       } catch (recieved) {
@@ -253,12 +256,12 @@ function runTests(verbose){
       if(desugarRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
       expected = desugarRef.replace(/\s*/g,"");     // remove whitespace fom desugar reference
       recieved = recieved.toString().replace(/\s*/g,"");// remove whitespace from test output
-      if(expected !== recieved) { return setTestFailureLink(row, expected, recieved);}
-      desugar.style.background = 'lightgreen';
+      if(sameResults(recieved, expected)) { desugar.style.background = 'lightgreen'; }
+      else { return setTestFailureLink(row, expected, recieved);}
+      
 
       bytecode.innerHTML = 'bytecode';
       try {
-        console.log("// COMPILATION: //////////////////////////////\n");
         var recieved    = JSON.stringify(plt.compiler.compile(program, pinfo2));
       } catch (recieved) {
         if(recieved instanceof unimplementedException){throw recieved.str + " NOT IMPLEMENTED";}
@@ -269,7 +272,7 @@ function runTests(verbose){
       expected = JSON.parse(bytecodeRef);
       recieved = JSON.parse(recieved);
       expected.bytecode = (0,eval)('('+expected.bytecode+')');
-      try { recieved.bytecode = (0,eval)('('+recieved.bytecode+')');}
+      try { recieved.bytecode = (0,eval)('('+recieved.bytecode+')'); }
       catch(e){console.log('MALFORMED BYTECODE:\n'+recieved.bytecode); return setTestFailureLink(row, expected.bytecode, recieved.bytecode); }
       if(sameResults(expected, recieved)) {
         desugar.style.background = 'lightgreen'; return true;

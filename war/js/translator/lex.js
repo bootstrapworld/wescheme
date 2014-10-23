@@ -55,7 +55,7 @@ plt.compiler = plt.compiler || {};
         oct3            = new RegExp("^([0-7]{1,3})", "i");
 
     // the delimiters encountered so far, line and column, and case-sensitivity
-    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols = true;
+    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols;
     // UGLY HACK to track index if an error occurs. We should remove this if we can make i entirely stateful
     var endOfError;
                             
@@ -159,7 +159,8 @@ plt.compiler = plt.compiler || {};
     // reads multiple sexps encoded into this string and converts them to a SExp
     // datum
     function readProg(str, strSource) {
-      var i = 0; sCol = column = 0; sLine = line = 1; // initialize all position indices
+      var i = 0; sCol = column = 0; sLine = line = 1, // initialize all position indices
+          caseSensitiveSymbols = true;                // initialize case sensitivity
       source = strSource || "<definitions>";
       var sexp, sexps = [];
       delims = [];
@@ -176,7 +177,8 @@ plt.compiler = plt.compiler || {};
     // readSSFile : String String -> SExp
     // removes the first three lines of the string that contain DrScheme meta data
     function readSSFile(str, strSource) {
-      var i = 0; sCol = column = 0; sline = line = 1; // initialize all position indices
+      var i = 0; sCol = column = 0; sLine = line = 1, // initialize all position indices
+          caseSensitiveSymbols = true;                // initialize case sensitivity
       source = strSource || "<definitions>";
       var crs = 0;
 
@@ -440,7 +442,7 @@ plt.compiler = plt.compiler || {};
         var badExtensionMatch = /^(!(?!\/)|reader|lang[\s]{0,1})/,
             badExtensionTest = badExtensionMatch.exec(str.slice(i));
         // Case sensitivity flags ARE allowed
-        var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)", 'g'),
+        var caseSensitiveMatch = new RegExp("^(c|C)(i|I|s|S)"),
             caseSensitiveTest = caseSensitiveMatch.exec(str.slice(i));
         // Vector literals ARE allowed
         var vectorMatch = new RegExp("^([0-9]*)[\[\(\{]", 'g'),
@@ -470,6 +472,7 @@ plt.compiler = plt.compiler || {};
                               + " not enabled in the current context"
                                   , badExtensionTest[0]);
         } else if(caseSensitiveTest && caseSensitiveTest[0].length > 0){
+                                                        console.log('case sensitivity flag!');
             caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
             i+=2; column+=2;
             return readSExpByIndex(str, i);
