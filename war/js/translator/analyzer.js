@@ -272,45 +272,53 @@ plt.compiler = plt.compiler || {};
  
  // ands become nested ifs
  andExpr.prototype.desugar = function(pinfo){
-    var expr = this.exprs[this.exprs.length-1];
+    var expr = this.exprs[this.exprs.length-1], ifStx = new symbolExpr("if");
+    ifStx.location = this.location;
     for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
       expr = new ifExpr(this.exprs[i],
-                        forceBooleanContext(this.stx, this.stx.location, expr),
+                        (expr instanceof ifExpr)? expr : // use the expression if it's an ifExpr, otherwise force a boolean ctx
+                          forceBooleanContext(this.stx, this.stx.location, expr),
                         new literal(false),
                         this.stx);
       expr.location = this.location;
     }
-    return expr.desugar(pinfo);
+    var desugared = expr.desugar(pinfo);
+    desugared[0].stx = ifStx;
+    return desugared;
  };
  // ors become nested lets-with-if-bodies
  orExpr.prototype.desugar = function(pinfo){
-    // grab the last expr, and remove it from the list and desugar
-    var that = this,
-        orSym = new symbolExpr("or"),
-        last = that.exprs.pop(),
-        expr = forceBooleanContext(that.stx, that.stx.location, last),
-        stxs = [orSym];   // list of stxs that will need their locations set to that.location
-    expr.location = last.location;
+    var that = this, orStx = new symbolExpr("or");
  
-    // given a desugared chain, add this expr to the chain
-    // we optimize the predicate/consequence by binding the expression to a temp symbol
-    function convertToNestedIf(restAndPinfo, expr){
-      var pinfoAndTempSym = pinfo.gensym('tmp'),
-          exprLoc = expr.location,
-          tmpSym = pinfoAndTempSym[1],
-          expr = forceBooleanContext(orSym, that.stx.location, expr), // force a boolean context on the value
-          tmpBinding = new couple(tmpSym, expr);                      // (let (tmpBinding) (if tmpSym tmpSym (...))
+    // recursively walk through the exprs
+    function desugarOrExprs(exprs, pinfo){
+      var firstExpr = exprs[0].desugar(pinfo)[0], exprLoc = firstExpr.location,
+          pinfoAndTempSym = pinfo.gensym('tmp'),
+          firstExprSym = pinfoAndTempSym[1],
+          pinfo = pinfoAndTempSym[0],
+          tmpBinding = new couple(firstExprSym, forceBooleanContext(that.stx, that.stx.location, firstExpr)),
+          secondExpr;
+ 
+      // if there are only two exprs in the chain, force a boolean ctx on the second expr before adding
+      // otherwise, desugar the rest of the chain before adding it
+      if(exprs.length == 2){
+        secondExpr = forceBooleanContext(orStx, that.stx.location, exprs[1]);
+      } else  {
+        var secondExprAndPinfo = desugarOrExprs(exprs.slice(1), pinfo);
+        secondExpr = secondExprAndPinfo[0];
+        pinfo = secondExprAndPinfo[1];
+      }
+
       // create if and let expressions, using these new symbols and bindings
-      var if_exp = new ifExpr(tmpSym, tmpSym, restAndPinfo[0], new symbolExpr("if")),
-          let_exp = new letExpr([tmpBinding], if_exp, orSym);
-      stxs = stxs.concat([tmpSym, tmpBinding, if_exp, if_exp.stx, let_exp]);
-      return [let_exp, restAndPinfo[1]];
+      var if_exp = new ifExpr(firstExprSym, firstExprSym, secondExpr, new symbolExpr("if")),
+          let_exp = new letExpr([tmpBinding], if_exp, orStx),
+          stxs = [orStx, firstExprSym, tmpBinding, if_exp, if_exp.stx, let_exp];
+      // assign location information to everything
+      stxs.forEach(function(stx){return stx.location = that.location;});
+      return let_exp.desugar(pinfo);
     }
-    // generate nested ifs and lets, set location for stxs, then desugar
-    var exprsAndPinfo = this.exprs.reduceRight(convertToNestedIf, [expr, pinfo]);
-    stxs.forEach(function(stx){return stx.location = that.location;});
-    var desugared = exprsAndPinfo[0].desugar(exprsAndPinfo[1]);
-    return [desugared[0], exprsAndPinfo[1]];
+ 
+    return desugarOrExprs(this.exprs, pinfo);
  };
 
  quotedExpr.prototype.desugar = function (pinfo) {
