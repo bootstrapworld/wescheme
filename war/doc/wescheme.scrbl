@@ -184,15 +184,15 @@ of things you can do in WeScheme.  You can:
 
 @itemlist[
 
-@item{@link["http://www.wescheme.org/view?publicId=strum-plaid-tasty-label-gruff"]{... make shapes and pictures ...}}
+@item{@link["http://www.wescheme.org/view?publicId=LBXSQ2aKKG"]{... make shapes and pictures,}}
 
-@item{@link["http://www.wescheme.org/view?publicId=cable-wagon-entry-cadre-vibes"]{... or image macros,}}
+@item{@link["http://www.wescheme.org/view?publicId=5bhqZiqdQ5s"]{... or a meme generator,}}
 
-@item{@link["http://www.wescheme.org/view?publicId=balls-snack-lobby-drawl-irate"]{... animate a ballooning circle,}}
+@item{@link["http://www.wescheme.org/view?publicId=GgAAxozEtt"]{... animate a ballooning circle,}}
 
-@item{@link["http://www.wescheme.org/view?publicId=horde-koala-camel-knife-lurid"]{... or land a UFO,}}
+@item{@link["http://www.wescheme.org/view?publicId=ggCaWzRgWK"]{... or land a UFO,}}
 
-@item{@link["http://www.wescheme.org/view?publicId=messy-humor-truck-adopt-outdo"]{... or have it chase after cows!}}
+@item{@link["http://www.wescheme.org/view?publicId=uGd1iMzAFg"]{... or have it chase after cows!}}
 ]
 
 
@@ -312,8 +312,6 @@ function will be called every time an event occurs.
           (to-draw draw))
 }|
 
-To support some legacy WeScheme applications, the name
-@racket[on-redraw] is an alias for @racket[to-draw].
 }
 
 
@@ -345,7 +343,7 @@ Here is a listing of the functions you can use to make images.
                     scene+line
                     place-image
                     place-image/align
-                    put-pinhole
+                    ;put-pinhole
                     circle
                     star
                     radial-star
@@ -588,7 +586,7 @@ and suggesting improvements.
    "Guillaume Marceau"      ;; general help, upcoming error messages
    "Shriram Krishnamurthi"  ;; of course... :)
    "Kathi Fisler"           ;; ditto!
-   "Emmanuel Schanzer"      ;; same!
+   "Emmanuel Schanzer"      ;; runtime library, local compilation
    "Robby Findler"
    "Matthew Flatt"
 
