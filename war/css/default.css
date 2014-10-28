@@ -278,8 +278,8 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
    amount of left-padding, with each replOutput element
    separated by a single pixel */
 #inter > * {padding-left: 5px;}
-.replOutput{margin-bottom: 1px; display:inline-block;}
- 
+.replOutput{margin-bottom: 3px; clear: left; display: block;}
+
  #inter input{
     width:              90%;
     height:             100%;
@@ -365,12 +365,10 @@ img.socialBookmarklet {
 span.top-aligned-inline-block {
     display: inline-block;
     vertical-align: top;
-
-    /* For IE 7 */
-    zoom: 1;
-    *display: inline;
 }
-
+span.top-aligned-inline-block:first-child{
+  display: clear: left;
+}
 
 .evaluatorToplevelNode {
     -webkit-tap-highlight-color: rgba(0,0,0,0);

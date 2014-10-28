@@ -87,7 +87,7 @@ var Evaluator = (function() {
 	    var dom = document.createElement("span");
             dom.style.whiteSpace = "pre";
 	    dom.style.fontFamily = "monospace";
-            var chunks = aStr.split("\n");
+           var chunks = aStr.split("\n").filter(function(str){return str!==""});
             if (chunks.length > 0) {
                 dom.appendChild(document.createTextNode(chunks[0]));
             }
@@ -174,7 +174,6 @@ var Evaluator = (function() {
 		// ignore for now
 	    }
 	}
-        newDom.appendChild(document.createElement("br"));
 	newDom.appendChild(document.createTextNode('at line: ' + line + ', column: ' + column + ', in ' + id));
 	return newDom;
     };
