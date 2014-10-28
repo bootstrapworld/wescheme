@@ -238,7 +238,8 @@ plt.compiler = plt.compiler || {};
     function readList(str, i) {
       var sCol=column, sLine=line, iStart=i, innerError=false,
           errorLocation = new Location(sCol, sLine, iStart, 1),
-          openingDelim = str.charAt(i++);
+          openingDelim = str.charAt(i++),
+          dot1Idx=false, dot2Idx = false; // indices of the dot operator
       column++; // move forward to count the closing delimeter
       var sexp, list = [];
       delims.push(openingDelim);
@@ -252,26 +253,67 @@ plt.compiler = plt.compiler || {};
         i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
         // if it's a dot, treat it as a cons
         if(sexp instanceof symbolExpr && sexp.val == '.'){
-          if(list.length === 0){                  // if the dot is the first element in the list, throw an error
-            var msg = new types.Message(["A `.' cannot be the first element in a syntax list"]);
+          if(dot2Idx){
+            var msg = new types.Message(["A syntax list may have only 2 `.'s"]);
             msg.betterThanServer = true;
-            throwError(msg, sexp.location);
+            throwError(msg, list[dot1Idx].location);
           }
-          sexp = readSExpByIndex(str, i);        // read the next sexp
-          if(!(sexp instanceof Array)){           // if the next sexp is not a list, throw an error
-             throwError(new types.Message(["A `.' must be followed by a syntax list, but found "
-                                          , new types.ColoredPart("something else", sexp.location)])
-                        , sexp.location);
-          }
-          sexp.forEach(function(item){list.push(item);});  // if it IS, push each item into this one
-          i = sexp.location.end().offset+1;
-        } else if(!(sexp instanceof Comment)){     // if it's not a comment, add it to the list
+          dot2Idx = dot1Idx? list.length : false; // if we've seen dot1, save this idx to dot2Idx
+          dot1Idx = dot1Idx || list.length;       // if we haven't seen dot1, save this idx to dot1Idx
+        }
+        if(!(sexp instanceof Comment)){            // if it's not a comment, add it to the list
           sexp.parent = list;                     // set this list as it's parent
           list.push(sexp);                        // and add the sexp to the list
         }
         return i;
       }
-                              
+                            
+      // if we have one dot, splice the element at that idx into the list
+      // if we have two dots, move the element they surround to the front
+      // throw errors for everything else
+      function processDots(list, dot1Idx, dot2Idx){
+        // if the dot is the first element in the list, throw an error
+        if(dot1Idx === 0){
+          var msg = new types.Message(["A `.' cannot be the first element in a syntax list"]);
+          msg.betterThanServer = true;
+          throwError(msg, list[dot1Idx].location);
+        }
+        // if a dot is the last element in the list, throw an error
+        if(dot1Idx===list.length || dot2Idx===list.length){
+          var msg = new types.Message(["A `.' cannot be the last element in a syntax list"]);
+          msg.betterThanServer = true;
+          throwError(msg, list[dot2Idx].location);
+        }
+        // assuming they are legal, if there are two dots in legal places...
+        if(dot2Idx){
+          // if they are not surrounding a single element, throw an error
+          if(dot2Idx - dot1Idx !== 2){
+            var msg = new types.Message(["Two `.'s may only surround one syntax item"]);
+            msg.betterThanServer = true;
+            throwError(msg, list[dot2Idx].location);
+          // if they are, move that element to the front of the list and remove the dots
+          } else {
+            return list.slice(dot1Idx+1,dot1Idx+2).concat(list.slice(0, dot1Idx), list.slice(dot2Idx+1));
+          }
+        }
+        // okay, we know there's just one dot, so the next element had better be a list AND the last element of the outer list
+        if(!(list[dot1Idx+1] instanceof Array)){
+           var msg = new types.Message(["A `.' must be followed by a syntax list, but found "
+                                        , new types.ColoredPart("something else", list[dot1Idx+1].location)])
+           msg.betterThanServer = true;
+           throwError(msg, list[dot1Idx+1].location);
+        }
+        if(list.length > dot1Idx+2){
+           var msg = new types.Message(["A `.' followed by a syntax list must be followed by a closing delimeter, but found "
+                                        , new types.ColoredPart("something else", list[dot1Idx+2].location)])
+           msg.betterThanServer = true;
+           throwError(msg, list[dot1Idx+1].location);
+         // splice that element into the list, removing the dots
+         } else {
+           return list.slice(0,dot1Idx).concat(list[dot1Idx+1],list.slice(dot1Idx+2));
+         }
+      }
+                            
       // if we see an error while reading a listItem
       function handleError(e){
         // Some errors we throw immediately, without reading the rest of the list...
@@ -326,6 +368,9 @@ plt.compiler = plt.compiler || {};
       column++; i++;  // move forward to count the closing delimeter
       // if an error occured within the list, set endOfError to the end, and throw it
       if(innerError){ endOfError = i; throw innerError; }
+                            
+      // deal with dots, if they exist
+      if(dot1Idx || dot2Idx) list = processDots(list, dot1Idx, dot2Idx);
       list.location = new Location(sCol, sLine, iStart, i-iStart);
       return list;
     }
