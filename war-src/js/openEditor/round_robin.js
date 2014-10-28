@@ -148,7 +148,7 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL = 0.60;
+       var TRUST_LOCAL = 0.70;
        // Is it an odd-numbered day?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
@@ -287,107 +287,97 @@ goog.provide("plt.wescheme.RoundRobin");
         }
     };
  
-  // sameResults : local server -> boolean
-  // Weak comparison on locations, indirect comparison for toplevel references
-  // Recursive comparison for objects
-  // Strong comparison for literals
-  // if there's a difference, log a diff to the form and return false
-  // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
-  function sameResults(x, y){
- 
-     // dictionaries of toplevel names for x and y bytecodes
-    var x_toplevels = [], y_toplevels = [],
-        extractTopLevelName = function (tl){
-          if(!tl) return false;
-          if(tl.$ === 'global-bucket') return tl.value;
-          if(tl.$ === 'module-variable') return tl.sym.val;
-          else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
-    }
-    
-    // given an object, remove empty properties and reconstruct as an alphabetized JSON string
-    // then parse and return a canonicalized object
-    function canonicalizeObject(obj){
-      var fields = [], obj2={};
-      for (i in obj) { if (obj.hasOwnProperty(i) && obj[i] !== "") fields.push(i); }
-      fields.sort();
-      for (var i=0;i<fields.length; i++) { obj2[fields[i]] = obj[fields[i]]; }
-      return obj2;
-    }
-    
-    function canonicalizeLiteral(lit){
-      return lit.toString().replace(/\s*/g,"").toLowerCase();
-    }
-
-    // if either one is a JSON string, convert it to an object
-    try{ var x = JSON.parse(x); }
-    catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-    try{ var y = JSON.parse(y);}
-    catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-
-    // if either one is an object, canonicalize it
-    if(typeof(x) === "object") x = canonicalizeObject(x);
-    if(typeof(y) === "object") y = canonicalizeObject(y);
-
-    // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
-    if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
-      return ( (x.span == y.span) && (x.offset == y.offset) );
-    }
-    // 2) if both objects have a prefix field, build our dictionaries *before* moving on
-    if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
-      x_toplevels = x.prefix.toplevels.map(extractTopLevelName);
-      y_toplevels = y.prefix.toplevels.map(extractTopLevelName);
-    }
-    // 3) if they are both objects, compare each property
-    if(typeof(x)=="object" && typeof(x)=="object"){
-      // does every property in x also exist in y?
-      for (var p in x) {
-        // log error if a property is not defined
-        if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
-        if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
-        // ignore the hashcode and betterThanServer propertoes
-        if(p==="_eqHashCode" || p==="betterThanServer") continue;
- 
-        // toplevel properties are equal if the sets of names are equal
-        // WARNING: this may require stronger checking!
-        if(p==="toplevels"){
-          // if they're not the same length, bail
-          if(x_toplevels.length !== y_toplevels.length){
-            console.log('different number of toplevels'); return false;
-          }
-          // if they're not the same names, bail
-          if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})){
-            console.log('different toplevel names'); return false;
-          }
-          // build sorted lists of all module variables, return true if they are identical
-          var x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"}),
-              y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
-          x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
-          y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
-          return sameResults(x_modVariables, y_modVariables);
-        }
-        // use pos's as keys into the toplevel dictionaries, and compare their values
-        if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
-          if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ return true; }
-          else { console.log('different indices for '+x_toplevels[Number(x[p])]); return false; }
-        }
-        // if they both have the property, compare it
-        if(sameResults(x[p],y[p])) continue;
-        else{ return false;}
-      }
-      // does every property in y also exist in x?
-      for (p in y) {
-        // log error if a property is not defined
-        if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){ return false; }
-      }
-    // 4)if they are literals, they must be identical
-    } else {
-        if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
-          console.log('(expected, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
-          return false;
-        }
-    }
-    return true;
+// sameResults : local server -> boolean
+// Weak comparison on locations, indirect comparison for toplevel references
+// Recursive comparison for objects
+// Strong comparison for literals
+// if there's a difference, log a diff to the form and return false
+// credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+function sameResults(x, y){
+  
+  // given an object, remove empty properties and reconstruct as an alphabetized JSON string
+  // then parse and return a canonicalized object
+  function canonicalizeObject(obj){
+    var fields = [], obj2={};
+    for (i in obj) { if (obj.hasOwnProperty(i) && obj[i] !== "") fields.push(i); }
+    fields.sort();
+    for (var i=0;i<fields.length; i++) { obj2[fields[i]] = obj[fields[i]]; }
+    return obj2;
   }
+  
+  function canonicalizeLiteral(lit){
+    return lit.toString().replace(/\s*/g,"");
+  }
+
+  // if either one is a JSON string, convert it to an object
+  try{ var x = JSON.parse(x); }
+  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
+  try{ var y = JSON.parse(y);}
+  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
+
+  // if either one is an object, canonicalize it
+  if(typeof(x) === "object") x = canonicalizeObject(x);
+  if(typeof(y) === "object") y = canonicalizeObject(y);
+
+  // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
+  if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
+    return ( (x.span == y.span) && (x.offset == y.offset) );
+  }
+  // 2) if both objects have a prefix field, build our dictionaries *before* moving on
+  if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
+    x_toplevels = x.prefix.toplevels.map(extractTopLevelName);
+    y_toplevels = y.prefix.toplevels.map(extractTopLevelName);
+  }
+  // 3) if they are both objects, compare each property
+  if(typeof(x)=="object" && typeof(x)=="object"){
+    // does every property in x also exist in y?
+    for (var p in x) {
+      // log error if a property is not defined
+      if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
+      if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
+      // ignore the hashcode property
+      if(p==="_eqHashCode") continue;
+      // toplevel properties are equal if the sets of names are equal
+      // WARNING: this may require stronger checking!
+      if(p==="toplevels"){
+        // if they're not the same length, bail
+        if(x_toplevels.length !== y_toplevels.length){
+          console.log('different number of toplevels'); return false;
+        }
+        // if they're not the same names, bail
+        if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})){
+          console.log('different toplevel names'); return false;
+        }
+        // build sorted lists of all module variables, return true if they are identical
+        x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
+        y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
+        x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
+        y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
+        return sameResults(x_modVariables, y_modVariables);
+      }
+      // use pos's as keys into the toplevel dictionaries, and compare their values
+      if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
+        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ return true; }
+        else { console.log('different indices for '+x_toplevels[Number(x[p])]); return false; }
+      }
+      // if they both have the property, compare it
+      if(sameResults(x[p],y[p])) continue;
+      else{ return false;}
+    }
+    // does every property in y also exist in x?
+    for (p in y) {
+      // log error if a property is not defined
+      if ( y.hasOwnProperty(p) && !x.hasOwnProperty(p) ){ return false; }
+    }
+  // 4)if they are literals, they must be identical
+  } else {
+      if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
+        console.log('(expected, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
+        return false;
+      }
+  }
+  return true;
+}
     // logResults : code local server -> void
     // send code, local error and server error to a Google spreadsheet
     function logResults(code, local, server){
