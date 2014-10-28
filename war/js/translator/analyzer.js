@@ -272,27 +272,41 @@ plt.compiler = plt.compiler || {};
  
  // ands become nested ifs
  andExpr.prototype.desugar = function(pinfo){
-    var expr = this.exprs[this.exprs.length-1], ifStx = new symbolExpr("if");
-    ifStx.location = this.location;
-    for(var i= this.exprs.length-2; i>-1; i--){ // ASSUME length >=2!!!
-      expr = new ifExpr(this.exprs[i],
-                        (expr instanceof ifExpr)? expr : // use the expression if it's an ifExpr, otherwise force a boolean ctx
-                          forceBooleanContext(this.stx, this.stx.location, expr),
-                        new literal(false),
-                        this.stx);
-      expr.location = this.location;
+    var that = this, ifStx = new symbolExpr("if"),
+        exprsAndPinfo = desugarProgram(this.exprs, pinfo),
+        exprs = exprsAndPinfo[0],
+        pinfo = exprsAndPinfo[1];
+ 
+    // recursively walk through the exprs
+    function desugarAndExprs(exprs){
+      var predicate = forceBooleanContext(that.stx, that.stx.location, exprs[0]),
+          // if there only two exprs in the chain, force a boolean ctx on the second expr and make it the consequence
+          // otherwise, desugar the rest of the chain before adding it
+          consequence = (exprs.length > 2)? desugarAndExprs(exprs.slice(1))
+                                          : forceBooleanContext(that.stx, that.stx.location, exprs[1]),
+          alternative = new literal(false),
+          ifLink = new ifExpr(predicate, consequence, alternative, ifStx),
+          stxs = [alternative, ifStx, ifLink];
+ 
+      // assign location information to everything
+      stxs.forEach(function(stx){return stx.location = that.location;});
+      return ifLink;
     }
-    var desugared = expr.desugar(pinfo);
-    desugared[0].stx = ifStx;
-    return desugared;
+ 
+    var ifChain = desugarAndExprs(exprs);
+    ifChain.location = that.location;
+    return [ifChain, pinfo];
  };
  // ors become nested lets-with-if-bodies
  orExpr.prototype.desugar = function(pinfo){
-    var that = this, orStx = new symbolExpr("or");
+    var that = this, orStx = new symbolExpr("or"),
+        exprsAndPinfo = desugarProgram(this.exprs, pinfo),
+        exprs = exprsAndPinfo[0],
+        pinfo = exprsAndPinfo[1];
  
     // recursively walk through the exprs
     function desugarOrExprs(exprs, pinfo){
-      var firstExpr = exprs[0].desugar(pinfo)[0], exprLoc = firstExpr.location,
+      var firstExpr = exprs[0], exprLoc = firstExpr.location,
           pinfoAndTempSym = pinfo.gensym('tmp'),
           firstExprSym = pinfoAndTempSym[1],
           pinfo = pinfoAndTempSym[0],
@@ -318,7 +332,7 @@ plt.compiler = plt.compiler || {};
       return let_exp.desugar(pinfo);
     }
  
-    return desugarOrExprs(this.exprs, pinfo);
+    return desugarOrExprs(exprs, pinfo);
  };
 
  quotedExpr.prototype.desugar = function (pinfo) {
