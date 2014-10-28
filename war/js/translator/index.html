@@ -193,9 +193,6 @@ function runTests(verbose){
       table.appendChild(row);
       row.style.background = 'lightgreen';
                         
-      // reset all state used in compilation
-      var sexp=null, AST=null, desugared=null, recieved=null, pinfo=null, pinfo2=null;
-                        
       // LEX: If we pass when we shouldn't, set to pink and return false.
       // Catch: If we fail better than the server, set to blue and return true.
       // Catch: If we fail equal to the server, set to green and return true.
