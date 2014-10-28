@@ -756,8 +756,11 @@ plt.compiler = plt.compiler || {};
                :  equalTo(elts[0], elts[1])? unique(elts.slice(1))
                :  [elts[0]].concat(unique(elts.slice(1)));
       }
-      return unique(elts.sort(lessThan));
+      // convert lessThan fn into a fn that returns -1 for less, 1 for greater, 0 for equal
+      var convertedSortFn = function(x,y){ return lessThan(x,y)? -1 : lessThan(y,x);}
+      return unique(elts.sort(convertedSortFn));
    }
+ 
  
    // [bytecodes, pinfo, env], Program -> [bytecodes, pinfo, env]
    // compile the program, then add the bytecodes and pinfo information to the acc
@@ -1030,6 +1033,9 @@ plt.compiler = plt.compiler || {};
             moduleOrTopLevelDefinedBindings = pinfo.usedBindingsHash.values().filter(isNotRequiredModuleBinding),
  
             allModuleBindings = requiredModuleBindings.concat(moduleOrTopLevelDefinedBindings),
+            uniqueModuleBindings = sortAndUnique(allModuleBindings,
+                                                 function(a,b){return a.name<b.name;},
+                                                 function(a,b){return a.name==b.name;}),
 
             // utility functions for making globalBuckets and moduleVariables
             makeGlobalBucket = function(name){ return new globalBucket(name);},
@@ -1044,11 +1050,10 @@ plt.compiler = plt.compiler || {};
         // FIXME: we have to make uniqueGlobalNames because a function name can also be a free variable,
         // due to a bug in analyze-lambda-expression in which the base pinfo is used for the function body.
             uniqueGlobalNames = sortAndUnique(globalNames, function(a,b){return a<b;}, function(a,b){return a==b;}),
-            topLevels = [false].concat(uniqueGlobalNames.map(makeGlobalBucket)
-                                      ,allModuleBindings.map(makeModuleVariablefromBinding)),
-            globals   = [false].concat(uniqueGlobalNames
-                                      ,allModuleBindings.map(function(b){return b.name;}));
-
+            topLevels         = [false].concat(uniqueGlobalNames.map(makeGlobalBucket)
+                                               ,allModuleBindings.map(makeModuleVariablefromBinding)),
+            globals           = [false].concat(uniqueGlobalNames
+                                               ,allModuleBindings.map(function(b){return b.name;}));
         return [new prefix(0, topLevels ,[])
                , new plt.compiler.globalEnv(globals, false, new plt.compiler.emptyEnv())];
       };
