@@ -281,6 +281,9 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 /* every value printed in the interactions window should be on it's own line */
 #inter > div:first-child > * {margin-bottom: 3px; clear: left; display: block;}
 
+/* since each value is already on it's own line, hide the runtime value-seperator */
+.value-seperator{display: none;}
+
  #inter input{
     width:              90%;
     height:             100%;
