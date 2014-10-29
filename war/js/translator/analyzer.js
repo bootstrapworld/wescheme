@@ -611,8 +611,8 @@ plt.compiler = plt.compiler || {};
     // if it's a literal, pull out the actual value. if it's a symbol use it as-is
     var moduleName = (this.spec instanceof literal)? this.spec.val.toString() : this.spec.toString(),
         resolvedModuleName = pinfo.modulePathResolver(moduleName, pinfo.currentModulePath),
-        returnPinfo,
-        that = this;
+        that = this,
+        newPinfo;
  
     // is this a shared WeScheme program?
     function getWeSchemeModule(name){
@@ -643,44 +643,38 @@ plt.compiler = plt.compiler || {};
                             return b;
                           },
           provideBindings = provides.map(strToBinding),
-          binding = new moduleBinding(moduleName, provideBindings);
-      returnPinfo = pinfo.accumulateModule(binding).accumulateModuleBindings(provideBindings);
+          modulebinding = new moduleBinding(moduleName, provideBindings);
+      newPinfo = pinfo.accumulateModule(modulebinding).accumulateModuleBindings(provideBindings);
     }
  
     // open a *synchronous* GET request -- FIXME to use callbacks?
     var url = window.location.protocol+"//"+window.location.host
               + (getWeSchemeModule(moduleName)?  "/loadProject?publicId="+(getWeSchemeModule(moduleName))
                                               : "/js/mzscheme-vm/collects/"+moduleName+".js");
- 
     jQuery.ajax({
          url:    url,
          success: function(result) {
                     // if it's not a native module, manually assign it to window.COLLECTIONS
                     if(getWeSchemeModule(moduleName)){
                       var program = (0,eval)('(' + result + ')');
-                console.log('require is used with a user-defined program. JS object is:');
-                console.log(program);
-                console.log('bytecode from this file is:');
-                console.log((0,eval)('(' + program.object.obj + ')'));
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
                                   'bytecode' : (0,eval)('(' + program.object.obj + ')'),
                                   'provides' : program.provides
                               };
-                console.log('attached to window.COLLECTIONS:');
-                console.log(window.COLLECTIONS[moduleName]);
                     // otherwise, simply evaluate the raw JS
                     } else {
                       eval(result);
                     }
-                    if(result){processModule(moduleName);}
+                    if(result){ processModule(moduleName); }
                     else { throwModuleError(moduleName); }
                   },
          error: function (error) { throwModuleError(moduleName); },
          async:   false
     });
  
-    return returnPinfo;
+ console.log(newPinfo);
+    return newPinfo;
  };
  
  localExpr.prototype.collectDefinitions = function(pinfo){
