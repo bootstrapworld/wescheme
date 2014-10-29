@@ -223,7 +223,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     onDone(bytecode);
 
                     // execute using locally-compiled bytecodes!!
-//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(bytecode));}
+//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(local_bytecode));}
 //                    catch(e){console.log(e);}
  
                 },
@@ -332,6 +332,9 @@ function sameResults(x, y){
   if(typeof(x)=="object" && typeof(x)=="object"){
     // does every property in x also exist in y?
     for (var p in x) {
+      // don't log an error for things that identical save for "betterThanServer"
+      if(p==="betterThanServer") continue;
+ 
       // log error if a property is not defined
       if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
       if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
