@@ -107,7 +107,7 @@ plt.compiler = plt.compiler || {};
     // make the define-values stx object, but store the original stx for define-struct
     var defineValuesStx = new defVars([this.name].concat(idSymbols), makeStructTypeCall, this.stx),
         stxs = [defineValuesStx];
-    defineValuesStx.location = this.stx[1].location;
+    defineValuesStx.location = this.location;
     // given a field, make a definition that binds struct-field to the result of
     // a make-struct-field accessor call in the runtime
     function makeAccessorDefn(f, i){
@@ -595,7 +595,7 @@ plt.compiler = plt.compiler || {};
  //        mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
           // assemble all the bindings together
           bindings = [structureBinding, refBinding, constructorBinding, predicateBinding, mutatorBinding];
-          return pinfo.accumulateDefinedBindings(bindings, that.location);
+      return pinfo.accumulateDefinedBindings(bindings, that.location);
     } else {
       return this.names.reduce(function(pinfo, id){
         var binding = new constantBinding(id.val, false, [], id.location);
@@ -661,10 +661,10 @@ plt.compiler = plt.compiler || {};
                 console.log('require is used with a user-defined program. JS object is:');
                 console.log(program);
                 console.log('bytecode from this file is:');
-                console.log(program.object.obj);
+                console.log((0,eval)('(' + program.object.obj + ')'));
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
-                                  'bytecode' : program.object.obj,
+                                  'bytecode' : (0,eval)('(' + program.object.obj + ')'),
                                   'provides' : program.provides
                               };
                 console.log('attached to window.COLLECTIONS:');
