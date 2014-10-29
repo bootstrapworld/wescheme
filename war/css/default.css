@@ -278,7 +278,8 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
    amount of left-padding, with each replOutput element
    separated by a single pixel */
 #inter > * {padding-left: 5px;}
-.replOutput{margin-bottom: 3px; clear: left; display: block;}
+/* every value printed in the interactions window should be on it's own line */
+#inter > div:first-child > * {margin-bottom: 3px; clear: left; display: block;}
 
  #inter input{
     width:              90%;
