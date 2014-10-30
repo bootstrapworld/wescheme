@@ -846,21 +846,18 @@ plt.compiler = plt.compiler || {};
       var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
       var chunk = symOrNum.exec(str.slice(i))[0];
 
-      // if the chunk *and the string* end with an escape, throw an error
-      if(/^([^\\]|\\\\)*\\$/.test(chunk) && (i+chunk.length+1 > str.length)){
-            i = str.length; // jump to the end of the string
+      // move the read head and column tracker forward
+      i+=chunk.length; column+=chunk.length;
+      if(chunk[chunk.length-1]==="\\"){
             endOfError = i; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
                                           ": read: EOF following `\\' in symbol"])
                        ,new Location(sCol, sLine, iStart, i-iStart)
                        ,"Error-GenericReadError");
       }
-      // move the read head and column tracker forward
-      i+=chunk.length; column+=chunk.length;
       
       // split the chunk at each |
       var chunks = chunk.split("|");
-
       // check for unbalanced |'s, and generate an error that begins at the last one
       // and extends for the remainder of the string
       if(((chunks.length%2) === 0)){
