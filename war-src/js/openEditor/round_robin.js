@@ -210,6 +210,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
+              if(Math.random() < .25){ // 25% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
@@ -217,6 +218,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        } else {
                           console.log("OK: LOCAL RETURNED EQUIVALENT BYTECODE AS THE SERVER");
                        }
+              }
                     }
                                               
                     // execute server bytecode
