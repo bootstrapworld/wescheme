@@ -148,7 +148,7 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL = 0.70;
+       var TRUST_LOCAL = 0.80;
        // Is it an odd-numbered day?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
@@ -208,15 +208,15 @@ goog.provide("plt.wescheme.RoundRobin");
                        } else {
                          console.log("OK: LOCAL AND SERVER BOTH PASSED");
                        }
+                       // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
-/*                       if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')')
-                                       ,(0,eval)('('+server_bytecode.bytecode+')'))){
+                       if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
+                                        (0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
-                          logResults(code, "TOO LONG", server_bytecode);
-                        } else {
+                          logResults(code, "BYTECODES_DIFFERED", "BYTECODES_DIFFERED");
+                       } else {
                           console.log("OK: LOCAL RETURNED EQUIVALENT BYTECODE AS THE SERVER");
-                        }
- */
+                       }
                     }
                                               
                     // execute server bytecode
@@ -294,6 +294,16 @@ goog.provide("plt.wescheme.RoundRobin");
 // if there's a difference, log a diff to the form and return false
 // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
 function sameResults(x, y){
+ 
+  // dictionaries of toplevel names for x and y bytecodes
+  var x_toplevels = [], y_toplevels = [],
+      extractTopLevelName = function (tl){
+        if(!tl) return false;
+        if(tl.$ === 'global-bucket') return tl.value;
+        if(tl.$ === 'module-variable') return tl.sym.val;
+        else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
+  }
+
   
   // given an object, remove empty properties and reconstruct as an alphabetized JSON string
   // then parse and return a canonicalized object
@@ -308,13 +318,11 @@ function sameResults(x, y){
   function canonicalizeLiteral(lit){
     return lit.toString().replace(/\s*/g,"");
   }
-
-  // if either one is a JSON string, convert it to an object
-  try{ var x = JSON.parse(x); }
-  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-  try{ var y = JSON.parse(y);}
-  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-
+/*
+  // if either one is a JSON string, convert it to an object. if it doesn't parse correctly, proceed silently
+  try{ var x = JSON.parse(x); var y = JSON.parse(y); }
+  catch(e) { }
+*/
   // if either one is an object, canonicalize it
   if(typeof(x) === "object") x = canonicalizeObject(x);
   if(typeof(y) === "object") y = canonicalizeObject(y);
@@ -352,8 +360,8 @@ function sameResults(x, y){
           console.log('different toplevel names'); return false;
         }
         // build sorted lists of all module variables, return true if they are identical
-        x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
-        y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
+        var x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"}),
+            y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
         x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
         y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
         return sameResults(x_modVariables, y_modVariables);
