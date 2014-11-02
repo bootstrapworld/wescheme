@@ -77,8 +77,6 @@
 
     <script src="/js/submitpost-min.js" type="text/javascript"></script>
 
-    <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
-
     <!-- mzscheme-vm evaluator -->
     <script src="/js/mzscheme-vm/support-min.js" type="text/javascript"></script>
     <script src="/js/mzscheme-vm/evaluator-min.js" type="text/javascript"></script>
@@ -87,6 +85,7 @@
     <!-- Local compiler files -->
     <jsp:include page="/js/translator/local.jsp"/>
 
+    <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
 
 <!--    <script src="https://apis.google.com/js/client:plusone.js"></script>
 -->
