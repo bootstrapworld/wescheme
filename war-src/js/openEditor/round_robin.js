@@ -267,11 +267,11 @@ goog.provide("plt.wescheme.RoundRobin");
 
                         var localJSON;
                         try{
-                          localJSON = JSON.parse(local_error);
-                        
+                          var localJSON = JSON.parse(JSON.parse(local_error)["structured-error"]),
+                              serverJSON = JSON.parse(JSON.parse(errorStruct.message)["structured-error"]);
                           // if it's not a known-better error, and if the results are different, we should log them to the server
                           if(//(localJSON.betterThanServer===undefined || !localJSON.betterThanServer) &&
-                             !sameResults(localJSON, JSON.parse(errorStruct.message))){
+                             !sameResults(localJSON, serverJSON)){
                               console.log("FAIL: LOCAL RETURNED DIFFERENT ERROR FROM SERVER");
                               logResults(code, JSON.stringify(local_error), JSON.stringify(errorStruct.message));
                           } else {
