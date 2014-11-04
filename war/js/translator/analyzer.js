@@ -573,7 +573,7 @@ plt.compiler = plt.compiler || {};
           mutatorIds    = fields.map(fieldToMutator),
           // build bindings out of these ids
           structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
-                                               selectorIds, mutatorIds, null, that.location),
+                                               selectorIds, mutatorIds, null, that.stx[1].location),
           constructorBinding = bf(constructorId, false, fields.length, false, that.location),
           predicateBinding   = bf(predicateId, false, 1, false, that.location),
           mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
