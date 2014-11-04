@@ -82,9 +82,16 @@ plt.compiler = plt.compiler || {};
     return [this, bodyAndPinfo[1]];
  };
  defVar.prototype.desugar = function(pinfo){
-    var exprAndPinfo = this.expr.desugar(pinfo);
-    this.expr = exprAndPinfo[0];
-    return [this, exprAndPinfo[1]];
+    // convert (define f (lambda (x) x)) into (define (f x) x)
+    if(this.expr instanceof lambdaExpr){
+      var func = new defFunc(this.name, this.expr.args, this.expr.body, this.stx);
+      func.location = this.location;
+      return func.desugar(pinfo);
+    } else {
+      var exprAndPinfo = this.expr.desugar(pinfo);
+      this.expr = exprAndPinfo[0];
+      return [this, exprAndPinfo[1]];
+    }
  };
  defVars.prototype.desugar = function(pinfo){
     var exprAndPinfo = this.expr.desugar(pinfo);
