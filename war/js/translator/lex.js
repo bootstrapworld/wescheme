@@ -321,6 +321,7 @@ plt.compiler = plt.compiler || {};
            || /unexpected/.exec(e)                   // unexpected delimiter
            || /syntax list/.exec(e)                  // improper use of .
            || /bad syntax/.exec(e)                   // bad syntax
+           || /bad character constant/.exec(e)       // bad character constant
            ){
           throw e;
         } else {
@@ -517,7 +518,6 @@ plt.compiler = plt.compiler || {};
                               + " not enabled in the current context"
                                   , badExtensionTest[0]);
         } else if(caseSensitiveTest && caseSensitiveTest[0].length > 0){
-                                                        console.log('case sensitivity flag!');
             caseSensitiveSymbols = (caseSensitiveTest[0].toLowerCase() === "cs");
             i+=2; column+=2;
             return readSExpByIndex(str, i);
@@ -579,10 +579,10 @@ plt.compiler = plt.compiler || {};
                       i+= datum.location.span+1; break;
             // SEXP COMMENTS
             case ';':  datum = readSExpComment(str, i+1);
-                       column=i+= datum.location.span+1; break;
+                      i+= datum.location.span+1; break;
             // LINE COMMENTS
             case '!': datum = readLineComment(str, i-1);
-                       i+= datum.location.span; break;
+                      i+= datum.location.span; break;
             // SYNTAX QUOTES, UNQUOTES, AND QUASIQUOTES
             case '`':
             case ',':
@@ -647,65 +647,58 @@ plt.compiler = plt.compiler || {};
     function readChar(str, i) {
       var sCol = column, sLine = line, iStart = i;
       i+=2;  column++; // skip over the #\\
-      var datum = "";
-      // read until we hit the end of the string, whitespace, or another char
-      while(i < str.length && !isWhiteSpace(str.charAt(i)) && (str.slice(i,i+2) !== "#\\")) {
+      var datum = "", isFirstChar=true, regexp;
+                                                        
+      // read until we hit the end of the string, another char, or whitespace when it's not the first char
+      while(i < str.length && (str.slice(i,i+2) !== "#\\")
+             && !(!isFirstChar && isWhiteSpace(str.charAt(i)) )) {
+        isFirstChar = false;
         column++;
         datum += str.charAt(i++);
       }
       // a special char is one of the following, as long as the next char is not alphabetic
-      var special = new RegExp("(nul|null|backspace|tab|newline|vtab|page|return|space|rubout)[^a-zA-Z]", "i");
-      // if the character begins with a digit, u, or U, use the character code
-      switch(true){
-         // check for special chars
-         case (special.test(datum)) :
-            var match = special.exec(datum)[1];
-            datum = match === 'nul' || match === 'null' ? '\u0000' :
-                    match === 'backspace' ? '\b' :
-                    match === 'tab'       ? '\t' :
-                    match === 'newline'   ? '\n' :
-                    match === 'vtab'      ? '\u000B' :
-                    match === 'page'      ? '\u000C' :
-                    match === 'return'    ? '\r' :
-                    datum === 'space'     ? '\u0020' :
-                    match === 'rubout'    ? '\u007F' :
-                   /* else */'\u0020'
-            i = iStart + 2 + match.length; // set the reader to the end of the char
-            break;
-                                                                
-         // check for oct
-         case oct3.test(datum) :
-            var match = oct3.exec(datum)[1];
-            datum = String.fromCharCode(parseInt(match, 8));
-            i = iStart + 2 + match.length; // set the reader to the end of the char
-            break;
-
-         // check for single characters of any kind, not followed by alphabetics
-         case (/.[^a-zA-Z]/.test(datum)) :
-            datum = datum.charAt(0);
-            i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) char
-            break;
-                                                                
-         // check for hex4 or hex6
-         case /[uU]/.test(datum) :
-            var regexp = datum.charAt(0) === "u"? hex4 : hex6;
-            if(regexp.test(datum.slice(1))){
-                var match = regexp.exec(datum.slice(1))[0];
-                column += (match.length-datum.length)+1; // adjust column if only a subset of the datum matched
-                datum = String.fromCharCode(parseInt(match, 16));
-                i = iStart + 3 + match.length; // fast-forward past (1) hash, (2) backslash and (3) match
-                break;
-            }
-
-         default:
-            if(datum.length>1 && /[a-zA-Z]/.test(datum.charAt(1))){
-              throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
-                                            ": read: bad character constant: #\\",datum]),
-                         new Location(sCol-1, sLine, iStart, i-iStart),
-                         "Error-GenericReadError");
-            } else {
-               i = iStart + 2 + datum.length;
-            }
+      // unlike DrRacket, there is no JS equivalent for nul, null, page and rubout
+      var special = new RegExp("(backspace|tab|newline|space|vtab)[^a-zA-Z]*", "i"),
+          match = special.exec(datum);
+                                                        
+      // check for special chars
+      if(special.test(datum)){
+          datum = datum === 'backspace'? '\b' :
+                  datum === 'tab' ?     '\t' :
+                  datum === 'newline' ? '\n' :
+                  datum === 'space' ?   ' ' :
+                  datum === 'vtab' ?    '\v' :
+                    "Impossible: unknown special char was matched by special char!";
+          i = iStart + 2 + match[1].length; // set the reader to the end of the char
+                                                        
+       // octal charCodes
+       } else if(/^[0-9].*/.test(datum)                     // if it starts with a number...
+                 && oct3.test(datum)                       // it had better have some octal digits..
+                 && (oct3.exec(datum)[0]===datum)           // in fact, all of them should be octal..
+                 && (parseInt(oct3.exec(datum)[0], 8) < 256) // and less than 256
+                 ) {
+          var match = /[0-7]+/.exec(datum)[0];
+          datum = String.fromCharCode(parseInt(match, 8));
+          i = iStart + 2 + match.length; // set the reader to the end of the char
+                                                        
+       // check for hex4 or hex6
+      } else if( /[uU]/.test(datum)                          // if it declares itself to be hexidecimal...
+                && (regexp=datum.charAt(0)==="u"? hex4:hex6) // and we have a regexp for it...
+                && regexp.test(datum.slice(1))               // and it's a valid hex code for that regexp...
+              ){
+          var match = regexp.exec(datum.slice(1))[0];
+          column += (match.length-datum.length)+1; // adjust column if only a subset of the datum matched
+          datum = String.fromCharCode(parseInt(match, 16));
+          i = iStart + 3 + match.length; // fast-forward past (1) hash, (2) backslash and (3) match
+       // check for a single character, or a character that is NOT followed by a unicode-alphabetic character
+      } else if (datum.length===1 || /[^\u00C0-\u1FFF\u2C00-\uD7FF\w]$/.test(datum.charAt(1))) {
+          datum = datum.charAt(0);
+          i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) char
+      } else {
+          throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
+                                        ": read: bad character constant: #\\",datum]),
+                     new Location(sCol-1, sLine, iStart, i-iStart),
+                     "Error-GenericReadError");
       }
       var chr = new literal(new types['char'](datum));
       chr.location = new Location(sCol, sLine, iStart, i-iStart);
@@ -737,7 +730,7 @@ plt.compiler = plt.compiler || {};
     // readSExpComment : String Number -> Atom
     // reads exactly one SExp and ignores it entirely
     function readSExpComment(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var sCol = column++, sLine = line, iStart = i;
       i = chewWhiteSpace(str, i);
       if(i+1 >= str.length) {
         endOfError = i; // remember where we are, so readList can pick up reading
@@ -840,21 +833,24 @@ plt.compiler = plt.compiler || {};
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
     // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readSymbolOrNumber(str, i){
+//                                                        console.log('reading symbol or number. column='+column+',i='+i);
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
       var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
       var chunk = symOrNum.exec(str.slice(i))[0];
 
-      // move the read head and column tracker forward
-      i+=chunk.length; column+=chunk.length;
-      if(chunk[chunk.length-1]==="\\"){
+      // if the chunk *and the string* end with an escape, throw an error
+      if(/^([^\\]|\\\\)*\\$/.test(chunk) && (i+chunk.length+1 > str.length)){
+            i = str.length; // jump to the end of the string
             endOfError = i; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
                                           ": read: EOF following `\\' in symbol"])
                        ,new Location(sCol, sLine, iStart, i-iStart)
                        ,"Error-GenericReadError");
       }
+      // move the read head and column tracker forward
+      i+=chunk.length; column+=chunk.length;
       
       // split the chunk at each |
       var chunks = chunk.split("|");
@@ -927,6 +923,7 @@ plt.compiler = plt.compiler || {};
         if(debug){
           console.log("Lexed in "+(Math.floor(end-start))+"ms");
           console.log(sexp);
+          console.log(sexpToString(sexp));
         }
         return sexp;
     };

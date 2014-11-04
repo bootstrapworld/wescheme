@@ -316,8 +316,19 @@ function literal(val) {
   Program.call(this);
   this.val = val;
   this.toString = function(){
+    // racket prints booleans using #t and #f
     if(this.val===true) return "#t";
     if(this.val===false) return "#f";
+    // racket prints special chars using their names
+    if(this.val instanceof Char){
+      var c = this.val.val;
+      return c === '\b' ? '#\\backspace' :
+            c === '\t' ? '#\\tab' :
+            c === '\n' ? '#\\newline' :
+            c === ' '  ? '#\\space' :
+            c === '\v' ? '#\\vtab' :
+            /* else */  this.val.toWrittenString();
+    }
     return types.toWrittenString(this.val);
   }
 };
