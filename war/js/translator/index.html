@@ -114,7 +114,7 @@ function sameResults(x, y){
   // 4)if they are literals, they must be identical
   } else {
       if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
-        console.log('(expected, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
+        console.log('(server, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
         return false;
       }
   }

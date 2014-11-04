@@ -346,8 +346,8 @@ function sameResults(x, y){
       if(p==="betterThanServer") continue;
  
       // log error if a property is not defined
-      if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
-      if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
+      if ( ! x.hasOwnProperty(p) ){ console.log('local lacks a '+p); return false; }
+      if ( ! y.hasOwnProperty(p) ){ console.log('server lacks a '+p); return false; }
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
       // toplevel properties are equal if the sets of names are equal
@@ -385,7 +385,7 @@ function sameResults(x, y){
   // 4)if they are literals, they must be identical
   } else {
       if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
-        console.log('(expected, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
+        console.log('(local, server) literals not the same:\n'+x+'\nis not equal to \n'+y);
         return false;
       }
   }
