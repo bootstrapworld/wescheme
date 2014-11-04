@@ -896,8 +896,9 @@ plt.compiler = plt.compiler || {};
           pinfo1 = compiledBodyAndPinfo[1];
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
+          args = isUnnamedLambda? this.args : this.args.reverse(),
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [isUnnamedLambda? this.stx:name].concat(this.args).map(getLocs),
+                             [isUnnamedLambda? this.stx:name].concat(args).map(getLocs),
                              [],                                                          // flags
                              this.args.length,                                            // numParams
                              this.args.map( function(){ return new symbolExpr("val");}  ),  // paramTypes
