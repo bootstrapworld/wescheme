@@ -307,6 +307,7 @@ plt.compiler = plt.compiler || {};
     // lam
     function lam(name, operatorAndRandLocs, flags, numParams, paramTypes,
                  rest, closureMap, closureTypes, maxLetDepth, body) {
+ 
       Bytecode.call(this);
       this.name       = name;         // symbol, vector, empty
       this.flags      = flags;        // (list of ('preserves-marks 'is-method 'single-result))
@@ -548,7 +549,8 @@ plt.compiler = plt.compiler || {};
       this.reqs    = reqs;    // syntax
       this.dummy   = dummy;   // toplevel
       this.toBytecode = function(){
-        return '{"$":"req","reqs":'+this.reqs.toBytecode()+',"dummy":'+this.dummy.toBytecode()+'}';
+        var reqBytecode = (this.reqs instanceof literal)? '"'+this.reqs.val+'"' : this.reqs.toBytecode();
+        return '{"$":"req","reqs":'+reqBytecode+',"dummy":'+this.dummy.toBytecode()+'}';
       };
     };
     req.prototype = heir(Bytecode.prototype);
@@ -729,9 +731,10 @@ plt.compiler = plt.compiler || {};
     orExpr.prototype.freeVariables    = function(acc, env){
        return this.exprs.reduceRight(function(acc, expr){ return expr.freeVariables(acc, env);} , acc);
     }
+    // be careful to make a copy of the array before reversing!
     lambdaExpr.prototype.freeVariables= function(acc, env){
       var pushLocalFromSym  = function(env, sym) { return new plt.compiler.localEnv(sym.val, false, env); },
-          envWithArgs       = this.args.reverse().reduce(pushLocalFromSym, env);
+          envWithArgs       = this.args.slice(0).reverse().reduce(pushLocalFromSym, env);
       return this.body.freeVariables(acc, envWithArgs);
  
     };
@@ -826,6 +829,7 @@ plt.compiler = plt.compiler || {};
    // environment.
    lambdaExpr.prototype.compile = function(env, pinfo, isUnnamedLambda, name){
       if(isUnnamedLambda===undefined) isUnnamedLambda = true;
+ 
       // maskUnusedGlobals : (listof symbol?) (listof symbol?) -> (listof symbol or false)
       function maskUnusedGlobals(listOfNames, namesToKeep){
         return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
@@ -886,8 +890,8 @@ plt.compiler = plt.compiler || {};
       // push each arg onto an empty Env, the compute the free variables in the function body with that Env
       var envWithArgs = this.args.map(function(s){return s.val;}).reduce(pushLocal, new plt.compiler.emptyEnv());
           freeVarsInBody = this.body.freeVariables([], envWithArgs);
-      // compute the closure information
-      var closureVectorAndEnv = getClosureVectorAndEnv(this.args, freeVarsInBody, env),
+      // compute the closure information using a COPY of the args array (protect against in-place reversal)
+      var closureVectorAndEnv = getClosureVectorAndEnv(this.args.slice(0), freeVarsInBody, env),
           closureVector = closureVectorAndEnv[0],
           extendedEnv = closureVectorAndEnv[1];
       // compile the body using the closure's environent
@@ -896,9 +900,8 @@ plt.compiler = plt.compiler || {};
           pinfo1 = compiledBodyAndPinfo[1];
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
-          args = isUnnamedLambda? this.args : this.args.reverse(),
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [isUnnamedLambda? this.stx:name].concat(args).map(getLocs),
+                             [isUnnamedLambda? this.stx:name].concat(this.args).map(getLocs),
                              [],                                                          // flags
                              this.args.length,                                            // numParams
                              this.args.map( function(){ return new symbolExpr("val");}  ),  // paramTypes
@@ -1019,11 +1022,6 @@ plt.compiler = plt.compiler || {};
  
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(env, pinfo){
-     if(this.spec instanceof literal){   // rewrite strings as symbols
-      var symbolSpec = new symbolExpr(this.spec.val.toString());
-      symbolSpec.location = this.spec.location;
-      this.spec = symbolSpec;
-     }
      return [new req(this.spec, new topLevel(0, 0, false, false, false)), pinfo];
    };
 
