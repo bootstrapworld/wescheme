@@ -177,6 +177,7 @@ plt.compiler = plt.compiler || {};
                                             ,"put-pinhole"
                                             ,"circle"
                                             ,"star"
+                                            ,"polygon"
                                             ,"radial-star"
                                             ,"star-polygon"
                                             ,"nw:rectangle"
