@@ -897,7 +897,7 @@ plt.compiler = plt.compiler || {};
       // emit the bytecode
       var getLocs = function(id){return id.location.toVector();},
           bytecode = new lam(isUnnamedLambda? [] : new symbolExpr(name),
-                             [isUnnamedLambda? this.stx:name].concat(this.args.reverse()).map(getLocs),
+                             [isUnnamedLambda? this.stx:name].concat(this.args).map(getLocs),
                              [],                                                          // flags
                              this.args.length,                                            // numParams
                              this.args.map( function(){ return new symbolExpr("val");}  ),  // paramTypes
