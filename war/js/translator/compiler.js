@@ -830,7 +830,7 @@ plt.compiler = plt.compiler || {};
       function maskUnusedGlobals(listOfNames, namesToKeep){
         return listOfNames.map(function(n){ return (namesToKeep.indexOf(n)>-1)? n : false; });
       }
- 
+
       function pushLocal(env, n)      { return new plt.compiler.localEnv(n, false, env); }
       function pushLocalBoxed(env, n) { return new plt.compiler.localEnv(n, true, env); }
       function pushGlobals(names, env){ return new plt.compiler.globalEnv(names, false, env); }
@@ -868,7 +868,7 @@ plt.compiler = plt.compiler || {};
 
           // Add the lexical free variables (in reverse order)
           var env2 = lexicalFreeRefs.reverse().reduce(function(env, ref){
-                      return ref.boxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
+                      return ref.isBoxed? pushLocalBoxed(env, ref.name) : pushLocal(env, ref.name);
                     }, env1);
 
           // Add the global free variables (in reverse order)
