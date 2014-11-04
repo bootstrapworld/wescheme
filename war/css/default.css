@@ -367,9 +367,6 @@ span.top-aligned-inline-block {
     display: inline-block;
     vertical-align: top;
 }
-span.top-aligned-inline-block:first-child{
-  display: clear: left;
-}
 
 .evaluatorToplevelNode {
     -webkit-tap-highlight-color: rgba(0,0,0,0);

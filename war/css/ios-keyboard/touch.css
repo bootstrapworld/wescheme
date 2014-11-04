@@ -178,6 +178,6 @@ both of which are hidden/shown based on the tool's class
   transform-origin: left top;
   -webkit-transform-origin: left top;
   user-select: none;
-  -webkit-user-select: none
+  -webkit-user-select: none;
   overflow:hidden;
 }
