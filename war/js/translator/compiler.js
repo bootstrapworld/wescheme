@@ -1018,6 +1018,11 @@ plt.compiler = plt.compiler || {};
  
    provideStatement.prototype.compile = function(env, pinfo){};
    requireExpr.prototype.compile = function(env, pinfo){
+     if(this.spec instanceof literal){   // rewrite strings as symbols
+      var symbolSpec = new symbolExpr(this.spec.val.toString());
+      symbolSpec.location = this.spec.location;
+      this.spec = symbolSpec;
+     }
      return [new req(this.spec, new topLevel(0, 0, false, false, false)), pinfo];
    };
 
