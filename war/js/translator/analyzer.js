@@ -532,15 +532,6 @@ plt.compiler = plt.compiler || {};
     }
     return [this, pinfo];
  };
- requireExpr.prototype.desugar = function(pinfo){
-    if(this.spec instanceof literal){   // rewrite strings as symbols
-      var symbolSpec = new symbolExpr(this.spec.val);
-      symbolSpec.location = this.spec.location;
-      this.spec = symbolSpec;
-    }
-    return [this, pinfo];
- };
-
  unsupportedExpr.prototype.desugar = function(pinfo){
     this.location.span = this.errorSpan;
     throwError(this.errorMsg, this.location, "Error-GenericReadError");
@@ -819,8 +810,9 @@ plt.compiler = plt.compiler || {};
                                       , ", but found none"]),
                     this.location);
     }
-    if(env.lookup_context(this.val)){
-      return pinfo.accumulateBindingUse(env.lookup_context(this.val), pinfo);
+    var binding = env.lookup_context(this.val);
+    if(binding){
+      return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
     }
