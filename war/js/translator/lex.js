@@ -338,7 +338,7 @@ plt.compiler = plt.compiler || {};
       while (i < str.length && !rightListDelims.test(str.charAt(i))) {
         // check for newlines
         if(str.charAt(i) === "\n"){ line++; column = 0;}
-        try  {     i = readListItem(str, i, list); }  // read a list item, hopefully without error
+        try  { i = readListItem(str, i, list); }  // read a list item, hopefully without error
         catch (e){ var i = handleError(e);   }        // try to keep reading from endOfError...
         // move reader to the next token
         i = chewWhiteSpace(str, i);
@@ -651,11 +651,12 @@ plt.compiler = plt.compiler || {};
                                                         
       // read until we hit the end of the string, another char, or whitespace when it's not the first char
       while(i < str.length && (str.slice(i,i+2) !== "#\\")
-             && !(!isFirstChar && isWhiteSpace(str.charAt(i)) )) {
+             && !(!isFirstChar && /\s|[(\u005B\u007B]|[)\u005D\u007D]/.test(str.charAt(i)) )) {
         isFirstChar = false;
         column++;
         datum += str.charAt(i++);
       }
+                                                        
       // a special char is one of the following, as long as the next char is not alphabetic
       // unlike DrRacket, there is no JS equivalent for nul, null, page and rubout
       var special = new RegExp("(backspace|tab|newline|space|vtab)[^a-zA-Z]*", "i"),
@@ -689,11 +690,11 @@ plt.compiler = plt.compiler || {};
           var match = regexp.exec(datum.slice(1))[0];
           column += (match.length-datum.length)+1; // adjust column if only a subset of the datum matched
           datum = String.fromCharCode(parseInt(match, 16));
-          i = iStart + 3 + match.length; // fast-forward past (1) hash, (2) backslash and (3) match
+          i = iStart + 3 + match.length; // fast-forward past (1) hash, (2) backslash, (3) u and (4) number
        // check for a single character, or a character that is NOT followed by a unicode-alphabetic character
       } else if (datum.length===1 || /[^\u00C0-\u1FFF\u2C00-\uD7FF\w]$/.test(datum.charAt(1))) {
           datum = datum.charAt(0);
-          i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) char
+          i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) single char
       } else {
           throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
                                         ": read: bad character constant: #\\",datum]),
