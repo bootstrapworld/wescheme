@@ -833,15 +833,15 @@ plt.compiler = plt.compiler || {};
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
     // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readSymbolOrNumber(str, i){
-//                                                        console.log('reading symbol or number. column='+column+',i='+i);
       var sCol = column, sLine = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
       var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
       var chunk = symOrNum.exec(str.slice(i))[0];
 
-      // if the chunk *and the string* end with an escape, throw an error
-      if(/^([^\\]|\\\\)*\\$/.test(chunk) && (i+chunk.length+1 > str.length)){
+      // if there's an unescaped backslash at the end, throw an error
+      var trailingEscs = /\.*\\+$/.exec(chunk);
+      if(trailingEscs && (trailingEscs[0].length%2 > 0)){
             i = str.length; // jump to the end of the string
             endOfError = i; // remember where we are, so readList can pick up reading
             throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
