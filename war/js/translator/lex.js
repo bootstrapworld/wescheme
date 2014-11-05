@@ -78,10 +78,11 @@ plt.compiler = plt.compiler || {};
                                 ,this.sCol
                                 ,this.span]);
       };
-      this.toBytecode = function(){
+      this.toString = function(){
         return {line: this.sLine.toString(), id: this.source, span: this.span.toString(),
                offset: (this.offset+1).toString(), column: this.sCol.toString()};
       };
+ 
     };
 
     /////////////////////
@@ -284,6 +285,7 @@ plt.compiler = plt.compiler || {};
           msg.betterThanServer = true;
           throwError(msg, list[dot2Idx].location);
         }
+
         // assuming they are legal, if there are two dots in legal places...
         if(dot2Idx){
           // if they are not surrounding a single element, throw an error
@@ -651,7 +653,7 @@ plt.compiler = plt.compiler || {};
                                                         
       // read until we hit the end of the string, another char, or whitespace when it's not the first char
       while(i < str.length && (str.slice(i,i+2) !== "#\\")
-             && !(!isFirstChar && /\s|[(\u005B\u007B]|[)\u005D\u007D]/.test(str.charAt(i)) )) {
+             && !(!isFirstChar && (isWhiteSpace(str.charAt(i)) || isDelim(str.charAt(i))) )) {
         isFirstChar = false;
         column++;
         datum += str.charAt(i++);

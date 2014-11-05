@@ -31,11 +31,11 @@ function throwError(msg, loc, errorClass) {
       return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
       return part.val;
     } else if(part.location !== undefined){
-      return {text: part.text, type: 'ColoredPart', loc: part.location.toBytecode()
+      return {text: part.text, type: 'ColoredPart', loc: part.location.toString()
             , toString: function(){return part.text;}};
     } else if(part.locations !== undefined){
       return {text: part.text, type: 'MultiPart', solid: part.solid
-            , locs: part.locations.map(function(l){return l.toBytecode()})
+            , locs: part.locations.map(function(l){return l.toString()})
             , toString: function(){return part.text;}};
     }
   }
@@ -69,7 +69,7 @@ function throwError(msg, loc, errorClass) {
                            ]
                         ]
                       ]
-    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toBytecode() })
+    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toString() })
   };
   if(msg.betterThanServer) json.betterThanServer = true;
   throw JSON.stringify(json);
@@ -866,7 +866,7 @@ function structBinding(name, moduleSource, fields, constructor,
       }
  
       // decorateWithPermissions: binding -> binding
-      // HACK (according to Danny's original sources...not sure why)
+      // THIS IS A HACK according to Danny's original sources...not sure why
       function decorateWithPermissions(binding){
         var bindingEntry = function(entry){return entry[0]===binding.name;},
             filteredPermissions = that.declaredPermissions.filter(bindingEntry);
@@ -892,16 +892,16 @@ function structBinding(name, moduleSource, fields, constructor,
     };
  
     this.toString = function(){
-      var s = "pinfo-------------";
- s+= "\n**env****: "+this.env.toString();
- s+= "\n**modules**: "+this.modules.join(",");
- s+= "\n**used bindings**: "+this.usedBindings();
- s+= "\n**free variables**: "+this.freeVariables.join(",");
- s+= "\n**gensym counter**: "+this.gensymCounter;
- s+= "\n**provided names**: "+this.providedNames.values();
- s+= "\n**defined names**: "+this.definedNames.values();
- s+= "\n**permissions**: "+this.permissions();
- return s;
+       var s = "pinfo-------------";
+       s+= "\n**env****: "+this.env.toString();
+       s+= "\n**modules**: "+this.modules.join(",");
+       s+= "\n**used bindings**: "+this.usedBindings();
+       s+= "\n**free variables**: "+this.freeVariables.join(",");
+       s+= "\n**gensym counter**: "+this.gensymCounter;
+       s+= "\n**provided names**: "+this.providedNames.values();
+       s+= "\n**defined names**: "+this.definedNames.values();
+       s+= "\n**permissions**: "+this.permissions();
+       return s;
     };
  }
  

@@ -1069,7 +1069,7 @@ plt.compiler = plt.compiler || {};
       // pull out separate program components for ordered compilation
       var defns    = program.filter(plt.compiler.isDefinition),
           requires = program.filter((function(p){return (p instanceof requireExpr);})),
-          provides = program.filter((function(p){return (p instanceof provideStatement);})),
+//          provides = program.filter((function(p){return (p instanceof provideStatement);})),
           exprs    = program.filter(plt.compiler.isExpression);
       var compiledRequiresAndPinfo = requires.reduceRight(compilePrograms, [[], pinfo, env]),
           compiledRequires = compiledRequiresAndPinfo[0],

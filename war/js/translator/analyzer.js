@@ -353,15 +353,6 @@ plt.compiler = plt.compiler || {};
    // everything else gets desugared
    function desugarQuotedItem(pinfo, loc){
      return function (x) {
-/*       if (x instanceof Array) {
-         var listSym = new symbolExpr('list'),
-             listArgs = x.map(function (x) {return desugarQuotedItem(pinfo, loc)(x)[0]}),
-             listCall = new callExpr(listSym, listArgs);
-         listSym.location = loc;
-         listSym.parent = listCall;
-         listCall.location = loc;
-         return [listCall, pinfo];
-       } else */
        if (  x instanceof callExpr
           || x instanceof quotedExpr
           || x instanceof unsupportedExpr
