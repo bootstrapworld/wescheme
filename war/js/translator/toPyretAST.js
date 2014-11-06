@@ -102,17 +102,7 @@ plt.compiler = plt.compiler || {};
     // if expression
     // ifExpr(predicate, consequence, alternate, stx)
     ifExpr.prototype.toPyret = function(){
-      return {pos: this.location.toPyret()
-              , kids : [this.predicate.toPyret()
-                        , this.consequence.toPyret()
-                        , this.alternate.toPyret()]
-                // (if-expr IF test COLON body branch ... ELSECOLON else END)
-                return RUNTIME.getField(ast, 's-if-else')
-                  .app(pos(node.pos), makeList(
-                    [RUNTIME.getField(ast, 's-if-branch')
-                     .app(pos(node.kids[1].pos), tr(node.kids[1]), tr(node.kids[3]))]
-                      .concat(node.kids.slice(4, -3).map(tr))),
-                       tr(node.kids[node.kids.length - 2]));
+      return "translation of If Expressions is not yet implemented";
     };
  
     // symbol expression
@@ -120,13 +110,7 @@ plt.compiler = plt.compiler || {};
     symbolExpr.prototype.toPyret = function(){
       return "translation of Symbol Expressions is not yet implemented";
     };
- 
-    // list expression
-    // listExpr(vals)
-    listExpr.prototype.toPyret = function(){
-      return "translation of List Expressions is not yet implemented";
-    };
- 
+  
     // require expression
     // requireExpr(spec, stx)
     requireExpr.prototype.toPyret = function(){

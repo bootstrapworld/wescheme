@@ -60,12 +60,17 @@ plt.compiler = plt.compiler || {};
     var endOfError;
                             
     // the location struct
+    // eCol and eLine are included for pyret error location
     var Location = function(sCol, sLine, offset, span, theSource){
       this.sCol   = sCol;   // starting index into the line
       this.sLine  = sLine;  // starting line # (1-index)
       this.offset = offset; // ch index of lexeme start, from beginning
       this.span   = span;   // num chrs between lexeme start and end
       this.source = theSource || source; // [OPTIONAL] id of the containing DOM element
+                            
+      this.eCol   = column; // ending index into the line
+      this.eLine  = line;   // ending index into the line
+                            
       this.start  = function(){ return new Location("", "", this.offset, 1); };
       this.end    = function(){ return new Location("", "", this.offset+this.span-1, 1); };
       this.toString = function(){
@@ -898,6 +903,7 @@ plt.compiler = plt.compiler || {};
         // if it's a bad number, throw an error
         try{
            var numValue = jsnums.fromString(filtered, true);
+           numValue.stx = filtered; // save the string that generated the number to begin with
            // If it's a number (don't interpret zero as 'false'), that's our node
            if(numValue || numValue === 0){ node = new literal(numValue); }
         // if it's not a number OR a symbol
