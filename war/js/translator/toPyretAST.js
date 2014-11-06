@@ -28,38 +28,50 @@ plt.compiler = plt.compiler || {};
     };
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toPyret = function(){
-      return 'types.rational('+this.n+', '+this.d+')';
+      return {name: 'frac-expr', kids: [{value: this.stx}], pos: this.location.toPyret()};
     };
     jsnums.BigInteger.prototype.toPyret = function(){
-      return 'types.bignum('+this.toString()+')';
+      return {name: 'num-expr', kids: [{value: this.stx}], pos: this.location.toPyret()};
     };
     jsnums.FloatPoint.prototype.toPyret = function(){
-      return 'types["float"]('+this.toString()+')';
+      return {name: 'num-expr', kids: [{value: this.stx}], pos: this.location.toPyret()};
     };
     jsnums.Complex.prototype.toPyret = function(){
-      return 'types.complex('+this.r+', '+this.i+')';
+      throw "Complex Numbers are not yet supported in Pyret";
     };
+ 
     Char.prototype.toPyret = function(){
       return 'types[\'char\'](String.fromCharCode('+this.val.charCodeAt(0)+'))';
+    };
+ 
+    // Pyret Locations need ending line and column info
+    Location.prototype.toPyret = function(){
+      return  {"start-line": this.sLine, "start-column": this.sCol, "start-char": this.offset
+            , "end-line":   this.eLine, "end-column": this.eCol, "end-char": this.offset + this.span
+            , source: this.source };
     };
 
     // literals
     // literal(String|Char|Number|Vector)
+    // everything has a toPyret() method _except_ Strs,
+    // which are a hidden datatype for some reason
     literal.prototype.toPyret = function(){
-      return "translation of Literals is not yet implemented";
+      return (this.val.toPyret)? this.val.toPyret()
+                                :  {name: "string-expr", pos : this.location.toPyret()
+                                   , kids: [this.toWrittenString()]};
     };
  
 
     // Function definition
     // defFunc(name, args, body, stx)
     defFunc.prototype.toPyret = function(){
-      return "translation of Function Definitions is not yet implemented";
+      return {name: "fun-expr", pos: this.location.toPyret()};
     };
 
     // Variable definition
     // defVar(name, rhs, stx)
     defVar.prototype.toPyret = function(){
-      return "translation of Variable Definitions is not yet implemented";
+      return {name: "let-expr", pos: this.location.toPyret()};
     };
 
     // Multi-Variable definition
@@ -83,7 +95,7 @@ plt.compiler = plt.compiler || {};
     // Lambda expression
     // lambdaExpr(args, body, stx)
     lambdaExpr.prototype.toPyret = function(){
-      return "translation of Lambda Expressions is not yet implemented";
+      return {name: "lambda-expr", pos: this.location.toPyret()};
     };
  
     // Local expression
