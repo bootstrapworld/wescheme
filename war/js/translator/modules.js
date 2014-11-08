@@ -61,6 +61,7 @@ plt.compiler = plt.compiler || {};
                                             ,["initial-effect", 1, false]
                                             ,["on-key", 1, false]
                                             ,["on-key!", 2, false]
+                                            ,["on-mouse", 1, false]
                                             ,["on-tap", 1, false]
                                             ,["on-tilt", 1, false]
                                             ,["on-redraw", 1, false]
