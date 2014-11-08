@@ -43,7 +43,7 @@ plt.compiler = plt.compiler || {};
  // desugar each program, appending those that desugar to multiple programs
  function desugarProgram(programs, pinfo, isTopLevelExpr){
       var acc = [ [], (pinfo || new plt.compiler.pinfo())];
-      return programs.reduce((function(acc, p){
+      var res = programs.reduce((function(acc, p){
             var desugaredAndPinfo = p.desugar(acc[1]);
             // if it's an expression, insert a print-values call so it shows up in the repl
             if(plt.compiler.isExpression(p) && isTopLevelExpr){
@@ -61,6 +61,8 @@ plt.compiler = plt.compiler || {};
             }
             return [acc[0], desugaredAndPinfo[1]];
         }), acc);
+      res[0].location = programs.location;
+      return res;
  }
  
  // Program.prototype.desugar: pinfo -> [Program, pinfo]
@@ -548,6 +550,16 @@ plt.compiler = plt.compiler || {};
     return new functionBinding(name, modulePath, arity, vararity, [], false, loc);
  }
  defFunc.prototype.collectDefinitions = function(pinfo){
+    this.args.forEach(function(arg){
+      if(plt.compiler.keywords.indexOf(arg.val) > -1){
+          throwError(new types.Message([new types.ColoredPart(arg.val, arg.location),
+                                        ": this is a reserved keyword and cannot be used"+
+                                        " as a variable or function name"])
+                     , arg.location);
+           
+               }
+      });
+ 
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
@@ -645,17 +657,20 @@ plt.compiler = plt.compiler || {};
          success: function(result) {
                     // if it's not a native module, manually assign it to window.COLLECTIONS
                     if(getWeSchemeModule(moduleName)){
+                console.log('trying to load non-native module');
                       var program = (0,eval)('(' + result + ')');
+                console.log('bytecodes for the module have been loaded');
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
                                   'bytecode' : (0,eval)('(' + program.object.obj + ')'),
                                   'provides' : program.provides
                               };
+                console.log('object code has been assigned to window.COLLECTIONS['+moduleName+']');
                     // otherwise, simply evaluate the raw JS
                     } else {
                       eval(result);
                     }
-                    if(result){ processModule(moduleName); }
+                    if(result){ console.log('processing module'); processModule(moduleName); }
                     else { throwModuleError(moduleName); }
                   },
          error: function (error) { throwModuleError(moduleName); },

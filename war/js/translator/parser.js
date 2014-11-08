@@ -1024,7 +1024,7 @@ plt.compiler = plt.compiler || {};
   /////////////////////
  plt.compiler.parse = function(sexp, debug){
       var start = new Date().getTime();
-      try{ var AST = parse(sexp); }                     // do the actual work
+      try{ var AST = parse(sexp); AST.location = sexp.location; }   // do the actual work
       catch(e) { console.log("PARSING ERROR"); throw e; }
       var end = new Date().getTime();
       if(debug){
