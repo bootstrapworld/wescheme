@@ -30,16 +30,16 @@ plt.compiler = plt.compiler || {};
     };
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toBytecode = function(){
-      return 'types.rational('+this.n+', '+this.d+')';
+      return 'types.rational('+convertToBytecode(this.n)+', '+convertToBytecode(this.d)+')';
     };
     jsnums.BigInteger.prototype.toBytecode = function(){
-      return 'types.bignum('+this.toString()+')';
+      return 'types.bignum("'+this.toString()+'")';
     };
     jsnums.FloatPoint.prototype.toBytecode = function(){
       return 'types["float"]('+this.toString()+')';
     };
     jsnums.Complex.prototype.toBytecode = function(){
-      return 'types.complex('+this.r+', '+this.i+')';
+      return 'types.complex('+convertToBytecode(this.r)+', '+convertToBytecode(this.i)+')';
     };
     Char.prototype.toBytecode = function(){
       return 'types[\'char\'](String.fromCharCode('+this.val.charCodeAt(0)+'))';
