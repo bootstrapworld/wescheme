@@ -646,6 +646,7 @@ plt.compiler = plt.compiler || {};
           provideBindings = provides.map(strToBinding),
           modulebinding = new moduleBinding(moduleName, provideBindings);
       newPinfo = pinfo.accumulateModule(modulebinding).accumulateModuleBindings(provideBindings);
+      console.log('loaded module: '+moduleName);
     }
  
     // open a *synchronous* GET request -- FIXME to use callbacks?
@@ -657,27 +658,25 @@ plt.compiler = plt.compiler || {};
          success: function(result) {
                     // if it's not a native module, manually assign it to window.COLLECTIONS
                     if(getWeSchemeModule(moduleName)){
-                console.log('trying to load non-native module');
                       var program = (0,eval)('(' + result + ')');
-                console.log('bytecodes for the module have been loaded');
+                      // Create the COLLECTIONS array, if it doesn't exist
+                      if(!window.COLLECTIONS) window.COLLECTIONS = [];
                       window.COLLECTIONS[moduleName] = {
                                   'name': moduleName,
                                   'bytecode' : (0,eval)('(' + program.object.obj + ')'),
                                   'provides' : program.provides
                               };
-                console.log('object code has been assigned to window.COLLECTIONS['+moduleName+']');
                     // otherwise, simply evaluate the raw JS
                     } else {
                       eval(result);
                     }
-                    if(result){ console.log('processing module'); processModule(moduleName); }
+                    if(result){ processModule(moduleName); }
                     else { throwModuleError(moduleName); }
                   },
          error: function (error) { throwModuleError(moduleName); },
          async:   false
     });
  
- console.log(newPinfo);
     return newPinfo;
  };
  
