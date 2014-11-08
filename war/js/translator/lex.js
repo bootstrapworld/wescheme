@@ -55,7 +55,7 @@ plt.compiler = plt.compiler || {};
         oct3            = new RegExp("^([0-7]{1,3})", "i");
 
     // the delimiters encountered so far, line and column, and case-sensitivity
-    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols;
+    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols, i;
     // UGLY HACK to track index if an error occurs. We should remove this if we can make i entirely stateful
     var endOfError;
                             
@@ -70,6 +70,7 @@ plt.compiler = plt.compiler || {};
                             
       this.eCol   = column; // ending index into the line
       this.eLine  = line;   // ending index into the line
+      this.eChar  = offset+span;      // ch index of lexeme end, from beginning
                             
       this.start  = function(){ return new Location("", "", this.offset, 1); };
       this.end    = function(){ return new Location("", "", this.offset+this.span-1, 1); };
@@ -87,7 +88,12 @@ plt.compiler = plt.compiler || {};
         return {line: this.sLine.toString(), id: this.source, span: this.span.toString(),
                offset: (this.offset+1).toString(), column: this.sCol.toString()};
       };
- 
+      // Pyret Locations need ending line and column info
+      this.toPyret = function(){
+        return  {"startRow": this.sLine, "startCol": this.sCol, "startChar": this.offset
+              , "endRow":   this.eLine, "endCol": this.eCol, "endChar": this.offset + this.span};
+      };
+
     };
 
     /////////////////////
@@ -177,6 +183,7 @@ plt.compiler = plt.compiler || {};
         if(!(sexp instanceof Comment)) { sexps.push(sexp); }
         i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
       }
+      sexps.location = new Location(sCol, sLine, 0, i, source);
       return sexps;
     }
 
@@ -846,7 +853,6 @@ plt.compiler = plt.compiler || {};
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
       var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
       var chunk = symOrNum.exec(str.slice(i))[0];
-
       // if there's an unescaped backslash at the end, throw an error
       var trailingEscs = /\.*\\+$/.exec(chunk);
       if(trailingEscs && (trailingEscs[0].length%2 > 0)){
@@ -885,15 +891,14 @@ plt.compiler = plt.compiler || {};
       var filtered = chunks.reduce(function(acc, str, i){
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
-          }, "").replace(/\\(?!\\)/g,'');
-
+          }, "");
 
       // if it's a newline, adjust line and column trackers
-      if(filtered==="\n"){line++; column=0;}
+      if(filtered==="\\\n"){line++; column=0;}
                                 
       // add bars if it's a symbol that needs those escape characters
       var needsBars = new RegExp("^$|[\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\\\]", 'g');
-      filtered = needsBars.test(filtered)? "|"+filtered+"|" : filtered;
+      filtered = (needsBars.test(filtered)? "|"+filtered+"|" : filtered).replace(/\\(?!\\)/g,'');
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
@@ -903,9 +908,15 @@ plt.compiler = plt.compiler || {};
         // if it's a bad number, throw an error
         try{
            var numValue = jsnums.fromString(filtered, true);
-           numValue.stx = filtered; // save the string that generated the number to begin with
            // If it's a number (don't interpret zero as 'false'), that's our node
-           if(numValue || numValue === 0){ node = new literal(numValue); }
+           if(numValue || numValue === 0){
+             if(numValue instanceof Object){
+               numValue.stx = filtered;
+               numValue.location = new Location(sCol, sLine, iStart, i-iStart);
+             }
+             node = new literal(numValue);
+             node.stx = filtered; // save the string that generated the number to begin with
+           }
         // if it's not a number OR a symbol
         } catch(e) {
             endOfError = i; // remember where we are, so readList can pick up reading
