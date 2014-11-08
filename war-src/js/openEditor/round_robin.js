@@ -210,7 +210,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
-              if(Math.random() < .25){ // 25% of the time, we'll compare the actual bytecodes
+              if(Math.random() < 25){ // 25% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
@@ -299,10 +299,10 @@ function sameResults(x, y){
  
   // dictionaries of toplevel names for x and y bytecodes
   var x_toplevels = [], y_toplevels = [],
-      extractTopLevelName = function (tl){
+    extractTopLevelName = function (tl){
         if(!tl) return false;
         if(tl.$ === 'global-bucket') return tl.value;
-        if(tl.$ === 'module-variable') return tl.sym.val;
+        if(tl.$ === 'module-variable') return tl.sym.val+tl.modidx.path;
         else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
   }
 
@@ -320,11 +320,7 @@ function sameResults(x, y){
   function canonicalizeLiteral(lit){
     return lit.toString().replace(/\s*/g,"");
   }
-/*
-  // if either one is a JSON string, convert it to an object. if it doesn't parse correctly, proceed silently
-  try{ var x = JSON.parse(x); var y = JSON.parse(y); }
-  catch(e) { }
-*/
+
   // if either one is an object, canonicalize it
   if(typeof(x) === "object") x = canonicalizeObject(x);
   if(typeof(y) === "object") y = canonicalizeObject(y);
@@ -362,10 +358,10 @@ function sameResults(x, y){
           console.log('different toplevel names'); return false;
         }
         // build sorted lists of all module variables, return true if they are identical
-        var x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"}),
-            y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
-        x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
-        y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
+        var x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"}).map(extractTopLevelName),
+            y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"}).map(extractTopLevelName);
+        x_modVariables.sort();
+        y_modVariables.sort();
         return sameResults(x_modVariables, y_modVariables);
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
