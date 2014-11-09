@@ -14,20 +14,23 @@
 <script type="text/javascript" src="lex.js"></script>
 <script type="text/javascript" src="repl2.js"></script>
 <script type="text/javascript" src="toPyretString.js"></script>
+<script type="text/javascript" src="toPyretAST.js"></script>
 
 <script>
 var rows    = [];
 var tests   = [];
 var passed  = 0;
 var testsRun= 0;
+
 // dictionaries of toplevel names for x and y bytecodes
-var x_toplevels = [], y_toplevels = [],
-    extractTopLevelName = function (tl){
-      if(!tl) return false;
-      if(tl.$ === 'global-bucket') return tl.value;
-      if(tl.$ === 'module-variable') return tl.sym.val;
-      else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
+x_toplevels = [], y_toplevels = [],
+extractTopLevelName = function (tl){
+  if(!tl) return false;
+  if(tl.$ === 'global-bucket') return tl.value;
+  if(tl.$ === 'module-variable') return tl.sym.val+tl.modidx.path;
+  else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
 }
+
 
 // sameResults : local server -> boolean
 // Weak comparison on locations, indirect comparison for toplevel references
@@ -51,12 +54,6 @@ function sameResults(x, y){
     return lit.toString().replace(/\s*/g,"");
   }
 
-  // if either one is a JSON string, convert it to an object
-  try{ var x = JSON.parse(x); }
-  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-  try{ var y = JSON.parse(y);}
-  catch(e) { /* if it doesn't parse correctly, proceed silently */ }
-
   // if either one is an object, canonicalize it
   if(typeof(x) === "object") x = canonicalizeObject(x);
   if(typeof(y) === "object") y = canonicalizeObject(y);
@@ -75,8 +72,8 @@ function sameResults(x, y){
     // does every property in x also exist in y?
     for (var p in x) {
       // log error if a property is not defined
-      if ( ! x.hasOwnProperty(p) ){ console.log('expected lacks a '+p); return false; }
-      if ( ! y.hasOwnProperty(p) ){ console.log('recieved lacks a '+p); return false; }
+      if ( ! x.hasOwnProperty(p) ){ console.log('local lacks a '+p); return false; }
+      if ( ! y.hasOwnProperty(p) ){ console.log('server lacks a '+p); return false; }
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
       // toplevel properties are equal if the sets of names are equal
@@ -84,27 +81,32 @@ function sameResults(x, y){
       if(p==="toplevels"){
         // if they're not the same length, bail
         if(x_toplevels.length !== y_toplevels.length){
-          console.log('different number of toplevels'); return false;
+          console.log('different number of toplevels. local has '
+                      +x_toplevels.length+', and server has '
+                      +y_toplevels.length);
+                      return false;
         }
         // if they're not the same names, bail
         if(!x_toplevels.every(function(v,i) { return y_toplevels.indexOf(v) > -1;})){
           console.log('different toplevel names'); return false;
         }
         // build sorted lists of all module variables, return true if they are identical
-        x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"});
-        y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"});
-        x_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
-        y_modVariables.sort(function(a,b){return (a.sym.val >= b.sym.val)? 1 : -1;});
-        return sameResults(x_modVariables, y_modVariables);
+        x_modVariables = x.toplevels.filter(function(tl){return tl.$==="module-variable"}).map(extractTopLevelName);
+        y_modVariables = y.toplevels.filter(function(tl){return tl.$==="module-variable"}).map(extractTopLevelName);
+        x_modVariables.sort();
+        y_modVariables.sort();
+        if(!sameResults(x_modVariables, y_modVariables)){ console.log('module variables differed'); return false; }
+        continue;
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
       if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
-        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ return true; }
+        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ continue; }
         else { console.log('different indices for '+x_toplevels[Number(x[p])]); return false; }
       }
+
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
-      else{ return false;}
+      else{ console.log('server and recieved local on property: '+p); return false;}
     }
     // does every property in y also exist in x?
     for (p in y) {
@@ -114,7 +116,7 @@ function sameResults(x, y){
   // 4)if they are literals, they must be identical
   } else {
       if (canonicalizeLiteral(x) !== canonicalizeLiteral(y)){
-        console.log('(server, local) literals not the same:\n'+x+'\nis not equal to \n'+y);
+        console.log('(local, server) literals not the same:\n'+x+'\nis not equal to \n'+y);
         return false;
       }
   }
@@ -206,7 +208,9 @@ function runTests(verbose){
         if(expected === "LOCAL IS BETTER"){ lex.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
-          if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+          var localJSON = JSON.parse(recieved["structured-error"]),
+              serverJSON = JSON.parse(JSON.parse(expected)["structured-error"]);
+          if(sameResults(localJSON, serverJSON)){ lex.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
@@ -225,7 +229,9 @@ function runTests(verbose){
         if(expected === "LOCAL IS BETTER"){ parse.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
         else{
-          if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+          var localJSON = JSON.parse(recieved["structured-error"]),
+              serverJSON = JSON.parse(JSON.parse(expected)["structured-error"]);
+          if(sameResults(localJSON, serverJSON)){ lex.style.background = 'lightgreen'; return true; }
           else{ return setTestFailureLink(row, expected, recieved);}
         }
       }
@@ -246,7 +252,9 @@ function runTests(verbose){
         if(recieved.betterThanServer){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "PASS"){ return setTestFailureLink(row, expected, recieved);}
-        if(sameResults(recieved, JSON.parse(expected))){ lex.style.background = 'lightgreen'; return true; }
+        var localJSON = JSON.parse(recieved["structured-error"]),
+            serverJSON = JSON.parse(JSON.parse(expected)["structured-error"]);
+        if(sameResults(localJSON, serverJSON)){ lex.style.background = 'lightgreen'; return true; }
         else{ return setTestFailureLink(row, expected, recieved);}
       }
       // if we don't have a desugarRef for this test, call it a questinonable pass move on
@@ -266,15 +274,15 @@ function runTests(verbose){
       }
       // if we don't have a bytecodeRef for this test, call it a questinonable pass move on
       if(bytecodeRef === undefined) { desugar.style.background = 'rgb(194, 288, 194)'; return true; }
-      expected = JSON.parse(bytecodeRef);
-      recieved = JSON.parse(recieved);
-      expected.bytecode = (0,eval)('('+expected.bytecode+')');
-      try { recieved.bytecode = (0,eval)('('+recieved.bytecode+')'); }
-      catch(e){console.log('MALFORMED BYTECODE:\n'+recieved.bytecode); return setTestFailureLink(row, expected.bytecode, recieved.bytecode); }
-      if(sameResults(expected, recieved)) {
+      expected_bc = JSON.parse(bytecodeRef);
+      recieved_bc = JSON.parse(recieved);
+      expected_bc.bytecode = (0,eval)('('+expected_bc.bytecode+')');
+      try { recieved_bc.bytecode = (0,eval)('('+recieved_bc.bytecode+')'); }
+      catch(e){console.log('MALFORMED BYTECODE:\n'+recieved_bc.bytecode); return setTestFailureLink(row, expected_bc.bytecode, recieved_bc.bytecode); }
+      if(sameResults(recieved_bc, expected_bc)) {
         desugar.style.background = 'lightgreen'; return true;
       } else {
-        return setTestFailureLink(row, JSON.stringify(expected), JSON.stringify(recieved));
+        return setTestFailureLink(row, bytecodeRef, recieved);
       }
 
       // EVERYTHING PASSED! WHOOPIE!

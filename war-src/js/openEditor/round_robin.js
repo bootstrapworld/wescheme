@@ -289,6 +289,16 @@ goog.provide("plt.wescheme.RoundRobin");
         }
     };
  
+// dictionaries of toplevel names for x and y bytecodes
+var x_toplevels = [], y_toplevels = [],
+  extractTopLevelName = function (tl){
+      if(!tl) return false;
+      if(tl.$ === 'global-bucket') return tl.value;
+      if(tl.$ === 'module-variable') return tl.sym.val+tl.modidx.path;
+      else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
+}
+
+  
 // sameResults : local server -> boolean
 // Weak comparison on locations, indirect comparison for toplevel references
 // Recursive comparison for objects
@@ -297,16 +307,6 @@ goog.provide("plt.wescheme.RoundRobin");
 // credit to: http://stackoverflow.com/questions/1068834/object-comparison-in-javascript
 function sameResults(x, y){
  
-  // dictionaries of toplevel names for x and y bytecodes
-  var x_toplevels = [], y_toplevels = [],
-    extractTopLevelName = function (tl){
-        if(!tl) return false;
-        if(tl.$ === 'global-bucket') return tl.value;
-        if(tl.$ === 'module-variable') return tl.sym.val+tl.modidx.path;
-        else throw "UNKNOWN TOPLEVEL TYPE: "+tl.toString();
-  }
-
-  
   // given an object, remove empty properties and reconstruct as an alphabetized JSON string
   // then parse and return a canonicalized object
   function canonicalizeObject(obj){
@@ -366,7 +366,7 @@ function sameResults(x, y){
       }
       // use pos's as keys into the toplevel dictionaries, and compare their values
       if((p==="pos") && (x["$"]==="toplevel") && (x["$"]==="toplevel")){
-        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ return true; }
+        if(x_toplevels[Number(x[p])] === y_toplevels[Number(y[p])]){ continue; }
         else { console.log('different indices for '+x_toplevels[Number(x[p])]); return false; }
       }
       // if they both have the property, compare it
