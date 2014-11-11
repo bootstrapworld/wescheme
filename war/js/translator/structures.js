@@ -579,7 +579,7 @@ function structBinding(name, moduleSource, fields, constructor,
   // sub-classes of env
   function emptyEnv(){
     env.call(this);
-  this.lookup = function(name, depth){ return new plt.compiler.unboundStackReference(name); };
+    this.lookup = function(name, depth){ return new plt.compiler.unboundStackReference(name); };
   }
   emptyEnv.prototype = heir(env.prototype);
  

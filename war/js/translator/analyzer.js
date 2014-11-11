@@ -683,7 +683,7 @@ plt.compiler = plt.compiler || {};
     }
     return newPinfo;
  };
- 
+/*
  localExpr.prototype.collectDefinitions = function(pinfo){
     // remember previously defined names, so we can revert to them later
     // in the meantime, scan the body
@@ -696,7 +696,7 @@ plt.compiler = plt.compiler || {};
     newKeys.forEach(function(k){ if(prevKeys.indexOf(k) === -1) newPinfo.definedNames.remove(k); });
     return newPinfo;
  };
- 
+ */
  // BINDING STRUCTS ///////////////////////////////////////////////////////
  function provideBindingId(symbl){ this.symbl = symbl;}
  function provideBindingStructId(symbl){ this.symbl = symbl; }
@@ -757,30 +757,30 @@ plt.compiler = plt.compiler || {};
  // extend the Program class to analyzing uses
  // Program.analyzeUses: pinfo -> pinfo
  Program.prototype.analyzeUses = function(pinfo, env){ return pinfo; };
- defVar.prototype.analyzeUses = function(pinfo, env){
+ defVar.prototype.analyzeUses = function(pinfo){
     // if it's a lambda, extend the environment with the function, then analyze as a lambda
     if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.expr.args.length, false, this.location));
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
- defVars.prototype.analyzeUses = function(pinfo, env){
+ defVars.prototype.analyzeUses = function(pinfo){
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
- defFunc.prototype.analyzeUses = function(pinfo, env){
+ defFunc.prototype.analyzeUses = function(pinfo){
     // extend the env to include the function binding, then make a copy of all the bindings
-    var env1 = env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
-        oldKeys = env1.bindings.keys(),
+    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
+        oldKeys = oldEnv.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
-    oldKeys.forEach(function(k){newBindings.put(k, env1.bindings.get(k));});
+    oldKeys.forEach(function(k){newBindings.put(k, oldEnv.bindings.get(k));});
  
     // make a copy of the environment, using the newly-copied bindings
     // add the args to this environment
-    var env2 = new plt.compiler.env(newBindings),
-        env2 = this.args.reduce(function(env, arg){
+    var newEnv = new plt.compiler.env(newBindings),
+        newEnv = this.args.reduce(function(env, arg){
                                   return env.extend(new constantBinding(arg.val, false, [], arg.location));
-                                }, env2);
-    pinfo.env = env2;                           // install the post-arg env into pinfo
-    pinfo = this.body.analyzeUses(pinfo, env2); // analyze the body
-    pinfo.env = env1;                           // install the pre-arg environment for pinfo
+                                }, newEnv);
+    pinfo.env = newEnv;                           // install the post-arg env into pinfo
+    pinfo = this.body.analyzeUses(pinfo, newEnv); // analyze the body
+    pinfo.env = oldEnv;                           // install the pre-arg environment for pinfo
     return pinfo;
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
@@ -796,10 +796,32 @@ plt.compiler = plt.compiler || {};
         }, env1);
     return this.body.analyzeUses(pinfo, env2);
  };
+
+ /*
+ // If we don't care about matching Danny's compiler, the code *probably should be*
  localExpr.prototype.analyzeUses = function(pinfo, env){
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
     return this.body.analyzeUses(pinfoAfterDefs, env);
  };
+ */
+ 
+ // This is what we do to match Danny's compiler, which I think behaves incorrectly.
+ // It's a horrible, horrible hack designed to get around the fact that our structures don't
+ // behave functionally. SHOULD BE TESTED FURTHER
+ localExpr.prototype.analyzeUses = function(pinfo, env){
+    pinfo.env = plt.compiler.getBasePinfo("base").env;
+    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
+ 
+     // extend the env to include the function binding, then make a copy of all the bindings
+    var envAfterDefs = pinfoAfterDefs.env, oldKeys = envAfterDefs.bindings.keys(),
+        newBindings = types.makeLowLevelEqHash();
+    oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});
+
+    var bodyPinfo = this.body.analyzeUses(pinfoAfterDefs, envAfterDefs);
+    bodyPinfo.env = envAfterDefs;
+    return bodyPinfo;
+ };
+ 
  callExpr.prototype.analyzeUses = function(pinfo, env){
     return [this.func].concat(this.args).reduce(function(p, arg){
                             return (arg instanceof Array)?
