@@ -106,7 +106,7 @@ function sameResults(x, y){
 
       // if they both have the property, compare it
       if(sameResults(x[p],y[p])) continue;
-      else{ console.log('server and recieved local on property: '+p); return false;}
+      else{ console.log('local and server differ on property: '+p); return false;}
     }
     // does every property in y also exist in x?
     for (p in y) {
