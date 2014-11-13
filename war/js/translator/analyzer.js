@@ -162,10 +162,6 @@ plt.compiler = plt.compiler || {};
                                         this.consequence,
                                         this.alternative],
                                        pinfo);
-    // preserve location information -- esp for the predicate!
-    exprsAndPinfo[0][0].location = this.predicate.location;
-    exprsAndPinfo[0][1].location = this.consequence.location;
-    exprsAndPinfo[0][2].location = this.alternative.location;
     this.predicate = forceBooleanContext(this.stx, this.stx.location, exprsAndPinfo[0][0]);
     this.consequence = exprsAndPinfo[0][1];
     this.alternative = exprsAndPinfo[0][2];
@@ -203,8 +199,9 @@ plt.compiler = plt.compiler || {};
       let_exp.location = binding.location;
       return let_exp;
     }
-    var nestedLets = this.bindings.reduceRight(bindingToLet, this.body);
-    return nestedLets.desugar(pinfo);
+    // if there are no bindings, desugar the body. Otherwise, reduce to nested lets first
+    if(this.bindings.length === 0) return this.body.desugar(pinfo);
+    else return this.bindings.reduceRight(bindingToLet, this.body).desugar(pinfo);
  };
  // conds become nested ifs
  condExpr.prototype.desugar = function(pinfo){
