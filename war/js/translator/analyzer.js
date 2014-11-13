@@ -175,11 +175,11 @@ plt.compiler = plt.compiler || {};
  // letrecs become locals
  letrecExpr.prototype.desugar = function(pinfo){
     function bindingToDefn(b){
-      var def = new defVar(b.first, b.second);
+      var def = new defVar(b.first, b.second, b.stx);
       def.location = b.location;
       return def
     };
-    var localAndPinfo = new localExpr(this.bindings.map(bindingToDefn), this.body).desugar(pinfo);
+    var localAndPinfo = new localExpr(this.bindings.map(bindingToDefn), this.body, this.stx).desugar(pinfo);
     localAndPinfo[0].location = this.location;
     return localAndPinfo;
  };
