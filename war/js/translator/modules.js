@@ -155,6 +155,7 @@ plt.compiler = plt.compiler || {};
                                              ,["js-button",   2, false]
                                              ,["js-button!",  2, false]
                                              ,["js-node",     1, false]
+                                             ,["js-text",    1, false]
                                              ,["js-select",   2, false]
                                              ,["js-img",      1, false, ["android.permission.INTERNET"]]
                                              ].map(makeFunctionBinding('"moby/jsworld"'))
