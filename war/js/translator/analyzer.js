@@ -198,12 +198,13 @@ plt.compiler = plt.compiler || {};
  };
  // let*s become nested lets
  letStarExpr.prototype.desugar = function(pinfo){
-    var body = this.body;
-    for(var i=0; i<this.bindings.length; i++){
-      body = new letExpr([this.bindings[i]], body, this.bindings[i].stx);
-      body.location = this.bindings[i].location;
+    function bindingToLet(body, binding){
+      var let_exp = new letExpr([binding], body, binding.stx);
+      let_exp.location = binding.location;
+      return let_exp;
     }
-    return body.desugar(pinfo);
+    var nestedLets = this.bindings.reduceRight(bindingToLet, this.body);
+    return nestedLets.desugar(pinfo);
  };
  // conds become nested ifs
  condExpr.prototype.desugar = function(pinfo){
