@@ -817,7 +817,7 @@ plt.compiler = plt.compiler || {};
  // horrible, horrible hack designed to get around the fact that we use immutable hashtables
  // SHOULD BE TESTED FURTHER
  localExpr.prototype.analyzeUses = function(pinfo, env){
-    var originalEnv = pinfo.env;
+//    var originalEnv = pinfo.env;
     pinfo.env = plt.compiler.getBasePinfo("base").env;
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
  
@@ -827,7 +827,7 @@ plt.compiler = plt.compiler || {};
     oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});
 
     var bodyPinfo = this.body.analyzeUses(pinfoAfterDefs, envAfterDefs);
-    bodyPinfo.env = originalEnv;
+    bodyPinfo.env = envAfterDefs;
     return bodyPinfo;
  };
  
