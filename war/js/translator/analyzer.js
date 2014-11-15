@@ -167,7 +167,17 @@ plt.compiler = plt.compiler || {};
     this.alternative = exprsAndPinfo[0][2];
     return [this, exprsAndPinfo[1]];
  };
-
+ whenUnlessExpr.prototype.desugar = function(pinfo){
+    var begin_exp = new beginExpr(this.exprs, this.stx),
+        void_exp = new symbolExpr('void'),
+        call_exp = new callExpr(void_exp, [], this.stx),
+        consequence = (this.stx==="when")? begin_exp : void_exp,
+        alternative = (this.stx==="when")? void_exp : begin_exp,
+        if_exp = new ifExpr(this.predicate, consequence, alternative, this.stx);
+    begin_exp.location = this.exprs.location;
+    void_exp.location = call_exp.location = if_exp.location = this.location;
+    return if_exp.desugar(pinfo);
+ };
  // letrecs become locals
  letrecExpr.prototype.desugar = function(pinfo){
     function bindingToDefn(b){
@@ -803,10 +813,11 @@ plt.compiler = plt.compiler || {};
  };
  */
  
- // This is what we do to match Danny's compiler, which I think behaves incorrectly.
- // It's a horrible, horrible hack designed to get around the fact that our structures don't
- // behave functionally. SHOULD BE TESTED FURTHER
+ // This is what we do to match Danny's compiler, which I think behaves incorrectly. It's a
+ // horrible, horrible hack designed to get around the fact that we use immutable hashtables
+ // SHOULD BE TESTED FURTHER
  localExpr.prototype.analyzeUses = function(pinfo, env){
+    var originalEnv = pinfo.env;
     pinfo.env = plt.compiler.getBasePinfo("base").env;
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
  
@@ -816,7 +827,7 @@ plt.compiler = plt.compiler || {};
     oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});
 
     var bodyPinfo = this.body.analyzeUses(pinfoAfterDefs, envAfterDefs);
-    bodyPinfo.env = envAfterDefs;
+    bodyPinfo.env = originalEnv;
     return bodyPinfo;
  };
  

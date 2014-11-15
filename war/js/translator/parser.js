@@ -590,6 +590,8 @@ plt.compiler = plt.compiler || {};
                     isSymbolEqualTo("begin", peek)   ? parseBeginExpr(sexp) :
                     isSymbolEqualTo("and", peek)     ? parseAndExpr(sexp) :
                     isSymbolEqualTo("or", peek)      ? parseOrExpr(sexp) :
+                    isSymbolEqualTo("when", peek)    ? parseWhenUnlessExpr(sexp) :
+                    isSymbolEqualTo("unless", peek)  ? parseWhenUnlessExpr(sexp) :
                     isSymbolEqualTo("quote", peek)   ? parseQuotedExpr(sexp) :
                     isSymbolEqualTo("quasiquote", peek)       ? parseQuasiQuotedExpr(sexp) :
                     isSymbolEqualTo("unquote", peek)          ? parseUnquoteExpr(sexp) :
@@ -598,6 +600,19 @@ plt.compiler = plt.compiler || {};
           expr.location = sexp.location;
           return expr;
    })();
+  }
+ 
+  function parseWhenUnlessExpr(sexp){
+    // is it just (when)?
+    if(sexp.length < 3){
+        throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected at a test and at least one result after "+sexp[0]+", but nothing's there"]),
+                    sexp.location);
+    }
+    var exprs = sexp.slice(2), result = new whenUnlessExpr(sexp[1], exprs, sexp[0]);
+    exprs.location = exprs[0].location; // FIXME: merge the locations
+    result.location = sexp.location;
+    return result;
   }
 
   function parseCondExpr(sexp) {

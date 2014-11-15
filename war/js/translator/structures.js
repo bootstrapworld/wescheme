@@ -303,6 +303,18 @@ function ifExpr(predicate, consequence, alternative, stx) {
 };
 ifExpr.prototype = heir(Program.prototype);
 
+// when/unless expression
+function whenUnlessExpr(predicate, exprs, stx) {
+  Program.call(this);
+  this.predicate = predicate;
+  this.exprs = exprs;
+  this.stx = stx;
+  this.toString = function(){
+    return "("+this.stx[0]+" "+this.predicate.toString()+" "+this.exprs.toString()+")";
+  };
+};
+whenUnlessExpr.prototype = heir(Program.prototype);
+
 // symbol expression (ID)
 function symbolExpr(val, stx) {
   Program.call(this);
