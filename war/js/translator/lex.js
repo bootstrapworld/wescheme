@@ -865,9 +865,16 @@ plt.compiler = plt.compiler || {};
       }
       // move the read head and column tracker forward
       i+=chunk.length; column+=chunk.length;
-      
+                                                        
+      // remove escapes
+      var unescaped = "";
+      for(var j=0; j < chunk.length; j++){
+        if(chunk.charAt(j) == "\\") { j++; }  // if it's an escape char, skip over it and add the next one
+        unescaped += chunk.charAt(j);
+      }
+                                                        
       // split the chunk at each |
-      var chunks = chunk.split("|");
+      var chunks = unescaped.split("|");
       // check for unbalanced |'s, and generate an error that begins at the last one
       // and extends for the remainder of the string
       if(((chunks.length%2) === 0)){
@@ -886,19 +893,20 @@ plt.compiler = plt.compiler || {};
                       ,new Location(column, line, lastVerbatimMarkerIndex, str.length-lastVerbatimMarkerIndex)
                       ,"Error-GenericReadError");
       }
-
-      // enforce case-sensitivity for non-verbatim sections. Remove all escape characters
+                                                        
+      // enforce case-sensitivity for non-verbatim sections.
       var filtered = chunks.reduce(function(acc, str, i){
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "");
-
+                                                        
       // if it's a newline, adjust line and column trackers
-      if(filtered==="\\\n"){line++; column=0;}
-                                
-      // add bars if it's a symbol that needs those escape characters
-      var needsBars = new RegExp("^$|[\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\\\]", 'g');
-      filtered = (needsBars.test(filtered)? "|"+filtered+"|" : filtered).replace(/\\(?!\\)/g,'');
+      if(filtered==="\n"){line++; column=0;}
+
+      // add bars if it's a symbol that needs those escape characters, or if the original string used an escaped number
+      var special_chars = new RegExp("^$|[\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\\\]", 'g');
+      var escaped_nums = new RegExp("^\\\\[\\d]*");
+      filtered = (escaped_nums.test(chunk) || special_chars.test(filtered)? "|"+filtered+"|" : filtered);
 
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
