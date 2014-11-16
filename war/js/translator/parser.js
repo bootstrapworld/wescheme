@@ -609,7 +609,7 @@ plt.compiler = plt.compiler || {};
                                       , ": expected at a test and at least one result after "+sexp[0]+", but nothing's there"]),
                     sexp.location);
     }
-    var exprs = sexp.slice(2), result = new whenUnlessExpr(sexp[1], exprs, sexp[0]);
+    var exprs = sexp.slice(2), result = new whenUnlessExpr(parseExpr(sexp[1]), parse(exprs), sexp[0]);
     exprs.location = exprs[0].location; // FIXME: merge the locations
     result.location = sexp.location;
     return result;

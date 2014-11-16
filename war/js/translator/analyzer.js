@@ -171,12 +171,18 @@ plt.compiler = plt.compiler || {};
     var begin_exp = new beginExpr(this.exprs, this.stx),
         void_exp = new symbolExpr('void'),
         call_exp = new callExpr(void_exp, [], this.stx),
-        consequence = (this.stx==="when")? begin_exp : void_exp,
-        alternative = (this.stx==="when")? void_exp : begin_exp,
-        if_exp = new ifExpr(this.predicate, consequence, alternative, this.stx);
+        consequence = (this.stx.val==="when")? begin_exp : call_exp,
+        alternative = (this.stx.val==="when")? call_exp : begin_exp;
+    // desugar each expression and construct an ifExpr
+    var exprsAndPinfo = desugarProgram([this.predicate,
+                                        consequence,
+                                        alternative],
+                                       pinfo),
+        if_exp = new ifExpr(exprsAndPinfo[0][0], exprsAndPinfo[0][1], exprsAndPinfo[0][2], this.stx);
     begin_exp.location = this.exprs.location;
     void_exp.location = call_exp.location = if_exp.location = this.location;
-    return if_exp.desugar(pinfo);
+    // DON'T desugar the ifExpr -- we don't forceBooleanContext on when/unless!
+    return [if_exp, exprsAndPinfo[1]];
  };
  // letrecs become locals
  letrecExpr.prototype.desugar = function(pinfo){
