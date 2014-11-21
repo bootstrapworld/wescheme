@@ -214,7 +214,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
-                          logResults(code, "BYTECODES_DIFFERED", "BYTECODES_DIFFERED");
+                          logResults(code, plt.wescheme.BrowserDetect.versionString, "BYTECODES_DIFFERED");
                        } else {
                           console.log("OK: LOCAL RETURNED EQUIVALENT BYTECODE AS THE SERVER");
                        }
