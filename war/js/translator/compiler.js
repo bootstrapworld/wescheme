@@ -852,7 +852,6 @@ plt.compiler = plt.compiler || {};
             getDepthFromRef   = function(r){return r.depth;},
             // this will either be #f, or the first unboundStackRef
             anyUnboundStackRefs = ormap(isUnboundStackRef, freeVariableRefs);
-
         // if any of the references are unbound, freak out!
         if(anyUnboundStackRefs){
           throw "Can't produce closure; I don't know where " + anyUnboundStackRefs.name + " is bound.";
@@ -866,7 +865,6 @@ plt.compiler = plt.compiler || {};
               globalDepths      = sortAndUnique(globalRefs.map(getDepthFromRef),
                                                 function(x,y){return x<y;},
                                                 function(x,y){return x===y;});
-
           // Add Function Arguments (in reverse order) to the environment
           var env1 = args.reverse().map(function(s){return s.val;}).reduce(pushLocal, originalEnv);
 
