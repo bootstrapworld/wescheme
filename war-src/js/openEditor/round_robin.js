@@ -148,11 +148,14 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL = 0.90;
+       var TRUST_LOCAL_ERROR = 0.90,
+           TRUST_LOCAL_BYTECODE = 0.10;
        // Is it an odd-numbered day?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
-       console.log('TEST_LOCAL is '+TEST_LOCAL+'\nTEST_DAY is '+TEST_DAY+'\nTRUST_LOCAL is '+TRUST_LOCAL);
+       console.log('TEST_LOCAL is '+TEST_LOCAL+'\nTEST_DAY is '+TEST_DAY
+                   +'\nTRUST_LOCAL_ERROR is '+TRUST_LOCAL_ERROR
+                   +'\nTRUST_LOCAL_BYTECODE is '+TRUST_LOCAL_BYTECODE);
  
  if(TEST_LOCAL){
        // Be conservative, and shut off the local compiler for future requests
@@ -180,7 +183,7 @@ goog.provide("plt.wescheme.RoundRobin");
       if( local_error                                                   // (1) it returned an error
           && !(/FATAL ERROR/.test(local_error.toString()))              // (2) the error was non-fatal
           && TEST_DAY                                                   // (3) it's a test day
-          && (Math.random() < TRUST_LOCAL) ) {                          // (4) it's being trusted
+          && (Math.random() < TRUST_LOCAL_ERROR) ) {                    // (4) it's being trusted
         // Produce the error without ever bothering the server
         console.log('returning local error without ever hitting the server.');
         onDoneError(local_error);
@@ -210,11 +213,11 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
-              if(Math.random() < .50){ // 50% of the time, we'll compare the actual bytecodes
+              if(Math.random() < 0.50){ // 50% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
-                          logResults(code, "BYTECODES_DIFFERED", "BYTECODES_DIFFERED");
+                          logResults(code, plt.wescheme.BrowserDetect.versionString, "BYTECODES_DIFFERED");
                        } else {
                           console.log("OK: LOCAL RETURNED EQUIVALENT BYTECODE AS THE SERVER");
                        }
@@ -223,11 +226,6 @@ goog.provide("plt.wescheme.RoundRobin");
                                               
                     // execute server bytecode
                     onDone(bytecode);
-
-                    // execute using locally-compiled bytecodes!!
-//                    try{ console.log('EXECUTING LOCAL BYTECODES!!!'); onDone(JSON.stringify(local_bytecode));}
-//                    catch(e){console.log(e);}
- 
                 },
                 // wrap onDoneError() with a function to compare local and server output
                 function(errorStruct) {
@@ -283,6 +281,8 @@ goog.provide("plt.wescheme.RoundRobin");
                     }
                     // use the server compiler's error message
                     onDoneError(errorStruct.message);
+                    // DEBUGGING: show the local compiler's error message underneath the server error
+                    onDoneError(local_error);
                 });
         } else {
             onAllCompilationServersFailing(onDoneError);
