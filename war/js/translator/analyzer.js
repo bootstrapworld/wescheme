@@ -275,7 +275,7 @@ plt.compiler = plt.compiler || {};
       var ormapStx = new symbolExpr('ormap'),
           callStx = new callExpr(ormapStx, [predicateStx, clause.first], that.stx),
           ifStx = new ifExpr(callStx, clause.second, base, caseStx);
-      stxs = stxs.concat([ormapStx, callStx, ifStx]);
+      stxs = stxs.concat([ormapStx, callStx, clause.first, ifStx]);
       return ifStx;
     }
 
