@@ -270,15 +270,12 @@ plt.compiler = plt.compiler || {};
         predicateStx = new lambdaExpr([xStx], equalTestStx, caseStx);
     stxs = stxs.concat([equalStx, equalTestStx, predicateStx]);
  
-    // the parser will treat each clause.first as a function appled to some args
-    // remix it into a <list> of [func].concat[args]
-    // generate (if (ormap <predicate> (quote <list>)) clause.second base)
+    // generate (if (ormap <predicate> clause.first) clause.second base)
     function processClause(base, clause){
       var ormapStx = new symbolExpr('ormap'),
-          quoteStx = new quotedExpr([clause.first.func].concat(clause.first.args)),
-          callStx = new callExpr(ormapStx, [predicateStx, quoteStx], that.stx),
+          callStx = new callExpr(ormapStx, [predicateStx, clause.first], that.stx),
           ifStx = new ifExpr(callStx, clause.second, base, caseStx);
-      stxs = stxs.concat([ormapStx, callStx, quoteStx, ifStx]);
+      stxs = stxs.concat([ormapStx, callStx, ifStx]);
       return ifStx;
     }
 
@@ -363,7 +360,6 @@ plt.compiler = plt.compiler || {};
      throwError( new types.Message(["ASSERTION ERROR: Every quotedExpr should have a location"])
                , loc)
    }
- 
    // Sexp-lists (arrays) become lists
    // literals and symbols stay themselves
    // everything else gets desugared
@@ -803,7 +799,7 @@ plt.compiler = plt.compiler || {};
  // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
  // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
-//    var env1 = pinfo.env, // FIXME: this is what the line *should* be 
+//    var env1 = pinfo.env, // FIXME: this is what the line *should* be
     var env1 = plt.compiler.getBasePinfo("base").env,
         env2 = this.args.reduce(function(env, arg){
           return env.extend(new constantBinding(arg.val, false, [], arg.location));

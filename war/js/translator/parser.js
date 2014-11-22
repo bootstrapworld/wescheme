@@ -764,8 +764,9 @@ plt.compiler = plt.compiler || {};
       }
     }
  
+    // read the first item in the clause as a quotedExpr, and parse the second
     function parseCaseCouple(clause) {
-        var test = parseExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
+        var test = new quotedExpr(clause[0]), result = parseExpr(clause[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
         cpl.location = clause.location;
         return cpl;
