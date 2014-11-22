@@ -923,7 +923,6 @@ plt.compiler = plt.compiler || {};
                numValue.location = new Location(sCol, sLine, iStart, i-iStart);
              }
              node = new literal(numValue);
-             node.stx = filtered; // save the string that generated the number to begin with
            }
         // if it's not a number OR a symbol
         } catch(e) {
@@ -937,6 +936,7 @@ plt.compiler = plt.compiler || {};
                        , "Error-GenericReadError");
         }
       }
+      node.stx = filtered; // save the string that generated the symbol/number to begin with
       node.location = new Location(sCol, sLine, iStart, i-iStart);
       return node;
     }
