@@ -167,14 +167,20 @@ goog.provide("plt.wescheme.RoundRobin");
           var desugared   = plt.compiler.desugar(AST)[0];
           var pinfo       = plt.compiler.analyze(desugared);
           var local_bytecode= plt.compiler.compile(desugared, pinfo);
+//          onDone(JSON.stringify(local_bytecode));
       } catch (e) {
           local_error = getError(e).toString();
+//          if(/FATAL ERROR/.test(local_error.toString())){
+//            logResults(code, JSON.stringify(local_error), "FATAL ERROR");
+//          }
+//          onDoneError(local_error);
       }
       var end         = new Date().getTime(), localTime   = Math.floor(end-start);
  
       // we made it out alive, so we can keep the local compiler on
       writeLocalCompilerCookie("true");
       console.log("Compiled in: " + Math.floor(end-start) +"ms");
+//      return;
  
       // At this point, the local compiler front-end has completed. If...
       if( local_error                                                   // (1) it returned an error
