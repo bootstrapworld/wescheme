@@ -292,10 +292,10 @@ plt.compiler = plt.compiler || {};
           throwError(msg, list[dot1Idx].location);
         }
         // if a dot is the last element in the list, throw an error
-        if(dot1Idx===list.length || dot2Idx===list.length){
+        if(dot1Idx===(list.length-1) || dot2Idx===(list.length-1)){
           var msg = new types.Message(["A `.' cannot be the last element in a syntax list"]);
           msg.betterThanServer = true;
-          throwError(msg, list[dot2Idx].location);
+          throwError(msg, list[dot2Idx||dot1Idx].location);
         }
 
         // assuming they are legal, if there are two dots in legal places...
