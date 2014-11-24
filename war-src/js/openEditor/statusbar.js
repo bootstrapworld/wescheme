@@ -43,6 +43,8 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
                                                       
 	    if (action === 'notify' && editorNotifyCategoryMap[category]) {
           that.notify(editorNotifyCategoryMap[category], waitForNextMessage);
+	    } else if (action === 'notify' && category === 'load-file') {
+          that.notify("Waiting on \""+data+"\"");
 	    } else if (action === 'notify' && category === 'exception') {
         var component = data[0];
         if (component instanceof WeSchemeEditor) {
