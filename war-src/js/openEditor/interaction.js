@@ -493,10 +493,11 @@ WeSchemeInteractions = (function () {
                                               || elem.mozRequestFullScreen // firefox capitalizes the 'S'
                                               || elem.webkitRequestFullscreen
                                               || elem.msRequestFullscreen;
-                        document.exitFullscreen = document.exitFullscreen // firefox is weird
-                                              || document.mozCancelFullscreen
+                        document.exitFullscreen = document.exitFullscreen
                                               || document.webkitExitFullscreen
-                                              || document.msExitFullscreen;
+                                              || document.msExitFullscreen
+                                              || document.mozCancelFullScreen;  // firefox is weird
+                                             
                         var fullscreenElement = document.fullscreenElement
                                               || document.mozFullScreenElement // firefox capitalizes the 'S'
                                               || document.webkitFullscreenElement
