@@ -445,20 +445,7 @@ WeSchemeInteractions = (function () {
         });
 
         var dialog = jQuery("<div/>");
-        var onFullScreenChange = function() {
-            if (document.fullscreen || document.mozFullScreen || document.webkitIsFullScreen) {
-                // do nothing if we're full-screen.
-            } else {
-                // if we came out of fullscreen, try closing
-                if (dialog.dialog && dialog.dialog("isOpen")) {
-                    dialog.dialog('close');
-                }
-            }
-        };
-        jQuery(document).bind("fullscreenchange", onFullScreenChange);
-        jQuery(document).bind("mozfullscreenchange", onFullScreenChange);
-        jQuery(document).bind("webkitfullscreenchange", onFullScreenChange);
-
+                        
         that.initializeRoundRobinCompilation(
             evaluator,
             function() {
@@ -487,26 +474,44 @@ WeSchemeInteractions = (function () {
                                 || elem.requestFullscreen) !== undefined);
                     };
 
-                    var toggleFullScreen = function() {
+                    var toggleFullScreen = function(evt) {
                         var elem;
+                        // if this is in response to a double-click, trap the event so it
+                        // doesn't bubble through to big-bang
+                        if(evt){
+                           evt.stopPropagation();
+                           evt.preventDefault();
+                        }
                                              
                         // If there's a unique canvas, highlight that one.
-                        if (innerArea.find("canvas").length === 1) {
-                            elem = innerArea.find("canvas").get(0);
                         // Otherwise, just highlight the whole toplevel node.
-                        } else {
-                            elem = innerArea.get(0);
-                        }
+                        elem = (innerArea.find("canvas").length === 1)? innerArea.find("canvas").get(0)
+                                             : innerArea.get(0);
                                        
-                        // assign fullscreen requester to be be native, or the vendor-prefixed function
+                        // assign fullscreen functions to be be native, or the vendor-prefixed function
                         elem.requestFullscreen = elem.requestFullscreen
                                               || elem.mozRequestFullScreen // firefox capitalizes the 'S'
                                               || elem.webkitRequestFullscreen
                                               || elem.msRequestFullscreen;
+                        document.exitFullscreen = document.exitFullscreen // firefox is weird
+                                              || document.mozCancelFullscreen
+                                              || document.webkitExitFullscreen
+                                              || document.msExitFullscreen;
+                        var fullscreenElement = document.fullscreenElement
+                                              || document.mozFullScreenElement // firefox capitalizes the 'S'
+                                              || document.webkitFullscreenElement
+                                              || document.msFullscreenElement;
+                                             
+                        // If there's no fullscreen element, we know that there WILL be one, so disable closeOnEsc
+                        var closeOnEscape = fullscreenElement;
+                        dialog.dialog( "option", "closeOnEscape", closeOnEscape );
+                                             
                         // get fullscreen access
-                        elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+                        if(!fullscreenElement) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+                        else document.exitFullscreen();
                     };
 
+                    // if fullscreen is supported add the 'maximize' icon and listen for double-clicks
                     if (supportsFullScreen()) {
                         jQuery("<span><img src='/images/fullscreen.png' width='12' height='12'></span>")
                             .css("float", "left")
@@ -514,24 +519,13 @@ WeSchemeInteractions = (function () {
                             .css("margin-top", "5px")
                             .click(toggleFullScreen)
                             .appendTo(dialog.parent().find(".ui-dialog-titlebar"));
-                    }   
+                        dialog.dblclick(toggleFullScreen);
+                    }
 
                     var innerArea = jQuery("<div class='evaluatorToplevelNode'></div>");
                     innerArea.css("background-color", "white");
                     dialog.append(innerArea);
                     dialog.dialog("open");
-                    dialog.dblclick(function (evt){
-                                   var elem = evt.target;
-                                   if (elem.webkitRequestFullscreen) {
-                                    elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                                   } else {
-                                      if (elem.mozRequestFullScreen) {
-                                        elem.mozRequestFullScreen();
-                                      } else {
-                                        elem.requestFullscreen();
-                                      }
-                                   }
-                                   });
                     return innerArea.get(0);
                 };
                 evaluator.setImageProxy("/imageProxy");
