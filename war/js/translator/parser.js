@@ -220,7 +220,9 @@ plt.compiler = plt.compiler || {};
                                             , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
-          return new defFunc(parseIdExpr(sexp[1][0]), rest(sexp[1]).map(parseIdExpr), parseExpr(sexp[2]), sexp);
+          var args = rest(sexp[1]).map(parseIdExpr);
+          args.location = sexp[1].location;
+          return new defFunc(parseIdExpr(sexp[1][0]), args, parseExpr(sexp[2]), sexp);
       }
       // If it's (define x ...)
       if(sexp[1] instanceof symbolExpr){
