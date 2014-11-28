@@ -23,7 +23,7 @@ plt.compiler = plt.compiler || {};
     function convertToPyret(programs){
       function foldToPyret(acc, p){
         return [plt.compiler.isDefinition(p)?
-                {name: "stmt", pos: p.location.toPyret(), kids: [p.toPyret()]}
+                {name: "stmt", kids: [p.toPyret()], pos: p.location.toPyret()}
                 : p.toPyret()].concat(acc);
       }
       var result = programs.reduceRight(foldToPyret, []);
@@ -43,32 +43,32 @@ plt.compiler = plt.compiler || {};
     jsnums.Rational.prototype.toPyret = function(){
       var loc = this.location.toPyret();
       return {name: 'frac-expr'
-              , pos: loc
               , kids: [{value: this.stx
                        , key: '\'RATIONAL:'+this.stx
                        , name: 'RATIONAL'
-                       , pos: this.location.toPyret()}]};
+                       , pos: this.location.toPyret()}]
+              , pos: loc};
     };
     jsnums.BigInteger.prototype.toPyret = function(){
       var loc = this.location.toPyret();
       return {name: 'num-expr'
-              , pos: loc
               , kids: [{value: this.stx
                        , key: '\'NUMBER:'+this.stx
                        , name: 'NUMBER'
-                       , pos: loc}]};
+                       , pos: loc}]
+              , pos: loc};
     };
     jsnums.FloatPoint.prototype.toPyret = function(){
       var loc = this.location.toPyret();
       return {name: 'num-expr'
-              , pos: loc
               , kids: [{value: this.stx
                        , key: '\'NUMBER:'+this.stx
                        , name: 'NUMBER'
-                       , pos: loc}]};
+                       , pos: loc}]
+              , pos: loc};
     };
     jsnums.Complex.prototype.toPyret = function(){
-      throw "Complex Numbers are not yet supported in Pyret";
+      throw "Complex Numbers are not supported in Pyret";
     };
  
     Char.prototype.toPyret = function(){
@@ -92,32 +92,42 @@ plt.compiler = plt.compiler || {};
       }
       function convertNumber(){
         return {name: "num-expr"
-                , pos : loc
-                , kids: [{key: '\'NUMBER:'+that.val.toString()
-                         , name: 'NUMBER'
+                , kids: [{name: 'NUMBER'
                          , value: that.val.toString()
-                         , pos : loc}]};
+                         , key: '\'NUMBER:'+that.val.toString()
+                         , pos : loc}]
+                , pos : loc};
       }
  
       var val = (that.val.toPyret)? that.val.toPyret(loc) :
             isNaN(this)? convertString()  :
               /* else */  convertNumber();
  
-      return {name: "stmt" , pos: loc
-            , kids: [{name: "check-test", pos: loc
-                     , kids: [{name: "binop-expr", pos: loc
-                              , kids: [{name: "expr", pos: loc
-                                       , kids: [{name: "prim-expr", pos: loc
-                                                , kids: [val]}]}]}]}]}
+      return {name: "binop-expr"
+              , kids: [{name: "expr"
+                       , kids: [{name: "prim-expr"
+                                  , kids: [val]
+                                  , pos: loc}]
+                       , pos: loc}]
+              , pos: loc}
     };
  
 
     // Function definition
     // defFunc(name, args, body, stx)
     defFunc.prototype.toPyret = function(){
-/*      var loc = this.location.toPyret();
-      return {name: "fun-expr", pos: loc
-            , kids: [{name:'FUN', value:'fun', key:'\'FUN', pos:this.stx[0].location.toPyret()}
+      var loc = this.location.toPyret();
+      function argToPyret(arg){
+        return {name: 'binding'
+              ,kids: [{name: 'NAME'
+                      ,value: arg.val
+                      ,key: '\'NAME:'+arg.val
+                      ,pos: loc}]
+              ,pos: arg.location.toPyret()};
+        }
+ 
+      return {name: "fun-expr"
+            , kids: [{name:'FUN', value:'fun', key:'\'FUN:fun', pos:this.stx[0].location.toPyret()}
                      ,{name:'fun-header'
                      , kids: [{name:'ty-params', kids:[], pos: blankLoc}
                               ,{name:'NAME'
@@ -125,35 +135,57 @@ plt.compiler = plt.compiler || {};
                                 , key:'\'NAME:'+this.name.stx
                                 , pos: this.name.location.toPyret()}
                               ,{name:'args'
-                                , kids: this.args.map(function(arg){return arg.toPyret();})
-                                , pos: this.args.location.toPyret()}]
+                                , kids: [{name:'PARENNOSPACE'
+                                          ,value:'('
+                                       ,key:'\'PARENNOSPACE:('
+                                          ,pos:this.args.location.start().toPyret()}].concat(
+                                          this.args.map(argToPyret)
+                                          ,[{name:'RPAREN'
+                                            ,value:')'
+                                            ,key:'\'RPAREN:)'
+                                            ,pos:this.args.location.end().toPyret()}])
+                                , pos: this.args.location.toPyret()}
+                              ,{name:'return-ann'
+                                ,kids: []
+                                ,pos:loc}]
                       , pos: this.stx[1].location.toPyret()}
-                     ,{name:'COLON', value:':', key:'\'COLON:', pos: blankLoc}
+                     ,{name:'COLON', value:':', key:'\'COLON::', pos: blankLoc}
                      ,{name:'doc-string', kids: [], pos: blankLoc}
                      ,{name:'block', kids: [this.body.toPyret()], pos: this.body.location.toPyret()}
                      ,{name:'where-clause', kids:  [], pos: blankLoc}
                      ,{name:'end'
                       , kids: [{name:'END',value:'end', key:'\'END:end', pos:this.location.end()}]
                       , pos: this.location.end().toPyret()}]
-            , pos: loc};*/
+            , pos: loc};
     };
 
     // Variable definition
     // defVar(name, rhs, stx)
     defVar.prototype.toPyret = function(){
-      return {name: "let-expr", pos: this.location.toPyret()};
+      return {name: "var-expr"
+              ,kids:[{name: 'VAR'
+                      ,value:'var'
+                      ,key:'\'VAR:var'
+                      ,pos:this.name.location.toPyret()}
+                    ,{name: 'toplevel-binding'
+                     ,kids:[{name:'binding'
+                              ,kids:[{name:'NAME'
+                                    ,value: this.name.val
+                                    ,key: '\'NAME:'+this.name.val
+                                    ,pos:this.name.location.toPyret()}]
+                              ,pos:this.name.location.toPyret()}]
+                     ,pos:this.name.location.toPyret()}
+                    ,{name:'EQUALS'
+                      ,value:'='
+                      ,key:'\'EQUALS:='
+                      ,pos:this.name.location.toPyret()}].concat(this.expr.toPyret())
+              , pos: this.location.toPyret()};
     };
 
     // Multi-Variable definition
     // defVars(names, rhs, stx)
     defVars.prototype.toPyret = function(){
       return "translation of Multi-Variable Definitions is not yet implemented";
-    };
-
-    // Structure definition
-    // defStruct(name, fields, stx)
-    defStruct.prototype.toPyret = function(){
-      return "translation of Structure Definitions is not yet implemented";
     };
 
     // Begin expression
@@ -174,11 +206,27 @@ plt.compiler = plt.compiler || {};
       return "translation of Local Expressions is not yet implemented";
     };
  
- 
     // call expression
     // callExpr(func, args, stx)
     callExpr.prototype.toPyret = function(){
-      return "translation of Call Expressions is not yet implemented";
+      var loc = this.location.toPyret();
+      return {name:'app-expr'
+              , kids: [{name: 'expr'
+                        , kids: [{name: 'id-expr'
+                                , kids: [{name: 'NAME'
+                                         , value: this.func.val
+                                         , key: '\'NAME:'+this.func.val
+                                         , pos: this.func.location.toPyret()}]
+                                , pos: this.func.location.toPyret()}]
+                        , pos: this.func.location.toPyret()}
+                       ,{name: 'app-args'
+                                , kids: [{name: 'PARENNOSPACE'
+                                          , value: '('
+                                          , key: '\'PARENNOSPACE:('
+                                          , pos: this.location.start().toPyret()}].concat(
+                                         this.args.map(function(p){return p.toPyret()}))
+                                , pos: this.func.location.toPyret()}]
+            , pos: loc}
     };
 
     // if expression
@@ -192,19 +240,19 @@ plt.compiler = plt.compiler || {};
     symbolExpr.prototype.toPyret = function(){
       var loc = this.location.toPyret();
       return {name: 'stmt'
-              , pos: loc
               , kids: [{name: 'check-test'
-                       , pos: loc
                        , kids: [{name: 'binop-expr'
-                                , pos: loc
                                 , kids: [{name: 'expr'
-                                         , pos: loc
                                          , kids: [{name: 'id-expr'
-                                                  , pos: loc
-                                                  , kids: [{key: '\'NAME:'+this.val
-                                                           , name: 'NAME'
-                                                           , pos: loc
-                                                           , value: this.val}]}]}]}]}]};
+                                                  , kids: [{name: 'NAME'
+                                                           , value: this.val
+                                                           , key: '\'NAME:'+this.val
+                                                           , pos: loc}]
+                                                  , pos: loc}]
+                                         , pos: loc}]
+                                , pos: loc}]
+                       , pos: loc}]
+              , pos: loc};
     };
  
     // require expression
