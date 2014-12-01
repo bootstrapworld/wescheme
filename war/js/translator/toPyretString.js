@@ -68,6 +68,17 @@ plt.compiler = plt.compiler || {};
     fnMap["expt"] = "num-expr";
     fnMap["number->string"] = "num-tostring";
     fnMap["bitmap/url"] = "image-url";
+                                     
+                                     
+    function makeBinopTreeForInfixApplication(infixOperator, exprs){
+      function addExprToTree(tree, expr){
+         return "("+expr.toPyretString()+" "+infixOperator+" "+tree+")";
+      }
+      // starting with the first expr, build the binop-expr tree
+      var last = exprs[exprs.length-1], rest = exprs.slice(0, exprs.length-1);
+      return rest.reduceRight(addExprToTree, last.toPyretString());
+    }
+                                     
  
     ////////////////////////// DEFINITIONS AND EXPRESSIONS /////////////
     // Function definition
@@ -149,13 +160,7 @@ plt.compiler = plt.compiler || {};
       // special-case for infix operators
       // use toString() because we want to compare the *original* racket string
       if(infix.indexOf(this.func.toString()) > -1){
-        if(this.args.length !== 2){
-          throw "PYRET TRANSLATION ERROR: an infix function was used with "
-                +this.args.length+" argument(s), which is not legal in Pyret."
-        }
-        return "("+this.args[0].toPyretString()
-              +" "+this.func.toString()+" "
-              +this.args[1].toPyretString()+")";
+        return makeBinopTreeForInfixApplication(this.func.toString(), this.args);
       }
                                      
       // general case
@@ -166,11 +171,20 @@ plt.compiler = plt.compiler || {};
     // if expression
     // ifExpr(predicate, consequence, alternate, stx)
     ifExpr.prototype.toPyretString = function(){
+      var rawPredicate = ((this.predicate instanceof callExpr)
+                          && (this.predicate.func.val === "verify-boolean-branch-value"))?
+                          this.predicate.args[2] : this.predicate;
       var str = "";
-      str+="if "+this.predicate.toPyretString() + ":\n  ";
+      str+="if "+rawPredicate.toPyretString() + ":\n  ";
       str+=this.consequence.toPyretString() + "\nelse:\n  ";
       str+=this.alternative.toPyretString() + "\nend";
       return str;
+    };
+                                     
+    // quotedExpr
+    // quotedExpr(val)
+    quotedExpr.prototype.toPyretString = function(){
+      return this.val;
     };
  
     // require expression
