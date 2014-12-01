@@ -337,7 +337,9 @@ plt.compiler = plt.compiler || {};
             msg.betterThanServer = true;
         throwError(msg, sexp.location);
       }
-      return new lambdaExpr(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp[0]);
+      var args = sexp[1].map(parseIdExpr);
+      args.location = sexp[1].location;
+      return new lambdaExpr(args, parseExpr(sexp[2]), sexp[0]);
     }
     function parseLocalExpr(sexp) {
       // is it just (local)?
