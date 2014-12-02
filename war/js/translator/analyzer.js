@@ -532,8 +532,8 @@ plt.compiler = plt.compiler || {};
     // the dot operator is not supported by WeScheme
     if(this.val === "."){
      var msg = new types.Message([this.location.source, ":",
-                                   this.location.sLine.toString(), ":",
-                                   this.location.sCol.toString()
+                                   this.location.startRow.toString(), ":",
+                                   this.location.startCol.toString()
                                   , ": read: '.' is not supported as a symbol in WeScheme"]);
      msg.betterThanServer = true;
      throwError(msg

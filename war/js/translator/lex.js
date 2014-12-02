@@ -14,9 +14,7 @@ plt.compiler = plt.compiler || {};
  
  TODO
  - JSLint
- - have every read function set i, then remove i-setting logic?
- - collect all regexps into RegExp objects
- - treat syntax and unsyntax as errors
+ - convert Location structs to use those from the Pyret lexer
  */
 
 //////////////////////////////////////////////////////////////////////////////
@@ -55,45 +53,39 @@ plt.compiler = plt.compiler || {};
         oct3            = new RegExp("^([0-7]{1,3})", "i");
 
     // the delimiters encountered so far, line and column, and case-sensitivity
-    var delims, line, column, sCol, sLine, source, caseSensitiveSymbols, i;
+    var delims, line, column, startCol, startRow, source, caseSensitiveSymbols, i;
     // UGLY HACK to track index if an error occurs. We should remove this if we can make i entirely stateful
     var endOfError;
                             
     // the location struct
-    // eCol and eLine are included for pyret error location
-    var Location = function(sCol, sLine, offset, span, theSource){
-      this.sCol   = sCol;   // starting index into the line
-      this.sLine  = sLine;  // starting line # (1-index)
-      this.offset = offset; // ch index of lexeme start, from beginning
-      this.span   = span;   // num chrs between lexeme start and end
-      this.source = theSource || source; // [OPTIONAL] id of the containing DOM element
+    // endCol and endRow are included for pyret error location
+    var Location = function(startCol, startRow, startChar, span, theSource){
+      this.startCol   = startCol;   // starting index into the line
+      this.startRow   = startRow;   // starting line # (1-index)
+      this.startChar  = startChar;  // ch index of lexeme start, from beginning
+      this.span       = span;       // num chrs between lexeme start and end
+      this.source     = theSource || source; // [OPTIONAL] id of the containing DOM element
                             
-      this.eCol   = column; // ending index into the line
-      this.eLine  = line;   // ending index into the line
-      this.eChar  = offset+span;      // ch index of lexeme end, from beginning
+      this.endCol     = column;     // ending index into the line
+      this.endRow     = line;       // ending index into the line
+      this.endChar    = startChar+span;      // ch index of lexeme end, from beginning
                             
-      this.start  = function(){ return new Location("", "", this.offset, 1); };
-      this.end    = function(){ return new Location("", "", this.offset+this.span-1, 1); };
-      this.toString = function(){
-        return "Loc("+this.sCol+", "+this.sLine+", "+(this.offset+1)+","+this.span+")";
+      this.start      = function(){ return new Location("", "", this.startChar, 1); };
+      this.end        = function(){ return new Location("", "", this.startChar+this.span-1, 1); };
+      this.toString   = function(){
+        return "Loc("+this.startCol+", "+this.startRow+", "+(this.startChar+1)+","+this.span+")";
       };
       this.toVector = function(){
         return new types.vector(['"'+this.source+'"' // add quotes to the source, since it's a str (not a symbol)
-                                ,this.offset+1
-                                ,this.sLine
-                                ,this.sCol
+                                ,this.startChar+1
+                                ,this.startRow
+                                ,this.startCol
                                 ,this.span]);
       };
       this.toString = function(){
-        return {line: this.sLine.toString(), id: this.source, span: this.span.toString(),
-               offset: (this.offset+1).toString(), column: this.sCol.toString()};
+        return {line: this.startRow.toString(), id: this.source, span: this.span.toString(),
+               offset: (this.startChar+1).toString(), column: this.startCol.toString()};
       };
-      // Pyret Locations need ending line and column info
-      this.toPyret = function(){
-        return  {"startRow": this.sLine, "startCol": this.sCol, "startChar": this.offset
-              , "endRow":   this.eLine, "endCol": this.eCol, "endChar": this.offset + this.span};
-      };
-
     };
 
     /////////////////////
@@ -171,7 +163,7 @@ plt.compiler = plt.compiler || {};
     // reads multiple sexps encoded into this string and converts them to a SExp
     // datum
     function readProg(str, strSource) {
-      var i = 0; sCol = column = 0; sLine = line = 1, // initialize all position indices
+      var i = 0; startCol = column = 0; startRow = line = 1, // initialize all position indices
           caseSensitiveSymbols = true;                // initialize case sensitivity
       source = strSource || "<definitions>";
       var sexp, sexps = [];
@@ -181,16 +173,16 @@ plt.compiler = plt.compiler || {};
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
         if(!(sexp instanceof Comment)) { sexps.push(sexp); }
-        i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
+        i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
-      sexps.location = new Location(sCol, sLine, 0, i, source);
+      sexps.location = new Location(startCol, startRow, 0, i, source);
       return sexps;
     }
 
     // readSSFile : String String -> SExp
     // removes the first three lines of the string that contain DrScheme meta data
     function readSSFile(str, strSource) {
-      var i = 0; sCol = column = 0; sLine = line = 1, // initialize all position indices
+      var i = 0; startCol = column = 0; startRow = line = 1, // initialize all position indices
           caseSensitiveSymbols = true;                // initialize case sensitivity
       source = strSource || "<definitions>";
       var crs = 0;
@@ -204,7 +196,7 @@ plt.compiler = plt.compiler || {};
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
         if(!(sexp instanceof Comment)) { sexps.push(sexp); }
-        i = chewWhiteSpace(str, sexp.location.offset+sexp.location.span);
+        i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
       return sexps;
     }
@@ -221,22 +213,22 @@ plt.compiler = plt.compiler || {};
     // reads a sexp encoded as a string starting at the i'th character and converts
     // it to a SExp datum
     function readSExpByIndex(str, i) {
-      sCol = column; sLine = line; var iStart = i;
+      startCol = column; startRow = line; var iStart = i;
       i = chewWhiteSpace(str, i);
       var p = str.charAt(i);
       if(i >= str.length) {
         endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":"
-                                      , sLine.toString(), ":"
-                                      , (sCol-1).toString()
+                                      , startRow.toString(), ":"
+                                      , (startCol-1).toString()
                                       , ": read: (found end-of-file)"])
-                   ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
+                   ,new Location(startCol-1, startRow, i-2, 2) // back up the startChar before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
       var sexp = rightListDelims.test(p) ?
                    throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
-                                                , new types.ColoredPart(p, new Location(column, sLine, iStart, 1))])
-                              ,new Location(column, sLine, iStart, 1)) :
+                                                , new types.ColoredPart(p, new Location(column, startRow, iStart, 1))])
+                              ,new Location(column, startRow, iStart, 1)) :
                  leftListDelims.test(p) ? readList(str, i) :
                  p === '"'                  ? readString(str, i) :
                  p === '#'                  ? readPoundSExp(str, i) :
@@ -249,8 +241,8 @@ plt.compiler = plt.compiler || {};
     // readList : String Number -> SExp
     // reads a list encoded in this string with the left delimiter at index i
     function readList(str, i) {
-      var sCol=column, sLine=line, iStart=i, innerError=false,
-          errorLocation = new Location(sCol, sLine, iStart, 1),
+      var startCol=column, startRow=line, iStart=i, innerError=false,
+          errorLocation = new Location(startCol, startRow, iStart, 1),
           openingDelim = str.charAt(i++),
           dot1Idx=false, dot2Idx = false; // indices of the dot operator
       column++; // move forward to count the closing delimeter
@@ -263,7 +255,7 @@ plt.compiler = plt.compiler || {};
       // see http://www.html5rocks.com/en/tutorials/speed/v8/#toc-topic-compilation
       function readListItem(str, i, list){
         var sexp = readSExpByIndex(str, i);       // read the next s-exp
-        i = sexp.location.end().offset+1;         // move i to the character at the end of the sexp
+        i = sexp.location.end().startChar+1;         // move i to the character at the end of the sexp
         // if it's a dot, treat it as a cons
         if(sexp instanceof symbolExpr && sexp.val == '.'){
           if(dot2Idx){
@@ -339,6 +331,7 @@ plt.compiler = plt.compiler || {};
            ){
           throw e;
         } else {
+          // when we reconstruct the location from an error, we use Racket-style fieldnames, for historical reasons
           var eLoc = JSON.parse(JSON.parse(e)["structured-error"]).location;
           errorLocation = new Location(Number(eLoc.column), Number(eLoc.line),
                                        Number(eLoc.offset)-1, Number(eLoc.span));
@@ -362,7 +355,7 @@ plt.compiler = plt.compiler || {};
          var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
                                       " to close ",
                                       new types.ColoredPart(openingDelim.toString(),
-                                                            new Location(sCol, sLine, iStart, 1))
+                                                            new Location(startCol, startRow, iStart, 1))
                                       ]);
          // throw an error
          throwError(msg, errorLocation);
@@ -372,7 +365,7 @@ plt.compiler = plt.compiler || {};
          var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
                                       " to close ",
                                       new types.ColoredPart(openingDelim.toString(),
-                                                            new Location(sCol, sLine, iStart, 1)),
+                                                            new Location(startCol, startRow, iStart, 1)),
                                       " but found a ",
                                       new types.ColoredPart(str.charAt(i).toString(),
                                                             new Location(column, line, i, 1))
@@ -386,7 +379,7 @@ plt.compiler = plt.compiler || {};
                             
       // deal with dots, if they exist
       if(dot1Idx || dot2Idx) list = processDots(list, dot1Idx, dot2Idx);
-      list.location = new Location(sCol, sLine, iStart, i-iStart);
+      list.location = new Location(startCol, startRow, iStart, i-iStart);
       return list;
     }
 
@@ -394,7 +387,7 @@ plt.compiler = plt.compiler || {};
     // reads a string encoded in this string with the leftmost quotation mark
     // at index i
     function readString(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var startCol = column, startRow = line, iStart = i;
       // greedily match to the end of the string, before examining escape sequences
       var closedString = /^\"[^\"]*(\\\"[^\"]*)*[^\\]\"|\"\"/.test(str.slice(i)),
           greedy = /^\"[^\"]*(\\"[^\"]*)*/.exec(str.slice(iStart))[0];
@@ -429,9 +422,9 @@ plt.compiler = plt.compiler || {};
                 if(!regexp.test(str.slice(i))){
                   // remember where we are, so readList can pick up reading
                   endOfError = iStart+greedy.length+1;
-                  throwError(new types.Message([source, ":" , sLine.toString(), ":", sCol.toString()
+                  throwError(new types.Message([source, ":" , startRow.toString(), ":", startCol.toString()
                                               , ": read: no hex digit following \\"+chr+" in string"])
-                           , new Location(sCol, sLine, iStart, i-iStart+1)
+                           , new Location(startCol, startRow, iStart, i-iStart+1)
                            , "Error-GenericReadError");
                 }
                 var match = regexp.exec(str.slice(i))[1];
@@ -447,10 +440,10 @@ plt.compiler = plt.compiler || {};
                 // remember where we are, so readList can pick up reading
                 endOfError = iStart+greedy.length+1;
                 throwError(new types.Message([source, ":"
-                                              , sLine.toString(), ":"
-                                              , sCol.toString()
+                                              , startRow.toString(), ":"
+                                              , startCol.toString()
                                               , ": read: unknown escape sequence \\" +chr+" in string"])
-                           , new Location(sCol, sLine, iStart, i-iStart)
+                           , new Location(startCol, startRow, iStart, i-iStart)
                            , "Error-GenericReadError");
                   }
         }
@@ -461,15 +454,15 @@ plt.compiler = plt.compiler || {};
       if(!closedString) {
         endOfError = iStart+greedy.length; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source, ":"
-                                      , sLine.toString(), ":"
-                                      , sCol.toString()
+                                      , startRow.toString(), ":"
+                                      , startCol.toString()
                                       , ": read: expected a closing \'\"\'"])
-                   , new Location(sCol, sLine, iStart, 1)
+                   , new Location(startCol, startRow, iStart, 1)
                    , "Error-GenericReadError");
       }
       var strng = new literal(new types.string(datum));
       i++; column++; // move forward to include the ending quote
-      strng.location = new Location(sCol, sLine, iStart, i-iStart);
+      strng.location = new Location(startCol, startRow, iStart, i-iStart);
       return strng;
     }
 
@@ -477,7 +470,7 @@ plt.compiler = plt.compiler || {};
     // based on http://docs.racket-lang.org/reference/reader.html#%28part._default-readtable-dispatch%29
     // NOTE: bytestrings, regexps, hashtables, graphs, reader and lang extensions are not supported
     function readPoundSExp(str, i) {
-      var sCol = column, sLine = line, iStart = i, datum;
+      var startCol = column, startRow = line, iStart = i, datum;
       i++; column++; // skip over the pound sign
       // construct an unsupported error string
       var unsupportedError;
@@ -489,7 +482,7 @@ plt.compiler = plt.compiler || {};
                                      , errorStr]);
         msg.betterThanServer = true;
         throwError(msg
-                   , new Location(sCol, sLine, iStart, token.length+1)
+                   , new Location(startCol, startRow, iStart, token.length+1)
                    , "Error-GenericReadError");
       }
                
@@ -525,7 +518,7 @@ plt.compiler = plt.compiler || {};
                                            , ": read-syntax: literal "+ kind + " not allowed"]);
             error.betterThanServer = true;
             datum = new unsupportedExpr(sexp, error, span);
-            datum.location = new Location(sCol, sLine, iStart, unsupportedTest[0].length+sexp.location.span);
+            datum.location = new Location(startCol, startRow, iStart, unsupportedTest[0].length+sexp.location.span);
             return datum;
         } else if(badExtensionTest && badExtensionTest[0].length > 0){
             throwUnsupportedError(": read: #" + badExtensionTest[0].trim()
@@ -547,12 +540,12 @@ plt.compiler = plt.compiler || {};
                                           elts.length+" value" + ((elts.length>1)? "s" : ""),
                                           " provided"]);
              msg.betterThanServer = true;
-             throwError(msg, new Location(sCol, sLine, iStart, vectorTest[0].length));
+             throwError(msg, new Location(startCol, startRow, iStart, vectorTest[0].length));
           }
 
           i+=elts.location.span;
           datum = new literal(new Vector(len, elts));
-          datum.location = new Location(sCol, sLine, iStart, i-iStart);
+          datum.location = new Location(startCol, startRow, iStart, i-iStart);
           return datum;
         } else {
           // match every valid (or *almost-valid*) sequence of characters, or the empty string
@@ -585,7 +578,7 @@ plt.compiler = plt.compiler || {};
                       var boxCall = new symbolExpr("box"),
                           datum = [boxCall, sexp];
                       i+= sexp.location.span+1;
-                      boxCall.location = new Location(sCol, sLine, iStart, i-iStart);
+                      boxCall.location = new Location(startCol, startRow, iStart, i-iStart);
                       break;
             // BLOCK COMMENTS
             case '|': i--;
@@ -601,9 +594,9 @@ plt.compiler = plt.compiler || {};
             case '`':
             case ',':
             case '\'': datum = readQuote(str, i);
-                      datum.location.offset--; datum.location.span++; // expand the datum to include leading '#'
+                      datum.location.startChar--; datum.location.span++; // expand the datum to include leading '#'
                       endOfError = i+datum.location.span;
-                      var msg = new types.Message([source, ":", sLine.toString()
+                      var msg = new types.Message([source, ":", startRow.toString()
                                                    , ":", (column-1).toString()
                                                    , " read: WeScheme does not support the '#"+p+"' notation for "
                                                    , (p===","? "unsyntax" : p==="'"? "syntax" : "quasisyntax")]);
@@ -638,7 +631,7 @@ plt.compiler = plt.compiler || {};
                                            , ": read: bad syntax `#", (chunk+nextChar),"'"]);
               msg.betterThanServer = true;
               throwError(msg
-                        , new Location(sCol, sLine, iStart, (chunk+nextChar).length+1)
+                        , new Location(startCol, startRow, iStart, (chunk+nextChar).length+1)
                         , "Error-GenericReadError");
            }
         }
@@ -648,10 +641,10 @@ plt.compiler = plt.compiler || {};
         throwError(new types.Message([source, ":", line.toString()
                                      , ":" , (column-1).toString()
                                      , ": read: bad syntax `#'"])
-                  , new Location(sCol, sLine, iStart, i-iStart)
+                  , new Location(startCol, startRow, iStart, i-iStart)
                   , "Error-GenericReadError");
       }
-      datum.location = new Location(sCol, sLine, iStart, i-iStart);
+      datum.location = new Location(startCol, startRow, iStart, i-iStart);
       return datum;
     }
 
@@ -659,7 +652,7 @@ plt.compiler = plt.compiler || {};
     // reads a character encoded in the string and returns a representative datum
     // see http://docs.racket-lang.org/reference/reader.html#%28part._parse-character%29
     function readChar(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var startCol = column, startRow = line, iStart = i;
       i+=2;  column++; // skip over the #\\
       var datum = "", isFirstChar=true, regexp;
                                                         
@@ -710,20 +703,20 @@ plt.compiler = plt.compiler || {};
           datum = datum.charAt(0);
           i = iStart + 3; // fast-forward past (1) hash, (2) backslash and (3) single char
       } else {
-          throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString(),
+          throwError(new types.Message([source , ":" , startRow.toString(), ":", (startCol-1).toString(),
                                         ": read: bad character constant: #\\",datum]),
-                     new Location(sCol-1, sLine, iStart, i-iStart),
+                     new Location(startCol-1, startRow, iStart, i-iStart),
                      "Error-GenericReadError");
       }
       var chr = new literal(new types['char'](datum));
-      chr.location = new Location(sCol, sLine, iStart, i-iStart);
+      chr.location = new Location(startCol, startRow, iStart, i-iStart);
       return chr;
     }
 
     // readBlockComment : String Number -> Atom
     // reads a multiline comment
     function readBlockComment(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var startCol = column, startRow = line, iStart = i;
       i+=2; column+=2; // skip over the #|
       var txt = "";
       while(i+1 < str.length && !(str.charAt(i) === '|' && str.charAt(i+1) === '#')) {
@@ -734,37 +727,37 @@ plt.compiler = plt.compiler || {};
       }
       if(i+1 >= str.length) {
         throwError(new types.Message(["read: Unexpected EOF when reading a multiline comment"])
-                   ,new Location(sCol, sLine, iStart, i-iStart));
+                   ,new Location(startCol, startRow, iStart, i-iStart));
       }
       i++; column++; // hop over '|#'
       var comment = new Comment(txt);
-      comment.location = new Location(sCol, sLine, iStart, i-iStart);
+      comment.location = new Location(startCol, startRow, iStart, i-iStart);
       return comment;
     }
 
     // readSExpComment : String Number -> Atom
     // reads exactly one SExp and ignores it entirely
     function readSExpComment(str, i) {
-      var sCol = column++, sLine = line, iStart = i;
+      var startCol = column++, startRow = line, iStart = i;
       i = chewWhiteSpace(str, i);
       if(i+1 >= str.length) {
         endOfError = i; // remember where we are, so readList can pick up reading
-        throwError(new types.Message([source , ":" , sLine.toString(), ":", (sCol-1).toString()
+        throwError(new types.Message([source , ":" , startRow.toString(), ":", (startCol-1).toString()
                                       , ": read: expected a commented-out element for `#;' (found end-of-file)"])
-                   ,new Location(sCol-1, sLine, i-2, 2) // back up the offset before #;, make the span include only those 2
+                   ,new Location(startCol-1, startRow, i-2, 2) // back up the startChar before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
       var ignore = readSExpByIndex(str, i); // we only read this to extend i
       i = i + ignore.location.span;
       var atom = new Comment("("+ignore.toString()+")");
-      atom.location = new Location(sCol, sLine, iStart, i-iStart);
+      atom.location = new Location(startCol, startRow, iStart, i-iStart);
       return atom;
     }
 
     // readLineComment : String Number -> Atom
     // reads a single line comment
     function readLineComment(str, i) {
-      var sCol = column, sLine = line, iStart = i;
+      var startCol = column, startRow = line, iStart = i;
       i++; column++; // skip over the ;
       var txt = "";
       while(i < str.length && str.charAt(i) !== '\n') {
@@ -774,10 +767,10 @@ plt.compiler = plt.compiler || {};
       if(i > str.length) {
         endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message(["read: Unexpected EOF when reading a line comment"]),
-                   new Location(sCol, sLine, iStart, i-iStart));
+                   new Location(startCol, startRow, iStart, i-iStart));
       }
       var atom = new Comment(txt);
-      atom.location = new Location(sCol, sLine, iStart, i+1-iStart);
+      atom.location = new Location(startCol, startRow, iStart, i+1-iStart);
       // at the end of the line, reset line/col values
       line++; column = 0;
       return atom;
@@ -787,7 +780,7 @@ plt.compiler = plt.compiler || {};
     // reads a quote, quasiquote, or unquote encoded as a string
     // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readQuote(str, i) {
-      var sCol = column, sLine = line, iStart = i, nextSExp;
+      var startCol = column, startRow = line, iStart = i, nextSExp;
       var p = str.charAt(i);
       var symbol = p == "'" ? new symbolExpr("quote") :
                    p == "`" ? new symbolExpr("quasiquote") :
@@ -799,10 +792,10 @@ plt.compiler = plt.compiler || {};
                      p == "," ? " unquoting " :
                      p == ",@" ? " unquoting " :                                 
                      /* else */  "";
-        throwError(new types.Message([source, ":", sLine.toString(), ":", sCol.toString()
+        throwError(new types.Message([source, ":", startRow.toString(), ":", startCol.toString()
                                       , ": read: expected an element for" + action, p
                                       , " (found end-of-file)"])
-                   , new Location(sCol, sLine, iStart, p.length)
+                   , new Location(startCol, startRow, iStart, p.length)
                    , "Error-GenericReadError");
       }
       if(i+1 >= str.length) { eofError(i); }
@@ -816,7 +809,7 @@ plt.compiler = plt.compiler || {};
         }
       }
 
-      symbol.location = new Location(column-1, sLine, iStart, i - iStart);
+      symbol.location = new Location(column-1, startRow, iStart, i - iStart);
 
       // read the next non-comment sexp
       while(!nextSExp || (nextSExp instanceof Comment)){
@@ -835,12 +828,12 @@ plt.compiler = plt.compiler || {};
           }
           throw e;
         }
-        i = nextSExp.location.end().offset+1;
+        i = nextSExp.location.end().startChar+1;
       }
       var quotedSexp = [symbol, nextSExp],
-          quotedSpan = (nextSExp.location.end().offset+1) - iStart;
+          quotedSpan = (nextSExp.location.end().startChar+1) - iStart;
       
-      quotedSexp.location = new Location(sCol, sLine, iStart, quotedSpan);
+      quotedSexp.location = new Location(startCol, startRow, iStart, quotedSpan);
       return quotedSexp;
     }
                    
@@ -848,7 +841,7 @@ plt.compiler = plt.compiler || {};
     // readSymbolOrNumber : String Number -> symbolExpr | types.Number
     // NOT OPTIMIZED BY V8, due to presence of try/catch
     function readSymbolOrNumber(str, i){
-      var sCol = column, sLine = line, iStart = i;
+      var startCol = column, startRow = line, iStart = i;
       // match anything consisting of stuff between two |bars|, **OR**
       // non-whitespace characters that do not include:  ( ) { } [ ] , ' ` | \\ " ;
       var symOrNum = new RegExp("(\\|(.|\\n)*\\||\\\\(.|\\n)|[^\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\;])+", 'mg');
@@ -858,9 +851,9 @@ plt.compiler = plt.compiler || {};
       if(trailingEscs && (trailingEscs[0].length%2 > 0)){
             i = str.length; // jump to the end of the string
             endOfError = i; // remember where we are, so readList can pick up reading
-            throwError(new types.Message([source, ":", line.toString(), ":", sCol.toString(),
+            throwError(new types.Message([source, ":", line.toString(), ":", startCol.toString(),
                                           ": read: EOF following `\\' in symbol"])
-                       ,new Location(sCol, sLine, iStart, i-iStart)
+                       ,new Location(startCol, startRow, iStart, i-iStart)
                        ,"Error-GenericReadError");
       }
       // move the read head and column tracker forward
@@ -883,7 +876,7 @@ plt.compiler = plt.compiler || {};
               strBeforeLastChunk = chunk.slice(0, chunk.length-sizeOfLastChunk),
               lastVerbatimMarkerIndex = iStart+strBeforeLastChunk.length;
           // We need to go back and get more precise location information
-          column = sCol;
+          column = startCol;
           for(var j=0; j<strBeforeLastChunk.length; j++){
             if(str.charAt(i) === "\n"){line++; column = 0;}
             else { column++; }
@@ -920,24 +913,24 @@ plt.compiler = plt.compiler || {};
            if(numValue || numValue === 0){
              if(numValue instanceof Object){
                numValue.stx = filtered;
-               numValue.location = new Location(sCol, sLine, iStart, i-iStart);
+               numValue.location = new Location(startCol, startRow, iStart, i-iStart);
              }
              node = new literal(numValue);
            }
         // if it's not a number OR a symbol
         } catch(e) {
             endOfError = i; // remember where we are, so readList can pick up reading
-            var msg = new types.Message([source, ":", sLine.toString()
-                                         , ":" , sCol.toString()
+            var msg = new types.Message([source, ":", startRow.toString()
+                                         , ":" , startCol.toString()
                                          , ": read: "+e.message]);
             msg.betterThanServer = true;
             throwError(msg
-                       , new Location(sCol, sLine, iStart, i-iStart)
+                       , new Location(startCol, startRow, iStart, i-iStart)
                        , "Error-GenericReadError");
         }
       }
       node.stx = filtered; // save the string that generated the symbol/number to begin with
-      node.location = new Location(sCol, sLine, iStart, i-iStart);
+      node.location = new Location(startCol, startRow, iStart, i-iStart);
       return node;
     }
     /////////////////////

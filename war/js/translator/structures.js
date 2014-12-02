@@ -61,9 +61,9 @@ function throwError(msg, loc, errorClass) {
                         , ["span"
                            , [["class", "location-reference"]
                               , ["style", "display:none"]]
-                           , ["span", [["class", "location-offset"]], (loc.offset+1).toString()]
-                           , ["span", [["class", "location-line"]]  , loc.sLine.toString()]
-                           , ["span", [["class", "location-column"]], loc.sCol.toString()]
+                           , ["span", [["class", "location-offset"]], (loc.startChar+1).toString()]
+                           , ["span", [["class", "location-line"]]  , loc.startRow.toString()]
+                           , ["span", [["class", "location-column"]], loc.startCol.toString()]
                            , ["span", [["class", "location-span"]]  , loc.span.toString()]
                            , ["span", [["class", "location-id"]]    , loc.source.toString()]
                            ]
