@@ -37,6 +37,34 @@ function popElementFromHistory(dir, current) {
   return current;
 }
 
+// pyretAST contains the actual AST node from the Pyret parser
+var pyretAST;
+function pyretCheck(racketAST){
+    // Source2Source translate and transpile into Pyret
+    var pyretSrc  = plt.compiler.toPyretString(racketAST);
+    console.log('TRANSLATED PYRET SOURCE:\n'+pyretSrc);
+    var transpiledAST = plt.compiler.toPyretAST(racketAST),
+        transpiledAST_str = JSON.stringify(transpiledAST, null, 2);
+    var url="http://localhost:3000/"+encodeURI(pyretSrc[0]);
+    var request = new XMLHttpRequest();
+    request.onloadend=function(){
+      console.log(this.responseText);
+      var pyretAST = JSON.parse(this.responseText),
+          pyretAST_str = JSON.stringify(pyretAST, null, 2);
+      
+      console.log('Translated Pyret AST is ');
+      console.log(pyretAST);
+      console.log('Transpiled Pyret AST ');
+      console.log(transpiledAST);
+      if(sameResults(pyretAST, transpiledAST)){
+        console.log('MATCH!');
+      }
+    };
+    request.open("GET", url);
+    request.send();
+}
+
+
 function getError(e){
   try{
     var err =  JSON.parse(e),
@@ -58,8 +86,6 @@ function readFromRepl(event) {
     var debug = true;
     var sexp      = plt.compiler.lex(aSource, undefined, debug);
     var AST       = plt.compiler.parse(sexp, debug);
-//    var pyret     = plt.compiler.toPyretString(AST, debug);
-//    console.log(pyret.join("\n"));
     var ASTandPinfo = plt.compiler.desugar(AST, undefined, debug);
         program     = ASTandPinfo[0],
         pinfo       = ASTandPinfo[1];
@@ -67,6 +93,8 @@ function readFromRepl(event) {
     var response    = plt.compiler.compile(program, pinfo, debug);
     response.bytecode = (0,eval)('(' + response.bytecode + ')');
     console.log(response);
+//    pyretCheck(AST);
+    console.log(plt.compiler.toPyretAST(AST));
  
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element

@@ -58,9 +58,9 @@ function sameResults(x, y){
   if(typeof(x) === "object") x = canonicalizeObject(x);
   if(typeof(y) === "object") y = canonicalizeObject(y);
 
-  // 1) if both are Locations, we only care about offset and span, so perform a weak comparison
-  if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
-    return ( (x.span == y.span) && (x.offset == y.offset) );
+  // 1) if both are Locations, we only care about startChar and span, so perform a weak comparison
+  if ( x.hasOwnProperty('span') && y.hasOwnProperty('span') ){
+    return ( (x.span == y.span) && (x.startChar == y.startChar) );
   }
   // 2) if both objects have a prefix field, build our dictionaries *before* moving on
   if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
@@ -74,6 +74,8 @@ function sameResults(x, y){
       // log error if a property is not defined
       if ( ! x.hasOwnProperty(p) ){ console.log('local lacks a '+p); return false; }
       if ( ! y.hasOwnProperty(p) ){ console.log('server lacks a '+p); return false; }
+      // if they are 'pos' objects (used in Pyret), don't bother comparing
+      if (p==="pos") continue;
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
       // toplevel properties are equal if the sets of names are equal
@@ -154,14 +156,17 @@ function loadTests(){
 
 function loadSuite(json){
   var which   = document.getElementById('whichTests');
+  console.log(json);
   for(var i=0; i<json.feed.entry.length; i++){
     rows.push(json.feed.entry[i].content.$t);
-    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: /);
+    var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: |, pyret\: |, pyretast\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
-               difference = chunks[4], reason = chunks[5], desugar = chunks[6], bytecode = chunks[7],
+               difference = chunks[4], reason = chunks[5], desugar = chunks[6],
+               bytecode = chunks[7], pyretSrc = chunks[8], pyretAST = chunks[9],
         opt = document.createElement('option');
     expr = expr.replace(/^\'\'/,"'");
-    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar, bytecode: bytecode});
+    tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar
+               , bytecode: bytecode, pyretSrc: pyretSrc, pyretAST: pyretAST});
     opt.value=opt.innerHTML = Number(i)+1;
     which.appendChild(opt);
   }
