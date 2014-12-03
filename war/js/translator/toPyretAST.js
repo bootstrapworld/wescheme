@@ -374,7 +374,7 @@ plt.compiler = plt.compiler || {};
     callExpr.prototype.toPyret = function(){
       var loc = this.location;
       // which functions are infix?
-      function getBinopForSym(sym){
+      function getInfixForSym(sym){
         if(!(sym instanceof symbolExpr)) return false;
         var str = sym.val, loc = sym.location;
         return (str==="+")? {name:'PLUS',   value: '+',   key: '\'PLUS: +',   pos: loc}
@@ -390,7 +390,7 @@ plt.compiler = plt.compiler || {};
       }
 
       // if the function is infix in Pyret, return the binop tree instead of a call-expr
-      var infixOperator = getBinopForSym(this.func);
+      var infixOperator = getInfixForSym(this.func);
       if(infixOperator){
         return makeBinopTreeForInfixApplication(infixOperator, this.args);
       } else {
@@ -567,7 +567,41 @@ plt.compiler = plt.compiler || {};
     // cond -> ask
     // see: http://www.pyret.org/docs/latest/Expressions.html#%28part._s~3aask-expr%29
     condExpr.prototype.toPyret = function(){
-      return "translation of cond expressions is not yet implemented";
+      var askStx = {name:"ASKCOLON", value:"ask:", key:"'ASKCOLON:ask:", pos:blankLoc},
+          barStx = {name:"BAR", value:"|", key:"'BAR:|", pos:blankLoc},
+          thenStx= {name:"THENCOLON", value:"then:", key:"'THENCOLON:then:", pos:blankLoc},
+          otherwiseStx = {name:"OTHERWISE",value:"otherwise:",key:"'OTHERWISE:otherwise:",pos:blankLoc},
+          endStx = {name:"END",value:"end",key:"'END:end",pos:blankLoc};
+ 
+      function makeIfPipeBranchfromClause(clause){
+        return {name: "if-pipe-branch"
+                , kids: [barStx
+                         ,clause.first.toPyret()
+                         ,thenStx
+                         ,{name: "block"
+                          ,kids: [clause.second.toPyret()]
+                          ,pos: clause.second.location}]
+                , pos: clause.location};
+      }
+ 
+      // make an ifPipe for each non-else clause
+      var lastClause  = this.clauses[this.clauses.length-1],
+          hasElse     = (lastClause.first.stx && lastClause.first.stx==="else"),
+          ifClauses   = hasElse? this.clauses.slice(this.clauses.length-2) : this.clauses,
+          branches = ifClauses.map(makeIfPipeBranchfromClause);
+ 
+      // if there's an else clause, turn it into a block and add it and it's syntax to the list of branches
+      if(hasElse){
+        var elseClause =  this.clauses[this.clauses.length-1],
+            otherwiseBlock = {name: "block", kids: [elseClause.second.toPyret()], pos: elseClause.second.location};
+        branches = branches.concat([otherwiseStx, otherwiseBlock]);
+      }
+ 
+      return {name:"expr"
+              , kids: [{name: "if-pipe-expr"
+                        , kids: [askStx].concat(branches, [{name: "end", kids:[endStx], pos:blankLoc}])
+                        , pos: this.location}]
+              , pos: this.location};
     };
 
     // case -> cases
@@ -635,19 +669,27 @@ plt.compiler = plt.compiler || {};
     // symbolExpr(val)
     symbolExpr.prototype.toPyret = function(){
       var loc = this.location;
-      return {name: 'check-test'
-             , kids: [{name: 'binop-expr'
-                      , kids: [{name: 'expr'
-                               , kids: [{name: 'id-expr'
-                                        , kids: [{name: 'NAME'
-                                                 , value: this.val
-                                                 , key: '\'NAME:'+this.val
-                                                 , pos: loc}]
-                                        , pos: loc}]
+      function getBinopForVal(str){
+        return (str==="+")? '_plus'
+            : (str==="-")?  '_minus'
+            : (str==="*")?  '_times'
+            : (str==="/")?  '_divide'
+            : (str===">")?  '_greaterthan'
+            : (str==="<")?  '_lessthan'
+            : (str===">=")? '_greaterequal'
+            : (str==="<=")? '_lessequal'
+            : (str==="=")?  'equal-always'
+            : sym; // if the function isn't a binop, return it unmolested
+      }
+      return {name: 'expr'
+             , kids: [{name: 'id-expr'
+                      , kids: [{name: 'NAME'
+                               , value: getBinopForVal(this.val)
+                               , key: '\'NAME:'+getBinopForVal(this.val)
                                , pos: loc}]
                       , pos: loc}]
              , pos: loc};
-    };
+ }
  
     /////////////////////
     /* Export Bindings */
