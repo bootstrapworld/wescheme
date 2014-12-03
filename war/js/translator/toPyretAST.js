@@ -86,9 +86,33 @@ plt.compiler = plt.compiler || {};
       return {name:"expr", kids:[{name:"prim-expr", kids:[result], pos: loc}], pos: loc};
     }
  
-    Vector.prototype.toPyret = function(){
-      return 'types.vector(['+this.elts.join(',')+'])';
-    };
+    function makeArrayFromVectorCall(vectorCall){
+      var loc = vectorCall.location,
+          lBrackStx = {name: "LBRACK", value: "[", key: "'LBRACK:[", pos: blankLoc},
+          colonStx  = {name: "COLON", value: ":", key: "'COLON::", pos: blankLoc},
+          commaStx  = {name: "COMMA", value: ",", key: "'COMMA:,", pos: blankLoc},
+          rBrackStx = {name: "RBRACK", value: "]", key: "'RBRACK:]", pos: blankLoc},
+          fakeArrayCall = new symbolExpr("array");
+      fakeArrayCall.location = blankLoc;
+ 
+      function makeListEltFromValue(val){
+        return {name: "list-elt"
+                , kids: [val.toPyret(), commaStx]
+                , pos: val.location};
+      }
+ 
+      var listElts = vectorCall.args.slice(0, vectorCall.args.length-1).map(makeListEltFromValue),
+          lastElt = vectorCall.args[vectorCall.args.length-1].toPyret();
+      listElts.push(lastElt);
+      return {name:"expr"
+              , kids: [{name: "constructor-expr"
+                        , kids: [lBrackStx
+                                 , {name: "constructor-modifier", kids: [], pos: blankLoc}
+                                 , fakeArrayCall.toPyret()
+                                 , colonStx].concat(listElts, [rBrackStx])
+                        , pos: blankLoc}]
+              , pos:loc};
+    }
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toPyret = function(){
       var loc = this.location;
@@ -388,7 +412,10 @@ plt.compiler = plt.compiler || {};
             : (str==="=")?  {name:'EQUALEQUAL', value: '==', key: '\'EQUALEQUAL: -', pos: loc}
             : false; // if the function isn't a binop, return false
       }
-
+ 
+      // runtime calls to "vector" need to be processed specially
+      if(this.func.val === "vector") return makeArrayFromVectorCall(this);
+ 
       // if the function is infix in Pyret, return the binop tree instead of a call-expr
       var infixOperator = getInfixForSym(this.func);
       if(infixOperator){
@@ -400,14 +427,14 @@ plt.compiler = plt.compiler || {};
                                   , kids: [{name: 'NAME'
                                            , value: this.func.val
                                            , key: '\'NAME:'+this.func.val
-                                           , pos: this.func.location()}]
+                                           , pos: this.func.location}]
                                   , pos: this.func.location}]
                           , pos: this.func.location}
                          ,{name: 'app-args'
                                   , kids: [{name: 'PARENNOSPACE'
                                             , value: '('
                                             , key: '\'PARENNOSPACE:('
-                                            , pos: this.location.start().toPyret()}].concat(
+                                            , pos: this.location.start()}].concat(
                                            this.args.map(function(p){return p.toPyret()}))
                                   , pos: this.func.location}]
               , pos: loc}
@@ -679,7 +706,7 @@ plt.compiler = plt.compiler || {};
             : (str===">=")? '_greaterequal'
             : (str==="<=")? '_lessequal'
             : (str==="=")?  'equal-always'
-            : sym; // if the function isn't a binop, return it unmolested
+            : str; // if the function isn't a binop, return it unmolested
       }
       return {name: 'expr'
              , kids: [{name: 'id-expr'
