@@ -585,7 +585,7 @@ plt.compiler = plt.compiler || {};
                       datum = readBlockComment(str, i);
                       i+= datum.location.span+1; break;
             // SEXP COMMENTS
-            case ';':  datum = readSExpComment(str, i+1);
+            case ';': datum = readSExpComment(str, i+1);
                       i+= datum.location.span+1; break;
             // LINE COMMENTS
             case '!': datum = readLineComment(str, i-1);
@@ -738,8 +738,16 @@ plt.compiler = plt.compiler || {};
     // readSExpComment : String Number -> Atom
     // reads exactly one SExp and ignores it entirely
     function readSExpComment(str, i) {
-      var startCol = column++, startRow = line, iStart = i;
-      i = chewWhiteSpace(str, i);
+      var startCol = column++, startRow = line, iStart = i, nextSExp;
+      // keep reading s-exprs while...
+      while((i = chewWhiteSpace(str, i)) &&           // there's whitespace to chew
+            (i+1<str.length) &&                         // we're not out of string
+            (nextSExp = readSExpByIndex(str, i)) &&   // there's an s-expr to be read
+            (nextSExp instanceof Comment)){            // and it's not a comment
+        i = nextSExp.location.endChar;
+      }
+                                                        
+      // if we're done reading, make sure we didn't read past the end of the file
       if(i+1 >= str.length) {
         endOfError = i; // remember where we are, so readList can pick up reading
         throwError(new types.Message([source , ":" , startRow.toString(), ":", (startCol-1).toString()
@@ -747,9 +755,9 @@ plt.compiler = plt.compiler || {};
                    ,new Location(startCol-1, startRow, i-2, 2) // back up the startChar before #;, make the span include only those 2
                    ,"Error-GenericReadError");
       }
-      var ignore = readSExpByIndex(str, i); // we only read this to extend i
-      i = i + ignore.location.span;
-      var atom = new Comment("("+ignore.toString()+")");
+      // if we're here, then we read a proper s-expr
+      var atom = new Comment("("+nextSExp.toString()+")");
+      i = nextSExp.location.endChar;
       atom.location = new Location(startCol, startRow, iStart, i-iStart);
       return atom;
     }
