@@ -6,7 +6,15 @@ plt.compiler = plt.compiler || {};
  
  BSL AST -> Pyret AST
  follows definition from XXXXX
- 
+ TODO:
+  - conversion of symbols, to account for common-but-invalid chars like '?', '!', etc.
+  - use prefix form of arithmetic functions
+  - translation of boolean symbols/values
+  - desugar (case...), then translate it?
+  - collect check-expect and EXAMPLE, convert to toplevel where: clauses
+  - use pinfo to locate all accessor functions, convert to <Struct.Field>
+  - desugar quoted items?
+  - when implemented, use tuples and roughnums for define-values and #i
  */
 
 
@@ -14,35 +22,39 @@ plt.compiler = plt.compiler || {};
     'use strict';
  
     // empty location
-    var blankLoc = {"startRow": 1, "startCol": 0, "startChar": 1
-                    , "endRow": 1, "endCol": 0, "endChar": 1};
+    var blankLoc = {"startRow": 1, "startCol": 0, "startChar": 1, "endRow": 1, "endCol": 0, "endChar": 1};
     // Pyret syntax objects that were never actually part of the source
-    var lBrackStx = {name: "LBRACK", value: "[", key: "'LBRACK:[", pos: blankLoc},
-        colonStx  = {name: "COLON", value: ":", key: "'COLON::", pos: blankLoc},
-        commaStx  = {name: "COMMA", value: ",", key: "'COMMA:,", pos: blankLoc},
-        rBrackStx = {name: "RBRACK", value: "]", key: "'RBRACK:]", pos: blankLoc},
-        lParenStx = {name:"PARENNOSPACE", value:"(", key:"'PARENNOSPACE:(", pos:blankLoc},
-        rParenStx = {name: "RPAREN", value:")", key:"'RPAREN:)", pos:blankLoc},
-        equalsStx = {name: "EQUALS", value: "=", key: "'EQUALS:=", pos: blankLoc},
-        funStx    = {name: "FUN", value:"fun", key:"'FUN:fun", pos: blankLoc},
-        endStx    = {name: "END", value:"end", key:"'END:end", pos:blankLoc},
-        letStx    = {name: "let", value:"let", key:"'LET:let", pos:blankLoc},
-        dataStx   = {name: "DATA", value: "data", key: "'DATA:data", pos: blankLoc},
-        barStx    = {name:"BAR", value:"|", key:"'BAR:|", pos:blankLoc},
-        ifStx     = {name:"IF", value:"if", key:"'IF:if", pos: blankLoc},
-        elseStx   = {name:"ELSECOLON", value:"else:", key:"'ELSECOLON:else:", pos: blankLoc},
-        letrecStx = {name: "LETREC" ,value:"lerec" ,key:"'LETREC:letrec" ,pos:blankLoc},
-        whenStx   = {name:"WHEN", value:"when", key:"'WHEN:when", pos: blankLoc},
-        askStx    = {name:"ASKCOLON", value:"ask:", key:"'ASKCOLON:ask:", pos:blankLoc},
-        thenStx   = {name:"THENCOLON", value:"then:", key:"'THENCOLON:then:", pos:blankLoc},
-        otherwiseStx={name:"OTHERWISE",value:"otherwise:",key:"'OTHERWISE:otherwise:",pos:blankLoc};
+    var lBrackStx = {name: "LBRACK",      value: "[",       key: "'LBRACK:[",     pos: blankLoc},
+        colonStx  = {name: "COLON",       value: ":",       key: "'COLON::",      pos: blankLoc},
+        commaStx  = {name: "COMMA",       value: ",",       key: "'COMMA:,",      pos: blankLoc},
+        rBrackStx = {name: "RBRACK",      value: "]",       key: "'RBRACK:]",     pos: blankLoc},
+        lParenStx = {name: "PARENNOSPACE", value: "(",      key: "'PARENNOSPACE:(", pos:blankLoc},
+        rParenStx = {name: "RPAREN",      value: ")",       key: "'RPAREN:)",      pos:blankLoc},
+        equalsStx = {name: "EQUALS",      value: "=",       key: "'EQUALS:=",     pos: blankLoc},
+        funStx    = {name: "FUN",         value: "fun",     key: "'FUN:fun",       pos: blankLoc},
+        endStx    = {name: "END",         value: "end",     key: "'END:end",       pos:blankLoc},
+        letStx    = {name: "let",         value: "let",     key: "'LET:let",       pos:blankLoc},
+        lamStx    = {name: "LAM",         value: "lam",     key: "'LAM:lam",      pos: blankLoc},
+        blockStx  = {name: "BLOCK",       value: "block",   key: "'BLOCK:block",  pos: blankLoc},
+        dataStx   = {name: "DATA",        value: "data",    key: "'DATA:data",    pos: blankLoc},
+        barStx    = {name: "BAR",         value: "|",       key: "'BAR:|",         pos:blankLoc},
+        ifStx     = {name: "IF",          value: "if",      key: "'IF:if",         pos: blankLoc},
+        elseStx   = {name: "ELSECOLON",   value: "else:",   key: "'ELSECOLON:else:", pos: blankLoc},
+        letrecStx = {name: "LETREC" ,     value: "lerec",   key: "'LETREC:letrec" ,  pos:blankLoc},
+        whenStx   = {name: "WHEN",        value: "when",    key: "'WHEN:when",      pos: blankLoc},
+        askStx    = {name: "ASKCOLON",    value: "ask:",    key: "'ASKCOLON:ask:",   pos:blankLoc},
+        thenStx   = {name: "THENCOLON",   value: "then:",   key: "'THENCOLON:then:", pos:blankLoc},
+        otherwiseStx={name:"OTHERWISE",   value: "otherwise:",key:"'OTHERWISE:otherwise:",pos:blankLoc};
  
+    // pinfo that is reset for each translation
+    var pinfo = null;
  
-    // convertToPyret : [listof Programs],  -> JSON
+    // convertToPyret : [listof Programs], pinfo -> JSON
     // generate pyret parse tree, preserving location information
     // follows http://www.pyret.org/docs/latest/s_program.html
     // provide and import will never be used
-    function convertToPyret(programs){
+    function convertToPyret(programs, given_pinfo){
+      pinfo = given_pinfo;
       return { name: "program"
              , kids: [ {name: "prelude"
                         , kids: [/* TBD */]
@@ -56,8 +68,8 @@ plt.compiler = plt.compiler || {};
     // makeLetExprFromCouple : Racket Couple -> Pyret let-expr
     // used by Let, Let*, possibly others..
     function makeLetExprFromCouple(couple){
-      return {name: 'stmt'
-              , kids: [{name: 'let-expr'
+      return {name: "stmt"
+              , kids: [{name: "let-expr"
                        , kids: [makeBindingFromSymbol(couple.first)
                                 ,equalsStx
                                 ,couple.second.toPyret()]
@@ -68,11 +80,8 @@ plt.compiler = plt.compiler || {};
     // given a symbol, make a binding (used for let-expr, fun-expr, lam-expr...)
     function makeBindingFromSymbol(sym){
       var loc = sym.location;
-      return {name:'binding'
-              , kids: [{name:'NAME'
-                        ,value: sym.val
-                        ,key:'\'NAME:'+sym.val
-                        ,pos:loc}]
+      return {name:"binding"
+              , kids: [{name:"NAME", value: sym.val, key:"'NAME:"+sym.val, pos:loc}]
               , pos: loc};
     }
 
@@ -80,7 +89,7 @@ plt.compiler = plt.compiler || {};
     // TODO: are some operators left-associative?
     function makeBinopTreeForInfixApplication(infixOperator, exprs){
       function addExprToTree(tree, expr){
-        return {name:'binop-expr'
+        return {name: "binop-expr"
                 , kids: [expr.toPyret(), infixOperator, tree]
                 , pos: expr.location}
       }
@@ -128,28 +137,28 @@ plt.compiler = plt.compiler || {};
     // Bytecode generation for jsnums types
     jsnums.Rational.prototype.toPyret = function(){
       var loc = this.location;
-      return {name: 'frac-expr'
+      return {name: "frac-expr"
               , kids: [{value: this.stx
-                       , key: '\'RATIONAL:'+this.stx
-                       , name: 'RATIONAL'
+                       , key: "'RATIONAL:"+this.stx
+                       , name: "RATIONAL"
                        , pos: this.location}]
               , pos: loc};
     };
     jsnums.BigInteger.prototype.toPyret = function(){
       var loc = this.location;
-      return {name: 'num-expr'
+      return {name: "num-expr"
               , kids: [{value: this.stx
-                       , key: '\'NUMBER:'+this.stx
-                       , name: 'NUMBER'
+                       , key: "'NUMBER:"+this.stx
+                       , name: "NUMBER"
                        , pos: loc}]
               , pos: loc};
     };
     jsnums.FloatPoint.prototype.toPyret = function(){
       var loc = this.location;
-      return {name: 'num-expr'
+      return {name: "num-expr"
               , kids: [{value: this.stx
-                       , key: '\'NUMBER:'+this.stx
-                       , name: 'NUMBER'
+                       , key: "'NUMBER:"+this.stx
+                       , name: "NUMBER"
                        , pos: loc}]
               , pos: loc};
     };
@@ -160,8 +169,8 @@ plt.compiler = plt.compiler || {};
     Char.prototype.toPyret = function(){
       return {name: "string-expr"
                 , pos : this.location
-                , kids: [{key: '\'STRING:'+this.val
-                         , name: 'STRING'
+                , kids: [{key: "'STRING:"+this.val
+                         , name: "STRING"
                          , value: this.val
                          , pos : this.location}]};
     };
@@ -177,17 +186,17 @@ plt.compiler = plt.compiler || {};
       function convertString(){
         return {name: "string-expr"
                 , pos : loc
-                , kids: [{key: '\'STRING:'+that.val.toWrittenString()
-                         , name: 'STRING'
+                , kids: [{key: "'STRING:"+that.val.toWrittenString()
+                         , name: "STRING"
                          , value: that.val.toWrittenString()
                          , pos : loc}]};
       }
       function convertNumber(){
         var str = (that.val.toString)? that.val.toString() : that.val;
         return {name: "num-expr"
-                , kids: [{name: 'NUMBER'
+                , kids: [{name: "NUMBER"
                          , value: str
-                         , key: '\'NUMBER:'+str
+                         , key: "'NUMBER:"+str
                          , pos : loc}]
                 , pos : loc};
       }
@@ -215,26 +224,26 @@ plt.compiler = plt.compiler || {};
       return {name:"stmt"
               , kids:[{name: "fun-expr"
                       , kids: [funStx
-                               ,{name:'fun-header'
-                               , kids: [{name:'ty-params', kids:[], pos: blankLoc}
-                                        ,{name:'NAME'
+                               ,{name:"fun-header"
+                               , kids: [{name:"ty-params", kids:[], pos: blankLoc}
+                                        ,{name:"NAME"
                                           , value: this.name.stx
-                                          , key:'\'NAME:'+this.name.stx
+                                          , key:"'NAME:"+this.name.stx
                                           , pos: this.name.location}
-                                        ,{name:'args'
-                                          , kids: [lParenStx].concat(
-                                                    this.args.map(makeBindingFromSymbol)
-                                                    ,[rParenStx])
+                                        ,{name:"args"
+                                          , kids: [].concat([lParenStx]
+                                                            , this.args.map(makeBindingFromSymbol)
+                                                            ,[rParenStx])
                                           , pos: this.args.location}
-                                        ,{name:'return-ann'
+                                        ,{name:"return-ann"
                                           ,kids: []
                                           ,pos:loc}]
                                 , pos: this.stx[1].location}
                                ,colonStx
-                               ,{name:'doc-string', kids: [], pos: blankLoc}
-                               ,{name:'block', kids: [this.body.toPyret()], pos: this.body.location}
-                               ,{name:'where-clause', kids:  [], pos: blankLoc}
-                               ,{name:'end'
+                               ,{name:"doc-string", kids: [], pos: blankLoc}
+                               ,{name:"block", kids: [this.body.toPyret()], pos: this.body.location}
+                               ,{name:"where-clause", kids:  [], pos: blankLoc}
+                               ,{name:"end"
                                 , kids: [endStx]
                                 , pos: this.location.end()}]
                       , pos: loc}]
@@ -246,9 +255,9 @@ plt.compiler = plt.compiler || {};
     // see: http://www.pyret.org/docs/latest/Statements.html#%28part._s~3alet-expr%29
     // TODO: detect toplevel declarations?
     defVar.prototype.toPyret = function(){
-      return {name: 'let-expr'
+      return {name: "let-expr"
               ,kids:[letStx
-                    ,{name: 'toplevel-binding'
+                    ,{name: "toplevel-binding"
                      ,kids:[makeBindingFromSymbol(this.name)]
                      ,pos:this.name.location}
                     ,equalsStx].concat(this.expr.toPyret())
@@ -302,16 +311,10 @@ plt.compiler = plt.compiler || {};
                                                       , kids:[lParenStx].concat(listVariantMembers, [rParenStx])
                                                       , pos: this.stx[2].location}]
                                             , pos: this.stx[1].location}
-                                          , {name: "data-with"
-                                            , kids: []
-                                            , pos:this.location}]
+                                          , {name: "data-with", kids: [], pos:this.location}]
                                   ,pos:this.stx[1].location}
-                                , {name: "data-sharing"
-                                  , kids:[]
-                                  , pos: blankLoc}
-                                , {name: "where-clause"
-                                  , kids: []
-                                  , pos: blankLoc}
+                                , {name: "data-sharing", kids:[], pos: blankLoc} // no sharing in racket
+                                , {name: "where-clause", kids: [], pos: blankLoc}// no struct tests in racket
                                 , endStx]
                        , pos: this.location}]
               , pos: this.location}
@@ -321,21 +324,20 @@ plt.compiler = plt.compiler || {};
     // beginExpr(exprs) -> block: exprs end
     // translates to a block: http://www.pyret.org/docs/latest/Blocks.html
     beginExpr.prototype.toPyret = function(){
-      var loc = this.location,
-          blockStx = {name: "BLOCK", value: "block", key: "'BLOCK:block", pos: blankLoc};
+      var loc = this.location;
       // given a single expr, convert to Pyret and wrap it inside a stmt
       function makeStmtFromExpr(expr){
-        return {name:'stmt'
+        return {name:"stmt"
                 , kids: [expr.toPyret()]
                 , pos: expr.location};
       }
-      return {name: 'expr'
-              , kids: [{name: 'user-block-expr'
+      return {name: "expr"
+              , kids: [{name: "user-block-expr"
                        , kids: [blockStx
-                                ,{name: 'block'
+                                ,{name: "block"
                                  , kids:[this.exprs.map(makeStmtFromExpr)]
                                  , pos: this.location}
-                                ,{name: 'end', kids:[endStx], pos: loc}]
+                                ,{name: "end", kids:[endStx], pos: loc}]
                        , pos: loc}]
               , pos: loc};
      };
@@ -343,25 +345,24 @@ plt.compiler = plt.compiler || {};
     // Lambda expression
     // lambdaExpr(args, body) -> lam(args): body end
     lambdaExpr.prototype.toPyret = function(){
-      var loc = this.location,
-          lamStx = {name:'LAM', value: 'lam', key: '\'LAM:lam', pos: blankLoc};
-      return {name: 'expr'
-              , kids: [{name: 'lambda-expr'
+      var loc = this.location;
+      return {name: "expr"
+              , kids: [{name: "lambda-expr"
                        , kids:[lamStx
-                               ,{name:'ty-params', kids:[], pos:loc}
-                               ,{name:'args'
+                               ,{name:"ty-params", kids:[], pos:loc}
+                               ,{name:"args"
                                 , kids: [lParenStx].concat(
                                           this.args.map(makeBindingFromSymbol)
                                           ,[rParenStx])
                                 , pos: this.args.location}
-                               , {name: 'return-ann', kids: [], pos: loc}
+                               , {name: "return-ann", kids: [], pos: loc}
                                , colonStx
-                               , {name:'doc-string', kids:[], pos: loc}
-                               , {name:'block'
+                               , {name:"doc-string", kids:[], pos: loc}
+                               , {name:"block"
                                 , kids:[this.body.toPyret()]
                                 , pos: this.body.location}
-                               , {name:'where-clause', kids:[], pos: loc}
-                               , {name:'end', kids:[endStx], pos: loc}]
+                               , {name:"where-clause", kids:[], pos: loc}
+                               , {name:"end", kids:[endStx], pos: loc}]
                        , pos: this.location}]
               , pos: loc};
     };
@@ -387,15 +388,15 @@ plt.compiler = plt.compiler || {};
       function getInfixForSym(sym){
         if(!(sym instanceof symbolExpr)) return false;
         var str = sym.val, loc = sym.location;
-        return (str==="+")? {name:'PLUS',   value: '+',   key: '\'PLUS: +',   pos: loc}
-            : (str==="-")?  {name:'DASH',   value: '-',   key: '\'DASH: -',   pos: loc}
-            : (str==="*")?  {name:'STAR',   value: '*',   key: '\'STAR: *',   pos: loc}
-            : (str==="/")?  {name:'SLASH',  value: '-',   key: '\'SLASH: /',  pos: loc}
-            : (str===">")?  {name:'GT',     value: '>',   key: '\'GT: >',     pos: loc}
-            : (str==="<")?  {name:'LT',     value: '<',   key: '\'LT: -',     pos: loc}
-            : (str===">=")? {name:'GEQ',    value: '>=',  key: 'GEQ: >=',     pos: loc}
-            : (str==="<=")? {name:'LEQ',    value: '<=',  key: 'LEQ: <=',     pos: loc}
-            : (str==="=")?  {name:'EQUALEQUAL', value: '==', key: '\'EQUALEQUAL: -', pos: loc}
+        return (str==="+")? {name:"PLUS",   value: "+",   key: "'PLUS: +",   pos: loc}
+            : (str==="-")?  {name:"DASH",   value: "-",   key: "'DASH: -",   pos: loc}
+            : (str==="*")?  {name:"STAR",   value: "*",   key: "'STAR: *",   pos: loc}
+            : (str==="/")?  {name:"SLASH",  value: "-",   key: "'SLASH: /",  pos: loc}
+            : (str===">")?  {name:"GT",     value: ">",   key: "'GT: >",     pos: loc}
+            : (str==="<")?  {name:"LT",     value: "<",   key: "'LT: -",     pos: loc}
+            : (str===">=")? {name:"GEQ",    value: ">=",  key: "'GEQ: >=",    pos: loc}
+            : (str==="<=")? {name:"LEQ",    value: "<=",  key: "LEQ: <=",     pos: loc}
+            : (str==="=")?  {name:"EQUALEQUAL", value: "==", key: "'EQUALEQUAL: -", pos: loc}
             : false; // if the function isn't a binop, return false
       }
  
@@ -407,16 +408,16 @@ plt.compiler = plt.compiler || {};
       if(infixOperator){
         return makeBinopTreeForInfixApplication(infixOperator, this.args);
       } else {
-        return {name:'app-expr'
-                , kids: [{name: 'expr'
-                          , kids: [{name: 'id-expr'
-                                  , kids: [{name: 'NAME'
+        return {name:"app-expr"
+                , kids: [{name: "expr"
+                          , kids: [{name: "id-expr"
+                                  , kids: [{name: "NAME"
                                            , value: this.func.val
-                                           , key: '\'NAME:'+this.func.val
+                                           , key: "'NAME:"+this.func.val
                                            , pos: this.func.location}]
                                   , pos: this.func.location}]
                           , pos: this.func.location}
-                         ,{name: 'app-args'
+                         ,{name: "app-args"
                                   , kids: [lParenStx].concat(
                                            this.args.map(function(p){return p.toPyret()}), [rParenStx])
                                   , pos: this.func.location}]
@@ -427,22 +428,22 @@ plt.compiler = plt.compiler || {};
     // if expression maps to if-expr
     // see: http://www.pyret.org/docs/latest/Expressions.html#%28part._s~3aif-expr%29
     ifExpr.prototype.toPyret = function(){
-       return {name: 'if-expr'
+       return {name: "if-expr"
               , kids: [ifStx
                        ,this.predicate.toPyret()
                        ,colonStx
-                       ,{name:'block'
-                        ,kids:[{name:'stmt'
+                       ,{name:"block"
+                        ,kids:[{name:"stmt"
                                , kids:[this.consequence.toPyret()]
                                , pos: this.consequence.location}]
                         ,pos: this.consequence.location}
                        ,elseStx
-                       ,{name:'block'
-                        ,kids:[{name:'stmt'
+                       ,{name:"block"
+                        ,kids:[{name:"stmt"
                                , kids:[this.alternative.toPyret()]
                                , pos: this.alternative.location}]
                         ,pos: this.alternative.location}
-                       ,{name:'end', kids:[endStx], pos:this.location.end()}]
+                       ,{name:"end", kids:[endStx], pos:this.location.end()}]
               , pos: this.location};
     };
 
@@ -461,12 +462,12 @@ plt.compiler = plt.compiler || {};
         this.predicate = notCall;
       }
  
-      return {name: 'when-expr'
+      return {name: "when-expr"
               , kids:[whenStx
                       ,this.predicate.toPyret()
                       ,colonStx
                       ,this.exprs.toPyret()
-                      ,{name:'end', kids:[endStx], pos:this.location.end()}]
+                      ,{name:"end", kids:[endStx], pos:this.location.end()}]
               , pos: loc};
     };
  
@@ -477,11 +478,7 @@ plt.compiler = plt.compiler || {};
     letrecExpr.prototype.toPyret = function(){
       function makeLetRecBindingExprFromCouple(couple){
         return {name: "letrec-binding"
-                , kids: [makeLetExprFromCouple(couple)
-                         , {name:"COMMA"
-                            , key: "'COMMA:,"
-                            , value:","
-                            , pos:couple.location.end()}]
+                , kids: [makeLetExprFromCouple(couple), commaStx]
                 , pos: couple.location};
       }
       var loc = this.location,
@@ -490,7 +487,7 @@ plt.compiler = plt.compiler || {};
           bodyBlock = {name:"block", kids:[this.body.toPyret()], pos: this.body.location};
       return {name:"expr"
               ,kids:[{name: "letrec-expr"
-                      ,kids: [letrecStx].concat(letrecBindings, [finalLet], colonStx, bodyBlock, endStx)
+                      ,kids: [letrecStx].concat(letrecBindings, [finalLet, colonStx, bodyBlock, endStx])
                       ,pos:loc}]
               ,pos:loc};
     };
@@ -502,7 +499,7 @@ plt.compiler = plt.compiler || {};
     letExpr.prototype.toPyret = function(){
       var loc = this.location;
       var tmpIDs = [],
-          // bind the rhs to lhs_tmp
+          // bind the rhs to lhs_tmp (a_1 = 5, ...)
           tmpBindings = this.bindings.map(function(c){
                                             var tmpSym = new symbolExpr(c.first.val+"_tmp"),
                                                 tmpBinding = new couple(tmpSym, c.second);
@@ -511,7 +508,7 @@ plt.compiler = plt.compiler || {};
                                             tmpIDs.push(tmpSym);
                                             return tmpBinding;
                                           }),
-          // bind lhs_tmp to lhs
+          // bind lhs_tmp to lhs (a = a_1, ...)
           newBindings = this.bindings.map(function(c, i){
                                             var c2 = new couple(c.first, tmpIDs[i]);
                                             c2.location = c.location;
@@ -519,11 +516,11 @@ plt.compiler = plt.compiler || {};
                                           }),
           stmts = tmpBindings.concat(newBindings).map(makeLetExprFromCouple);
       stmts.push(this.body.toPyret());
-      return {name: 'expr'
-              , kids: [{name: 'user-block-expr'
+      return {name: "expr"
+              , kids: [{name: "user-block-expr"
                        , kids: [blockStx
-                                ,{name: 'block', kids: stmts, pos: this.location}
-                                ,{name: 'end', kids:[endStx], pos: loc}]
+                                ,{name: "block", kids: stmts, pos: this.location}
+                                ,{name: "end", kids:[endStx], pos: loc}]
                        , pos: loc}]
               , pos: loc};
 
@@ -535,11 +532,11 @@ plt.compiler = plt.compiler || {};
       var loc = this.location,
           stmts = this.bindings.map(makeLetExprFromCouple);
       stmts = stms.push(this.body.toPyret());
-      return {name: 'expr'
-              , kids: [{name: 'user-block-expr'
+      return {name: "expr"
+              , kids: [{name: "user-block-expr"
                        , kids: [blockStx
-                                ,{name: 'block', kids:stmts, pos: this.location}
-                                ,{name: 'end', kids:[endStx], pos: loc}]
+                                ,{name: "block", kids:stmts, pos: this.location}
+                                ,{name: "end", kids:[endStx], pos: loc}]
                        , pos: loc}]
               , pos: loc};
     };
@@ -588,7 +585,7 @@ plt.compiler = plt.compiler || {};
     // convert to nested, binary ands
     andExpr.prototype.toPyret = function(){
       var loc = this.stx.location,
-          infixOperator = {name:'AND', value: 'and', key: 'AND:and', pos: loc};
+          infixOperator = {name:"AND", value: "and", key: "'AND:and", pos: loc};
       return makeBinopTreeForInfixApplication(infixOperator, this.exprs);
     };
 
@@ -596,7 +593,7 @@ plt.compiler = plt.compiler || {};
     // convert to nested, binary ors
     orExpr.prototype.toPyret = function(){
       var loc = this.stx.location,
-          infixOperator = {name:'OR', value: 'or', key: 'OR:or', pos: loc};
+          infixOperator = {name:"OR", value: "or", key: "'OR:or", pos: loc};
       return makeBinopTreeForInfixApplication(infixOperator, this.exprs);
     };
 
@@ -644,22 +641,22 @@ plt.compiler = plt.compiler || {};
     symbolExpr.prototype.toPyret = function(){
       var loc = this.location;
       function getBinopForVal(str){
-        return (str==="+")? '_plus'
-            : (str==="-")?  '_minus'
-            : (str==="*")?  '_times'
-            : (str==="/")?  '_divide'
-            : (str===">")?  '_greaterthan'
-            : (str==="<")?  '_lessthan'
-            : (str===">=")? '_greaterequal'
-            : (str==="<=")? '_lessequal'
-            : (str==="=")?  'equal-always'
-            : str; // if the function isn't a binop, return it unmolested
+        return (str==="+")? "_plus"
+            : (str==="-")?  "_minus"
+            : (str==="*")?  "_times"
+            : (str==="/")?  "_divide"
+            : (str===">")?  "_greaterthan"
+            : (str==="<")?  "_lessthan"
+            : (str===">=")? "_greaterequal"
+            : (str==="<=")? "_lessequal"
+            : (str==="=")?  "equal-always"
+            : str; // if the function isn"t a binop, return it unmolested
       }
-      return {name: 'expr'
-             , kids: [{name: 'id-expr'
-                      , kids: [{name: 'NAME'
+      return {name: "expr"
+             , kids: [{name: "id-expr"
+                      , kids: [{name: "NAME"
                                , value: getBinopForVal(this.val)
-                               , key: '\'NAME:'+getBinopForVal(this.val)
+                               , key: "'NAME:"+getBinopForVal(this.val)
                                , pos: loc}]
                       , pos: loc}]
              , pos: loc};
