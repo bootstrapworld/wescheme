@@ -153,7 +153,7 @@ goog.provide("plt.wescheme.RoundRobin");
  
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
        var TRUST_LOCAL_ERRORS   = (Math.random() < 0.90) && TEST_DAY,
-           TRUST_LOCAL_BYTECODE = (Math.random() < 0.15) && TEST_DAY;
+           TRUST_LOCAL_BYTECODE = (Math.random() < 0.25) && TEST_DAY;
  
        console.log('Local compiler is '+(TEST_LOCAL? '' : 'not')+' running\nTEST_DAY is '+TEST_DAY
                   +'\nTRUST_LOCAL_ERRORS is '+TRUST_LOCAL_ERRORS+'\nTRUST_LOCAL_BYTECODE is '+TRUST_LOCAL_BYTECODE);
@@ -285,6 +285,7 @@ goog.provide("plt.wescheme.RoundRobin");
                     }
                     // use the server compiler's error message
                     onDoneError(errorStruct.message);
+
                 });
         } else {
             onAllCompilationServersFailing(onDoneError);
@@ -328,8 +329,8 @@ function sameResults(x, y){
   if(typeof(y) === "object") y = canonicalizeObject(y);
 
   // 1) if both are Locations, we only care about startChar and span, so perform a weak comparison
-  if ( x.hasOwnProperty('startChar') && y.hasOwnProperty('startChar') ){
-    return ( (x.span == y.span) && (x.startChar == y.startChar) );
+  if ( x.hasOwnProperty('offset') && y.hasOwnProperty('offset') ){
+    return ( (x.span == y.span) && (x.offset == y.offset) );
   }
   // 2) if both objects have a prefix field, build our dictionaries *before* moving on
   if(x.hasOwnProperty('prefix') && y.hasOwnProperty('prefix')){
