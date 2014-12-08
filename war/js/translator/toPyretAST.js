@@ -640,18 +640,6 @@ plt.compiler = plt.compiler || {};
     // symbolExpr(val)
     symbolExpr.prototype.toPyret = function(){
       var loc = this.location;
-      function getBinopForVal(str){
-        return (str==="+")? "_plus"
-            : (str==="-")?  "_minus"
-            : (str==="*")?  "_times"
-            : (str==="/")?  "_divide"
-            : (str===">")?  "_greaterthan"
-            : (str==="<")?  "_lessthan"
-            : (str===">=")? "_greaterequal"
-            : (str==="<=")? "_lessequal"
-            : (str==="=")?  "equal-always"
-            : str; // if the function isn"t a binop, return it unmolested
-      }
       return {name: "expr"
              , kids: [{name: "id-expr"
                       , kids: [{name: "NAME"

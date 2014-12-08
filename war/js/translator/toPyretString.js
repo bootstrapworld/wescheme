@@ -105,6 +105,15 @@ plt.compiler = plt.compiler || {};
           +"("+converttoPyretString(this.fields).join(", ")+")"+" end";
       return str;
     };
+                                     
+    beginExpr.prototype.toPyretString = function(){};
+    whenUnlessExpr.prototype.toPyret = function(){};
+    letrecExpr.prototype.toPyret = function(){};
+    letExpr.prototype.toPyret = function(){};
+    letStarExpr.prototype.toPyret = function(){};
+    condExpr.prototype.toPyretString = function(){};
+    caseExpr.prototype.toPyretString = function(){};
+    beginExpr.prototype.toPyretString = function(){};
 
     // Lambda expression
     // lambdaExpr(args, body, stx)
