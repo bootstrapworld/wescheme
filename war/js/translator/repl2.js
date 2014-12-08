@@ -94,7 +94,7 @@ function readFromRepl(event) {
     response.bytecode = (0,eval)('(' + response.bytecode + ')');
     console.log(response);
 //    pyretCheck(AST);
-    console.log(plt.compiler.toPyretAST(AST));
+    console.log(plt.compiler.toPyretAST(AST, pinfo));
  
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
