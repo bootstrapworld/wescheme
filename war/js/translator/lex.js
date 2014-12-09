@@ -668,7 +668,6 @@ plt.compiler = plt.compiler || {};
       // unlike DrRacket, there is no JS equivalent for nul, null, page and rubout
       var special = new RegExp("(backspace|tab|newline|space|vtab)[^a-zA-Z]*", "i"),
           match = special.exec(datum);
-                                                        
       // check for special chars
       if(special.test(datum)){
           datum = datum === 'backspace'? '\b' :
@@ -680,10 +679,11 @@ plt.compiler = plt.compiler || {};
           i = iStart + 2 + match[1].length; // set the reader to the end of the char
                                                         
        // octal charCodes
-       } else if(/^[0-9].*/.test(datum)                     // if it starts with a number...
-                 && oct3.test(datum)                       // it had better have some octal digits..
-                 && (oct3.exec(datum)[0]===datum)           // in fact, all of them should be octal..
-                 && (parseInt(oct3.exec(datum)[0], 8) < 256) // and less than 256
+       } else if(/^[0-9].*/.test(datum)                       // if it starts with a number...
+                 && oct3.test(datum)                         // it had better have some octal digits..
+                 && (oct3.exec(datum)[0]===datum)            // in fact, all of them should be octal..
+                 && (parseInt(oct3.exec(datum)[0], 8) < 256) // and less than 256...
+                 && (parseInt(oct3.exec(datum)[0], 8) > 31)  // and greater than 31,
                  ) {
           var match = /[0-7]+/.exec(datum)[0];
           datum = String.fromCharCode(parseInt(match, 8));
