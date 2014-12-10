@@ -79,26 +79,29 @@ plt.compiler = plt.compiler || {};
                    , sexp.location);
       }
     });
-    var bodyAndPinfo = this.body.desugar(pinfo);
-    this.body = bodyAndPinfo[0];
-    return [this, bodyAndPinfo[1]];
+    var bodyAndPinfo = this.body.desugar(pinfo),
+        newDefFunc = new defFunc(this.name, this.args, bodyAndPinfo[0], this.stx);
+    newDefFunc.location = this.location;
+    return [newDefFunc, bodyAndPinfo[1]];
  };
  defVar.prototype.desugar = function(pinfo){
     // convert (define f (lambda (x) x)) into (define (f x) x)
     if(this.expr instanceof lambdaExpr){
-      var func = new defFunc(this.name, this.expr.args, this.expr.body, this.stx);
-      func.location = this.location;
-      return func.desugar(pinfo);
+      var newDefFunc = new defFunc(this.name, this.expr.args, this.expr.body, this.stx);
+      newDefFunc.location = this.location;
+      return newDefFunc.desugar(pinfo);
     } else {
-      var exprAndPinfo = this.expr.desugar(pinfo);
-      this.expr = exprAndPinfo[0];
-      return [this, exprAndPinfo[1]];
+      var exprAndPinfo = this.expr.desugar(pinfo),
+          newDefVar = new defVar(this.name, exprAndPinfo[0], this.stx);
+      newDefVar.location = this.location;
+      return [newDefVar, exprAndPinfo[1]];
     }
  };
  defVars.prototype.desugar = function(pinfo){
-    var exprAndPinfo = this.expr.desugar(pinfo);
-    this.expr = exprAndPinfo[0];
-    return [this, exprAndPinfo[1]];
+    var exprAndPinfo = this.expr.desugar(pinfo),
+        newDefVars = new defVars(this.names, exprAndPinfo[0], this.stx);
+    newDefVars.location = this.location;
+    return [newDefVars, exprAndPinfo[1]];
  };
  defStruct.prototype.desugar = function(pinfo){
     var that = this,
@@ -133,39 +136,43 @@ plt.compiler = plt.compiler || {};
     return [stxs, pinfo];
  };
  beginExpr.prototype.desugar = function(pinfo){
-    var exprsAndPinfo = desugarProgram(this.exprs, pinfo);
-    this.exprs = exprsAndPinfo[0];
-    return [this, exprsAndPinfo[1]];
+    var exprsAndPinfo = desugarProgram(this.exprs, pinfo),
+        newBeginExpr = new beginExpr(exprsAndPinfo[0], this.stx);
+    newBeginExpr.location = this.location;
+    return [newBeginExpr, exprsAndPinfo[1]];
  };
  lambdaExpr.prototype.desugar = function(pinfo){
     // if this was parsed from raw syntax, check for duplicate arguments
     if(this.stx) checkDuplicateIdentifiers(this.args, this.stx, this.location);
-    var bodyAndPinfo = this.body.desugar(pinfo);
-    this.body = bodyAndPinfo[0];
-    return [this, bodyAndPinfo[1]];
+    var bodyAndPinfo = this.body.desugar(pinfo),
+        newLambdaExpr = new lambdaExpr(this.args, bodyAndPinfo[0], this.stx);
+    newLambdaExpr.location = this.location;
+    return [newLambdaExpr, bodyAndPinfo[1]];
  };
  localExpr.prototype.desugar = function(pinfo){
-    var defnsAndPinfo = desugarProgram(this.defs, pinfo);
-    var exprAndPinfo = this.body.desugar(defnsAndPinfo[1]);
-    this.defs = defnsAndPinfo[0];
-    this.body = exprAndPinfo[0];
-    return [this, exprAndPinfo[1]];
+    var defnsAndPinfo = desugarProgram(this.defs, pinfo),
+        exprAndPinfo = this.body.desugar(defnsAndPinfo[1]),
+        newLocalExpr = new localExpr(defnsAndPinfo[0], exprAndPinfo[0], this.stx);
+    newLocalExpr.location = this.location;
+    return [newLocalExpr, exprAndPinfo[1]];
  };
  callExpr.prototype.desugar = function(pinfo){
-    var exprsAndPinfo = desugarProgram([this.func].concat(this.args), pinfo);
-    this.func = exprsAndPinfo[0][0];
-    this.args = exprsAndPinfo[0].slice(1);
-    return [this, exprsAndPinfo[1]];
+    var exprsAndPinfo = desugarProgram([this.func].concat(this.args), pinfo),
+        newCallExpr = new callExpr(exprsAndPinfo[0][0], exprsAndPinfo[0].slice(1), this.stx);
+    newCallExpr.location = this.location;
+    return [newCallExpr, exprsAndPinfo[1]];
  };
  ifExpr.prototype.desugar = function(pinfo){
     var exprsAndPinfo = desugarProgram([this.predicate,
                                         this.consequence,
                                         this.alternative],
-                                       pinfo);
-    this.predicate = forceBooleanContext(this.stx, this.stx.location, exprsAndPinfo[0][0]);
-    this.consequence = exprsAndPinfo[0][1];
-    this.alternative = exprsAndPinfo[0][2];
-    return [this, exprsAndPinfo[1]];
+                                       pinfo),
+        predicate = forceBooleanContext(this.stx, this.stx.location, exprsAndPinfo[0][0]),
+        consequence = exprsAndPinfo[0][1],
+        alternative = exprsAndPinfo[0][2],
+        newIfExpr = new ifExpr(predicate, consequence, alternative, this.stx);
+    newIfExpr.location = this.location;
+    return [newIfExpr, exprsAndPinfo[1]];
  };
  whenUnlessExpr.prototype.desugar = function(pinfo){
     var begin_exp = new beginExpr(this.exprs, this.stx),
@@ -173,14 +180,15 @@ plt.compiler = plt.compiler || {};
         call_exp = new callExpr(void_exp, [], this.stx),
         consequence = (this.stx.val==="when")? begin_exp : call_exp,
         alternative = (this.stx.val==="when")? call_exp : begin_exp;
+    begin_exp.location = this.exprs.location;
+    void_exp.location = call_exp.location = this.location;
     // desugar each expression and construct an ifExpr
     var exprsAndPinfo = desugarProgram([this.predicate,
                                         consequence,
                                         alternative],
                                        pinfo),
         if_exp = new ifExpr(exprsAndPinfo[0][0], exprsAndPinfo[0][1], exprsAndPinfo[0][2], this.stx);
-    begin_exp.location = this.exprs.location;
-    void_exp.location = call_exp.location = if_exp.location = this.location;
+    if_exp.location = this.location;
     // DON'T desugar the ifExpr -- we don't forceBooleanContext on when/unless!
     return [if_exp, exprsAndPinfo[1]];
  };
