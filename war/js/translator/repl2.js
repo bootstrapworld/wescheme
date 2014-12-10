@@ -39,11 +39,11 @@ function popElementFromHistory(dir, current) {
 
 // pyretAST contains the actual AST node from the Pyret parser
 var pyretAST;
-function pyretCheck(racketAST){
+function pyretCheck(racketAST, pinfo){
     // Source2Source translate and transpile into Pyret
-    var pyretSrc  = plt.compiler.toPyretString(racketAST);
+    var pyretSrc  = plt.compiler.toPyretString(racketAST, pinfo);
     console.log('TRANSLATED PYRET SOURCE:\n'+pyretSrc);
-    var transpiledAST = plt.compiler.toPyretAST(racketAST),
+    var transpiledAST = plt.compiler.toPyretAST(racketAST, pinfo),
         transpiledAST_str = JSON.stringify(transpiledAST, null, 2);
     var url="http://localhost:3000/"+encodeURI(pyretSrc[0]);
     var request = new XMLHttpRequest();
@@ -93,7 +93,9 @@ function readFromRepl(event) {
     var response    = plt.compiler.compile(program, pinfo, debug);
     response.bytecode = (0,eval)('(' + response.bytecode + ')');
     console.log(response);
-//    pyretCheck(AST);
+//    pyretCheck(AST, pinfo);
+    console.log(plt.compiler.toPyretString(AST, pinfo));
+    console.log(plt.compiler.toPyretString(AST, pinfo).join("\n"));
     console.log(plt.compiler.toPyretAST(AST, pinfo));
  
     repl_input.value = ""; // clear the input

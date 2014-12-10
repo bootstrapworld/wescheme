@@ -180,7 +180,7 @@ function loadSuite(json){
 }
 
 function runTests(verbose){
-  function test(expr, expected, desugarRef, bytecodeRef, pyretJSONRef){
+  function test(expr, expected, desugarRef, bytecodeRef, pyretSrcRef, pyretJSONRef){
       // show the result
       var row   = document.createElement('tr'),
           num   = document.createElement('td'),
@@ -189,7 +189,8 @@ function runTests(verbose){
           parse = document.createElement('td'),
           desugar=document.createElement('td'),
           bytecode=document.createElement('td'),
-          pyret = document.createElement('td');
+          pyretSrc = document.createElement('td');
+          pyretAST = document.createElement('td');
       num.innerHTML  = (i+1)+')'; // make test nums 1-aligned, instead of 0-aligned
       test.innerHTML = expr;      // show which expr we're testing
       row.appendChild(num);
@@ -198,7 +199,6 @@ function runTests(verbose){
       row.appendChild(parse);
       row.appendChild(desugar);
       row.appendChild(bytecode);
-      row.appendChild(pyret);
       table.appendChild(row);
       row.style.background = 'lightgreen';
                         
@@ -297,23 +297,46 @@ function runTests(verbose){
                         
       // do we move on to testing the Pyret Translation?
       if(!document.getElementById('pyretTest').checked) return true;
+      // we're testing Pyret translation, so let's add the columns for Src and AST
+                        
+      // TRANSLATE TO PYRET SRC
+      row.appendChild(pyretSrc);
+      pyretSrc.innerHTML = 'pyretSrc';
+      try{
+        var recieved = plt.compiler.toPyretString(AST, pinfo2).join("\n");
+      } catch (translationError) {
+        console.log(translationError);
+        pyretSrc.style.background = 'red';
+        return setTestFailureLink(row, pyretSrcRef, recieved);
+      }
+      // if we don't have a JSONRef for this test, call it a questinonable pass move on
+      if(pyretSrcRef === undefined) { pyretSrc.style.background = 'rgb(194, 288, 194)'; return true; }
+      // if there's no translation, it's a pass by default
+      if(pyretSrcRef === "NOTRANSLATE") { pyretSrc.style.background = 'lightblue'; return true; }
+      var expected = pyretSrcRef;
+      if(sameResults(recieved, expected)) { pyretSrc.style.background = 'lightgreen'; }
+      else { return setTestFailureLink(row, expected, recieved);}
+
+      // for now, we're only checking the source translation
+      return true;
                         
       // TRANSLATE TO PYRET AST
-      pyret.innerHTML = 'pyret';
+      row.appendChild(pyretAST);
+      pyretAST.innerHTML = 'pyret';
       try{
         var recieved = plt.compiler.toPyretAST(AST, pinfo2);
       } catch (translationError) {
         console.log(translationError);
-        pyret.style.background = 'red';
+        pyretAST.style.background = 'red';
         return setTestFailureLink(row, pyretJSONRef, recieved);
       }
       // if we don't have a JSONRef for this test, call it a questinonable pass move on
-      if(pyretJSONRef === undefined) { pyret.style.background = 'rgb(194, 288, 194)'; return true; }
+      if(pyretJSONRef === undefined) { pyretAST.style.background = 'rgb(194, 288, 194)'; return true; }
                         console.log('about to parse jsonref: "'+pyretJSONRef+'"');
       var expected = JSON.parse(pyretJSONRef);
       // compare objects (compare fn ignores location information)
                         console.log('parsed jsonref');
-      if(sameResults(recieved, expected)) { pyret.style.background = 'lightgreen'; }
+      if(sameResults(recieved, expected)) { pyretAST.style.background = 'lightgreen'; }
       else { return setTestFailureLink(row, pyretJSONRef, JSON.stringify(recieved));}
               
       return true;
@@ -329,7 +352,8 @@ function runTests(verbose){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode, tests[i].pyretAST);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode,
+                        tests[i].pyretSrc, tests[i].pyretAST);
       if(result) passed++;
       testsRun++;
       document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
