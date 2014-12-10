@@ -8,7 +8,6 @@ plt.compiler = plt.compiler || {};
  follows definition from XXXXX
  TODO:
   - conversion of symbols, to account for common-but-invalid chars like '?', '!', etc.
-  - use prefix form of arithmetic functions
   - translation of boolean symbols/values
   - desugar (case...), then translate it?
   - collect check-expect and EXAMPLE, convert to toplevel where: clauses
@@ -47,14 +46,14 @@ plt.compiler = plt.compiler || {};
         otherwiseStx={name:"OTHERWISE",   value: "otherwise:",key:"'OTHERWISE:otherwise:",pos:blankLoc};
  
     // pinfo that is reset for each translation
-    var pinfo = null;
+    var _pinfo = null;
  
     // convertToPyret : [listof Programs], pinfo -> JSON
     // generate pyret parse tree, preserving location information
     // follows http://www.pyret.org/docs/latest/s_program.html
     // provide and import will never be used
-    function convertToPyret(programs, given_pinfo){
-      pinfo = given_pinfo;
+    function convertToPyret(programs, pinfo){
+      _pinfo = pinfo;
       return { name: "program"
              , kids: [ {name: "prelude"
                         , kids: [/* TBD */]
@@ -114,8 +113,8 @@ plt.compiler = plt.compiler || {};
       return {name:"expr", kids:[{name:"prim-expr", kids:[result], pos: loc}], pos: loc};
     }
  
-    function makeArrayFromList(elts, loc){
-      var fakeArrayCall = new symbolExpr("array"),
+    function makeStructFromMembers(constructor, elts, loc){
+      var fakeArrayCall = new symbolExpr(constructor),
           makeListEltFromValue = function(val){
             return {name: "list-elt" , kids: [val.toPyret(), commaStx], pos: val.location};
           },
@@ -401,7 +400,7 @@ plt.compiler = plt.compiler || {};
       }
  
       // runtime calls to "vector" need to be processed specially
-      if(this.func.val === "vector") return makeArrayFromList(this.args, this.location);
+      if(this.func.val === "vector") return makeStructFromMembers("array", this.args, this.location);
  
       // if the function is infix in Pyret, return the binop tree instead of a call-expr
       var infixOperator = getInfixForSym(this.func);
@@ -617,23 +616,14 @@ plt.compiler = plt.compiler || {};
       } else if(this.val instanceof symbolExpr){
         return makeLiteralFromSymbol(this.val);
       } else if (this.val instanceof Array){
-        return makeArrayFromList(this.val);
+        return makeStructFromMembers("list", this.val, this.val.location);
       } else {
         throw "There is no translation for "+this.toString();
       }
     };
 
-    // we need to find a way to desugar these
-    unquotedExpr.prototype.toPyret = function(){
-      throw "IMPOSSIBLE: unquoted expressions should be desugared away";
-    };
-
-    unquoteSplice.prototype.toPyret = function(){
-      throw "IMPOSSIBLE: unquote-splace expressions should be desugared away";
-    };
-
     quasiquotedExpr.prototype.toPyret = function(){
-      throw "IMPOSSIBLE: quasiquoted expressions should be desugared away";
+      return this.desugar(_pinfo)[0].toPyretString();
     };
 
     // symbol expression
@@ -643,8 +633,8 @@ plt.compiler = plt.compiler || {};
       return {name: "expr"
              , kids: [{name: "id-expr"
                       , kids: [{name: "NAME"
-                               , value: getBinopForVal(this.val)
-                               , key: "'NAME:"+getBinopForVal(this.val)
+                               , value: this.val
+                               , key: "'NAME:"+this.val
                                , pos: loc}]
                       , pos: loc}]
              , pos: loc};
