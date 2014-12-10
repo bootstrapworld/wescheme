@@ -11,7 +11,17 @@ plt.compiler = plt.compiler || {};
 (function () {
     'use strict';
  
-    var _pinfo = null, constructors = [], accessors = [], predicates = [];
+    var _pinfo = null, constructors = {}, accessors = {}, predicates = {};
+    // add info about posns
+    constructors["make-posn"] = "posn";
+    accessors["posn-x"] = "x";
+    accessors["posn-y"] = "y";
+    predicates["posn?"] = "is-posn";
+    // add info about lists
+    accessors["rest"] = "rest";
+    accessors["first"] = "first";
+    accessors["length"] = "length";
+    predicates["posn?"] = "is-posn";
  
     // convertToPyretString : [listof Programs] pinfo -> Pyret String
     // BSL-to-pyret translation for testing. ignores location information altogether
@@ -23,10 +33,17 @@ plt.compiler = plt.compiler || {};
             constructors[b.constructor] = b.name;
             predicates[b.predicate] = "is-"+b.name;
             b.accessors.forEach(function(a){accessors[a]=a.substring(b.name.length+1);});
-          };
+          },
+          isTestCase = function(p){
+            return (p instanceof callExpr)
+                && (p.func instanceof symbolExpr)
+                && (["check-expect", "EXAMPLE", "check-within"].indexOf(p.func.val) > -1);
+          },
+          defsAndExprs = programs.filter(function(p){return !isTestCase(p);}),
+          testCases = programs.filter(isTestCase);
       _pinfo.definedNames.values().filter(isStruct).forEach(accumulateStructInfo);
  
-      return programs.map(toPyretString, []);
+      return defsAndExprs.map(toPyretString, []).concat(testCases.map(toPyretString));
     }
  
     function toPyretString(p){return p.toPyretString(); }
@@ -49,18 +66,23 @@ plt.compiler = plt.compiler || {};
     symbolMap["atan"]   = "num-atan";
     symbolMap["modulo"] = "num-modulo";
     symbolMap["sqrt"]   = "num-sqrt";
-    symbolMap["sqr"]    = "num-url";
+    symbolMap["sqr"]    = "num-sqr";
     symbolMap["ceiling"]= "num-ceiling";
     symbolMap["floor"]  = "num-floor";
     symbolMap["log"]    = "num-log";
     symbolMap["expt"]   = "num-expr";
     symbolMap["="]      = "==";
     symbolMap["equal?"] = "equal-always";
+    symbolMap["image=?"] = "equal-always";
+    symbolMap["string=?"] = "equal-always";
     symbolMap["ormap"]  = "any";
     symbolMap["number->string"] = "num-tostring";
     symbolMap["bitmap/url"] = "image-url";
-                                     
-                                     
+    symbolMap["empty?"] = "is-empty";
+    symbolMap["cons?"]  = "is-link";
+    symbolMap["cons"]   = "link";
+
+ 
     function makeBinopTreeForInfixApplication(infixOperator, exprs){
       function addExprToTree(tree, expr){
          return "("+expr.toPyretString()+" "+infixOperator+" "+tree+")";
@@ -166,7 +188,12 @@ plt.compiler = plt.compiler || {};
       return "block:\n"+bindings.join("\n")+"\n"+this.body.toPyretString()+" end";
     };
     caseExpr.prototype.toPyretString = function(){
-      return this.desugar(_pinfo)[0].toPyretString();
+      function convertClause(c){
+        return "| any(lam(elt): equal-always(_val,elt) end, "
+              + c.first.toPyretString() + ") then: " + c.second.toPyretString();
+      }
+      return "block: \n _val=" + this.expr.toPyretString() + "\n ask:"
+              + this.clauses.map(convertClause).join("\n") + "\n end \n end";
     };
 
     // Lambda expression
@@ -263,7 +290,9 @@ plt.compiler = plt.compiler || {};
     // quotedExpr
     // quotedExpr(val)
     quotedExpr.prototype.toPyretString = function(){
-      if(this.val instanceof literal){
+      if(this.val instanceof literal && this.val.val instanceof symbolExpr){
+        return makeLiteralFromSymbol(this.val);
+      } else if(this.val instanceof literal){
         return this.val.toPyretString();
       } else if(this.val instanceof symbolExpr){
         return makeLiteralFromSymbol(this.val);
@@ -281,8 +310,9 @@ plt.compiler = plt.compiler || {};
     // if a symbol already has a (different) name in Pyret, use that
     // otherwise, clean it up so it's a valid Pyret identifier
     symbolExpr.prototype.toPyretString = function(){
-      return symbolMap[this.val]? symbolMap[this.val]
-          : this.val.replace(/\//g,'SLASH').replace(/\?/g,'QUESTION').replace(/\!/g,'BANG');
+      return (symbolMap[this.val])? symbolMap[this.val]
+          : this.val.length===1? this.val
+          : this.val.replace(/\//g,'SLASH').replace(/\?/g,'QUESTION').replace(/\!/g,'BANG').replace(/\+/g,'PLUS');
     };
 
     // literals
