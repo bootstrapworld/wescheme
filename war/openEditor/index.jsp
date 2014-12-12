@@ -25,7 +25,7 @@
 
     <!-- JQuery -->
     <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
-    <script src="/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
+    <script src="/js/jquery/jquery-ui-1.8.24.min.js" type="text/javascript"></script>
 
    <!-- The standard Google Loader script; use your own key. -->
     <script src="http://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>

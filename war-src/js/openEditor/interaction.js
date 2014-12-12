@@ -457,11 +457,11 @@ WeSchemeInteractions = (function () {
 
                     dialog.dialog( {
                         bgiframe : true,
-                        position: ["left", "top"],
+                        position: {my: "left top", at:"left top"},
                         modal : true,
                         width: "auto",
                         height: "auto",
-                        beforeclose: handleClose,
+                        beforeClose: handleClose,
                         resizable: false,
                         closeOnEscape: true
                     });
@@ -512,12 +512,14 @@ WeSchemeInteractions = (function () {
                         else document.exitFullscreen();
                     };
 
-                    // if fullscreen is supported add the 'maximize' icon and listen for double-clicks
+                    // if fullscreen is supported, add the 'maximize' icon and listen for double-clicks
                     if (supportsFullScreen()) {
-                        jQuery("<span><img src='/images/fullscreen.png' width='12' height='12'></span>")
-                            .css("float", "left")
-                            .css("cursor", "auto")
+                        jQuery("<span><img src='/images/fullscreen.png' style='position: absolute;'></span>")
                             .css("margin-top", "5px")
+                            .css("background-image", "none")
+                            .css("position", "absolute")
+                            .css("cursor", "pointer")
+                            .css("left", "2em")
                             .click(toggleFullScreen)
                             .appendTo(dialog.parent().find(".ui-dialog-titlebar"));
                         dialog.dblclick(toggleFullScreen);
