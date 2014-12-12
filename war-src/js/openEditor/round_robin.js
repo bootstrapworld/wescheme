@@ -217,7 +217,6 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
-                                              console.log(local_bytecode.bytecode);
               if(Math.random() < .50){ // 50% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
