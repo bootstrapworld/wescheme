@@ -142,6 +142,9 @@ goog.provide("plt.wescheme.RoundRobin");
     var tryServerN = function(n, countFailures, 
                               programName, code, 
                               onDone, onDoneError) {
+
+       // strip out nonbreaking whitespace chars from the code
+       code = code.replace(/[\uFEFF\u2060\u200B]/,'');
  
        // if no cookie exists, set it to true
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
@@ -160,7 +163,6 @@ goog.provide("plt.wescheme.RoundRobin");
  
  if(TEST_LOCAL){
        var local_error = false, local_bytecode = false, start = new Date().getTime();
-
        // try client-side compilation first
        try{
           var lexemes     = plt.compiler.lex(code, programName);
@@ -188,7 +190,6 @@ goog.provide("plt.wescheme.RoundRobin");
             return;
           }
       }
- 
       // if we're going out to the server, track the time for speed comparison
       var end         = new Date().getTime(), localTime   = Math.floor(end-start);
       console.log("Compiled in: " + Math.floor(end-start) +"ms");
@@ -216,6 +217,7 @@ goog.provide("plt.wescheme.RoundRobin");
                        }
                        // compare bytecodes for accuracy
                        var server_bytecode = JSON.parse(bytecode);
+                                              console.log(local_bytecode.bytecode);
               if(Math.random() < .50){ // 50% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
