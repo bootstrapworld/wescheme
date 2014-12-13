@@ -7,6 +7,13 @@ plt.compiler = plt.compiler || {};
  BSL AST -> Pyret Source
  follows definition from http://www.pyret.org/docs/latest/
  
+ TODO:
+ - insert accessor and predicate functions into source, to allow them to evaluate to functions?
+ - use those functions in the pyret source instead, simplifying callExpr translation?
+ - use binop form of all infix functions
+ - fix quoted symbols, so they print as strings
+ - translate append as a binop tree
+ - must we auto-insert data definition for posn, and functions for lists (first, append, etc)? :(
  */
 (function () {
     'use strict';
@@ -51,7 +58,7 @@ plt.compiler = plt.compiler || {};
  
     ////////////////////////// FUNCTION MAPPINGS ///////////////////////
     // pyret functions that are infix
-    var infix = ["+","-","*","/","=",">","<",">=","<=","and","or"];
+    var infix = ["+","-","*","/","=",">","<",">=","<=","and","or", "append"];
                                                    
     // racket->pyret function name mapping
     var symbolMap = {};
@@ -97,10 +104,11 @@ plt.compiler = plt.compiler || {};
      return '"'+sym.val+'"';
     }
  
-    function makeStructFromMembers(constructor, elts){
+    function makeStructFromMembers(constructor, elts, isQuoted){
       var args = elts.map(function(e){
-        return (e instanceof Array)? makeStructFromMembers(constructor, e)
-                                  : e.toPyretString();});
+        return (e instanceof Array)? makeStructFromMembers(constructor, e, isQuoted)
+                          : (isQuoted && e instanceof symbolExpr)? makeLiteralFromSymbol(e)
+                          : e.toPyretString();});
       return "["+constructor+": "+args.join(",")+"]"
     }
  
@@ -134,7 +142,18 @@ plt.compiler = plt.compiler || {};
     defStruct.prototype.toPyretString = function(){
       var str = "", name = this.name.toPyretString(),
           typeName = name+"_"
-      str+="data "+typeName+": | "+name+"("+this.fields.map(toPyretString).join(", ")+")"+" end";
+      str+="data "+typeName+": | "+name+"("+this.fields.map(toPyretString).join(", ")+")"+" end\n";
+ 
+      function makeStandaloneAccessorFunction(field){
+        str+="fun "+name+"-"+field.toPyretString()+"(_struct_): "
+              +"_struct_."+field.toPyretString()+" end\n";
+      }
+ 
+      // add accessor functions, constructor and predicate
+      this.fields.forEach(makeStandaloneAccessorFunction)
+      str+="fun "+name+"QUESTION(_struct_): "+"is-"+name+"(_struct_) end\n";
+      str+="fun make-"+name+"("+this.fields.map(toPyretString).join(",")+"): "
+          +name+"("+this.fields.map(toPyretString).join(",")+") end\n";
       return str;
     };
                                      
@@ -270,6 +289,7 @@ plt.compiler = plt.compiler || {};
       if(predicates[funcStr]){
         return predicates[funcStr]+"("+this.args[0].toPyretString()+")";
       }
+ 
       // general case
       return this.func.toPyretString() +"("+this.args.map(toPyretString).join(', ')+")";
     };
@@ -297,7 +317,7 @@ plt.compiler = plt.compiler || {};
       } else if(this.val instanceof symbolExpr){
         return makeLiteralFromSymbol(this.val);
       } else if (this.val instanceof Array){
-        return makeStructFromMembers("list", this.val);
+        return makeStructFromMembers("list", this.val, true);
       } else {
         throw "There is no translation for "+this.toString();
       }
