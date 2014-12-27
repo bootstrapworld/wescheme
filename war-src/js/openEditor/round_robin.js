@@ -156,7 +156,7 @@ goog.provide("plt.wescheme.RoundRobin");
  
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
        var TRUST_LOCAL_ERRORS   = (Math.random() < 0.90) && TEST_DAY,
-           TRUST_LOCAL_BYTECODE = (Math.random() < 0.35) && TEST_DAY;
+           TRUST_LOCAL_BYTECODE = (Math.random() < 0.50) && TEST_DAY;
  
        console.log('Local compiler is '+(TEST_LOCAL? '' : 'not')+' running\nTEST_DAY is '+TEST_DAY
                   +'\nTRUST_LOCAL_ERRORS is '+TRUST_LOCAL_ERRORS+'\nTRUST_LOCAL_BYTECODE is '+TRUST_LOCAL_BYTECODE);
