@@ -234,6 +234,9 @@ plt.compiler = plt.compiler || {};
         exhaustedLoc = new quotedExpr(new literal(this.location.toVector())),
         expr = tagApplicationOperator_Module(new callExpr(condExhausted, [exhaustedLoc])
                                              , "moby/runtime/kernel/misc");
+ var ifStx = new symbolExpr("if");
+ ifStx.location = this.stx.location;
+ 
     expr.location = condExhausted.location = exhaustedLoc.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
       // desugar else to true
@@ -696,25 +699,11 @@ plt.compiler = plt.compiler || {};
                       else { throwModuleError(moduleName); }
                     },
            error: function (error) { throwModuleError(moduleName); },
-           async:   false
+           async: false
       });
     }
     return newPinfo;
  };
-/*
- localExpr.prototype.collectDefinitions = function(pinfo){
-    // remember previously defined names, so we can revert to them later
-    // in the meantime, scan the body
-    var prevKeys = pinfo.definedNames.keys(),
-        localPinfo= this.defs.reduce(function(pinfo, p){ return p.collectDefinitions(pinfo); }
-                                        , pinfo),
-        newPinfo  = this.body.collectDefinitions(localPinfo),
-        newKeys = newPinfo.definedNames.keys();
-    // now that the body is scanned, forget all the new definitions
-    newKeys.forEach(function(k){ if(prevKeys.indexOf(k) === -1) newPinfo.definedNames.remove(k); });
-    return newPinfo;
- };
- */
  // BINDING STRUCTS ///////////////////////////////////////////////////////
  function provideBindingId(symbl){ this.symbl = symbl;}
  function provideBindingStructId(symbl){ this.symbl = symbl; }
