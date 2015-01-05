@@ -165,6 +165,7 @@ plt.compiler = plt.compiler || {};
   var worldModule       = new moduleBinding("world",
                                            worldHandlersModule.bindings.concat(worldEffectsModule.bindings,
                                            ["key=?"
+                                            ,"play-sound"
                                             ,"big-bang"
                                             ,"make-color"
                                             ,"color-red"
