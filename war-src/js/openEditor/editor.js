@@ -22,6 +22,11 @@ var WeSchemeEditor;
 
     // The timeout between autosaving.
     var AUTOSAVE_TIMEOUT = 10000;
+    // Number of failed save attempts
+    var FAILED_SAVES = 0;
+    // the timer to show the error message
+    var delayedErrorTimer;
+
 
     //
     // These are the dependencies we're trying to maintain.
@@ -323,80 +328,85 @@ var WeSchemeEditor;
     };
 
     WeSchemeEditor.prototype.save = function(success, fail, cancel) {
-	var that = this;
-	var afterSave = function(pid) {
-	    that.pid = pid;
+      var that = this;
+ 
+      var resetSaveDelay = function(){
+        FAILED_SAVES = 0;   // set the tracker back to 0
+        clearTimeout(delayedErrorTimer);// clear any pending error messages
+      }
+ 
+      var afterSave = function(pid) {
+        that.pid = pid;
+        that.savedE.sendEvent(true);
+        resetSaveDelay(); // success! let's reset the decay
+        plt.wescheme.WeSchemeIntentBus.notify("after-save", that);
+        if (success) { success(); }
+      }
+      var whenSaveBreaks = function() {
+        FAILED_SAVES = Math.min(FAILED_SAVES+1, 8);
+        delayedErrorTimer = setTimeout(function(){
+                                       alert("Unable to save!\n\nYou may have been logged out of Google Services."
+                                             +"\nRefresh the Program List to log back in.");
+                                       }, Math.pow(2, FAILED_SAVES) * 1000);
+        if (fail) { fail(); }
+      };
 
-	    that.savedE.sendEvent(true);
-	    plt.wescheme.WeSchemeIntentBus.notify("after-save", that);
-            if (success) { success(); }
+      var onFirstSave = function() {
+        that.actions.save({ pid: false,
+                            title: that.filenameEntry.attr("value"),
+                            code : that.defn.getCode()},
+                          doPageReload,
+                          whenSaveBreaks);
+      };
+
+      var onUpdate = function() {
+        that.actions.save({ pid: that.pid,
+                            title: that.filenameEntry.attr("value"),
+                            code : that.defn.getCode()},
+                          afterSave,
+                          whenSaveBreaks);
+      };
+
+      var afterFileNameChosen = function() {
+        plt.wescheme.WeSchemeIntentBus.notify("before-save", that);
+        if (that.pid == false) {
+          onFirstSave();
+        } else {
+          if (valueNow(that.isPublishedB)) {
+            that.actions.makeAClone(that.pid, that.defn.getCode(),
+                                    function(newPid) {
+                                      that.actions.save({ pid: newPid,
+                                                          title: that.filenameEntry.attr("value"),
+                                                          code : that.defn.getCode()},
+                                                        function() {
+                                                          afterSave(newPid);
+                                                          doPageReload(newPid);
+                                                        },
+                                                        whenSaveBreaks);
+                                    },
+                                    whenSaveBreaks);
+          } else {
+            onUpdate();
+          }
         }
-	var whenSaveBreaks = function() {
-    alert("Unable to save!\n\nYou may have been logged out of Google Services.\nRefresh the Program List to log back in.");
-    if (fail) { fail(); }
-	};
+      };
 
-	var onFirstSave = function() {
-	    that.actions.save({ pid: false,
-		                title: that.filenameEntry.attr("value"),
-		                code : that.defn.getCode()},
-		doPageReload,
-		whenSaveBreaks);
-	};
-
-	var onUpdate = function() {
-	    that.actions.save({ pid: that.pid,
-		                title: that.filenameEntry.attr("value"),
-		                code : that.defn.getCode()},
-		afterSave,
-		whenSaveBreaks);
-	};
-
-	var afterFileNameChosen = function() {
-	    plt.wescheme.WeSchemeIntentBus.notify("before-save", that);
-	    if (that.pid == false) {
-		onFirstSave();
-	    } else {
-		if (valueNow(that.isPublishedB)) {
-		    that.actions.makeAClone(
-					    that.pid,
-					    that.defn.getCode(),
-					    function(newPid) {
-						that.actions.save(
-	{ pid: newPid,
-	  title: that.filenameEntry.attr("value"),
-	  code : that.defn.getCode()},
-	function() {
-	    afterSave(newPid);
-	    doPageReload(newPid);
-	},
-	whenSaveBreaks);
-					    },
-					    whenSaveBreaks);
-		} else {
-		    onUpdate();
-		}
-	    }
-	};
-
-        var doPageReload = function(pid) {
+      var doPageReload = function(pid) {
             that.suppressWarningBeforeUnloadE.sendEvent(true);
             plt.wescheme.WeSchemeIntentBus.notify("before-editor-reload-on-save", that)
-	    window.location =
-	    "/openEditor?pid=" + encodeURIComponent(pid);
+        window.location = "/openEditor?pid=" + encodeURIComponent(pid);
         };
 
 
-	that.filenameEntry.attr("value",
-				plt.wescheme.helpers.trimWhitespace(
-								    that.filenameEntry.attr("value")));
-	that._enforceNonemptyName(afterFileNameChosen,
-				  function() {
-				      // on abort, don't do anything.
-                                      if (cancel) { cancel(); }
-				  },
-				  true);
-    };
+      that.filenameEntry.attr("value",
+                              plt.wescheme.helpers.trimWhitespace(that.filenameEntry.attr("value")));
+      that._enforceNonemptyName(afterFileNameChosen,
+                                function() {
+                                  // on abort, don't do anything.
+                                  if (cancel) { cancel(); }
+                                },
+                                true);
+      };
 
     WeSchemeEditor.prototype._enforceNonemptyName = function(afterK, abortK, isFirstEntry) {
 	var that = this;
