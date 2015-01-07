@@ -987,7 +987,7 @@ WeSchemeInteractions = (function () {
             var aChunk = jQuery("<span/>").css("background-color", errorColor+'')
                                           .addClass("colored-link")
                                           .click(clickFunction);
-            var aLink = jQuery("<a/>").append(text)
+            var aLink = jQuery("<a/>").append(text.toString())
                                       .attr("href", "#")
                                       .click(clickFunction);
             jQuery(aChunk).append(aLink);

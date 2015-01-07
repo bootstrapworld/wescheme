@@ -13,7 +13,7 @@ plt.compiler = plt.compiler || {};
  - use binop form of all infix functions
  - fix quoted symbols, so they print as strings
  - translate append as a binop tree
- - must we auto-insert data definition for posn, and functions for lists (first, append, etc)? :(
+ - we must auto-insert data definition for posn, and functions for lists (first, append, etc) and boxes 
  */
 (function () {
     'use strict';
@@ -58,8 +58,10 @@ plt.compiler = plt.compiler || {};
  
     ////////////////////////// FUNCTION MAPPINGS ///////////////////////
     // pyret functions that are infix
-    var infix = ["+","-","*","/","=",">","<",">=","<=","and","or", "append"];
-                                                   
+    var infix = ["+","-","*","/","=",">","<",">=","<=","and","or", "append", "string"];
+    // racket functions for which there is no known translation
+    var noTranslation = ["eval"];
+ 
     // racket->pyret function name mapping
     var symbolMap = {};
     symbolMap["min"]    = "num-min";

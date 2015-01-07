@@ -2142,6 +2142,51 @@ var jsworld = {};
     }
     Jsworld.on_key = on_key;
 
+    function on_mouse(mouse) {
+      return function() {
+        var e;
+        var top;
+
+        var stillMousing = false;
+        var clearMousing = function() {
+            stillMousing = false;
+        };
+ 
+        var f = function(w, k) { mouse(w, e, k); };
+        var wrappedMouse = function(_e) {
+            e = _e;
+            if (top) { top.focus(); }
+
+            preventDefault(e);
+            stopPropagation(e);
+   
+            if (! stillMousing) {
+              stillMousing = true;
+              change_world(f, clearMousing);
+            }
+        };
+ 
+        return {
+          onRegister: function(top_) {
+            top = top_;
+            attachEvent(top, 'mousedown', wrappedMouse);
+            attachEvent(top, 'mouseup', wrappedMouse);
+            attachEvent(top, 'mousemove', wrappedMouse);
+          },
+          onUnregister: function(top) {
+            detachEvent(top, 'mousedown', wrappedMouse);
+            detachEvent(top, 'mouseup', wrappedMouse);
+            detachEvent(top, 'mousemove', wrappedMouse);
+          }
+        };
+      }
+    }
+    Jsworld.on_mouse = on_mouse;
+
+ 
+
+ 
+
 
     function on_tap(press) {
 	return function() {
@@ -2169,11 +2214,11 @@ var jsworld = {};
 	    return {
 		onRegister: function(top_) {
                     top = top_;
-                    attachEvent(top, 'mousedown', wrappedPress); 
+//                    attachEvent(top, 'mousedown', wrappedPress);
                     attachEvent(top, 'touchstart', wrappedPress); 
                 },
 		onUnregister: function(top) { 
-                    detachEvent(top, 'mousedown', wrappedPress);
+//                    detachEvent(top, 'mousedown', wrappedPress);
                     detachEvent(top, 'touchstart', wrappedPress); 
                 }
 	    };
@@ -5334,9 +5379,9 @@ if (typeof(exports) !== 'undefined') {
     function flonumRegexp(digits) {
 	var decimalNumOnRight = "(["+digits+"]*)\\.(["+digits+"]+)"
 	var decimalNumOnLeft = "(["+digits+"]+)\\.(["+digits+"]*)"
-	return new RegExp("^(?:([+-]?)" +
+	return new RegExp("^(?:([+-]?)(" +
                           decimalNumOnRight+"|"+decimalNumOnLeft +
-                          ")$");
+                          "))$");
     }
     function scientificPattern(digits, exp_mark) {
 	var noDecimal = "["+digits+"]+"
@@ -5344,7 +5389,7 @@ if (typeof(exports) !== 'undefined') {
 	var decimalNumOnLeft = "["+digits+"]+\\.["+digits+"]*"
 	return new RegExp("^(?:([+-]?" +
 			  "(?:"+noDecimal+"|"+decimalNumOnRight+"|"+decimalNumOnLeft+")" +
-			  ")["+exp_mark+"](\\+?["+digits+"]+))$");
+			  ")["+exp_mark+"]([+-]?["+digits+"]+))$");
     }
 
     function digitsForRadix(radix) {
@@ -5463,8 +5508,8 @@ if (typeof(exports) !== 'undefined') {
 
 	var fMatch = x.match(flonumRegexp(digitsForRadix(radix)))
 	if (fMatch) {
-	    var integralPart = fMatch[2] !== undefined ? fMatch[2] : fMatch[4];
-	    var fractionalPart = fMatch[3] !== undefined ? fMatch[3] : fMatch[5];
+	    var integralPart = fMatch[3] !== undefined ? fMatch[3] : fMatch[5];
+	    var fractionalPart = fMatch[4] !== undefined ? fMatch[4] : fMatch[6];
 	    return parseFloat( fMatch[1]
                              , integralPart
                              , fractionalPart
@@ -8778,7 +8823,7 @@ var textToDomNode = function(text) {
     var i;
     var wrapper = document.createElement("span");
     var newlineDiv;
-    wrapper.className = "wescheme-string";
+    wrapper.className = (text==="true" || text==="false")? "wescheme-boolean" : "wescheme-string";
     wrapper.style.fontFamily = 'monospace';
     wrapper.style.whiteSpace = "pre";
     if (chunks.length > 0) {
@@ -10162,6 +10207,9 @@ var world = {};
 	    // onKeyEffect: world key -> effect
 	    onKeyEffect : false,
 
+	    // onMouse: world number number string -> world
+	    onMouse: false,
+ 
 	    // onTilt: world number number number -> world
 	    onTilt: false,
 	    // onTiltEffect: world number number number -> effect
@@ -10919,11 +10967,12 @@ if (typeof(world) === 'undefined') {
       }
       // if it's something more sophisticated, render both images to canvases
       // First check canvas dimensions, then go pixel-by-pixel
-      var c1 = this.toDomNode(), c2 = other.toDomNode();
-      c1.afterAttach();  c2.afterAttach();
-      if(c1.width !== c2.width || c1.height !== c2.height){ return false;}
+      var node1 = this.toDomNode(), node2 = other.toDomNode();
+      if(node1.width !== node2.width || node1.height !== node2.height){ return false;}
       try{
-        var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d'),
+          var c1 = makeCanvas(node1.width, node1.height);
+          var c2 = makeCanvas(node2.width, node2.height);
+          var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d'),
             data1 = ctx1.getImageData(0, 0, c1.width, c1.height),
             data2 = ctx2.getImageData(0, 0, c2.width, c2.height);
         var pixels1 = data1.data,
@@ -11068,10 +11117,6 @@ if (typeof(world) === 'undefined') {
         }
     };
 
-    FileImage.installInstance = function(path, rawImage, afterInit) {
-        imageCache[path] = new FileImage(path, rawImage, afterInit);
-    };
-
     FileImage.installBrokenImage = function(path) {
         imageCache[path] = new TextImage("Unable to load " + path, 10, colorDb.get("red"),
                                          "normal", "Arial","","",false);
@@ -11089,7 +11134,7 @@ if (typeof(world) === 'undefined') {
         this.animationHackImg = this.img.cloneNode(true);
         document.body.appendChild(this.animationHackImg);
         this.animationHackImg.style.position = 'absolute';
-        this.animationHackImg.style.top = '-5000px';
+        this.animationHackImg.style.top = '-50000px';
  
         if (this.animationHackImg.complete) {
             afterInit(that);
@@ -11171,6 +11216,50 @@ if (typeof(world) === 'undefined') {
           return BaseImage.prototype.isEqual.call(this, other, aUnionFind);
         }
         return (this.src === other.src);
+    };
+ 
+
+    //////////////////////////////////////////////////////////////////////
+    // FileAudio: String Node -> Video
+    var FileAudio = function(src, loop, rawAudio) {
+        this.src = src;
+        var that = this;
+        if (rawAudio && (rawAudio.readyState===4)) {
+            that.audio                  = rawAudio;
+            that.audio.autoplay         = true;
+            that.audio.autobuffer       = true;
+            that.audio.currentTime      = 0;
+            that.audio.loop             = loop;
+            that.audio.play();
+        } else {
+            // fixme: we may want to do something blocking here for
+            // onload, since we don't know at this time what the file size
+            // should be, nor will drawImage do the right thing until the
+            // file is loaded.
+            that.audio = document.createElement('audio');
+            that.audio.src = src;
+            that.audio.addEventListener('canplay', function() {
+                that.audio.autoplay     = true;
+                that.audio.autobuffer   = true;
+                that.audio.currentTime  = 0;
+                that.audio.loop         = loop;
+                that.audio.play();
+            });
+        }
+        return true;
+    };
+    var audioCache = {};
+    FileAudio.makeInstance = function(path, loop, rawAudio) {
+/*        if (! (path in audioCache)) {
+            audioCache[path] = new FileAudio(path, loop, rawAudio, afterInit);
+            return audioCache[path];
+        } else {
+            audioCache[path].audio.play();
+            afterInit(audioCache[path]);
+            return audioCache[path];
+        }
+ */
+        return new FileAudio(path, loop, rawAudio);
     };
  
     //////////////////////////////////////////////////////////////////////
@@ -11516,11 +11605,12 @@ if (typeof(world) === 'undefined') {
     // colorString : hexColor Style -> rgba
     // Style can be "solid" (1.0), "outline" (1.0), a number (0-1.0) or null (1.0)
     var colorString = function(aColor, aStyle) {
-      var alpha = isNaN(aStyle)? 1.0 : aStyle/255;
+      var styleAlpha = isNaN(aStyle)? 1.0 : aStyle/255,
+          colorAlpha = types.colorAlpha(aColor)/255;
       return "rgba(" + types.colorRed(aColor) + "," +
                       types.colorGreen(aColor) + ", " +
                       types.colorBlue(aColor) + ", " +
-                      alpha + ")";
+                      styleAlpha*colorAlpha + ")";
     };
 
     //////////////////////////////////////////////////////////////////////
@@ -11572,6 +11662,29 @@ if (typeof(world) === 'undefined') {
     };
 
     //////////////////////////////////////////////////////////////////////
+    // PosnImage: Vertices Mode Color -> Image
+    //
+    var PosnImage = function(vertices, style, color) {
+        BaseImage.call(this);
+        var xs = vertices.map(function(v){return types.posnX(v);}),
+            ys = vertices.map(function(v){return types.posnY(v);}),
+            vertices = zipVertices(xs, ys);
+
+        this.width      = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
+        this.height     = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+        this.style      = style;
+        this.color      = color;
+        // shift the vertices by the calculated offsets, now that we know the width
+        var xOffset = Math.min.apply(Math, xs);
+        var yOffset = Math.min.apply(Math, ys);
+        for(var i=0; i<vertices.length; i++){
+            vertices[i].x -= xOffset; vertices[i].y -= yOffset;
+        }
+        this.vertices   = vertices;
+    };
+    PosnImage.prototype = heir(BaseImage.prototype);
+
+    //////////////////////////////////////////////////////////////////////
     // PolygonImage: Number Count Step Mode Color -> Image
     //
     // See http://www.algebra.com/algebra/homework/Polygons/Inscribed-and-circumscribed-polygons.lesson
@@ -11621,10 +11734,9 @@ if (typeof(world) === 'undefined') {
 
     //////////////////////////////////////////////////////////////////////
     // TextImage: String Number Color String String String String any/c -> Image
-    var TextImage = function(msg, size, color, face, family, style, weight, underline) {        
+    var TextImage = function(str, size, color, face, family, style, weight, underline) {
         BaseImage.call(this);
-        var metrics;
-        this.msg        = msg;
+        this.str        = str;
         this.size       = size;   // 18
         this.color      = color;  // red
         this.face       = face;   // Gill Sans
@@ -11632,52 +11744,38 @@ if (typeof(world) === 'undefined') {
         this.style      = (style === "slant")? "oblique" : style;  // Racket's "slant" -> CSS's "oblique"
         this.weight     = (weight=== "light")? "lighter" : weight; // Racket's "light" -> CSS's "lighter"
         this.underline  = underline;
-        // example: "bold italic 20px 'Times', sans-serif". 
-        // Default weight is "normal", face is "Arial"
  
         // NOTE: we *ignore* font-family, as it causes a number of font bugs due the browser inconsistencies
-        var canvas      = world.Kernel.makeCanvas(0, 0),
-            ctx         = canvas.getContext("2d");
+        // example: "bold italic 20px 'Times', sans-serif".
+        // Default weight is "normal", face is "Arial"
+        this.font = (this.style+" " +this.weight+" "+this.size+"px "+'"'+this.face+'", '+this.family);
+
+        // We don't trust ctx.measureText, since (a) it's buggy and (b) it doesn't measure height
+        // based off of the amazing work at http://mudcu.be/journal/2011/01/html5-typographic-metrics/#baselineCanvas
+        // PENDING CANVAS V5 API: http://www.whatwg.org/specs/web-apps/current-work/#textmetrics
  
-        this.font = (this.style + " " +
-                     this.weight + " " +
-                     this.size + "px " +
-                     '"'+this.face+'", '+
-                     this.family);
- 
-        try {
-            ctx.font    = this.font;
-        } catch (e) {
-            this.fallbackOnFont();
-            ctx.font    = this.font;
-        }
+        // build a DOM node with the same styling as the canvas, then measure it
+        var container = document.createElement("div"),
+            parent = document.createElement("span"),
+            image = document.createElement("img");    // hack to get at CSS measuring properties
+        parent.style.font = this.font;                // use the same font settings as the context
+        image.width = 42; image.height = 1;           // we use a dataURL to reduce dependency on external image files
+        image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWM4MbPgPwAGzwLR05RbqwAAAABJRU5ErkJggg==";
+        container.style.cssText = "position: absolute; top: 0px; left: 0px;  zIndex=-1";
+        parent.appendChild(document.createTextNode(str));
+        parent.appendChild(image);
+        container.appendChild(parent);
+        document.body.appendChild(container);
         
-        // Defensive: on IE, this can break.
-        try {
-            metrics     = ctx.measureText(msg);
-            this.width  = metrics.width;
-            this.height = Number(this.size); 
-        } catch(e) {
-            this.fallbackOnFont();
-        }
+        // getting (more accurate) css equivalent of ctx.measureText()
+        image.style.display = "none";
+        parent.style.display= "inline";
+        this.alphaBaseline = 0;
+        this.width       = parent.offsetWidth;
+        this.height      = parent.offsetHeight;
+        document.body.removeChild(container);       // clean up after ourselves
     };
- 
-
     TextImage.prototype = heir(BaseImage.prototype);
-
-    TextImage.prototype.fallbackOnFont = function() {
-        // Defensive: if the browser doesn't support certain features, we
-        // reduce to a smaller feature set and try again.
-        this.font       = this.size + "px " + maybeQuote(this.family);    
-        var canvas      = world.Kernel.makeCanvas(0, 0);
-        var ctx         = canvas.getContext("2d");
-        ctx.font        = this.font;
-        var metrics     = ctx.measureText(this.msg);
-        this.width      = metrics.width;
-        // KLUDGE: I don't know how to get at the height.
-        this.height     = Number(this.size);//ctx.measureText("m").width + 20;
-    };
-
 
     TextImage.prototype.render = function(ctx, x, y) {
         ctx.save();
@@ -11685,13 +11783,7 @@ if (typeof(world) === 'undefined') {
         ctx.textBaseline= 'top';
         ctx.fillStyle   = colorString(this.color);
         ctx.font        = this.font;
-        try { 
-            ctx.fillText(this.msg, x, y); 
-        } catch (e) {
-            this.fallbackOnFont();
-            ctx.font = this.font;    
-            ctx.fillText(this.msg, x, y); 
-        }
+        ctx.fillText(this.str, x, y);
         if(this.underline){
             ctx.beginPath();
             ctx.moveTo(x, y+this.size);
@@ -11704,15 +11796,13 @@ if (typeof(world) === 'undefined') {
         ctx.restore();
     };
 
-    TextImage.prototype.getBaseline = function() {
-        return this.size;
-    };
+    TextImage.prototype.getBaseline = function() { return this.alphaBaseline; };
 
     TextImage.prototype.isEqual = function(other, aUnionFind) {
         if (!(other instanceof TextImage)) {
           return BaseImage.prototype.isEqual.call(this, other, aUnionFind);
         }
-        return (this.msg      === other.msg &&
+        return (this.str      === other.str &&
                 this.size     === other.size &&
                 this.face     === other.face &&
                 this.family   === other.family &&
@@ -11760,7 +11850,7 @@ if (typeof(world) === 'undefined') {
      var TriangleImage = function(sideC, angleA, sideB, style, color) {
        BaseImage.call(this);
           var thirdX = sideB * Math.cos(angleA * Math.PI/180);
-          var thirdY = sideB * Math.sin(angleA * Math.PI/180);
+          var thirdY = Math.floor(sideB * Math.sin(angleA * Math.PI/180));
 
           var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
@@ -11901,195 +11991,193 @@ if (typeof(world) === 'undefined') {
 
     // FIXME: update toString to handle the primitive field values.
     var colorDb = new ColorDb();
-    colorDb.put("ORANGE", types.color(255, 165, 0));
-    colorDb.put("RED", types.color(255, 0, 0));
-    colorDb.put("ORANGERED", types.color(255, 69, 0));
-    colorDb.put("TOMATO", types.color(255, 99, 71));
-    colorDb.put("DARKRED", types.color(139, 0, 0));
-    colorDb.put("RED", types.color(255, 0, 0));
-    colorDb.put("FIREBRICK", types.color(178, 34, 34));
-    colorDb.put("CRIMSON", types.color(220, 20, 60));
-    colorDb.put("DEEPPINK", types.color(255, 20, 147));
-    colorDb.put("MAROON", types.color(176, 48, 96));
-    colorDb.put("INDIAN RED", types.color(205, 92, 92));
-    colorDb.put("INDIANRED", types.color(205, 92, 92));
-    colorDb.put("MEDIUM VIOLET RED", types.color(199, 21, 133));
-    colorDb.put("MEDIUMVIOLETRED", types.color(199, 21, 133));
-    colorDb.put("VIOLET RED", types.color(208, 32, 144));
-    colorDb.put("VIOLETRED", types.color(208, 32, 144));
-    colorDb.put("LIGHTCORAL", types.color(240, 128, 128));
-    colorDb.put("HOTPINK", types.color(255, 105, 180));
-    colorDb.put("PALEVIOLETRED", types.color(219, 112, 147));
-    colorDb.put("LIGHTPINK", types.color(255, 182, 193));
-    colorDb.put("ROSYBROWN", types.color(188, 143, 143));
-    colorDb.put("PINK", types.color(255, 192, 203));
-    colorDb.put("ORCHID", types.color(218, 112, 214));
-    colorDb.put("LAVENDERBLUSH", types.color(255, 240, 245));
-    colorDb.put("SNOW", types.color(255, 250, 250));
-    colorDb.put("CHOCOLATE", types.color(210, 105, 30));
-    colorDb.put("SADDLEBROWN", types.color(139, 69, 19));
-    colorDb.put("BROWN", types.color(132, 60, 36));
-    colorDb.put("DARKORANGE", types.color(255, 140, 0));
-    colorDb.put("CORAL", types.color(255, 127, 80));
-    colorDb.put("SIENNA", types.color(160, 82, 45));
-    colorDb.put("ORANGE", types.color(255, 165, 0));
-    colorDb.put("SALMON", types.color(250, 128, 114));
-    colorDb.put("PERU", types.color(205, 133, 63));
-    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11));
-    colorDb.put("GOLDENROD", types.color(218, 165, 32));
-    colorDb.put("SANDYBROWN", types.color(244, 164, 96));
-    colorDb.put("LIGHTSALMON", types.color(255, 160, 122));
-    colorDb.put("DARKSALMON", types.color(233, 150, 122));
-    colorDb.put("GOLD", types.color(255, 215, 0));
-    colorDb.put("YELLOW", types.color(255, 255, 0));
-    colorDb.put("OLIVE", types.color(128, 128, 0));
-    colorDb.put("BURLYWOOD", types.color(222, 184, 135));
-    colorDb.put("TAN", types.color(210, 180, 140));
-    colorDb.put("NAVAJOWHITE", types.color(255, 222, 173));
-    colorDb.put("PEACHPUFF", types.color(255, 218, 185));
-    colorDb.put("KHAKI", types.color(240, 230, 140));
-    colorDb.put("DARKKHAKI", types.color(189, 183, 107));
-    colorDb.put("MOCCASIN", types.color(255, 228, 181));
-    colorDb.put("WHEAT", types.color(245, 222, 179));
-    colorDb.put("BISQUE", types.color(255, 228, 196));
-    colorDb.put("PALEGOLDENROD", types.color(238, 232, 170));
-    colorDb.put("BLANCHEDALMOND", types.color(255, 235, 205));
-    colorDb.put("MEDIUM GOLDENROD", types.color(234, 234, 173));
-    colorDb.put("MEDIUMGOLDENROD", types.color(234, 234, 173));
-    colorDb.put("PAPAYAWHIP", types.color(255, 239, 213));
-    colorDb.put("MISTYROSE", types.color(255, 228, 225));
-    colorDb.put("LEMONCHIFFON", types.color(255, 250, 205));
-    colorDb.put("ANTIQUEWHITE", types.color(250, 235, 215));
-    colorDb.put("CORNSILK", types.color(255, 248, 220));
-    colorDb.put("LIGHTGOLDENRODYELLOW", types.color(250, 250, 210));
-    colorDb.put("OLDLACE", types.color(253, 245, 230));
-    colorDb.put("LINEN", types.color(250, 240, 230));
-    colorDb.put("LIGHTYELLOW", types.color(255, 255, 224));
-    colorDb.put("SEASHELL", types.color(255, 245, 238));
-    colorDb.put("BEIGE", types.color(245, 245, 220));
-    colorDb.put("FLORALWHITE", types.color(255, 250, 240));
-    colorDb.put("IVORY", types.color(255, 255, 240));
-    colorDb.put("GREEN", types.color(0, 255, 0));
-    colorDb.put("LAWNGREEN", types.color(124, 252, 0));
-    colorDb.put("CHARTREUSE", types.color(127, 255, 0));
-    colorDb.put("GREEN YELLOW", types.color(173, 255, 47));
-    colorDb.put("GREENYELLOW", types.color(173, 255, 47));
-    colorDb.put("YELLOW GREEN", types.color(154, 205, 50));
-    colorDb.put("YELLOWGREEN", types.color(154, 205, 50));
-    colorDb.put("MEDIUM FOREST GREEN", types.color(107, 142, 35));
-    colorDb.put("OLIVEDRAB", types.color(107, 142, 35));
-    colorDb.put("MEDIUMFORESTGREEN", types.color(107, 142, 35));
-    colorDb.put("DARK OLIVE GREEN", types.color(85, 107, 47));
-    colorDb.put("DARKOLIVEGREEN", types.color(85, 107, 47));
-    colorDb.put("DARKSEAGREEN", types.color(143, 188, 139));
-    colorDb.put("LIME", types.color(0, 255, 0));
-    colorDb.put("DARK GREEN", types.color(0, 100, 0));
-    colorDb.put("DARKGREEN", types.color(0, 100, 0));
-    colorDb.put("LIME GREEN", types.color(50, 205, 50));
-    colorDb.put("LIMEGREEN", types.color(50, 205, 50));
-    colorDb.put("FOREST GREEN", types.color(34, 139, 34));
-    colorDb.put("FORESTGREEN", types.color(34, 139, 34));
-    colorDb.put("SPRING GREEN", types.color(0, 255, 127));
-    colorDb.put("SPRINGGREEN", types.color(0, 255, 127));
-    colorDb.put("MEDIUM SPRING GREEN", types.color(0, 250, 154));
-    colorDb.put("MEDIUMSPRINGGREEN", types.color(0, 250, 154));
-    colorDb.put("SEA GREEN", types.color(46, 139, 87));
-    colorDb.put("SEAGREEN", types.color(46, 139, 87));
-    colorDb.put("MEDIUM SEA GREEN", types.color(60, 179, 113));
-    colorDb.put("MEDIUMSEAGREEN", types.color(60, 179, 113));
-    colorDb.put("AQUAMARINE", types.color(112, 216, 144));
-    colorDb.put("LIGHTGREEN", types.color(144, 238, 144));
-    colorDb.put("PALE GREEN", types.color(152, 251, 152));
-    colorDb.put("PALEGREEN", types.color(152, 251, 152));
-    colorDb.put("MEDIUM AQUAMARINE", types.color(102, 205, 170));
-    colorDb.put("MEDIUMAQUAMARINE", types.color(102, 205, 170));
-    colorDb.put("TURQUOISE", types.color(64, 224, 208));
-    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170));
-    colorDb.put("MEDIUM TURQUOISE", types.color(72, 209, 204));
-    colorDb.put("MEDIUMTURQUOISE", types.color(72, 209, 204));
-    colorDb.put("HONEYDEW", types.color(240, 255, 240));
-    colorDb.put("MINTCREAM", types.color(245, 255, 250));
-    colorDb.put("ROYALBLUE", types.color(65, 105, 225));
-    colorDb.put("DODGERBLUE", types.color(30, 144, 255));
-    colorDb.put("DEEPSKYBLUE", types.color(0, 191, 255));
-    colorDb.put("CORNFLOWERBLUE", types.color(100, 149, 237));
-    colorDb.put("STEEL BLUE", types.color(70, 130, 180));
-    colorDb.put("STEELBLUE", types.color(70, 130, 180));
-    colorDb.put("LIGHTSKYBLUE", types.color(135, 206, 250));
-    colorDb.put("DARK TURQUOISE", types.color(0, 206, 209));
-    colorDb.put("DARKTURQUOISE", types.color(0, 206, 209));
-    colorDb.put("CYAN", types.color(0, 255, 255));
-    colorDb.put("AQUA", types.color(0, 255, 255));
-    colorDb.put("DARKCYAN", types.color(0, 139, 139));
-    colorDb.put("TEAL", types.color(0, 128, 128));
-    colorDb.put("SKY BLUE", types.color(135, 206, 235));
-    colorDb.put("SKYBLUE", types.color(135, 206, 235));
-    colorDb.put("CADET BLUE", types.color(96, 160, 160));
-    colorDb.put("CADETBLUE", types.color(95, 158, 160));
-    colorDb.put("DARK SLATE GRAY", types.color(47, 79, 79));
-    colorDb.put("DARKSLATEGRAY", types.color(47, 79, 79));
-    colorDb.put("LIGHTSLATEGRAY", types.color(119, 136, 153));
-    colorDb.put("SLATEGRAY", types.color(112, 128, 144));
-    colorDb.put("LIGHT STEEL BLUE", types.color(176, 196, 222));
-    colorDb.put("LIGHTSTEELBLUE", types.color(176, 196, 222));
-    colorDb.put("LIGHT BLUE", types.color(173, 216, 230));
-    colorDb.put("LIGHTBLUE", types.color(173, 216, 230));
-    colorDb.put("POWDERBLUE", types.color(176, 224, 230));
-    colorDb.put("PALETURQUOISE", types.color(175, 238, 238));
-    colorDb.put("LIGHTCYAN", types.color(224, 255, 255));
-    colorDb.put("ALICEBLUE", types.color(240, 248, 255));
-    colorDb.put("AZURE", types.color(240, 255, 255));
-    colorDb.put("MEDIUM BLUE", types.color(0, 0, 205));
-    colorDb.put("MEDIUMBLUE", types.color(0, 0, 205));
-    colorDb.put("DARKBLUE", types.color(0, 0, 139));
-    colorDb.put("MIDNIGHT BLUE", types.color(25, 25, 112));
-    colorDb.put("MIDNIGHTBLUE", types.color(25, 25, 112));
-    colorDb.put("NAVY", types.color(36, 36, 140));
-    colorDb.put("BLUE", types.color(0, 0, 255));
-    colorDb.put("INDIGO", types.color(75, 0, 130));
-    colorDb.put("BLUE VIOLET", types.color(138, 43, 226));
-    colorDb.put("BLUEVIOLET", types.color(138, 43, 226));
-    colorDb.put("MEDIUM SLATE BLUE", types.color(123, 104, 238));
-    colorDb.put("MEDIUMSLATEBLUE", types.color(123, 104, 238));
-    colorDb.put("SLATE BLUE", types.color(106, 90, 205));
-    colorDb.put("SLATEBLUE", types.color(106, 90, 205));
-    colorDb.put("PURPLE", types.color(160, 32, 240));
-    colorDb.put("DARK SLATE BLUE", types.color(72, 61, 139));
-    colorDb.put("DARKSLATEBLUE", types.color(72, 61, 139));
-    colorDb.put("DARKVIOLET", types.color(148, 0, 211));
-    colorDb.put("DARK ORCHID", types.color(153, 50, 204));
-    colorDb.put("DARKORCHID", types.color(153, 50, 204));
-    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219));
-    colorDb.put("CORNFLOWER BLUE", types.color(68, 64, 108));
-    colorDb.put("MEDIUM ORCHID", types.color(186, 85, 211));
-    colorDb.put("MEDIUMORCHID", types.color(186, 85, 211));
-    colorDb.put("MAGENTA", types.color(255, 0, 255));
-    colorDb.put("FUCHSIA", types.color(255, 0, 255));
-    colorDb.put("DARKMAGENTA", types.color(139, 0, 139));
-    colorDb.put("VIOLET", types.color(238, 130, 238));
-    colorDb.put("PLUM", types.color(221, 160, 221));
-    colorDb.put("LAVENDER", types.color(230, 230, 250));
-    colorDb.put("THISTLE", types.color(216, 191, 216));
-    colorDb.put("GHOSTWHITE", types.color(248, 248, 255));
-    colorDb.put("WHITE", types.color(255, 255, 255));
-    colorDb.put("WHITESMOKE", types.color(245, 245, 245));
-    colorDb.put("GAINSBORO", types.color(220, 220, 220));
-    colorDb.put("LIGHT GRAY", types.color(211, 211, 211));
-    colorDb.put("LIGHTGRAY", types.color(211, 211, 211));
-    colorDb.put("SILVER", types.color(192, 192, 192));
-    colorDb.put("GRAY", types.color(190, 190, 190));
-    colorDb.put("DARK GRAY", types.color(169, 169, 169));
-    colorDb.put("DARKGRAY", types.color(169, 169, 169));
-    colorDb.put("DIM GRAY", types.color(105, 105, 105));
-    colorDb.put("DIMGRAY", types.color(105, 105, 105));
-    colorDb.put("BLACK", types.color(0, 0, 0));
+    colorDb.put("ORANGE", types.color(255, 165, 0, 255));
+    colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("ORANGERED", types.color(255, 69, 0, 255));
+    colorDb.put("TOMATO", types.color(255, 99, 71, 255));
+    colorDb.put("DARKRED", types.color(139, 0, 0, 255));
+    colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("FIREBRICK", types.color(178, 34, 34, 255));
+    colorDb.put("CRIMSON", types.color(220, 20, 60, 255));
+    colorDb.put("DEEPPINK", types.color(255, 20, 147, 255));
+    colorDb.put("MAROON", types.color(176, 48, 96, 255));
+    colorDb.put("INDIAN RED", types.color(205, 92, 92, 255));
+    colorDb.put("INDIANRED", types.color(205, 92, 92, 255));
+    colorDb.put("MEDIUM VIOLET RED", types.color(199, 21, 133, 255));
+    colorDb.put("MEDIUMVIOLETRED", types.color(199, 21, 133, 255));
+    colorDb.put("VIOLET RED", types.color(208, 32, 144, 255));
+    colorDb.put("VIOLETRED", types.color(208, 32, 144, 255));
+    colorDb.put("LIGHTCORAL", types.color(240, 128, 128, 255));
+    colorDb.put("HOTPINK", types.color(255, 105, 180, 255));
+    colorDb.put("PALEVIOLETRED", types.color(219, 112, 147, 255));
+    colorDb.put("LIGHTPINK", types.color(255, 182, 193, 255));
+    colorDb.put("ROSYBROWN", types.color(188, 143, 143, 255));
+    colorDb.put("PINK", types.color(255, 192, 203, 255));
+    colorDb.put("ORCHID", types.color(218, 112, 214, 255));
+    colorDb.put("LAVENDERBLUSH", types.color(255, 240, 245, 255));
+    colorDb.put("SNOW", types.color(255, 250, 250, 255));
+    colorDb.put("CHOCOLATE", types.color(210, 105, 30, 255));
+    colorDb.put("SADDLEBROWN", types.color(139, 69, 19, 255));
+    colorDb.put("BROWN", types.color(132, 60, 36, 255));
+    colorDb.put("DARKORANGE", types.color(255, 140, 0, 255));
+    colorDb.put("CORAL", types.color(255, 127, 80, 255));
+    colorDb.put("SIENNA", types.color(160, 82, 45, 255));
+    colorDb.put("ORANGE", types.color(255, 165, 0, 255));
+    colorDb.put("SALMON", types.color(250, 128, 114, 255));
+    colorDb.put("PERU", types.color(205, 133, 63, 255));
+    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
+    colorDb.put("GOLDENROD", types.color(218, 165, 32, 255));
+    colorDb.put("SANDYBROWN", types.color(244, 164, 96, 255));
+    colorDb.put("LIGHTSALMON", types.color(255, 160, 122, 255));
+    colorDb.put("DARKSALMON", types.color(233, 150, 122, 255));
+    colorDb.put("GOLD", types.color(255, 215, 0, 255));
+    colorDb.put("YELLOW", types.color(255, 255, 0, 255));
+    colorDb.put("OLIVE", types.color(128, 128, 0, 255));
+    colorDb.put("BURLYWOOD", types.color(222, 184, 135, 255));
+    colorDb.put("TAN", types.color(210, 180, 140, 255));
+    colorDb.put("NAVAJOWHITE", types.color(255, 222, 173, 255));
+    colorDb.put("PEACHPUFF", types.color(255, 218, 185, 255));
+    colorDb.put("KHAKI", types.color(240, 230, 140, 255));
+    colorDb.put("DARKKHAKI", types.color(189, 183, 107, 255));
+    colorDb.put("MOCCASIN", types.color(255, 228, 181, 255));
+    colorDb.put("WHEAT", types.color(245, 222, 179, 255));
+    colorDb.put("BISQUE", types.color(255, 228, 196, 255));
+    colorDb.put("PALEGOLDENROD", types.color(238, 232, 170, 255));
+    colorDb.put("BLANCHEDALMOND", types.color(255, 235, 205, 255));
+    colorDb.put("MEDIUM GOLDENROD", types.color(234, 234, 173, 255));
+    colorDb.put("MEDIUMGOLDENROD", types.color(234, 234, 173, 255));
+    colorDb.put("PAPAYAWHIP", types.color(255, 239, 213, 255));
+    colorDb.put("MISTYROSE", types.color(255, 228, 225, 255));
+    colorDb.put("LEMONCHIFFON", types.color(255, 250, 205, 255));
+    colorDb.put("ANTIQUEWHITE", types.color(250, 235, 215, 255));
+    colorDb.put("CORNSILK", types.color(255, 248, 220, 255));
+    colorDb.put("LIGHTGOLDENRODYELLOW", types.color(250, 250, 210, 255));
+    colorDb.put("OLDLACE", types.color(253, 245, 230, 255));
+    colorDb.put("LINEN", types.color(250, 240, 230, 255));
+    colorDb.put("LIGHTYELLOW", types.color(255, 255, 224, 255));
+    colorDb.put("SEASHELL", types.color(255, 245, 238, 255));
+    colorDb.put("BEIGE", types.color(245, 245, 220, 255));
+    colorDb.put("FLORALWHITE", types.color(255, 250, 240, 255));
+    colorDb.put("IVORY", types.color(255, 255, 240, 255));
+    colorDb.put("GREEN", types.color(0, 255, 0, 255));
+    colorDb.put("LAWNGREEN", types.color(124, 252, 0, 255));
+    colorDb.put("CHARTREUSE", types.color(127, 255, 0, 255));
+    colorDb.put("GREEN YELLOW", types.color(173, 255, 47, 255));
+    colorDb.put("GREENYELLOW", types.color(173, 255, 47, 255));
+    colorDb.put("YELLOW GREEN", types.color(154, 205, 50, 255));
+    colorDb.put("YELLOWGREEN", types.color(154, 205, 50, 255));
+    colorDb.put("MEDIUM FOREST GREEN", types.color(107, 142, 35, 255));
+    colorDb.put("OLIVEDRAB", types.color(107, 142, 35, 255));
+    colorDb.put("MEDIUMFORESTGREEN", types.color(107, 142, 35, 255));
+    colorDb.put("DARK OLIVE GREEN", types.color(85, 107, 47, 255));
+    colorDb.put("DARKOLIVEGREEN", types.color(85, 107, 47, 255));
+    colorDb.put("DARKSEAGREEN", types.color(143, 188, 139, 255));
+    colorDb.put("LIME", types.color(0, 255, 0, 255));
+    colorDb.put("DARK GREEN", types.color(0, 100, 0, 255));
+    colorDb.put("DARKGREEN", types.color(0, 100, 0, 255));
+    colorDb.put("LIME GREEN", types.color(50, 205, 50, 255));
+    colorDb.put("LIMEGREEN", types.color(50, 205, 50, 255));
+    colorDb.put("FOREST GREEN", types.color(34, 139, 34, 255));
+    colorDb.put("FORESTGREEN", types.color(34, 139, 34, 255));
+    colorDb.put("SPRING GREEN", types.color(0, 255, 127, 255));
+    colorDb.put("SPRINGGREEN", types.color(0, 255, 127, 255));
+    colorDb.put("MEDIUM SPRING GREEN", types.color(0, 250, 154, 255));
+    colorDb.put("MEDIUMSPRINGGREEN", types.color(0, 250, 154, 255));
+    colorDb.put("SEA GREEN", types.color(46, 139, 87, 255));
+    colorDb.put("SEAGREEN", types.color(46, 139, 87, 255));
+    colorDb.put("MEDIUM SEA GREEN", types.color(60, 179, 113, 255));
+    colorDb.put("MEDIUMSEAGREEN", types.color(60, 179, 113, 255));
+    colorDb.put("AQUAMARINE", types.color(112, 216, 144, 255));
+    colorDb.put("LIGHTGREEN", types.color(144, 238, 144, 255));
+    colorDb.put("PALE GREEN", types.color(152, 251, 152, 255));
+    colorDb.put("PALEGREEN", types.color(152, 251, 152, 255));
+    colorDb.put("MEDIUM AQUAMARINE", types.color(102, 205, 170, 255));
+    colorDb.put("MEDIUMAQUAMARINE", types.color(102, 205, 170, 255));
+    colorDb.put("TURQUOISE", types.color(64, 224, 208, 255));
+    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170, 255));
+    colorDb.put("MEDIUM TURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("MEDIUMTURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("HONEYDEW", types.color(240, 255, 240, 255));
+    colorDb.put("MINTCREAM", types.color(245, 255, 250, 255));
+    colorDb.put("ROYALBLUE", types.color(65, 105, 225, 255));
+    colorDb.put("DODGERBLUE", types.color(30, 144, 255, 255));
+    colorDb.put("DEEPSKYBLUE", types.color(0, 191, 255, 255));
+    colorDb.put("CORNFLOWERBLUE", types.color(100, 149, 237, 255));
+    colorDb.put("STEEL BLUE", types.color(70, 130, 180, 255));
+    colorDb.put("STEELBLUE", types.color(70, 130, 180, 255));
+    colorDb.put("LIGHTSKYBLUE", types.color(135, 206, 250, 255));
+    colorDb.put("DARK TURQUOISE", types.color(0, 206, 209, 255));
+    colorDb.put("DARKTURQUOISE", types.color(0, 206, 209, 255));
+    colorDb.put("CYAN", types.color(0, 255, 255, 255));
+    colorDb.put("AQUA", types.color(0, 255, 255, 255));
+    colorDb.put("DARKCYAN", types.color(0, 139, 139, 255));
+    colorDb.put("TEAL", types.color(0, 128, 128, 255));
+    colorDb.put("SKY BLUE", types.color(135, 206, 235, 255));
+    colorDb.put("SKYBLUE", types.color(135, 206, 235, 255));
+    colorDb.put("CADET BLUE", types.color(96, 160, 160, 255));
+    colorDb.put("CADETBLUE", types.color(95, 158, 160, 255));
+    colorDb.put("DARK SLATE GRAY", types.color(47, 79, 79, 255));
+    colorDb.put("DARKSLATEGRAY", types.color(47, 79, 79, 255));
+    colorDb.put("LIGHTSLATEGRAY", types.color(119, 136, 153, 255));
+    colorDb.put("SLATEGRAY", types.color(112, 128, 144, 255));
+    colorDb.put("LIGHT STEEL BLUE", types.color(176, 196, 222, 255));
+    colorDb.put("LIGHTSTEELBLUE", types.color(176, 196, 222, 255));
+    colorDb.put("LIGHT BLUE", types.color(173, 216, 230, 255));
+    colorDb.put("LIGHTBLUE", types.color(173, 216, 230, 255));
+    colorDb.put("POWDERBLUE", types.color(176, 224, 230, 255));
+    colorDb.put("PALETURQUOISE", types.color(175, 238, 238, 255));
+    colorDb.put("LIGHTCYAN", types.color(224, 255, 255, 255));
+    colorDb.put("ALICEBLUE", types.color(240, 248, 255, 255));
+    colorDb.put("AZURE", types.color(240, 255, 255, 255));
+    colorDb.put("MEDIUM BLUE", types.color(0, 0, 205, 255));
+    colorDb.put("MEDIUMBLUE", types.color(0, 0, 205, 255));
+    colorDb.put("DARKBLUE", types.color(0, 0, 139, 255));
+    colorDb.put("MIDNIGHT BLUE", types.color(25, 25, 112, 255));
+    colorDb.put("MIDNIGHTBLUE", types.color(25, 25, 112, 255));
+    colorDb.put("NAVY", types.color(36, 36, 140, 255));
+    colorDb.put("BLUE", types.color(0, 0, 255, 255));
+    colorDb.put("INDIGO", types.color(75, 0, 130, 255));
+    colorDb.put("BLUE VIOLET", types.color(138, 43, 226, 255));
+    colorDb.put("BLUEVIOLET", types.color(138, 43, 226, 255));
+    colorDb.put("MEDIUM SLATE BLUE", types.color(123, 104, 238, 255));
+    colorDb.put("MEDIUMSLATEBLUE", types.color(123, 104, 238, 255));
+    colorDb.put("SLATE BLUE", types.color(106, 90, 205, 255));
+    colorDb.put("SLATEBLUE", types.color(106, 90, 205, 255));
+    colorDb.put("PURPLE", types.color(160, 32, 240, 255));
+    colorDb.put("DARK SLATE BLUE", types.color(72, 61, 139, 255));
+    colorDb.put("DARKSLATEBLUE", types.color(72, 61, 139, 255));
+    colorDb.put("DARKVIOLET", types.color(148, 0, 211, 255));
+    colorDb.put("DARK ORCHID", types.color(153, 50, 204, 255));
+    colorDb.put("DARKORCHID", types.color(153, 50, 204, 255));
+    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219, 255));
+    colorDb.put("CORNFLOWER BLUE", types.color(68, 64, 108, 255));
+    colorDb.put("MEDIUM ORCHID", types.color(186, 85, 211, 255));
+    colorDb.put("MEDIUMORCHID", types.color(186, 85, 211, 255));
+    colorDb.put("MAGENTA", types.color(255, 0, 255, 255));
+    colorDb.put("FUCHSIA", types.color(255, 0, 255, 255));
+    colorDb.put("DARKMAGENTA", types.color(139, 0, 139, 255));
+    colorDb.put("VIOLET", types.color(238, 130, 238, 255));
+    colorDb.put("PLUM", types.color(221, 160, 221, 255));
+    colorDb.put("LAVENDER", types.color(230, 230, 250, 255));
+    colorDb.put("THISTLE", types.color(216, 191, 216, 255));
+    colorDb.put("GHOSTWHITE", types.color(248, 248, 255, 255));
+    colorDb.put("WHITE", types.color(255, 255, 255, 255));
+    colorDb.put("WHITESMOKE", types.color(245, 245, 245, 255));
+    colorDb.put("GAINSBORO", types.color(220, 220, 220, 255));
+    colorDb.put("LIGHT GRAY", types.color(211, 211, 211, 255));
+    colorDb.put("LIGHTGRAY", types.color(211, 211, 211, 255));
+    colorDb.put("SILVER", types.color(192, 192, 192, 255));
+    colorDb.put("GRAY", types.color(190, 190, 190, 255));
+    colorDb.put("DARK GRAY", types.color(169, 169, 169, 255));
+    colorDb.put("DARKGRAY", types.color(169, 169, 169, 255));
+    colorDb.put("DIM GRAY", types.color(105, 105, 105, 255));
+    colorDb.put("DIMGRAY", types.color(105, 105, 105, 255));
+    colorDb.put("BLACK", types.color(0, 0, 0, 255));
 
 
     var nameToColor = function(s) {
         return colorDb.get('' + s);
     };
-
-
 
     ///////////////////////////////////////////////////////////////
     // Exports
@@ -12122,6 +12210,9 @@ if (typeof(world) === 'undefined') {
     world.Kernel.polygonImage = function(length, count, step, style, color) {
         return new PolygonImage(length, count, step, style, color);
     };
+    world.Kernel.posnImage = function(posns, style, color) {
+        return new PosnImage(posns, style, color);
+    };
     world.Kernel.squareImage = function(length, style, color) {
         return new RectangleImage(length, length, style, color);
     };
@@ -12152,14 +12243,17 @@ if (typeof(world) === 'undefined') {
     world.Kernel.flipImage = function(img, direction) {
         return new FlipImage(img, direction);
     };
-    world.Kernel.textImage = function(msg, size, color, face, family, style, weight, underline) {
-        return new TextImage(msg, size, color, face, family, style, weight, underline);
+    world.Kernel.textImage = function(str, size, color, face, family, style, weight, underline) {
+        return new TextImage(str, size, color, face, family, style, weight, underline);
     };
     world.Kernel.fileImage = function(path, rawImage, afterInit) {
         return FileImage.makeInstance(path, rawImage, afterInit);
     };
     world.Kernel.fileVideo = function(path, rawVideo) {
         return FileVideo.makeInstance(path, rawVideo);
+    };
+    world.Kernel.fileAudio = function(path, loop, rawAudio) {
+        return FileAudio.makeInstance(path, loop, rawAudio);
     };
 
     world.Kernel.isSceneImage   = function(x) { return x instanceof SceneImage; };
@@ -12763,7 +12857,37 @@ if (typeof(world) === 'undefined') {
 	    toplevelNode.focus();
 	}
 
+  var mouseIsDown = false;
+  if (config.lookup('onMouse')) {
+	    var wrappedMouse = function(w, e, k) {
+          // browsers don't send drag events for *all* move-while-down mouse events,
+          // so we use state to track those events
+          if(e.type==="mousedown") mouseIsDown = true;
+          if(e.type==="mouseup" || e.type==="mouseleave")   mouseIsDown = false;
+ 
+          var x = e.pageX, y = e.pageY,
+              type  = e.type==='mousedown' ? "button-down"
+                    : e.type==='mouseup'   ? "button-up"
+                    : e.type==='mouseenter'? "enter"
+                    : e.type==='mouseleave'? "leave"
+                    : (e.type==='mousemove' && mouseIsDown)? "drag"
+                    : e.type==='mousemove'? "move"
+                    : e.type;
+ 
+          var currentElement = e.target;
+          do {
+              x -= currentElement.offsetLeft;
+              y -= currentElement.offsetTop;
+              currentElement = currentElement.offsetParent;
+          } while(currentElement);
 
+          var scaledX = x*e.target.width/e.target.offsetWidth
+              scaledY = y*e.target.height/e.target.offsetHeight;
+          caller(config.lookup('onMouse'), [w, scaledX, scaledY, type], k);
+	    }
+	    wrappedHandlers.push(_js.on_mouse(wrappedMouse));
+  }
+ 
         if (config.lookup('onTap')) {
 	    var wrappedTap = function(w, e, k) {
                 var x = e.pageX, y = e.pageY;
@@ -13636,6 +13760,9 @@ var isAssocList = function(x) {
 	return isPair(x) && isPair(x.rest()) && isEmpty(x.rest().rest());
 };
 
+var isMouseEvent = function(x){
+ return ["button-down", "button-up", "drag", "move", "enter", "leave"].indexOf(x) > -1;
+};
 
 var isCompoundEffect = function(x) {
 	return ( types.isEffect(x) || isListOf(x, isCompoundEffect) );
@@ -13719,6 +13846,16 @@ var checkAllSameLength = function(aState, lists, functionName, args) {
 		});
 }
 
+ 
+// A hook for notifying the outside world about file loading
+ var notifyLoading = function(url){
+    if(window.plt && window.plt.wescheme && plt.wescheme.WeSchemeIntentBus){
+      var shortenedUrl = url.substring(0,20)+"..."+url.substring(url.length-20);
+      plt.wescheme.WeSchemeIntentBus.notify("load-file", shortenedUrl);
+    } else {
+      console.log("Loading from "+url);
+    }
+ };
 
 //////////////////////////////////////////////////////////////////////
 
@@ -17582,9 +17719,9 @@ PRIMITIVES['make-color'] =
 		                        3,
 		                        false, false,
 		                        function(aState, r, g, b) {
-		 	                    check(aState, r, isByte, 'make-color', 'number between 0 and 255', 1, arguments);
-		 	                    check(aState, g, isByte, 'make-color', 'number between 0 and 255', 2, arguments);
-		 	                    check(aState, b, isByte, 'make-color', 'number between 0 and 255', 3, arguments);
+		 	                    check(aState, r, isByte, 'make-color', 'exact number between 0 and 255', 1, arguments);
+		 	                    check(aState, g, isByte, 'make-color', 'exact number between 0 and 255', 2, arguments);
+		 	                    check(aState, b, isByte, 'make-color', 'exact number between 0 and 255', 3, arguments);
                                             
 			                    return types.color(jsnums.toFixnum(r),
 					                       jsnums.toFixnum(g),
@@ -17594,10 +17731,10 @@ PRIMITIVES['make-color'] =
 		                        4,
 		                        false, false,
 		                        function(aState, r, g, b, a) {
-		 	                    check(aState, r, isByte, 'make-color', 'number between 0 and 255', 1, arguments);
-		 	                    check(aState, g, isByte, 'make-color', 'number between 0 and 255', 2, arguments);
-		 	                    check(aState, b, isByte, 'make-color', 'number between 0 and 255', 3, arguments);
-		 	                    check(aState, a, isByte, 'make-color', 'number between 0 and 255', 4, arguments);
+		 	                    check(aState, r, isByte, 'make-color', 'exact number between 0 and 255', 1, arguments);
+		 	                    check(aState, g, isByte, 'make-color', 'exact number between 0 and 255', 2, arguments);
+		 	                    check(aState, b, isByte, 'make-color', 'exact number between 0 and 255', 3, arguments);
+		 	                    check(aState, a, isByte, 'make-color', 'exact number between 0 and 255', 4, arguments);
                                             
 			                    return types.color(jsnums.toFixnum(r),
 					                       jsnums.toFixnum(g),
@@ -17883,6 +18020,23 @@ PRIMITIVES['rectangle'] =
 							   jsnums.toFixnum(h),
 							   s.toString(), c);
 		 });
+
+PRIMITIVES['polygon'] =
+new PrimProc('polygon',
+			 3,
+			 false, false,
+			 function(aState, points, s, c) {
+       function isPosnList(lst){ return isListOf(lst, types.isPosn); }
+       checkListOfLength(aState, points, 3, 'polygon', 1);
+			 check(aState, points,	isPosnList,	"polygon", "list of posns", 1, arguments);
+			 check(aState, s,		isMode, "polygon", 'style ("solid" or "outline" or [0-255])', 2, arguments);
+			 check(aState, c,		isColor, "polygon", "color", 3, arguments);
+			 
+			 if (colorDb.get(c)) { c = colorDb.get(c); }
+			 return world.Kernel.posnImage(helpers.flattenSchemeListToArray(points),
+											  s.toString(),
+											  c);
+			 });
 
 PRIMITIVES['regular-polygon'] =
 new PrimProc('regular-polygon',
@@ -18606,19 +18760,42 @@ new PrimProc('text/font',
 			 check(aState, aWeight,	isFontWeight,	"text/font", "weight",	7, arguments);
 			 check(aState, aUnderline,isBoolean,	"text/font", "underline?",8, arguments);
 			 
-			 if (colorDb.get(aColor)) {
-			 aColor = colorDb.get(aColor);
-			 }
-                             try {
-			 return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
-										   aFace.toString(), aFamily.toString(), aStyle.toString(),
-										   aWeight.toString(), aUnderline);
-                             } catch(e) {
-                                 // Under IE 8, something breaks.  I don't know yet what it is.
-		        return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
-											  "normal", "Arial","","",false);
-                             }
-			 });
+			 if (colorDb.get(aColor)) { aColor = colorDb.get(aColor); }
+       try {
+         return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
+                                       aFace.toString(), aFamily.toString(), aStyle.toString(),
+                                       aWeight.toString(), aUnderline);
+      } catch(e) {
+      // Under IE 8, something breaks.  I don't know yet what it is.
+        return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
+                                      "normal", "Arial","","",false);
+      }
+    });
+ 
+PRIMITIVES['play-sound'] =
+    new PrimProc('play-sound',
+		 2,
+		 false, false,
+		 function(aState, path, async) {
+		     check(aState, path, isString, "play-sound", "string", 1);
+         check(aState, async, isBoolean, "play-sound", "boolean", 2);
+			     return PAUSE(function(restarter, caller) {
+                    notifyLoading(path.toString());
+										var rawAudio = document.createElement('audio');
+										rawAudio.src = path.toString();
+                    // return true at 'canplay' if we're using async, or at 'ended' if we're not
+                    rawAudio.addEventListener('canplay', function() {
+                        var temp = new world.Kernel.fileAudio(path.toString(), false, rawAudio);
+                        function pause(){ temp.audio.pause(); return true;};
+                        aState.addBreakRequestedListener(pause);
+                        if(async){ return restarter(true); }
+                        else { rawAudio.addEventListener('ended', function(){return restarter(true);}); }
+                    });
+										rawAudio.addEventListener('error', function(e) { restarter(false);	});
+										rawAudio.src = path.toString();
+          });
+		 });
+ 
 PRIMITIVES['bitmap/url'] = 
 PRIMITIVES['image-url'] =
     new PrimProc('image-url',
@@ -18635,6 +18812,7 @@ PRIMITIVES['image-url'] =
 		     }
 
 		     return PAUSE(function(restarter, caller) {
+       notifyLoading(originalPath);
 			 var rawImage = new Image();
 			 rawImage.onload = function() {
 			     world.Kernel.fileImage(
@@ -18662,13 +18840,16 @@ new PrimProc('video-url',
 			 function(aState, path) {
 		     check(aState, path, isString, "video-url", "string", 1);
 			     return PAUSE(function(restarter, caller) {
+                      notifyLoading(path.toString());
 										var rawVideo = document.createElement('video');
 										rawVideo.src = path.toString();
 										rawVideo.addEventListener('canplay', function() {
-										restarter(world.Kernel.fileVideo(path.toString(), rawVideo));
-										});
+                                              restarter(world.Kernel.fileVideo(path.toString(), rawVideo));
+                                              function pause(){ rawVideo.pause(); return true;};
+                                              aState.addBreakRequestedListener(pause);
+                                              });
 										rawVideo.addEventListener('error', function(e) {
-										restarter(types.schemeError(types.incompleteExn(
+                                              restarter(types.schemeError(types.incompleteExn(
 																				   types.exnFail,
 																				   " (unable to load: " + path + ")",
 																				   [])));
@@ -18852,8 +19033,14 @@ var OnTickBang = WorldConfigOption.extend({
 
 
 
-// The default tick delay is 28 times a second.
-var DEFAULT_TICK_DELAY = types.rational(1, 28);
+ // The default tick delay is 28 times a second.
+ // On slower browsers, we'll force all delays to be >= 1/10
+ var slow_browser = false;
+ if(window.plt !== undefined){
+   var clientInfo  = plt.wescheme.BrowserDetect,
+       slow_browser= (clientInfo.browser==="Explorer") && (clientInfo.version<11);
+ }
+ var DEFAULT_TICK_DELAY = slow_browser? (types.rational(1, 8)) : (types.rational(1, 28));
 
 PRIMITIVES['on-tick'] =
 	new CasePrimitive(
@@ -18877,7 +19064,7 @@ PRIMITIVES['on-tick'] =
 			      return new OnTickBang(f,
 						    new PrimProc('', 1, false, false,
 								 function(aState, w) { return types.effectDoNothing(); }),
-						    aDelay);
+                slow_browser? Math.max(jsnums.toFixnum(aDelay), jsnums.toFixnum(DEFAULT_TICK_DELAY)) : aDelay);
 			  }) ]);
 
 
@@ -18899,7 +19086,8 @@ PRIMITIVES['on-tick!'] =
 			  check(aState, handler, isFunction, "on-tick!", "function name", 1, arguments);
 			  check(aState, effectHandler, isFunction, "on-tick!","function name", 2, arguments);
 			  check(aState, aDelay, isNonNegativeReal, "on-tick!", "non-negative number", 3, arguments);
-			  return new OnTickBang(handler, effectHandler, aDelay);
+			  return new OnTickBang(handler, effectHandler,
+                              slow_browser? Math.max(jsnums.toFixnum(aDelay), jsnums.toFixnum(DEFAULT_TICK_DELAY)) : aDelay);
 		      }) ]);
 
 
@@ -18909,6 +19097,28 @@ PRIMITIVES['on-tilt'] = new PrimProc('on-tilt', 1, false, false, onEvent('on-til
 
 PRIMITIVES['on-key'] = new PrimProc('on-key', 1, false, false, onEvent('on-key', 'onKey', 2));
 PRIMITIVES['on-key!'] = new PrimProc('on-key!', 2, false, false, onEventBang('on-key!', 'onKey'));
+ 
+PRIMITIVES['on-mouse'] = new PrimProc('on-mouse', 1, false, false, onEvent('on-mouse', 'onMouse', 3));
+
+
+PRIMITIVES['mouse-event?'] =
+    new PrimProc('mouse-event?',
+		 1,
+		 true, false,
+     function(aState, v) { return isMouseEvent(v); });
+ 
+ 
+PRIMITIVES['mouse=?'] =
+    new PrimProc('mouse=?',
+		 2,
+		 true, false,
+		 function(aState, mouseA, mouseB) {
+		 	check(aState, mouseA, isMouseEvent, 'mouse-event?', 'mouse-event', 1);
+		 	check(aState, mouseB, isMouseEvent, 'mouse-event?', 'mouse-event', 2);
+			return mouseA===mouseB;
+});
+
+
 
 // PRIMITIVES['on-announce'] = new PrimProc('on-announce', 1, false, false,
 // 					 onEvent('on-announce', 'onAnnounce', 3));

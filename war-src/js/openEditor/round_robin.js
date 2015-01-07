@@ -151,12 +151,12 @@ goog.provide("plt.wescheme.RoundRobin");
        // turn on local testing if the cookie is true *and* if we have the error logging form in place
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
 
-       // Is it an odd-numbered day?
+       // Is it a MWF?
        var TEST_DAY = (new Date().getDay() % 2)==1;
  
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
        var TRUST_LOCAL_ERRORS   = (Math.random() < 0.90) && TEST_DAY,
-           TRUST_LOCAL_BYTECODE = (Math.random() < 0.50) && TEST_DAY;
+           TRUST_LOCAL_BYTECODE = (Math.random() < 0.60) && TEST_DAY;
  
        console.log('Local compiler is '+(TEST_LOCAL? '' : 'not')+' running\nTEST_DAY is '+TEST_DAY
                   +'\nTRUST_LOCAL_ERRORS is '+TRUST_LOCAL_ERRORS+'\nTRUST_LOCAL_BYTECODE is '+TRUST_LOCAL_BYTECODE);
@@ -167,7 +167,7 @@ goog.provide("plt.wescheme.RoundRobin");
        try{
           var lexemes     = plt.compiler.lex(code, programName);
           var AST         = plt.compiler.parse(lexemes);
-          var desugared   = plt.compiler.desugar(AST)[0];
+          var desugared   = plt.compiler.desugar(AST)[0];  // includes [AST, pinfo]
           var pinfo       = plt.compiler.analyze(desugared);
           local_bytecode  = plt.compiler.compile(desugared, pinfo);
 

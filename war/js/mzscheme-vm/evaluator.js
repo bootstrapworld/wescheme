@@ -86,17 +86,18 @@ var Evaluator = (function() {
 	this.aState.setDisplayHook(function(aStr) {
 	    var dom = document.createElement("span");
             dom.style.whiteSpace = "pre";
-	    dom.style.fontFamily = "monospace";
-           var chunks = aStr.split("\n").filter(function(str){return str!==""});
+            dom.style.fontFamily = "monospace";
+            var chunks = aStr.split("\n").filter(function(str){return str!=="";});
             if (chunks.length > 0) {
                 dom.appendChild(document.createTextNode(chunks[0]));
             }
             var newlineDiv;
             var i;
             for (i = 1; i < chunks.length; i++) {
-                newlineDiv = document.createElement("br");
-                newlineDiv.style.clear = 'left';
-                dom.appendChild(newlineDiv);
+                newline = document.createElement("br");
+                newline.style.clear = 'left';
+                newline.className = 'value-seperator';
+                dom.appendChild(newline);
                 dom.appendChild(document.createTextNode(chunks[i]));
             }
 	    dom = that.transformDom(dom);
@@ -174,6 +175,7 @@ var Evaluator = (function() {
 		// ignore for now
 	    }
 	}
+        newDom.appendChild(document.createElement("br"));
 	newDom.appendChild(document.createTextNode('at line: ' + line + ', column: ' + column + ', in ' + id));
 	return newDom;
     };

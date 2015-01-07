@@ -174,7 +174,7 @@ plt.compiler = plt.compiler || {};
                          , pos : this.location}]};
     };
   
-    Program.prototype.toPyret = function(){ throw "no toPyret() method defined"; };
+    Program.prototype.toPyret = function(){ console.log(this); throw "no toPyret() method defined"; };
     // literals
     // literal(String|Char|Number|Vector)
     // everything has a toPyret() method _except_ Strs,
