@@ -225,7 +225,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     border-bottom:	solid 1px black;
 }
 
-#inter .CodeMirror, #definitions>.CodeMirror {background: none;}
+#inter .CodeMirror, #definitions>.CodeMirror {background: none; min-height:}
 #inter .CodeMirror-lines, #definitions .CodeMirror-lines {
   background: white; /* fall back to white on old browsers */
   background: linear-gradient(to right, rgba(255,255,255,1) 60%, rgba(255,255,255,.5))
