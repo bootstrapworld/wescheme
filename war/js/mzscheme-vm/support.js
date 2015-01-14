@@ -20843,7 +20843,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
 		types.incompleteExn(types.exnFailContract,
             new types.Message([new types.MultiPart("function call", [op, cp], true),
                                 ": expected function, given: ",
-                                new types.ColoredPart(procValue, locationList.first())
+                                new types.ColoredPart(procValue.toString(), locationList.first())
                                 ]),
                              []));
 
