@@ -566,7 +566,7 @@ plt.compiler = plt.compiler || {};
       // quote must have exactly one argument
       if(sexp.length < 2){
         throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                      , ": expected a single argument, but did not find one "]),
+                                      , ": expected a single argument, but did not find one."]),
                     sexp.location);
       }
       if(sexp.length > 2){
