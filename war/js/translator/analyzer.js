@@ -264,7 +264,6 @@ plt.compiler = plt.compiler || {};
 
     // track all the syntax we've created so far...
     var stxs = [valStx, xStx, voidStx];
-
     // if there's an 'else', pop off the clause and use the result as the base
     var expr, clauses = this.clauses, lastClause = clauses[this.clauses.length-1];
     if((lastClause.first instanceof symbolExpr) && (lastClause.first.val === 'else')){
@@ -274,7 +273,6 @@ plt.compiler = plt.compiler || {};
       expr = new callExpr(voidStx,[], that.stx);
       expr.location = that.location;
     }
-
     // This is the predicate we'll be applying using ormap: (lambda (x) (equal? x val))
     var equalStx = new symbolExpr('equal?'),
         equalTestStx = new callExpr(equalStx, [xStx, valStx], caseStx),
