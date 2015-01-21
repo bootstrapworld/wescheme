@@ -873,7 +873,6 @@ plt.compiler = plt.compiler || {};
         if(chunk.charAt(j) == "\\") { j++; }  // if it's an escape char, skip over it and add the next one
         unescaped += chunk.charAt(j);
       }
-                                                        
       // split the chunk at each |
       var chunks = unescaped.split("|");
       // check for unbalanced |'s, and generate an error that begins at the last one
@@ -900,19 +899,19 @@ plt.compiler = plt.compiler || {};
             // if we're inside a verbatim portion (i is even) *or* we're case sensitive, preserve case
             return acc+= (i%2 || caseSensitiveSymbols)? str : str.toLowerCase();
           }, "");
-                                                        
+
       // if it's a newline, adjust line and column trackers
       if(filtered==="\n"){line++; column=0;}
 
       // add bars if it's a symbol that needs those escape characters, or if the original string used an escaped number
       var special_chars = new RegExp("^$|[\\(\\)\\{\\}\\[\\]\\,\\'\\`\\s\\\"\\\\]", 'g');
-      var escaped_nums = new RegExp("^\\\\[\\d]*");
+      var escaped_nums = new RegExp("^.*\\\\[\\d]*.*|\\|[\\d]*\\|");
       filtered = (escaped_nums.test(chunk) || special_chars.test(filtered)? "|"+filtered+"|" : filtered);
-
+                                                        
       // PERF: start out assuming it's a symbol...
       var node = new symbolExpr(filtered);
       // PERF: if it's not trivially a symbol, we take the hit of jsnums.fromString()
-      if(!/^[a-zA-Z\-\?]+$/.test(filtered)){
+      if((chunks.length === 1) && !/^[a-zA-Z\-\?]+$/.test(filtered)){
         // attempt to parse using jsnums.fromString(), assign to sexp and add location
         // if it's a bad number, throw an error
         try{
