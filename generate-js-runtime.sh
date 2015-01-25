@@ -7,33 +7,32 @@ testing=false
 
 echo 'Building support.js:';
 
-pushd war-src/js/js-runtime/
+pushd war-src/js/js-runtime/ > /dev/null
 
-rm -f $target
+if [ -f $target ]; then
+	rm -f $target 
+fi
 
-$target
-
-if [ -f $platform-platform.js ]
-    then
-	echo '    Adding platform-specific code';
+if [ -f $platform-platform.js ]; then
+	echo "    Adding platform-specific code for $platform";
 	cat $platform-platform.js >> $target;
     else
 	echo "    Requires a platform (either \"browser\" or \"node\")"
-	exit
+	exit -1
 fi
 
-echo 'Concatenating main source files';
+echo '    Concatenating main source files';
 for i in `cat order`; do
-	echo '    adding' $i;
+	echo '        adding' $i;
 	cat $i >> $target;
 done;
 
 if [ "$testing" = true ]; then
-	echo 'Adding exports for testing'
+	echo '    Adding exports for testing'
 	cat exports.js >> $target;
 fi
 
-echo
 echo '    Done!'
 
-popd
+popd > /dev/null
+exit 0
