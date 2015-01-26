@@ -145,6 +145,12 @@ goog.provide("plt.wescheme.RoundRobin");
 
        // strip out nonbreaking whitespace chars from the code
        code = code.replace(/[\uFEFF\u2060\u200B]/,'');
+
+       // get an array of charCodes for all non-ascii chars in a string
+       function getHigherThanAsciiChars(str){
+          var nonASCII = str.split("").filter(function(c) { return (c.charCodeAt(0) > 127); });
+          return nonASCII.map(function(c) { return c.charCodeAt(0);});
+       }
  
        // if no cookie exists, set it to true
        if(readLocalCompilerCookie()===null) writeLocalCompilerCookie("true");
@@ -220,8 +226,9 @@ goog.provide("plt.wescheme.RoundRobin");
               if(Math.random() < .50){ // 50% of the time, we'll compare the actual bytecodes
                        if(!sameResults( (0,eval)('('+local_bytecode.bytecode+')'),
                                         (0,eval)('('+server_bytecode.bytecode+')'))){
+                          nonASCIIcodes = getHigherThanAsciiChars(code).join(",");
                           console.log("FAIL: LOCAL RETURNED DIFFERENT BYTECODE FROM SERVER");
-                          logResults(code, plt.wescheme.BrowserDetect.versionString, "BYTECODES_DIFFERED");
+                          logResults(code, plt.wescheme.BrowserDetect.versionString, "BYTECODES_DIFFERED. NonASCII codes were "+nonASCII);
                        } else {
                           console.log("OK: LOCAL RETURNED EQUIVALENT BYTECODE AS THE SERVER");
                        }
