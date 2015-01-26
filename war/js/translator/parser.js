@@ -684,9 +684,7 @@ plt.compiler = plt.compiler || {};
     // first check the couples, then parse if there's no problem
     rest(sexp).forEach(checkCondCouple);
     var numClauses = rest(sexp).length,
-        parsedClauses = rest(sexp).reduce(function (rst, couple) {
-                                            return rst.concat([parseCondCouple(couple)]);
-                                          }, []);
+        parsedClauses = rest(sexp).map(parseCondCouple);
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
     rest(sexp).forEach(function(couple, idx){
@@ -703,7 +701,7 @@ plt.compiler = plt.compiler || {};
     return new condExpr(parsedClauses, sexp[0]);
   }
 
-   function parseCaseExpr(sexp) {
+  function parseCaseExpr(sexp) {
     // is it just (case)?
     if(sexp.length === 1){
         var msg = new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -719,9 +717,7 @@ plt.compiler = plt.compiler || {};
         msg.betterThanServer = true;
         throwError(msg, sexp.location);
     }
-                                                                  
-    function isElseClause(couple){ return isSymbol(couple[0]) && isSymbolEqualTo(couple[0], "else");}
-
+ 
     function checkCaseCouple(clause) {
       var clauseLocations = [clause.location.start(), clause.location.end()];
       if(!(clause instanceof Array)){
@@ -768,25 +764,28 @@ plt.compiler = plt.compiler || {};
       }
     }
  
+    // is this sexp actually an else clause?
+    function isElseClause(sexp){ return isSymbol(sexp[0]) && (sexp[0].val==="else");}
+
     // read the first item in the clause as a quotedExpr, and parse the second
     // if it's an else clause, however, leave it alone
-    function parseCaseCouple(clause) {
-        var test = isElseClause(clause)? clause[0] : new quotedExpr(clause[0]),
-            result = parseExpr(clause[1]), cpl = new couple(test, result);
+    function parseCaseCouple(sexp) {
+        var test = isElseClause(sexp)? sexp[0] : new quotedExpr(sexp[0]),
+            result = parseExpr(sexp[1]), cpl = new couple(test, result);
         test.isClause = true; // used to determine appropriate "else" use during desugaring
-        cpl.location = clause.location;
+        cpl.location = sexp.location;
         return cpl;
     }
  
+    var clauses = sexp.slice(2);
     // first check the couples, then parse if there's no problem
-    sexp.slice(2).forEach(checkCaseCouple);
-    var numClauses = sexp.slice(2).length,
-        parsedClauses = sexp.slice(2).reduce(function (rst, couple) {
-                                            return rst.concat([parseCaseCouple(couple)]);
-                                          }, []);
+    clauses.forEach(checkCaseCouple);
+    var numClauses = clauses.length,
+        parsedClauses = clauses.map(parseCaseCouple);
+
     // if we see an else and we haven't seen all other clauses first
     // throw an error that points to the next clause (rst + the one we're looking at + "cond")
-    sexp.slice(2).forEach(function(couple, idx){
+    clauses.forEach(function(couple, idx){
      if(isElseClause(couple) && (idx < (numClauses-1))){
         var msg = new types.Message([new types.MultiPart("case", caseLocs, true)
                                      , ": found an "

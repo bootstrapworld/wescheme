@@ -277,6 +277,7 @@ plt.compiler = plt.compiler || {};
     var equalStx = new symbolExpr('equal?'),
         equalTestStx = new callExpr(equalStx, [xStx, valStx], caseStx),
         predicateStx = new lambdaExpr([xStx], equalTestStx, caseStx);
+    // track the syntax that will need location information reset
     stxs = stxs.concat([equalStx, equalTestStx, predicateStx]);
  
     // generate (if (ormap <predicate> clause.first) clause.second base)
@@ -284,6 +285,7 @@ plt.compiler = plt.compiler || {};
       var ormapStx = new symbolExpr('ormap'),
           callStx = new callExpr(ormapStx, [predicateStx, clause.first], that.stx),
           ifStx = new ifExpr(callStx, clause.second, base, caseStx);
+      // track the syntax that will need location information reset
       stxs = stxs.concat([ormapStx, callStx, clause.first, ifStx]);
       return ifStx;
     }
@@ -292,10 +294,12 @@ plt.compiler = plt.compiler || {};
     var binding = new couple(valStx, this.expr),
         body = clauses.reduceRight(processClause, expr),
         letExp = new letExpr([binding], body, caseStx);
-    stxs = stxs.concat([binding, body, letExp]);
+    // track the syntax that will need location information reset
+    stxs = stxs.concat([binding, letExp]);
  
     // assign location to every stx element we created
     stxs.forEach(function(stx){stx.location = that.location;});
+ 
     return letExp.desugar(updatedPinfo2);
  };
  
