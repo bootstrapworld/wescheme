@@ -83,7 +83,7 @@
 
 
     <!-- Local compiler files -->
-    <jsp:include page="/js/translator/local.jsp"/>
+    <jsp:include page="/js/compiler/local.jsp"/>
 
     <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
 
