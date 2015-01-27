@@ -165,7 +165,8 @@
 (printf "Building editor\n")
 (build "openEditor/index.js" "openEditor/openEditor-calc.js")
 
-
+(printf "Building compiler\n")
+(build "compiler/index.js" "compiler/compiler-calc.js")
 
 ;; ######################################################################
 (printf "Compressing JavaScript libraries.  This may take a few minutes, depending if this is the first time this has been run.\n")

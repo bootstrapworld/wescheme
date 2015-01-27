@@ -83,7 +83,7 @@
 
 
     <!-- Local compiler files -->
-    <jsp:include page="/js/compiler/local.jsp"/>
+    <script src="/js/compiler/compiler-calc-min.js" type="text/javascript"></script>
 
     <script src="/js/openEditor/openEditor-calc.js" type="text/javascript"></script>
 
