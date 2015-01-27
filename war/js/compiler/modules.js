@@ -1,19 +1,15 @@
 // if not defined, declare the compiler object as part of plt
 window.plt   = window.plt   || {};
 plt.compiler = plt.compiler || {};
-/*
- TODO
- -
- */
-
-var moduleBinding   = plt.compiler.moduleBinding;
-var functionBinding = plt.compiler.functionBinding;
-var constantBinding = plt.compiler.constantBinding;
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////// MODULE BINDINGS //////////////////////////
 (function (){
  
+  var moduleBinding   = plt.compiler.moduleBinding;
+  var functionBinding = plt.compiler.functionBinding;
+  var constantBinding = plt.compiler.constantBinding;
+
   // given a moduleName, return a function that converts binding specs into function bindings
   function makeFunctionBinding(modulePath){
     return function(binding){
