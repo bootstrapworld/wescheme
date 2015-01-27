@@ -12,6 +12,35 @@ plt.compiler = plt.compiler || {};
  */
 
 (function (){
+ 
+   // import frequently-used bindings
+   var literal          = plt.compiler.literal;
+   var symbolExpr       = plt.compiler.symbolExpr;
+   var Program          = plt.compiler.Program;
+   var ifExpr           = plt.compiler.ifExpr;
+   var beginExpr        = plt.compiler.beginExpr;
+   var localExpr        = plt.compiler.localExpr;
+   var andExpr          = plt.compiler.andExpr;
+   var orExpr           = plt.compiler.orExpr;
+   var lambdaExpr       = plt.compiler.lambdaExpr;
+   var quotedExpr       = plt.compiler.quotedExpr;
+   var callExpr         = plt.compiler.callExpr;
+   var defFunc          = plt.compiler.defFunc;
+   var defVar           = plt.compiler.defVar;
+   var defVars          = plt.compiler.defVars;
+   var defStruct        = plt.compiler.defStruct;
+   var requireExpr      = plt.compiler.requireExpr;
+   var provideStatement = plt.compiler.provideStatement;   
+
+   // Inheritance from pg 168: Javascript, the Definitive Guide.
+    var heir = function(p) {
+      var f = function() {};
+      f.prototype = p;
+      return new f();
+    };
+
+ 
+ 
     literal.prototype.toBytecode = function(){
       var str = this.val.toBytecode? this.val.toBytecode()
               : this.val===true? "true"

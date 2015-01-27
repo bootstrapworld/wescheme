@@ -41,6 +41,12 @@ plt.compiler = plt.compiler || {};
 (function () {
     'use strict';
 
+    // import frequently-used bindings
+    var literal         = plt.compiler.literal;
+    var symbolExpr      = plt.compiler.symbolExpr;
+    var unsupportedExpr = plt.compiler.unsupportedExpr;
+    var throwError      = plt.compiler.throwError;
+
     // a collection of common RegExps
     var leftListDelims  = /[(\u005B\u007B]/,
         rightListDelims = /[)\u005D\u007D]/,

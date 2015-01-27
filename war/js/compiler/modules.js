@@ -6,6 +6,10 @@ plt.compiler = plt.compiler || {};
  -
  */
 
+var moduleBinding   = plt.compiler.moduleBinding;
+var functionBinding = plt.compiler.functionBinding;
+var constantBinding = plt.compiler.constantBinding;
+
 //////////////////////////////////////////////////////////////////////////////
 /////////////////// MODULE BINDINGS //////////////////////////
 (function (){

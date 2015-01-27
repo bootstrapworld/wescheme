@@ -11,511 +11,491 @@ plt.compiler = plt.compiler || {};
 /////////////////// COMMON FUNCTIONS AND STRUCTURES //////////////////////////
 //////////////// used by multiple phases of the compiler/////////////////////
 
-var unimplementedException = function(str){
-  this.str = str;
-}
-
-/**************************************************************************
- *
- *    CONVERT LOCAL COMPILER ERRORS INTO WESCHEME ERRORS
- *
- **************************************************************************/
-// encode the msg and location as a JSON error
-function throwError(msg, loc, errorClass) {
-  loc.source = loc.source || "<unknown>"; // FIXME -- we should have the source populated
-  // rewrite a ColoredPart to match the format expected by the runtime
-  function rewritePart(part){
-    if(typeof(part) === 'string'){
-      return part;
-    } else if(part instanceof symbolExpr){
-      return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
-      return part.val;
-    } else if(part.location !== undefined){
-      return {text: part.text, type: 'ColoredPart', loc: part.location.toString()
-            , toString: function(){return part.text;}};
-    } else if(part.locations !== undefined){
-      return {text: part.text, type: 'MultiPart', solid: part.solid
-            , locs: part.locations.map(function(l){return l.toString()})
-            , toString: function(){return part.text;}};
-    }
+(function () {
+ 'use strict';
+ 
+  var unimplementedException = function(str){
+    this.str = str;
   }
-  
-  msg.args = msg.args.map(rewritePart);
-  
-  var json = {type: "moby-failure"
-    , "dom-message": ["span"
-                      ,[["class", "Error"]]
-                      ,["span"
-                        , [["class", (errorClass || "Message")]]].concat(
-                         (errorClass? [["span"
-                                        , [["class", "Error.reason"]]
-                                        , msg.toString()]
-                                      , ["span", [["class", ((errorClass || "message")
-                                                            +((errorClass === "Error-GenericReadError")?
-                                                              ".locations"
-                                                              :".otherLocations"))]]]]
-                                      : msg.args.map(function(x){return x.toString();})))
-                      ,["br", [], ""]
-                      ,["span"
-                        , [["class", "Error.location"]]
-                        , ["span"
-                           , [["class", "location-reference"]
-                              , ["style", "display:none"]]
-                           , ["span", [["class", "location-offset"]], (loc.startChar+1).toString()]
-                           , ["span", [["class", "location-line"]]  , loc.startRow.toString()]
-                           , ["span", [["class", "location-column"]], loc.startCol.toString()]
-                           , ["span", [["class", "location-span"]]  , loc.span.toString()]
-                           , ["span", [["class", "location-id"]]    , loc.source.toString()]
-                           ]
+
+  /**************************************************************************
+   *
+   *    CONVERT LOCAL COMPILER ERRORS INTO WESCHEME ERRORS
+   *
+   **************************************************************************/
+  // encode the msg and location as a JSON error
+  function throwError(msg, loc, errorClass) {
+    loc.source = loc.source || "<unknown>"; // FIXME -- we should have the source populated
+    // rewrite a ColoredPart to match the format expected by the runtime
+    function rewritePart(part){
+      if(typeof(part) === 'string'){
+        return part;
+      } else if(part instanceof symbolExpr){
+        return '["span", [["class", "SchemeValue-Symbol"]], '+part.val+']';
+        return part.val;
+      } else if(part.location !== undefined){
+        return {text: part.text, type: 'ColoredPart', loc: part.location.toString()
+              , toString: function(){return part.text;}};
+      } else if(part.locations !== undefined){
+        return {text: part.text, type: 'MultiPart', solid: part.solid
+              , locs: part.locations.map(function(l){return l.toString()})
+              , toString: function(){return part.text;}};
+      }
+    }
+    
+    msg.args = msg.args.map(rewritePart);
+    
+    var json = {type: "moby-failure"
+      , "dom-message": ["span"
+                        ,[["class", "Error"]]
+                        ,["span"
+                          , [["class", (errorClass || "Message")]]].concat(
+                           (errorClass? [["span"
+                                          , [["class", "Error.reason"]]
+                                          , msg.toString()]
+                                        , ["span", [["class", ((errorClass || "message")
+                                                              +((errorClass === "Error-GenericReadError")?
+                                                                ".locations"
+                                                                :".otherLocations"))]]]]
+                                        : msg.args.map(function(x){return x.toString();})))
+                        ,["br", [], ""]
+                        ,["span"
+                          , [["class", "Error.location"]]
+                          , ["span"
+                             , [["class", "location-reference"]
+                                , ["style", "display:none"]]
+                             , ["span", [["class", "location-offset"]], (loc.startChar+1).toString()]
+                             , ["span", [["class", "location-line"]]  , loc.startRow.toString()]
+                             , ["span", [["class", "location-column"]], loc.startCol.toString()]
+                             , ["span", [["class", "location-span"]]  , loc.span.toString()]
+                             , ["span", [["class", "location-id"]]    , loc.source.toString()]
+                             ]
+                          ]
                         ]
-                      ]
-    , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toString() })
-  };
-  if(msg.betterThanServer) json.betterThanServer = true;
-  throw JSON.stringify(json);
-}
-
-
-// checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
-// sort the array, and throw errors for non-symbols, keywords or duplicates
-function checkDuplicateIdentifiers(lst, stx, loc){
-  var visitedIds = {}; // initialize a dictionary of ids we've seen
-  lst.forEach(function(id){
-      if(!(id instanceof symbolExpr)){
-        throwError("expected identifier "+id.val, id.location);
-      } else if(visitedIds[id.val]) { // if we've seen this variable before, throw an error
-        throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
-                                  ": found ",
-                                  new types.ColoredPart("a variable", id.location),
-                                  " that is already used ",
-                                  new types.ColoredPart("here", visitedIds[id.val].location)])
-                   , id.location);
-      } else {
-        visitedIds[id.val] = id; // otherwise, record the identifier as being visited
-      }
-                       
-  });
-}
-
-// couple = pair
-function couple(first, second) {
-  this.first = first;
-  this.second = second;
-  this.toString = function(){
-    return "("+this.first.toString() +" "+this.second.toString()+")";
-  };
-};
-
-/**************************************************************************
- *
- *    AST Nodes
- *
- **************************************************************************/
-
-// Inheritance from pg 168: Javascript, the Definitive Guide.
-var heir = function(p) {
-  var f = function() {};
-  f.prototype = p;
-  return new f();
-};
-
-// all Programs, by default, print out their values
-// anything that behaves differently must provide their own toString() function
-var Program = function() {
-  // -> String
-  this.toString = function(){ return this.val.toString(); };
-  // every Program has a location, but it's initialized to null
-  this.location = null;
-};
-
-// Function definition
-function defFunc(name, args, body, stx) {
-  Program.call(this);
-  this.name = name;
-  this.args = args;
-  this.body = body;
-  this.stx  = stx;
-  this.toString = function(){
-    return "(define ("+this.name.toString()+" "+this.args.join(" ")+")\n    "+this.body.toString()+")";
-  };
-};
-defFunc.prototype = heir(Program.prototype);
-
-
-// Variable definition
-function defVar(name, expr, stx) {
-  Program.call(this);
-  this.name = name;
-  this.expr = expr;
-  this.stx  = stx;
-  this.toString = function(){
-    return "(define "+this.name.toString()+" "+this.expr.toString()+")";
-  };
-};
-defVar.prototype = heir(Program.prototype);
-
-// Multi-Variable definition
-function defVars(names, expr, stx) {
-  Program.call(this);
-  this.names  = names;
-  this.expr   = expr;
-  this.stx    = stx;
-  this.toString = function(){
-    return "(define-values ("+this.names.join(" ")+") "+this.expr.toString()+")";
-  };
-};
-defVars.prototype = heir(Program.prototype);
-
-// Structure definition
-function defStruct(name, fields, stx) {
-  Program.call(this);
-  this.name   = name;
-  this.fields = fields;
-  this.stx    = stx;
-  this.toString = function(){
-    return "(define-struct "+this.name.toString()+" ("+this.fields.toString()+"))";
-  };
-};
-defStruct.prototype = heir(Program.prototype);
-
-// Begin expression
-function beginExpr(exprs, stx) {
-  Program.call(this);
-  this.exprs  = exprs;
-  this.stx    = stx;
-  this.toString = function(){
-    return "(begin "+this.exprs.join(" ")+")";
-  };
-};
-beginExpr.prototype = heir(Program.prototype);
-
-// Lambda expression
-function lambdaExpr(args, body, stx) {
-  Program.call(this);
-  this.args = args;
-  this.body = body;
-  this.stx  = stx;
-  this.toString = function(){
-    return "(lambda ("+this.args.join(" ")+") "+this.body.toString()+")";
-  };
-};
-lambdaExpr.prototype = heir(Program.prototype);
-
-// Local expression
-function localExpr(defs, body, stx) {
-  Program.call(this);
-  this.defs = defs;
-  this.body = body;
-  this.stx  = stx;
-  this.toString = function(){
-    return "(local ("+this.defs.toString()+") "+this.body.toString()+")";
-  };
-};
-localExpr.prototype = heir(Program.prototype);
-
-// Letrec expression
-function letrecExpr(bindings, body, stx) {
-  this.bindings = bindings;
-  this.body     = body;
-  this.stx      = stx;
-  this.toString = function(){
-    return "(letrec ("+this.bindings.toString()+") ("+this.body.toString()+"))";
-  };
-};
-
-// Let expression
-function letExpr(bindings, body, stx) {
-  this.bindings = bindings;
-  this.body     = body;
-  this.stx      = stx;
-  this.toString = function(){
-    return "(let ("+this.bindings.toString()+") ("+this.body.toString()+"))";
-  };
-};
-
-// Let* expressions
-function letStarExpr(bindings, body, stx) {
-  this.bindings = bindings;
-  this.body     = body;
-  this.stx      = stx;
-  this.toString = function(){
-    return "(let* ("+this.bindings.toString()+") ("+this.body.toString()+"))";
-  };
-};
-
-// cond expression
-function condExpr(clauses, stx) {
-  this.clauses  = clauses;
-  this.stx      = stx;
-  this.toString = function(){
-    return "(cond\n    "+this.clauses.join("\n    ")+")";
-  };
-};
-
-// Case expression
-function caseExpr(expr, clauses, stx) {
-  Program.call(this);
-  this.expr     = expr;
-  this.clauses  = clauses;
-  this.stx      = stx;
-  this.toString = function(){
-    return "(case "+this.expr.toString()+"\n    "+this.clauses.join("\n    ")+")";
-  };
-};
-caseExpr.prototype = heir(Program.prototype);
-
-// and expression
-function andExpr(exprs, stx) {
-  this.exprs  = exprs;
-  this.stx    = stx;
-  this.toString = function(){ return "(and "+this.exprs.join(" ")+")"; };
-};
-
-// or expression
-function orExpr(exprs, stx) {
-  this.exprs  = exprs;
-  this.stx    = stx;
-  this.toString = function(){ return "(or "+this.exprs.toString()+")"; };
-};
-
-// application expression
-function callExpr(func, args, stx) {
-  Program.call(this);
-  this.func   = func;
-  this.args   = args;
-  this.stx    = stx;
-  this.toString = function(){
-    return "("+[this.func].concat(this.args).join(" ")+")";
-  };
-};
-callExpr.prototype = heir(Program.prototype);
-
-// if expression
-function ifExpr(predicate, consequence, alternative, stx) {
-  Program.call(this);
-  this.predicate = predicate;
-  this.consequence = consequence;
-  this.alternative = alternative;
-  this.stx = stx;
-  this.toString = function(){
-    return "(if "+this.predicate.toString()+" "+this.consequence.toString()+" "+this.alternative.toString()+")";
-  };
-};
-ifExpr.prototype = heir(Program.prototype);
-
-// when/unless expression
-function whenUnlessExpr(predicate, exprs, stx) {
-  Program.call(this);
-  this.predicate = predicate;
-  this.exprs = exprs;
-  this.stx = stx;
-  this.toString = function(){
-    return "("+this.stx[0]+" "+this.predicate.toString()+" "+this.exprs.toString()+")";
-  };
-};
-whenUnlessExpr.prototype = heir(Program.prototype);
-
-// symbol expression (ID)
-function symbolExpr(val, stx) {
-  Program.call(this);
-  this.val = val;
-  this.stx = stx;
-};
-symbolExpr.prototype = heir(Program.prototype);
-
-// Literal values (String, Char, Number, Vector)
-function literal(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){
-    // racket prints booleans using #t and #f
-    if(this.val===true) return "#t";
-    if(this.val===false) return "#f";
-    // racket prints special chars using their names
-    if(this.val instanceof Char){
-      var c = this.val.val;
-      return c === '\b' ? '#\\backspace' :
-            c === '\t' ? '#\\tab' :
-            c === '\n' ? '#\\newline' :
-            c === ' '  ? '#\\space' :
-            c === '\v' ? '#\\vtab' :
-            /* else */  this.val.toWrittenString();
-    }
-    return types.toWrittenString(this.val);
+      , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toString() })
+    };
+    if(msg.betterThanServer) json.betterThanServer = true;
+    throw JSON.stringify(json);
   }
-};
-literal.prototype = heir(Program.prototype);
 
-Vector.prototype.toString = Vector.prototype.toWrittenString = function(){
-  var filtered = this.elts.filter(function(e){return e!==undefined;}),
-      last = filtered[filtered.length-1];
-  return "#("+this.elts.map(function(elt){return elt===undefined? last : elt;})+")";
-}
-
-// quoted expression
-function quotedExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function() {
-    function quoteLikePairP(v) {
-      return v instanceof Array
-        && v.length === 2
-        && v[0] instanceof symbolExpr
-        && (    v[0].val === 'quasiquote'
-                || v[0].val === 'quote'
-                || v[0].val === 'unquote'
-                || v[0].val === 'unquote-splicing'
-           ) }
-    function shortName(lexeme) {
-      var s = lexeme.val
-      return s === 'quasiquote' ? "`" :
-        s === 'quote' ? "'" :
-        s === 'unquote' ? "," :
-        s === 'unquote-splicing' ? ",@" :
-        (function () { throw "impossible quote-like string" })()
-    }
-    function elementToString(v) {
-      if (quoteLikePairP(v)) {
-        return shortName(v[0]).concat(elementToString(v[1]))
-      } else if (v instanceof Array) {
-        return v.reduce(function (acc, x) { return acc.concat(elementToString(x)) }, "(").concat(")")
-      } else {
-        return v.toString()
-      }
-    }
-
-    return "'"+elementToString(this.val)
-  }
-};
-quotedExpr.prototype = heir(Program.prototype);
-
-// unquoted expression
-function unquotedExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return ","+this.val.toString(); };
-};
-unquotedExpr.prototype = heir(Program.prototype);
-
-// quasiquoted expression
-function quasiquotedExpr(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){
-    if(this.val instanceof Array) return "`("+this.val.toString()+")";
-    else return "`"+this.val.toString();
+  // couple = pair
+  function couple(first, second) {
+    this.first = first;
+    this.second = second;
+    this.toString = function(){
+      return "("+this.first.toString() +" "+this.second.toString()+")";
+    };
   };
-};
-quasiquotedExpr.prototype = heir(Program.prototype);
 
-// unquote-splicing
-function unquoteSplice(val) {
-  Program.call(this);
-  this.val = val;
-  this.toString = function(){ return ",@"+this.val.toString();};
-};
-unquoteSplice.prototype = heir(Program.prototype);
+  /**************************************************************************
+   *
+   *    AST Nodes
+   *
+   **************************************************************************/
 
-// require expression
-function requireExpr(spec, stx) {
-  Program.call(this);
-  this.spec = spec;
-  this.stx  = stx;
-  this.toString = function(){ return "(require "+this.spec.toString()+")"; };
-};
-requireExpr.prototype = heir(Program.prototype);
+  // Inheritance from pg 168: Javascript, the Definitive Guide.
+  var heir = function(p) {
+    var f = function() {};
+    f.prototype = p;
+    return new f();
+  };
 
-// provide expression
-function provideStatement(clauses, stx) {
-  Program.call(this);
-  this.clauses  = clauses;
-  this.stx      = stx;
-  this.toString = function(){ return "(provide "+this.clauses.toString()+")" };
-};
-provideStatement.prototype = heir(Program.prototype);
+  // all Programs, by default, print out their values
+  // anything that behaves differently must provide their own toString() function
+  var Program = function() {
+    // -> String
+    this.toString = function(){ return this.val.toString(); };
+    // every Program has a location, but it's initialized to null
+    this.location = null;
+  };
 
-// Unsupported structure (allows us to generate parser errors ahead of "unsupported" errors)
-function unsupportedExpr(val, errorMsg, errorSpan) {
-  Program.call(this);
-  this.val = val;
-  this.errorMsg = errorMsg;
-  this.errorSpan = errorSpan; // when throwing an error, we use a different span from the actual sexp span
-  this.errorMsg.betterThanServer = true;
-  this.toString = function(){ return this.val.toString() };
-};
-unsupportedExpr.prototype = heir(Program.prototype);
+  // Function definition
+  function defFunc(name, args, body, stx) {
+    Program.call(this);
+    this.name = name;
+    this.args = args;
+    this.body = body;
+    this.stx  = stx;
+    this.toString = function(){
+      return "(define ("+this.name.toString()+" "+this.args.join(" ")+")\n    "+this.body.toString()+")";
+    };
+  };
+  defFunc.prototype = heir(Program.prototype);
 
 
-function isExpression(node){
-  return !(   (node instanceof defVar)
-           || (node instanceof defVars)
-           || (node instanceof defStruct)
-           || (node instanceof defFunc)
-           || (node instanceof provideStatement)
-           || (node instanceof unsupportedExpr)
-           || (node instanceof requireExpr));
-}
+  // Variable definition
+  function defVar(name, expr, stx) {
+    Program.call(this);
+    this.name = name;
+    this.expr = expr;
+    this.stx  = stx;
+    this.toString = function(){
+      return "(define "+this.name.toString()+" "+this.expr.toString()+")";
+    };
+  };
+  defVar.prototype = heir(Program.prototype);
 
-function isDefinition(node){
-  return (node instanceof defVar)
-      || (node instanceof defVars)
-      || (node instanceof defStruct)
-      || (node instanceof defFunc);
-}
+  // Multi-Variable definition
+  function defVars(names, expr, stx) {
+    Program.call(this);
+    this.names  = names;
+    this.expr   = expr;
+    this.stx    = stx;
+    this.toString = function(){
+      return "(define-values ("+this.names.join(" ")+") "+this.expr.toString()+")";
+    };
+  };
+  defVars.prototype = heir(Program.prototype);
 
-/**************************************************************************
- *
- *    STRUCTURES NEEDED BY THE COMPILER
- *
- **************************************************************************/
+  // Structure definition
+  function defStruct(name, fields, stx) {
+    Program.call(this);
+    this.name   = name;
+    this.fields = fields;
+    this.stx    = stx;
+    this.toString = function(){
+      return "(define-struct "+this.name.toString()+" ("+this.fields.toString()+"))";
+    };
+  };
+  defStruct.prototype = heir(Program.prototype);
 
-// moduleBinding: records an id and its associated JS implementation.
-function moduleBinding(name, bindings){
-  this.name     = name;
-  this.bindings = bindings;
-}
+  // Begin expression
+  function beginExpr(exprs, stx) {
+    Program.call(this);
+    this.exprs  = exprs;
+    this.stx    = stx;
+    this.toString = function(){
+      return "(begin "+this.exprs.join(" ")+")";
+    };
+  };
+  beginExpr.prototype = heir(Program.prototype);
 
-// constantBinding: records an id and its associated JS implementation.
-function constantBinding(name, moduleSource, permissions, loc){
-  this.name = name;
-  this.moduleSource = moduleSource;
-  this.permissions = permissions;
-  this.loc = loc;
-  this.toString = function(){return this.name;};
-  return this;
-}
+  // Lambda expression
+  function lambdaExpr(args, body, stx) {
+    Program.call(this);
+    this.args = args;
+    this.body = body;
+    this.stx  = stx;
+    this.toString = function(){
+      return "(lambda ("+this.args.join(" ")+") "+this.body.toString()+")";
+    };
+  };
+  lambdaExpr.prototype = heir(Program.prototype);
 
-// functionBinding: try to record more information about the toplevel-bound function
-function functionBinding(name, moduleSource, minArity, isVarArity, permissions, isCps, loc){
-  this.name = name;
-  this.moduleSource = moduleSource;
-  this.minArity = minArity;
-  this.isVarArity = isVarArity;
-  this.permissions = permissions;
-  this.isCps = isCps;
-  this.loc = loc;
-  this.toString = function(){return this.name;};
-  return this;
-}
+  // Local expression
+  function localExpr(defs, body, stx) {
+    Program.call(this);
+    this.defs = defs;
+    this.body = body;
+    this.stx  = stx;
+    this.toString = function(){
+      return "(local ("+this.defs.toString()+") "+this.body.toString()+")";
+    };
+  };
+  localExpr.prototype = heir(Program.prototype);
 
-// structBinding: A binding to a structure.
-// structBinding : symbol, ?, (listof symbol), symbol, symbol, (listof symbol) (listof symbol) (listof permission), location -> Binding
-function structBinding(name, moduleSource, fields, constructor,
-                      predicate, accessors, mutators, permissions, loc){
-  this.name = name;
-  this.moduleSource = moduleSource;
-  this.fields = fields;
-  this.constructor = constructor;
-  this.predicate = predicate;
-  this.accessors = accessors;
-  this.mutators = mutators;
-  this.permissions = permissions;
-  this.loc = loc;
-  this.toString = function(){return this.name;};
-  return this;
-}
+  // Letrec expression
+  function letrecExpr(bindings, body, stx) {
+    this.bindings = bindings;
+    this.body     = body;
+    this.stx      = stx;
+    this.toString = function(){
+      return "(letrec ("+this.bindings.toString()+") ("+this.body.toString()+"))";
+    };
+  };
 
-(function (){
+  // Let expression
+  function letExpr(bindings, body, stx) {
+    this.bindings = bindings;
+    this.body     = body;
+    this.stx      = stx;
+    this.toString = function(){
+      return "(let ("+this.bindings.toString()+") ("+this.body.toString()+"))";
+    };
+  };
+
+  // Let* expressions
+  function letStarExpr(bindings, body, stx) {
+    this.bindings = bindings;
+    this.body     = body;
+    this.stx      = stx;
+    this.toString = function(){
+      return "(let* ("+this.bindings.toString()+") ("+this.body.toString()+"))";
+    };
+  };
+
+  // cond expression
+  function condExpr(clauses, stx) {
+    this.clauses  = clauses;
+    this.stx      = stx;
+    this.toString = function(){
+      return "(cond\n    "+this.clauses.join("\n    ")+")";
+    };
+  };
+
+  // Case expression
+  function caseExpr(expr, clauses, stx) {
+    Program.call(this);
+    this.expr     = expr;
+    this.clauses  = clauses;
+    this.stx      = stx;
+    this.toString = function(){
+      return "(case "+this.expr.toString()+"\n    "+this.clauses.join("\n    ")+")";
+    };
+  };
+  caseExpr.prototype = heir(Program.prototype);
+
+  // and expression
+  function andExpr(exprs, stx) {
+    this.exprs  = exprs;
+    this.stx    = stx;
+    this.toString = function(){ return "(and "+this.exprs.join(" ")+")"; };
+  };
+
+  // or expression
+  function orExpr(exprs, stx) {
+    this.exprs  = exprs;
+    this.stx    = stx;
+    this.toString = function(){ return "(or "+this.exprs.toString()+")"; };
+  };
+
+  // application expression
+  function callExpr(func, args, stx) {
+    Program.call(this);
+    this.func   = func;
+    this.args   = args;
+    this.stx    = stx;
+    this.toString = function(){
+      return "("+[this.func].concat(this.args).join(" ")+")";
+    };
+  };
+  callExpr.prototype = heir(Program.prototype);
+
+  // if expression
+  function ifExpr(predicate, consequence, alternative, stx) {
+    Program.call(this);
+    this.predicate = predicate;
+    this.consequence = consequence;
+    this.alternative = alternative;
+    this.stx = stx;
+    this.toString = function(){
+      return "(if "+this.predicate.toString()+" "+this.consequence.toString()+" "+this.alternative.toString()+")";
+    };
+  };
+  ifExpr.prototype = heir(Program.prototype);
+
+  // when/unless expression
+  function whenUnlessExpr(predicate, exprs, stx) {
+    Program.call(this);
+    this.predicate = predicate;
+    this.exprs = exprs;
+    this.stx = stx;
+    this.toString = function(){
+      return "("+this.stx[0]+" "+this.predicate.toString()+" "+this.exprs.toString()+")";
+    };
+  };
+  whenUnlessExpr.prototype = heir(Program.prototype);
+
+  // symbol expression (ID)
+  function symbolExpr(val, stx) {
+    Program.call(this);
+    this.val = val;
+    this.stx = stx;
+  };
+  symbolExpr.prototype = heir(Program.prototype);
+
+  // Literal values (String, Char, Number, Vector)
+  function literal(val) {
+    Program.call(this);
+    this.val = val;
+    this.toString = function(){
+      // racket prints booleans using #t and #f
+      if(this.val===true) return "#t";
+      if(this.val===false) return "#f";
+      // racket prints special chars using their names
+      if(this.val instanceof Char){
+        var c = this.val.val;
+        return c === '\b' ? '#\\backspace' :
+              c === '\t' ? '#\\tab' :
+              c === '\n' ? '#\\newline' :
+              c === ' '  ? '#\\space' :
+              c === '\v' ? '#\\vtab' :
+              /* else */  this.val.toWrittenString();
+      }
+      return types.toWrittenString(this.val);
+    }
+  };
+  literal.prototype = heir(Program.prototype);
+
+  Vector.prototype.toString = Vector.prototype.toWrittenString = function(){
+    var filtered = this.elts.filter(function(e){return e!==undefined;}),
+        last = filtered[filtered.length-1];
+    return "#("+this.elts.map(function(elt){return elt===undefined? last : elt;})+")";
+  }
+
+  // quoted expression
+  function quotedExpr(val) {
+    Program.call(this);
+    this.val = val;
+    this.toString = function() {
+      function quoteLikePairP(v) {
+        return v instanceof Array
+          && v.length === 2
+          && v[0] instanceof symbolExpr
+          && (    v[0].val === 'quasiquote'
+                  || v[0].val === 'quote'
+                  || v[0].val === 'unquote'
+                  || v[0].val === 'unquote-splicing'
+             ) }
+      function shortName(lexeme) {
+        var s = lexeme.val
+        return s === 'quasiquote' ? "`" :
+          s === 'quote' ? "'" :
+          s === 'unquote' ? "," :
+          s === 'unquote-splicing' ? ",@" :
+          (function () { throw "impossible quote-like string" })()
+      }
+      function elementToString(v) {
+        if (quoteLikePairP(v)) {
+          return shortName(v[0]).concat(elementToString(v[1]))
+        } else if (v instanceof Array) {
+          return v.reduce(function (acc, x) { return acc.concat(elementToString(x)) }, "(").concat(")")
+        } else {
+          return v.toString()
+        }
+      }
+
+      return "'"+elementToString(this.val)
+    }
+  };
+  quotedExpr.prototype = heir(Program.prototype);
+
+  // unquoted expression
+  function unquotedExpr(val) {
+    Program.call(this);
+    this.val = val;
+    this.toString = function(){ return ","+this.val.toString(); };
+  };
+  unquotedExpr.prototype = heir(Program.prototype);
+
+  // quasiquoted expression
+  function quasiquotedExpr(val) {
+    Program.call(this);
+    this.val = val;
+    this.toString = function(){
+      if(this.val instanceof Array) return "`("+this.val.toString()+")";
+      else return "`"+this.val.toString();
+    };
+  };
+  quasiquotedExpr.prototype = heir(Program.prototype);
+
+  // unquote-splicing
+  function unquoteSplice(val) {
+    Program.call(this);
+    this.val = val;
+    this.toString = function(){ return ",@"+this.val.toString();};
+  };
+  unquoteSplice.prototype = heir(Program.prototype);
+
+  // require expression
+  function requireExpr(spec, stx) {
+    Program.call(this);
+    this.spec = spec;
+    this.stx  = stx;
+    this.toString = function(){ return "(require "+this.spec.toString()+")"; };
+  };
+  requireExpr.prototype = heir(Program.prototype);
+
+  // provide expression
+  function provideStatement(clauses, stx) {
+    Program.call(this);
+    this.clauses  = clauses;
+    this.stx      = stx;
+    this.toString = function(){ return "(provide "+this.clauses.toString()+")" };
+  };
+  provideStatement.prototype = heir(Program.prototype);
+
+  // Unsupported structure (allows us to generate parser errors ahead of "unsupported" errors)
+  function unsupportedExpr(val, errorMsg, errorSpan) {
+    Program.call(this);
+    this.val = val;
+    this.errorMsg = errorMsg;
+    this.errorSpan = errorSpan; // when throwing an error, we use a different span from the actual sexp span
+    this.errorMsg.betterThanServer = true;
+    this.toString = function(){ return this.val.toString() };
+  };
+  unsupportedExpr.prototype = heir(Program.prototype);
+
+
+  function isExpression(node){
+    return !(   (node instanceof defVar)
+             || (node instanceof defVars)
+             || (node instanceof defStruct)
+             || (node instanceof defFunc)
+             || (node instanceof provideStatement)
+             || (node instanceof unsupportedExpr)
+             || (node instanceof requireExpr));
+  }
+
+  function isDefinition(node){
+    return (node instanceof defVar)
+        || (node instanceof defVars)
+        || (node instanceof defStruct)
+        || (node instanceof defFunc);
+  }
+
+  /**************************************************************************
+   *
+   *    STRUCTURES NEEDED BY THE COMPILER
+   *
+   **************************************************************************/
+
+  // moduleBinding: records an id and its associated JS implementation.
+  function moduleBinding(name, bindings){
+    this.name     = name;
+    this.bindings = bindings;
+  }
+
+  // constantBinding: records an id and its associated JS implementation.
+  function constantBinding(name, moduleSource, permissions, loc){
+    this.name = name;
+    this.moduleSource = moduleSource;
+    this.permissions = permissions;
+    this.loc = loc;
+    this.toString = function(){return this.name;};
+    return this;
+  }
+
+  // functionBinding: try to record more information about the toplevel-bound function
+  function functionBinding(name, moduleSource, minArity, isVarArity, permissions, isCps, loc){
+    this.name = name;
+    this.moduleSource = moduleSource;
+    this.minArity = minArity;
+    this.isVarArity = isVarArity;
+    this.permissions = permissions;
+    this.isCps = isCps;
+    this.loc = loc;
+    this.toString = function(){return this.name;};
+    return this;
+  }
+
+  // structBinding: A binding to a structure.
+  // structBinding : symbol, ?, (listof symbol), symbol, symbol, (listof symbol) (listof symbol) (listof permission), location -> Binding
+  function structBinding(name, moduleSource, fields, constructor,
+                        predicate, accessors, mutators, permissions, loc){
+    this.name = name;
+    this.moduleSource = moduleSource;
+    this.fields = fields;
+    this.constructor = constructor;
+    this.predicate = predicate;
+    this.accessors = accessors;
+    this.mutators = mutators;
+    this.permissions = permissions;
+    this.loc = loc;
+    this.toString = function(){return this.name;};
+    return this;
+  }
+
   var makeHash = types.makeLowLevelEqHash;
   plt.compiler.keywords = ["cond", "else", "let", "case", "let*", "letrec", "quote",
                               "quasiquote", "unquote","unquote-splicing","local","begin",
@@ -941,6 +921,37 @@ function structBinding(name, moduleSource, fields, constructor,
     return pinfo;
  }
  
+ plt.compiler.throwError    = throwError;
+ 
+ plt.compiler.Program       = Program;
+ plt.compiler.couple        = couple;
+ plt.compiler.defFunc       = defFunc;
+ plt.compiler.defVar        = defVar;
+ plt.compiler.defVars       = defVars;
+ plt.compiler.defStruct     = defStruct;
+ plt.compiler.beginExpr     = beginExpr;
+ plt.compiler.lambdaExpr    = lambdaExpr;
+ plt.compiler.localExpr     = localExpr;
+ plt.compiler.letrecExpr    = letrecExpr;
+ plt.compiler.letExpr       = letExpr;
+ plt.compiler.letStarExpr   = letStarExpr;
+ plt.compiler.condExpr      = condExpr;
+ plt.compiler.caseExpr      = caseExpr;
+ plt.compiler.andExpr       = andExpr;
+ plt.compiler.orExpr        = orExpr;
+ plt.compiler.callExpr      = callExpr;
+ plt.compiler.ifExpr        = ifExpr;
+ plt.compiler.whenUnlessExpr= whenUnlessExpr;
+ plt.compiler.symbolExpr    = symbolExpr;
+ plt.compiler.literal       = literal;
+ plt.compiler.quotedExpr    = quotedExpr;
+ plt.compiler.unquotedExpr  = unquotedExpr;
+ plt.compiler.quasiquotedExpr=quasiquotedExpr;
+ plt.compiler.unquoteSplice = unquoteSplice;
+ plt.compiler.requireExpr   = requireExpr;
+ plt.compiler.provideStatement = provideStatement;
+ plt.compiler.unsupportedExpr= unsupportedExpr;
+
  plt.compiler.pinfo       = pinfo;
  plt.compiler.getBasePinfo= getBasePinfo;
  plt.compiler.isExpression= isExpression;
@@ -949,5 +960,9 @@ function structBinding(name, moduleSource, fields, constructor,
  plt.compiler.emptyEnv    = emptyEnv;
  plt.compiler.localEnv    = localEnv;
  plt.compiler.globalEnv   = globalEnv;
+ plt.compiler.moduleBinding  = moduleBinding;
+ plt.compiler.functionBinding  = functionBinding;
+ plt.compiler.constantBinding  = constantBinding;
+ plt.compiler.structBinding  = structBinding;
  plt.compiler.unnamedEnv  = unnamedEnv;
 })();
