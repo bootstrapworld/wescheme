@@ -24,7 +24,6 @@ var unimplementedException = function(str){
 function throwError(msg, loc, errorClass) {
   loc.source = loc.source || "<unknown>"; // FIXME -- we should have the source populated
   // rewrite a ColoredPart to match the format expected by the runtime
-  console.log(msg);
   function rewritePart(part){
     if(typeof(part) === 'string'){
       return part;
