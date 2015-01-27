@@ -10,6 +10,60 @@ plt.compiler = plt.compiler || {};
 (function () {
  'use strict';
  
+ // import frequently-used bindings
+ var literal          = plt.compiler.literal;
+ var symbolExpr       = plt.compiler.symbolExpr;
+ var Program          = plt.compiler.Program;
+ var couple           = plt.compiler.couple;
+ var ifExpr           = plt.compiler.ifExpr;
+ var beginExpr        = plt.compiler.beginExpr;
+ var letExpr          = plt.compiler.letExpr;
+ var letStarExpr      = plt.compiler.letStarExpr;
+ var letrecExpr       = plt.compiler.letrecExpr;
+ var localExpr        = plt.compiler.localExpr;
+ var andExpr          = plt.compiler.andExpr;
+ var orExpr           = plt.compiler.orExpr;
+ var condExpr         = plt.compiler.condExpr;
+ var caseExpr         = plt.compiler.caseExpr;
+ var lambdaExpr       = plt.compiler.lambdaExpr;
+ var quotedExpr       = plt.compiler.quotedExpr;
+ var unquotedExpr     = plt.compiler.unquotedExpr;
+ var quasiquotedExpr  = plt.compiler.quasiquotedExpr;
+ var unquoteSplice    = plt.compiler.unquoteSplice;
+ var callExpr         = plt.compiler.callExpr;
+ var whenUnlessExpr   = plt.compiler.whenUnlessExpr;
+ var defFunc          = plt.compiler.defFunc;
+ var defVar           = plt.compiler.defVar;
+ var defVars          = plt.compiler.defVars;
+ var defStruct        = plt.compiler.defStruct;
+ var requireExpr      = plt.compiler.requireExpr;
+ var provideStatement = plt.compiler.provideStatement;
+ var unsupportedExpr  = plt.compiler.unsupportedExpr;
+ 
+ var throwError       = plt.compiler.throwError;
+ var structBinding    = plt.compiler.structBinding;
+ 
+  // checkDuplicateIdentifiers : [listof SymbolExprs], Program -> Void
+  // sort the array, and throw errors for non-symbols, keywords or duplicates
+  function checkDuplicateIdentifiers(lst, stx, loc){
+    var visitedIds = {}; // initialize a dictionary of ids we've seen
+    lst.forEach(function(id){
+        if(!(id instanceof symbolExpr)){
+          throwError("expected identifier "+id.val, id.location);
+        } else if(visitedIds[id.val]) { // if we've seen this variable before, throw an error
+          throwError(new types.Message([new types.ColoredPart(stx.toString(), stx.location),
+                                    ": found ",
+                                    new types.ColoredPart("a variable", id.location),
+                                    " that is already used ",
+                                    new types.ColoredPart("here", visitedIds[id.val].location)])
+                     , id.location);
+        } else {
+          visitedIds[id.val] = id; // otherwise, record the identifier as being visited
+        }
+                         
+    });
+  }
+ 
  // tag-application-operator/module: Stx module-name -> Stx
  // Adjust the lexical context of the func so it refers to the environment of a particular module.
  function tagApplicationOperator_Module(application, moduleName){
