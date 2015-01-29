@@ -90,7 +90,8 @@ function readFromRepl(event) {
         program     = ASTandPinfo[0],
         pinfo       = ASTandPinfo[1];
     var pinfo       = plt.compiler.analyze(program, debug);
-    var response    = plt.compiler.compile(program, pinfo, debug);
+    var optimized   = plt.compiler.optimize(program);
+    var response    = plt.compiler.compile(optimized, pinfo, debug);
     response.bytecode = (0,eval)('(' + response.bytecode + ')');
     console.log(response);
 //    pyretCheck(AST, pinfo);
