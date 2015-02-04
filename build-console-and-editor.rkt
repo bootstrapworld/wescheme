@@ -67,6 +67,8 @@
                "-o" "script"
                #:pipe-output-to (string-append "war/js/" dest)))
 
+(define (generate-js-runtime!)
+  (call-system "./generate-js-runtime.sh"))
 
 (define (ensure-codemirror-installed!)
   (unless (directory-exists? codemirror-dir)
@@ -127,6 +129,9 @@
 (ensure-closure-library-installed!)
 (ensure-appengine-installed!)
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(generate-js-runtime!)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

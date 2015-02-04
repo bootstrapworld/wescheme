@@ -10,10 +10,6 @@
 		<property name="DEFAULT_ENCODING" value="UTF-8" />
 	</system-properties>
 
-	<env-variables>
-		<env-var name="DEFAULT_ENCODING" value="UTF-8" />
-	</env-variables>
-
 	<threadsafe>false</threadsafe>
 
 	
