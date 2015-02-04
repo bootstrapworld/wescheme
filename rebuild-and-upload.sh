@@ -3,7 +3,7 @@ set -e
 set -x
 
 # Copy wescheme-compiler libraries
-./copy-compiler-libraries.sh
+./generate-js-runtime.sh
 
 # Following is necessary to avoid hitting compression bug
 rm war/js/mzscheme-vm/*-min.js
