@@ -829,7 +829,7 @@ PRIMITIVES['write'] =
 			return types.VOID;
 		}),
 	 new PrimProc('write', 2, false, true, function(aState, x, port) {
-		 	throw types.internalError('write to a port not implemented yet.', false);
+		 	throw types.internalError("write to a port not implemented yet.", state.captureCurrentContinuationMarks(aState));
 		}) ]);
 
 
@@ -842,7 +842,7 @@ PRIMITIVES['display'] =
 	}),
 			  new PrimProc('display', 2, false, true, function(aState, x, port) {
 	     // FIXME
-	     throw types.internalError("display to a port not implemented yet.", false);
+	     throw types.internalError("display to a port not implemented yet.", state.captureCurrentContinuationMarks(aState));
 	 } )]);
 
 
@@ -855,7 +855,7 @@ PRIMITIVES['newline'] =
 	}),
 	 new PrimProc('newline', 1, false, false, function(aState, port) {
 	     // FIXME
-	     throw types.internalError("newline to a port not implemented yet.", false);
+	     throw types.internalError("newline to a port not implemented yet.", state.captureCurrentContinuationMarks(aState));
 	 } )]);
 
 
