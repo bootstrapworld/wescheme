@@ -4600,15 +4600,26 @@ PRIMITIVES['color-alpha'] =
 		 });
 
 
-PRIMITIVES['empty-scene'] =
-    new PrimProc('empty-scene',
+PRIMITIVES['empty-scene'] = new CasePrimitive('empty-scene',
+  [new PrimProc('empty-scene',
 		 2,
 		 false, false,
 		 function(aState, width, height) {
 		 	check(aState, width, isNonNegativeReal, 'empty-scene', 'non-negative number', 1, arguments);
 			check(aState, height, isNonNegativeReal, 'empty-scene', 'non-negative number', 2, arguments);
 		        return world.Kernel.sceneImage(jsnums.toFixnum(width), jsnums.toFixnum(height), [], true);
-		 });
+		 }),
+   new PrimProc('empty-scene',
+		 3,
+		 false, false,
+		 function(aState, width, height, c) {
+		 	check(aState, width, isNonNegativeReal, 'empty-scene', 'non-negative number', 1, arguments);
+			check(aState, height, isNonNegativeReal, 'empty-scene', 'non-negative number', 2, arguments);
+			check(aState, c, isColor, 'empty-scene', 'color', 3, arguments);
+      if (colorDb.get(c)) { c = colorDb.get(c); }
+      return world.Kernel.sceneImage(jsnums.toFixnum(width), jsnums.toFixnum(height), [], true, c);
+		 })
+   ]);
 
 // just like place-image, but we flip the y-coordinate
 PRIMITIVES['put-image'] =

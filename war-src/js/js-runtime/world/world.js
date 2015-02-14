@@ -325,13 +325,14 @@ if (typeof(world) === 'undefined') {
     };
 
     //////////////////////////////////////////////////////////////////////
-    // SceneImage: primitive-number primitive-number (listof image) -> Scene
-    var SceneImage = function(width, height, children, withBorder) {
+    // SceneImage: primitive-number primitive-number (listof image) boolean color -> Scene
+    var SceneImage = function(width, height, children, withBorder, color) {
         BaseImage.call(this);
         this.width    = width;
         this.height   = height;
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
+        this.color    = color;
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -351,7 +352,7 @@ if (typeof(world) === 'undefined') {
         var childImage, childX, childY;
         // create a clipping region around the boundaries of the Scene
         ctx.save();
-        ctx.fillStyle = "rgba(0,0,0,0)";
+        ctx.fillStyle = this.color? colorString(this.color) : "rgba(0,0,0,0)";
         ctx.fillRect(x, y, this.width, this.height);
         ctx.restore();
         // save the context, reset the path, and clip to the path around the scene edge
@@ -1522,8 +1523,8 @@ if (typeof(world) === 'undefined') {
     world.Kernel.nameToColor = nameToColor;
     world.Kernel.colorDb = colorDb;
 
-    world.Kernel.sceneImage = function(width, height, children, withBorder) {
-        return new SceneImage(width, height, children, withBorder);
+    world.Kernel.sceneImage = function(width, height, children, withBorder, color) {
+        return new SceneImage(width, height, children, withBorder, color);
     };
     world.Kernel.circleImage = function(radius, style, color) {
         return new EllipseImage(2*radius, 2*radius, style, color);
