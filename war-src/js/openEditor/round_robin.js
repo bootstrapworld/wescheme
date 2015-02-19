@@ -158,7 +158,10 @@ goog.provide("plt.wescheme.RoundRobin");
        var TEST_LOCAL = document.getElementById('errorLogForm') && readLocalCompilerCookie() === "true";
 
        // How much do we trust the local compiler to run without a server safety-net? (0.00-1.00)
-       var TRUST_LOCAL   = (Math.random() < 0.90);
+       var today         = new Date().getDay(),
+           local_days    = [0, 2, 4, 6],                   // Fly solo on Sunday, Tuesday, Thursday and Saturday
+           LOCAL_DAY     = local_days.indexOf(today) > -1, // Are we flying solo?
+           TRUST_LOCAL   = (Math.random() < 0.90) || LOCAL_DAY;
  
        console.log('Local compiler is '+(TEST_LOCAL? '' : 'not')+' running'
                   +'\nTRUST_LOCAL is '+TRUST_LOCAL);
