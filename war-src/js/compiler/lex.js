@@ -275,7 +275,6 @@ plt.compiler = plt.compiler || {};
         if(sexp instanceof symbolExpr && sexp.val == '.'){
           if(dot2Idx){
             var msg = new types.Message(["A syntax list may have only 2 `.'s"]);
-            msg.betterThanServer = true;
             throwError(msg, list[dot1Idx].location);
           }
           dot2Idx = dot1Idx? list.length : false; // if we've seen dot1, save this idx to dot2Idx
@@ -295,13 +294,11 @@ plt.compiler = plt.compiler || {};
         // if the dot is the first element in the list, throw an error
         if(dot1Idx === 0){
           var msg = new types.Message(["A `.' cannot be the first element in a syntax list"]);
-          msg.betterThanServer = true;
           throwError(msg, list[dot1Idx].location);
         }
         // if a dot is the last element in the list, throw an error
         if(dot1Idx===(list.length-1) || dot2Idx===(list.length-1)){
           var msg = new types.Message(["A `.' cannot be the last element in a syntax list"]);
-          msg.betterThanServer = true;
           throwError(msg, list[dot2Idx||dot1Idx].location);
         }
 
@@ -310,7 +307,6 @@ plt.compiler = plt.compiler || {};
           // if they are not surrounding a single element, throw an error
           if(dot2Idx - dot1Idx !== 2){
             var msg = new types.Message(["Two `.'s may only surround one syntax item"]);
-            msg.betterThanServer = true;
             throwError(msg, list[dot2Idx].location);
           // if they are, move that element to the front of the list and remove the dots
           } else {
@@ -321,13 +317,11 @@ plt.compiler = plt.compiler || {};
         if(!(list[dot1Idx+1] instanceof Array)){
            var msg = new types.Message(["A `.' must be followed by a syntax list, but found "
                                         , new types.ColoredPart("something else", list[dot1Idx+1].location)])
-           msg.betterThanServer = true;
            throwError(msg, list[dot1Idx+1].location);
         }
         if(list.length > dot1Idx+2){
            var msg = new types.Message(["A `.' followed by a syntax list must be followed by a closing delimeter, but found "
                                         , new types.ColoredPart("something else", list[dot1Idx+2].location)])
-           msg.betterThanServer = true;
            throwError(msg, list[dot1Idx+1].location);
          // splice that element into the list, removing the dots
          } else {
@@ -495,7 +489,6 @@ plt.compiler = plt.compiler || {};
         var msg = new types.Message([source, ":", line.toString()
                                      , ":", (column-1).toString()
                                      , errorStr]);
-        msg.betterThanServer = true;
         throwError(msg
                    , new Location(startCol, startRow, iStart, token.length+1)
                    , "Error-GenericReadError");
@@ -531,7 +524,6 @@ plt.compiler = plt.compiler || {};
             }
             var error = new types.Message([source, ":", line.toString(), ":", "0"
                                            , ": read-syntax: literal "+ kind + " not allowed"]);
-            error.betterThanServer = true;
             datum = new unsupportedExpr(sexp, error, span);
             datum.location = new Location(startCol, startRow, iStart, unsupportedTest[0].length+sexp.location.span);
             return datum;
@@ -554,7 +546,6 @@ plt.compiler = plt.compiler || {};
              var msg = new types.Message(["read: vector length "+len+" is too small, ",
                                           elts.length+" value" + ((elts.length>1)? "s" : ""),
                                           " provided"]);
-             msg.betterThanServer = true;
              throwError(msg, new Location(startCol, startRow, iStart, vectorTest[0].length));
           }
 
@@ -615,7 +606,6 @@ plt.compiler = plt.compiler || {};
                                                    , ":", (column-1).toString()
                                                    , " read: WeScheme does not support the '#"+p+"' notation for "
                                                    , (p===","? "unsyntax" : p==="'"? "syntax" : "quasisyntax")]);
-                      msg.betterThanServer = true;
                       throwError(msg, datum.location);
                       break;
             // STRINGS
@@ -644,7 +634,6 @@ plt.compiler = plt.compiler || {};
               var msg = new types.Message([source, ":", line.toString()
                                            , ":", (column-1).toString()
                                            , ": read: bad syntax `#", (chunk+nextChar),"'"]);
-              msg.betterThanServer = true;
               throwError(msg
                         , new Location(startCol, startRow, iStart, (chunk+nextChar).length+1)
                         , "Error-GenericReadError");
@@ -945,7 +934,6 @@ plt.compiler = plt.compiler || {};
             var msg = new types.Message([source, ":", startRow.toString()
                                          , ":" , startCol.toString()
                                          , ": read: "+e.message]);
-            msg.betterThanServer = true;
             throwError(msg
                        , new Location(startCol, startRow, iStart, i-iStart)
                        , "Error-GenericReadError");

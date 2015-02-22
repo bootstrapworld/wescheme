@@ -119,7 +119,6 @@ plt.compiler = plt.compiler || {};
                         ]
       , "structured-error": JSON.stringify({message: (errorClass? false : msg.args), location: loc.toString() })
     };
-    if(msg.betterThanServer) json.betterThanServer = true;
     throw JSON.stringify(json);
   }
 
@@ -466,7 +465,6 @@ plt.compiler = plt.compiler || {};
     this.val = val;
     this.errorMsg = errorMsg;
     this.errorSpan = errorSpan; // when throwing an error, we use a different span from the actual sexp span
-    this.errorMsg.betterThanServer = true;
     this.toString = function(){ return this.val.toString() };
   };
   unsupportedExpr.prototype = heir(Program.prototype);
