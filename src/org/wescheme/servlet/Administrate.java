@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.wescheme.project.Compiler.BadCompilationResult;
 import org.wescheme.project.Program;
 import org.wescheme.project.ProgramDigest;
 import org.wescheme.user.Session;

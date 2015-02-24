@@ -1,7 +1,6 @@
 package org.wescheme.project;
 
 import java.io.Serializable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,13 +10,11 @@ import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
 import javax.jdo.annotations.IdentityType;
 import javax.jdo.annotations.PrimaryKey;
-import javax.servlet.ServletContext;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 
 import org.jdom.Element;
-import org.wescheme.project.Compiler.BadCompilationResult;
 import org.wescheme.util.CacheHelpers;
 import org.wescheme.util.Queries;
 import org.wescheme.util.XML;
@@ -42,8 +39,10 @@ public class Program implements Serializable {
 
 	@Persistent
 	protected String title_;
-	@Persistent
-	protected ObjectCode obj_;
+        
+        // TODO: Will this affect the PersistenceManager's treatment of other fields?
+	// @Persistent
+	// protected ObjectCode obj_;
 	
 	@Persistent
 	protected Boolean isSourcePublic;
@@ -85,7 +84,6 @@ public class Program implements Serializable {
 		this.title_ = "Unknown";
 		this.srcs_ = new ArrayList<SourceCode>();
 		this.srcs_.add(new SourceCode(this.title_, src));
-		this.obj_ = new ObjectCode();
 		this.isSourcePublic = false;
 		this.isDeleted = false;
 		this.owner_ 	= ownerName;
@@ -155,7 +153,6 @@ public class Program implements Serializable {
 
 	public void updateSource(String src){
 		this.setSource(new SourceCode(this.title_, src));
-		this.obj_ = new ObjectCode();
 		updateTime();
 	}
 
@@ -178,18 +175,6 @@ public class Program implements Serializable {
 		this.srcs_.clear();
 		this.srcs_.add(src);
 		this.updateTime();
-	}
-
-	public ObjectCode getObject(){
-		if (this.obj_ == null) {
-			this.obj_ = new ObjectCode();
-		}
-		return obj_;
-	}
-
-	// Returns true if the program has been compiled with an associated useful ObjectCode.
-	public boolean hasBeenBuilt() {
-		return (this.obj_ != null && this.obj_.getObj().length() > 0);
 	}
 
 
@@ -227,9 +212,6 @@ public class Program implements Serializable {
 			root.addContent(getSource().toXML());
 		}
 
-		if( null != obj_){
-			root.addContent(obj_.toXML());
-		}
 		root.addContent(XML.makeElement("id", id));
 		if (publicId_ != null) { root.addContent(XML.makeElement("publicId", publicId_)); }
 		root.addContent(XML.makeElement("isSourcePublic", this.getIsSourcePublic()));
@@ -260,7 +242,6 @@ public class Program implements Serializable {
     public JSONObject toJSON(boolean includeSource, PersistenceManager pm) {
         JSONObject json = new JSONObject();
         if (includeSource) { json.put("source", getSource().toJSON()); }
-        if (obj_ != null) { json.put("object", obj_.toJSON()); }
         json.put("id", id);
         if (publicId_ != null) { json.put("publicId", publicId_); }
         json.put("isSourcePublic", this.getIsSourcePublic());
@@ -282,20 +263,12 @@ public class Program implements Serializable {
         }
         json.put("sharedAs", sharedAs);
 
+        // TODO: Can this be removed?
         JSONArray permissions = new JSONArray();
-        if (this.obj_ != null) {
-            for(String perm : this.obj_.getPermissions()) {
-                permissions.add(perm);
-            }
-        }
         json.put("permissions", permissions);
 
+        // TODO: Can this be removed?
         JSONArray provides = new JSONArray();
-        if (this.obj_ != null) {
-            for(String provide : this.obj_.getProvides()) {
-                provides.add(provide);
-            }
-        }
         json.put("provides", provides);
 
         return json;
