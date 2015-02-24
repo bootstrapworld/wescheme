@@ -202,7 +202,7 @@ WeSchemeInteractions = (function () {
                 //stylesheet: "/js/codemirror/contrib/scheme/css/schemecolors-interactive.css",
                 content: nextCode,
                 makeTransparentIframe: true,
-                readOnly: "nocursor", // sets CM to readOnly mode AND hides the blinking cursor
+                readOnly: true, // sets CM to readOnly mode. need to hide the cursor via CSS
                 matchBrackets: false },
             function(container) {
                 var newId = makeFreshId();
