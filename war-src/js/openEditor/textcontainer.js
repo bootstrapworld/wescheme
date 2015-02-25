@@ -43,7 +43,6 @@ var WeSchemeTextContainer;
 		this.impl = null;
 		this.options = options;
 		this.keymaps = [];
-
 		jQuery(this.div).empty();
 		new CodeMirrorImplementation(
 				this,
@@ -191,8 +190,8 @@ var WeSchemeTextContainer;
 					lineWrapping: true,
 					matchBrackets: (options.matchBrackets !== undefined ? options.matchBrackets : true),
 					value: options.content || "",
-					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false)
-
+					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
+          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
 				});
  
         this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
@@ -267,7 +266,7 @@ var WeSchemeTextContainer;
 		this.behaviorE.sendEvent(code);
 		this.editor.refresh();
 	};
-
+ 
 	CodeMirrorImplementation.prototype.handleAndColumnToPos = function (handle) {
 		return {
 			line: handle.handle,
