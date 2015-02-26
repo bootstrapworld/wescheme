@@ -231,6 +231,10 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
   background: linear-gradient(to right, rgba(255,255,255,1) 60%, rgba(255,255,255,.5))
 }
 
+#inter .CodeMirror-scroll{
+  overflow: hidden !important;
+}
+
 #defn {
     clear:			both;
     width:			100%;
