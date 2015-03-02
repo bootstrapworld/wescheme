@@ -64,28 +64,6 @@ goog.require('plt.wescheme.Program');
 		    });
     };
 
-
-
-    // runTheCompiler: number (-> void) (-> void) -> void
-    // Drives the compiler.
-    plt.wescheme.AjaxActions.prototype.runTheCompiler = function(pid, onSuccess, onFailure) {
-	jQuery.ajax({cache : false,
-  		     data : { pid: pid },
-  		     dataType: "xml",
-  		     type: "POST",
-  		     url: "/build",
-  		     success: function(data) {
-			 onSuccess();
-		     },
-  		     error: function(xhr) {
-			 onFailure(xhr.statusText);
-		     },
-		     xhr: function(settings) { return new XMLHttpRequest(settings); }
-		    });
-    };
-
-
-
     // makeAClone: number (string | null) (number -> void) (-> void) -> void
     // Clones a program.  If code is non-null, also update the code source of the
     // clone.

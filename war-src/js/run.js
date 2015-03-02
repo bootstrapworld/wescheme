@@ -129,8 +129,8 @@ goog.provide("plt.wescheme.runner");
 	    new Runner(compilationServerUrl, document.getElementById('interactions'));
         var afterLoad = function(aProgram) {
 	    var title = aProgram.getTitle();
-	    var programCode = aProgram.getObjectCode();
 	    var sourceCode = aProgram.getSourceCode();
+        var programCode = null; // Set it to null, so that the client-side compiler is invoked.
 	    var permissions = aProgram.getPermissions();
             
             var j = jQuery("#interactions");

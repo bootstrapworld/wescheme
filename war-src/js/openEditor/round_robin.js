@@ -3,6 +3,9 @@
 
 goog.provide("plt.wescheme.RoundRobin");
 
+// I need to somehow include plt.compiler here.
+// How do I do that?
+// goog.require('plt.compiler');
 
 (function() {
     "use strict";
@@ -42,8 +45,7 @@ goog.provide("plt.wescheme.RoundRobin");
           structuredErr = JSON.parse(err['structured-error']);
           return e;
         } catch (JSONerror){
-          writeLocalCompilerCookie("false"); // if the local compiler crashes, turn it off
-          return "!! FATAL ERROR !!\n on "+(plt.wescheme.BrowserDetect.versionString)+'\n'+e.stack;
+          return "!! FATAL ERROR !!\n"+e.stack;
         }
       }
       // logResults : code local server -> void
@@ -71,7 +73,7 @@ goog.provide("plt.wescheme.RoundRobin");
           onDone(JSON.stringify(local_bytecode));
       } catch (e) {
           var local_error = getError(e).toString();
-          // if it's a fatal error, shut off the local compiler, log the error and move on
+          // if it's a fatal error, log the error and move on
           if(/FATAL ERROR/.test(local_error.toString())){
             logResults(code, JSON.stringify(local_error), "FATAL ERROR");
             onCompilationFail(onDoneError);
