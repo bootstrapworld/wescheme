@@ -2,11 +2,25 @@
 // openEditor, but stripped down since it does not need to support
 // interactive evaluation.
 
+goog.provide("plt.wescheme.runner");
+
 goog.require("plt.wescheme.AjaxActions");
 goog.require("plt.wescheme.WeSchemeProperties");
 goog.require("plt.wescheme.makeDynamicModuleLoader");
 goog.require("plt.wescheme.RoundRobin");
-goog.provide("plt.wescheme.runner");
+
+
+/* BUGFIX:
+ * 
+ * These #includes are required by plt.wescheme.RoundRobin.
+ * See round_robin.js for more details.
+ */
+goog.require('plt.compiler.lex');
+goog.require('plt.compiler.parse');
+goog.require('plt.compiler.desugar');
+goog.require('plt.compiler.analyze');
+goog.require('plt.compiler.compile');
+
 
 (function() {
 
