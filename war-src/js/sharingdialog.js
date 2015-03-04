@@ -49,21 +49,8 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             that.actions.makeAClone(
                 that.pid, 
                 that.code,
-                function(newPid) { 
-                    that.actions.runTheCompiler(
-                        newPid, 
-                        function() { whenCompilationSucceeds(isPublic, newPid); },
-                        function(err) { whenCompilationFails(isPublic, newPid, err); });
-                },
+                function(newPid) { showResultOfSharing(isPublic, newPid, false); },
                 whenCloningFails);
-        };
-
-        var whenCompilationSucceeds = function(isPublic, newPid) {
-            showResultOfSharing(isPublic, newPid, false);
-        };
-
-        var whenCompilationFails = function(isPublic, newPid, errMessage) {
-            showResultOfSharing(isPublic, newPid, errMessage);
         };
 
         var showResultOfSharing = function(isPublic, newPid, errMessage) {

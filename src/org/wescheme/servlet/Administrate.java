@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.wescheme.project.Compiler.BadCompilationResult;
 import org.wescheme.project.Program;
 import org.wescheme.project.ProgramDigest;
 import org.wescheme.user.Session;
@@ -33,9 +32,7 @@ public class Administrate extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
 		checkAccessControl(req, res);
 
-		if (req.getParameter("action").equals("refreshProgram")) {
-			refreshProgram(req, res);
-		} 
+		// Do nothing on POST.
 	}
 
 	// Checks that the person accessing this servlet is an administrator.
@@ -58,34 +55,6 @@ public class Administrate extends HttpServlet {
 			listPrograms(req, res);
 		}
 	}
-
-
-	// refreshProgram: force the building of the binary of the given program if it exists,
-	// and repair broken invariants of the data model.
-	private void refreshProgram(HttpServletRequest req, HttpServletResponse res) throws IOException {
-		String programId = req.getParameter("pid");
-		if (programId == null) {
-			throw new RuntimeException("pid missing");
-		}
-		PersistenceManager pm = PMF.get().getPersistenceManager();
-		try {
-			Program prog = pm.getObjectById(Program.class,
-					Long.parseLong(req.getParameter("pid")));
-
-			// First, build the program if it's already been built.
-			if (prog.hasBeenBuilt()) {
-				try {
-					prog.build(this.getServletContext(), pm);
-				} catch (BadCompilationResult e){
-					// FIXME: report that the compilation failed.
-				}
-			}	
-		} finally {
-			pm.close();
-		}
-		// TODO: report if the compilation went ok.
-	}
-
 
 	// Lists all programs across all of WeScheme.
 	private void listPrograms(HttpServletRequest req, HttpServletResponse res) throws IOException {
