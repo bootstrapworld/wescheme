@@ -3,9 +3,11 @@
 
 goog.provide("plt.wescheme.RoundRobin");
 
-// I need to somehow include plt.compiler here.
-// How do I do that?
-// goog.require('plt.compiler');
+goog.require('plt.compiler.lex');
+goog.require('plt.compiler.parse');
+goog.require('plt.compiler.desugar');
+goog.require('plt.compiler.analyze');
+goog.require('plt.compiler.compile');
 
 (function() {
     "use strict";
