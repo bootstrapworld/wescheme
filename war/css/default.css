@@ -440,7 +440,4 @@ span.top-aligned-inline-block {
   #printedCM{visibility: visible;}
   #fileInfo{border-style: solid; border-color: black; border-width: 3px 0px;}
   #fileInfo img{display: none;}
-  #splitpane, #definitions{height: auto;}
-  .goog-splitpane-first-container{overflow: visible;}
-  .goog-splitpane-handle goog-splitpane-handle-vertical{display: none;}
 }

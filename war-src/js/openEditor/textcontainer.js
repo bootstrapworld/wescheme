@@ -30,7 +30,6 @@ var WeSchemeTextContainer;
 //onchange attribute: called whenever the text changes, with this bound to the container.
 
 (function() {
- window.cms = [];
 	// container: DIV
 	// WARNING WARNING. 
 	// There's a non-obvious assumption of the textarea implementation:
