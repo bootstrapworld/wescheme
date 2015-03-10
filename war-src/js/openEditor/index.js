@@ -118,91 +118,69 @@ var initializeEditor;
 
 	var statusBar = new plt.wescheme.WeSchemeStatusBar(jQuery("#statusbar"));
 
-	var textContainerOptions = { width: "100%", 
-				     lineNumbers: true };
+	var textContainerOptions = { width: "100%", lineNumbers: true };
 	new plt.wescheme.WeSchemeTextContainer(
 	    jQuery("#definitions").get(0),
 	    textContainerOptions,
 	    function(container) {
-		var defnSourceContainer = container;
-		myEditor = new plt.wescheme.WeSchemeEditor(
+        var defnSourceContainer = container;
+        myEditor = new plt.wescheme.WeSchemeEditor(
 		    { userName: userName,
 		      defn: defnSourceContainer,
 		      interactions: jQuery("#inter").get(0),
 		      filenameInput: jQuery("#filename")},
-		    function(_myEditor) {
-			myEditor = _myEditor;
-
-
-                        if (attrs.noColorError) {
-                            myEditor.disableColoredErrorMessages();
-                        }
-                        
-			jQuery("#run").click(function()  { myEditor.run(); });
-			jQuery("#stop").click(function()  { myEditor.requestBreak(); });
-			jQuery("#save").click(function() { myEditor.save(); });
-			jQuery("#share").click(function()  { myEditor.share(); });
-			jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
- 			jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
-			jQuery("#logout").click(function() { 
-                            if(confirm("You will be logged out of WeScheme and other Google services.")) {
-                                submitPost("/logout"); 
-                            }
-                        });
-			jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
-
-      jQuery("#definitions").click(function() { defnInFocus = true;});
-
-
-			var afterLoad1 = function() {
-			    if (attrs.autorunDefinitions) {
-				myEditor.run(afterLoad2);
-			    } else {
-				afterLoad2();
-			    }
-			};
-
-			var afterLoad2 = function() {
-			    if (attrs.initialInteractionsText) {
-				myEditor.interactions.setPromptText(attrs.initialInteractionsText + '');
-			    }
-			    if (attrs.initialDefinitionsText) {
-				myEditor.defn.setCode(attrs.initialDefinitionsText + '');
-			    }
-
-			    // Set up interactions afterwards.
-			    jQuery("#interactions").click(function(e) {
-        defnInFocus = false;
-				myEditor.interactions.focusOnPrompt();
-				e.stopPropagation();
-				e.preventDefault();
-				return false;
-			    });
-			    jQuery(document.body).keydown(plt.wescheme.topKeymap);
-
-
-			    // Call the after continuation at the end.
-			    after();
-			};
-
-			if (pid !== null) {
-			    myEditor.load({pid : parseInt(pid) }, afterLoad1, afterLoad1);
-			} else if (publicId != null) {
-			    myEditor.load({publicId : publicId}, afterLoad1, afterLoad1);
-
-                            // TODO: use JQuery BBQ to look to see
-                            // if the pid or publicId exists
-                            // in the client-side hash part of the URL.
-
-			} else {
-			    // otherwise, dont load.
-			    afterLoad1();
-			}
-
-
-		    }
-		);
-	    });
+          function(_myEditor) {
+            myEditor = _myEditor;
+            if (attrs.noColorError) {
+                myEditor.disableColoredErrorMessages();
+            }
+            jQuery("#run").click(function()  { myEditor.run(); });
+            jQuery("#stop").click(function()  { myEditor.requestBreak(); });
+            jQuery("#save").click(function() { myEditor.save(); });
+            jQuery("#share").click(function()  { myEditor.share(); });
+            jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
+            jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
+            jQuery("#logout").click(function() { 
+                                  if(confirm("You will be logged out of WeScheme and other Google services.")) {
+                                      submitPost("/logout");
+                                  }
+                              });
+            jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
+            jQuery("#definitions").click(function() { defnInFocus = true;});
+            var afterLoad1 = function() {
+               if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }
+               else { afterLoad2(); }
+            };
+            var afterLoad2 = function() {
+                if (attrs.initialInteractionsText) {
+                  myEditor.interactions.setPromptText(attrs.initialInteractionsText + '');
+                }
+                if (attrs.initialDefinitionsText) {
+                  myEditor.defn.setCode(attrs.initialDefinitionsText + '');
+                }
+                // Set up interactions afterwards.
+                jQuery("#interactions").click(function(e) {
+                  defnInFocus = false;
+                  myEditor.interactions.focusOnPrompt();
+                  e.stopPropagation();
+                  e.preventDefault();
+                  return false;
+                });
+                jQuery(document.body).keydown(plt.wescheme.topKeymap);
+                // Call the after continuation at the end.
+                after();
+            };
+            if (pid !== null) {
+                myEditor.load({pid : parseInt(pid) }, afterLoad1, afterLoad1);
+            } else if (publicId != null) {
+                myEditor.load({publicId : publicId}, afterLoad1, afterLoad1);
+            } else {
+                // otherwise, dont load.
+                afterLoad1();
+            }
+		    });
+       },
+       "definitionsCM");
     };
 
 
