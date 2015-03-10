@@ -30,13 +30,13 @@ var WeSchemeTextContainer;
 //onchange attribute: called whenever the text changes, with this bound to the container.
 
 (function() {
-
+ window.cms = [];
 	// container: DIV
 	// WARNING WARNING. 
 	// There's a non-obvious assumption of the textarea implementation:
 	// The DIV is already attached to document.body.
 	// If this assumptions are violated, then Bad Things happen.
-	WeSchemeTextContainer = function(aDiv, options, afterInitialization) {
+	WeSchemeTextContainer = function(aDiv, options, afterInitialization, id) {
 		var that = this;
 		this.div = aDiv;
 		this.mode = 'textarea';
@@ -44,14 +44,14 @@ var WeSchemeTextContainer;
 		this.options = options;
 		this.keymaps = [];
 		jQuery(this.div).empty();
-		new CodeMirrorImplementation(
-				this,
-				options,
-				function(anImpl){
-					that.impl = anImpl;
-					afterInitialization(that);
-				});
-
+		var tc = new CodeMirrorImplementation(this,
+                                          options,
+                                          function(anImpl){
+                                            that.impl = anImpl;
+                                            afterInitialization(that);
+                                          });
+    tc.editor.getWrapperElement().id = id;
+    tc.editor.getWrapperElement().impl = tc;
 	};
 
 	WeSchemeTextContainer.prototype.refresh = function() {
@@ -233,6 +233,17 @@ var WeSchemeTextContainer;
         }
 	
 	    this.editor.refresh();
+      // if the 'clone' option is set, we create a linked doc that is updated as the definitions window changes
+      // this doc is added to the 'middle' element, which likely ****BREAKS ABSTRACTION****
+      // CSS is then used to hide everything except the clone
+      if(options.clone){
+        var clone = new CodeMirror(this.editor.getWrapperElement(),{value: this.editor.getDoc().linkedDoc()}),
+            cloneDOM = clone.getWrapperElement();
+        document.getElementById('middle').appendChild(cloneDOM);
+        clone.setOption("lineNumbers", this.editor.getOption("lineNumbers"));
+        cloneDOM.id = "printedCM";
+        cloneDOM.style.height = "auto";
+      }
 	    onSuccess.call(that, that);
 	};
 

@@ -391,20 +391,6 @@ span.top-aligned-inline-block {
 }
 
 
-
-
-/*	
-.documentation{
-	overflow: hidden;
-	position: fixed;
-    right: 10px;
-    top: 5px;
-    width: 33%;
-    height: 94.6%;
-    
-    z-index: 4;
-}
-*/
 *:fullscreen{
   width: 100% !important;
   height: 100% !important;
@@ -432,11 +418,12 @@ span.top-aligned-inline-block {
   left:     0px;
 }
 
+#printedCM{visibility: hidden; }
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
 	#toolbar li {min-width: 50px;}
-    #toolbar li a{
-        border-left:  solid 1px gray;
+  #toolbar li a{
+    border-left:  solid 1px gray;
 		padding-top: 10px;   
 		padding-bottom: 10px;
 		/* Hide the text by making is as small as possible, and match the BG color */ 
@@ -445,4 +432,15 @@ span.top-aligned-inline-block {
 		}
 
 	#toolbar li a:hover{background: none;}
+}
+
+/* When printing, hide everything except the fileInfo and definitions areas */
+@media print{
+  #header, #toolbar, #footer, #splitpane{display: none;}
+  #printedCM{visibility: visible;}
+  #fileInfo{border-style: solid; border-color: black; border-width: 3px 0px;}
+  #fileInfo img{display: none;}
+  #splitpane, #definitions{height: auto;}
+  .goog-splitpane-first-container{overflow: visible;}
+  .goog-splitpane-handle goog-splitpane-handle-vertical{display: none;}
 }
