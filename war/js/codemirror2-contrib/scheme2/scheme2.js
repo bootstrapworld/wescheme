@@ -105,6 +105,7 @@ var nextToken = (function() {
 			source.eatWhile(isNotDelimiterChar);
 			var word = source.current();
 			if (looksLikeNumber(word)) {
+                 console.log('looks numberish');
 				return {type: "number", style: "scheme-number", content: word};
 			} else if(word==="true" || word==="false"){
 				return {type: "variable", style: "scheme-boolean", content: word};
@@ -135,11 +136,11 @@ var nextToken = (function() {
 					style:"scheme-symbol",
 					content: text};
 			} else {
+        source.eatWhile(isNotDelimiterChar);
 				text = source.current();
-
-				return {type : "symbol",
-					style: "scheme-symbol",
-					content: text};
+				return looksLikeNumber(text)?
+                   {type : "number", style: "scheme-number", content: text}
+                 : {type : "symbol", style: "scheme-symbol", content: text};
 			}
 
 		};
