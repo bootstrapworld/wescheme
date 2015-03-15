@@ -460,10 +460,21 @@
   <script type="text/javascript">
     var widget;
     jQuery(document).ready(function() {
-    widget = initializeWidget(myEditor.defn.impl.editor,
-                              myEditor.getTokenizer());
+      widget = initializeWidget(myEditor.defn.impl.editor,
+                                myEditor.getTokenizer());
 
-    jQuery("#recipe").bind("click", function(e) { e.preventDefault(); e.stopPropagation(); widget.showWidget(); });
+      jQuery("#recipe").bind("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var codeUpToCursor = myEditor.defn.getCode(0, myEditor.defn.getCursorStartPosition());
+        // don't let the user start the DR if the cursor is inside an expression
+        if(plt.wescheme.tokenizer.hasCompleteExpression(codeUpToCursor)){
+          widget.showWidget();
+        } else {
+          alert("You cannot start the Design Recipe widget when your cursor is inside another expression.");
+          myEditor.defn.focus();
+        }
+      });
     });
 
     <% if (isEmbedded) { %>
