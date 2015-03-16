@@ -105,7 +105,6 @@ var nextToken = (function() {
 			source.eatWhile(isNotDelimiterChar);
 			var word = source.current();
 			if (looksLikeNumber(word)) {
-                 console.log('looks numberish');
 				return {type: "number", style: "scheme-number", content: word};
 			} else if(word==="true" || word==="false"){
 				return {type: "variable", style: "scheme-boolean", content: word};
