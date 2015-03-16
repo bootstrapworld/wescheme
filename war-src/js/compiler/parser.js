@@ -967,9 +967,14 @@ plt.compiler = plt.compiler || {};
  
   // replace all undefineds with the last sexp, and convert to a function call
   function parseVector(sexp){
+    function buildZero(){
+      var lit = new literal(0);
+      lit.location = sexp.location;
+      return lit;
+    }
     var unParsedVector = sexp.val,
         vals = parseStar(unParsedVector.elts.filter(function(e){return e!==undefined;})),
-        last = (vals.length===0)? new literal(0) : vals[vals.length-1], // if they're all undefined, use 0
+        last = (vals.length===0)? buildZero() : vals[vals.length-1], // if they're all undefined, use 0
         elts = unParsedVector.elts.map(function(v){return (v===undefined)? last : parseExpr(v);});
     var vectorFunc = new symbolExpr("vector"),
         buildVector = new callExpr(vectorFunc, elts);
