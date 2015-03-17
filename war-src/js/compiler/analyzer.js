@@ -762,8 +762,8 @@ plt.compiler = plt.compiler || {};
     // assumes the module has been assigned to window.COLLECTIONS.
     // pull out the bindings, and then add them to pinfo
     function processModule(moduleName){
-      var provides = window.COLLECTIONS[moduleName].provides,
-          strToBinding = function(p){
+      var provides = window.COLLECTIONS[moduleName].provides;
+      var strToBinding = function(p){
                             var b = new constantBinding(p, new symbolExpr(moduleName), false);
                             b.imported = true; // WTF: Moby treats imported bindings differently, so we need to identify them
                             return b;
@@ -790,18 +790,24 @@ plt.compiler = plt.compiler || {};
                         var program = (0,eval)('(' + result + ')');
                         // Create the COLLECTIONS array, if it doesn't exist
                         if(window.COLLECTIONS === undefined){ window.COLLECTIONS = []; }
+                        // extract the sourcecode
+                        var lexemes     = plt.compiler.lex(program.source.src, moduleName),
+                            AST         = plt.compiler.parse(lexemes),
+                            desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
+                            pinfo       = plt.compiler.analyze(desugared),
+                            objectCode  = plt.compiler.compile(desugared, pinfo);
                         window.COLLECTIONS[moduleName] = {
                                     'name': moduleName,
-                                    'bytecode' : (0,eval)('(' + program.object.obj + ')'),
-                                    'provides' : program.provides
+                                    'bytecode' : (0,eval)('(' + objectCode.bytecode + ')'),
+                                    'provides' : objectCode.provides
                                 };
                       // otherwise, simply evaluate the raw JS
                       } else {
                         eval(result);
                       }
-                      if(result){ processModule(moduleName); }
-                      else { throwModuleError(moduleName); }
-                    },
+                  if(result){ processModule(moduleName); }
+                  else { throwModuleError(moduleName); }
+                },
            error: function (error) { throwModuleError(moduleName); },
            async: false
       });
