@@ -789,7 +789,7 @@ plt.compiler = plt.compiler || {};
                       if(getWeSchemeModule(moduleName)){
                         var program = (0,eval)('(' + result + ')');
                         // Create the COLLECTIONS array, if it doesn't exist
-                        if(!window.COLLECTIONS) window.COLLECTIONS = [];
+                        if(window.COLLECTIONS === undefined){ window.COLLECTIONS = []; }
                         window.COLLECTIONS[moduleName] = {
                                     'name': moduleName,
                                     'bytecode' : (0,eval)('(' + program.object.obj + ')'),
