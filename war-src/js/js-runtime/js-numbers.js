@@ -1556,24 +1556,30 @@ if (typeof(exports) !== 'undefined') {
     };
 
 
-    Rational.prototype.round = function() {
-	// FIXME: not correct when values are bignums
-	if (equals(this.d, 2)) {
-	    // Round to even if it's a n/2
-	    var v = _integerDivideToFixnum(this.n, this.d);
-	    var fl = Math.floor(v);
-	    var ce = Math.ceil(v);
-	    if (_integerIsZero(fl % 2)) {
-		return fl;
-	    }
-	    else {
-		return ce;
-	    }
-	} else {
-	    return Math.round(this.n / this.d);
-	}
-    };
-
+   Rational.prototype.round = function() {
+     var halfintp = equals(this.d, 2);
+     var negativep = _integerLessThan(this.n, 0);
+     var n = this.n;
+     if (negativep) {
+       n = negate(n);
+     }
+     var quo = _integerQuotient(n, this.d);
+     if (halfintp) {
+       // rounding half to away from 0
+       // uncomment following if rounding half to even
+       // if (_integerIsOne(_integerModulo(quo, 2)))
+       quo = add(quo, 1);
+     } else {
+       var rem = _integerRemainder(n, this.d);
+       if (greaterThan(multiply(rem, 2), this.d)) {
+         quo = add(quo, 1);
+       }
+     }
+     if (negativep) {
+       quo = negate(quo);
+     }
+     return quo;
+   };
 
     Rational.makeInstance = function(n, d) {
 	if (n === undefined)
