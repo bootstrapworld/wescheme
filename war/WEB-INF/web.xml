@@ -130,29 +130,6 @@
     <url-pattern>/view</url-pattern>
   </servlet-mapping>
 
-
-
-
-  <servlet>
-    <servlet-name>GetAndroidPackage</servlet-name>
-    <servlet-class>org.wescheme.servlet.GetAndroidPackage</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>GetAndroidPackage</servlet-name>
-    <url-pattern>/android</url-pattern>
-  </servlet-mapping>
-
-  <servlet>
-    <servlet-name>StoreAndroidPackage</servlet-name>
-    <servlet-class>org.wescheme.servlet.StoreAndroidPackage</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>StoreAndroidPackage</servlet-name>
-    <url-pattern>/store_android/*</url-pattern>
-  </servlet-mapping>
-
-
-
   <servlet>
     <servlet-name>AddFeedback</servlet-name>
     <servlet-class>org.wescheme.servlet.AddFeedback</servlet-class>
@@ -161,7 +138,6 @@
     <servlet-name>AddFeedback</servlet-name>
     <url-pattern>/addFeedback</url-pattern>
   </servlet-mapping>
-
 
   <servlet>
     <servlet-name>DumpFeedback</servlet-name>
@@ -173,11 +149,6 @@
   </servlet-mapping>
 
 
-
-
-
-
-
   <servlet>
     <servlet-name>run</servlet-name>
     <jsp-file>/run.jsp</jsp-file>
@@ -186,8 +157,6 @@
     <servlet-name>run</servlet-name>
     <url-pattern>/run</url-pattern>
   </servlet-mapping>
-
-
 
 
 
@@ -214,7 +183,6 @@
   </servlet-mapping>
 
 
-
   <servlet>
     <servlet-name>loadProject</servlet-name>
     <servlet-class>org.wescheme.servlet.LoadProjectServlet</servlet-class>
@@ -223,27 +191,6 @@
     <servlet-name>loadProject</servlet-name>
     <url-pattern>/loadProject</url-pattern>
   </servlet-mapping>
-
-
-  <servlet>
-    <servlet-name>getModuleProviderRecord</servlet-name>
-    <servlet-class>org.wescheme.servlet.GetModuleProviderRecord</servlet-class>
-  </servlet>  
-  <servlet-mapping>
-    <servlet-name>getModuleProviderRecord</servlet-name>
-    <url-pattern>/getModuleProviderRecord</url-pattern>
-  </servlet-mapping>
-
-
-  <servlet>
-    <servlet-name>build</servlet-name>
-    <servlet-class>org.wescheme.servlet.Build</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>build</servlet-name>
-    <url-pattern>/build</url-pattern>
-  </servlet-mapping>
-
 
 
   <servlet>
@@ -288,18 +235,6 @@
     <url-pattern>/administrate</url-pattern>
   </servlet-mapping>
 
-
-
-  <servlet>
-    <servlet-name>compile</servlet-name>
-    <servlet-class>org.wescheme.servlet.Compile</servlet-class>
-  </servlet>
-  <servlet-mapping>
-    <servlet-name>compile</servlet-name>
-    <url-pattern>/compile</url-pattern>
-  </servlet-mapping>
-
-
   <servlet>
     <servlet-name>imageProxy</servlet-name>
     <servlet-class>org.wescheme.servlet.ImageProxy</servlet-class>
@@ -308,9 +243,6 @@
     <servlet-name>imageProxy</servlet-name>
     <url-pattern>/imageProxy</url-pattern>
   </servlet-mapping>
-
-
-
 
 
 </web-app>
