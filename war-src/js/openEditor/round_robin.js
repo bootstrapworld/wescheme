@@ -16,11 +16,11 @@ goog.provide("plt.wescheme.RoundRobin");
  *   The fix is to have files that require this file also require the following files.
  *   See run.js for an example.
  */
-//goog.require('plt.compiler.lex');
-//goog.require('plt.compiler.parse');
-//goog.require('plt.compiler.desugar');
-//goog.require('plt.compiler.analyze');
-//goog.require('plt.compiler.compile');
+goog.require('plt.compiler.lex');
+goog.require('plt.compiler.parse');
+goog.require('plt.compiler.desugar');
+goog.require('plt.compiler.analyze');
+goog.require('plt.compiler.compile');
 
 (function() {
     "use strict";
