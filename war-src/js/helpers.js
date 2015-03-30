@@ -54,6 +54,7 @@ goog.provide("plt.wescheme.helpers");
 	    img.className = "socialBookmarklet";
 	    a.appendChild(img);
 	    a.href = url;
+      a.target = "_blank";
 	    span.appendChild(a);
 	};
 
