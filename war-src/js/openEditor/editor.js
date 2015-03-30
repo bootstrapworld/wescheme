@@ -661,6 +661,10 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.run = function(after) {
 	var that = this;
+    // if the isRunning flag is true, bail
+    if(that.isRunning !== undefined && that.isRunning) return false;
+    // otherwise, set it to true
+    that.isRunning = true;
 	plt.wescheme.WeSchemeIntentBus.notify("before-run", this);
 	this.interactions.reset();
 	this.interactions.runCode(
@@ -668,7 +672,7 @@ var WeSchemeEditor;
 	    "<definitions>",
 	    function() {
 		plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
-		if (after) { after(); }
+    if (after) { after(); that.isRunning = false; }
 	    });
     };
 
