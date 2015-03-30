@@ -363,6 +363,7 @@ a.socialBookmarklet {
 img.socialBookmarklet {
     border: 0px solid black;
     padding: 5px;
+    width:   24px;
 }
 
 

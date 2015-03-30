@@ -48,9 +48,9 @@ goog.provide("plt.wescheme.helpers");
 	    var a = document.createElement("a");
 	    var img = document.createElement("img");
 	    a.className = "socialBookmarklet";
-	    a.title = "Post to " + name;
+	    a.title = "Share via " + name;
 	    img.src = imgSrc;
-	    img.alt = "Post to " + name;
+	    img.alt = "Share via " + name;
 	    img.className = "socialBookmarklet";
 	    a.appendChild(img);
 	    a.href = url;
@@ -69,42 +69,39 @@ goog.provide("plt.wescheme.helpers");
 
 
 	addBookmarklet("email",
-		       "/images/icon_email.gif",
-		       "mailto:" + "?" + encodeKeyPairs({subject: title,
-							 body: url}));
-	addBookmarklet("Digg",
-		       "/images/icon_digg.gif",
-		       "http://digg.com/submit?" +
-		       encodeKeyPairs({url: url,
-				       title: title,
-				       bodytext: title,
-				       media: "news"}));
+		       "/images/icon_email.png",
+		       "https://mail.google.com/mail/u/0/?view=cm&fs=1&tf=1" +
+            encodeKeyPairs({su: title,
+                            body: url}));
 
-	addBookmarklet("Reddit",
-		       "/images/icon_reddit.gif",
-		       "http://www.reddit.com/submit?" +
-		       encodeKeyPairs({url: url,
-				       title: title}));
+	addBookmarklet("Facebook",
+                 "/images/icon_facebook.png",
+                 "http://www.facebook.com/sharer.php" + "?" +
+                 encodeKeyPairs({u: url,
+                                t: title}));
+ 
 	addBookmarklet("Twitter",
-		       "/images/icon_twitter.gif",
-		       "http://twitter.com/home" + "?" + 
+		       "/images/icon_twitter.png",
+		       "http://twitter.com/home?" +
 		       encodeKeyPairs({status: url}));
 	
-	// http://delicious.com/help/savebuttons
-	addBookmarklet("Del.icio.us",
-		       "/images/icon_delicious.gif",
-		       "http://del.icio.us/post?" +
-		       encodeKeyPairs({url: url,
-				       title: title}));
+	addBookmarklet("Google+",
+		       "/images/icon_gplus.png",
+		       "https://plus.google.com/share?" +
+		       encodeKeyPairs({url: url}));
 
-	// http://www.facebook.com/facebook-widgets/share.php
-	addBookmarklet("Facebook",
-		       "/images/icon_facebook.gif",
-		       "http://www.facebook.com/sharer.php" + "?" + 
-		       encodeKeyPairs({u: url,
-				       t: title}));
+	addBookmarklet("Pinterest",
+                 "/images/icon_pinterest.png",
+                 "http://pinterest.com/pin/create/button/?" +
+                 encodeKeyPairs({url: url,
+                                description: title}));
  
-	// http://qrcode.kaywa.com/img.php
+	addBookmarklet("Reddit",
+                 "/images/icon_reddit.png",
+                 "http://www.reddit.com/submit?" +
+                 encodeKeyPairs({url: url,
+                                title: title}));
+ 
 	addBookmarklet("Barcode",
 				"/images/icon_qrcode.png",
 				"http://qrcode.kaywa.com/img.php" + "?" + 

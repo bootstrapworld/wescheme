@@ -173,13 +173,21 @@ img:hover+div, #programList ul li img+div:hover{display: inline-block; }
 
 
 
+span.socialBookmarks{
+  display: block;
+  width:   100%;
+  text-align: center;
+  border-top: solid 1px black;
+}
 
 a.socialBookmarklet {
-    border: 0px solid black;
+  border: 0px solid black;
 }
 
 img.socialBookmarklet {
-    border: 0px solid black;
+  border: 0px solid black;
+  padding: 5px;
+  width:   24px;
 }
 
 
