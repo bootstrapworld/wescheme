@@ -180,6 +180,9 @@ span.socialBookmarks{
   border-top: solid 1px black;
 }
 
+/* remove top-border from tooltip */
+.tooltip .socialBookmarks{border-top: none;}
+
 a.socialBookmarklet {
   border: 0px solid black;
 }
