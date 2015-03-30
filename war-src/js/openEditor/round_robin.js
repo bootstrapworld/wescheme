@@ -3,19 +3,6 @@
 
 goog.provide("plt.wescheme.RoundRobin");
 
-
-/* BUGFIX:
- * 
- * plt.wescheme.RoundRobin has the following requirements.
- *   Unfortunately, due to a bug in the way that dependencies are handled,
- *   Closure attempts to include compiler/structures.js multiple times. This
- *   causes the following error:
- *
- *     Uncaught Error: Namespace "plt.compiler.throwError" already declared
- *
- *   The fix is to have files that require this file also require the following files.
- *   See run.js for an example.
- */
 goog.require('plt.compiler.lex');
 goog.require('plt.compiler.parse');
 goog.require('plt.compiler.desugar');
