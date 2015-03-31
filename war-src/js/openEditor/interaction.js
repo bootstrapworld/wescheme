@@ -453,6 +453,8 @@ WeSchemeInteractions = (function () {
                 evaluator.makeToplevelNode = function() {
                     var handleClose = function(event, ui) {
                         that.evaluator.requestBreak();
+                        // remove the topLevelEvaluatorNode before destroying the dialog
+                        dialog[0].removeChild(dialog[0].firstChild);
                         dialog.dialog("destroy");
                     };
 
