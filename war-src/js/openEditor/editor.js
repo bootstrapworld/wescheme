@@ -660,20 +660,21 @@ var WeSchemeEditor;
     
 
     WeSchemeEditor.prototype.run = function(after) {
-	var that = this;
-    // if the isRunning flag is true, bail
-    if(that.isRunning !== undefined && that.isRunning) return false;
-    // otherwise, set it to true
-    that.isRunning = true;
-	plt.wescheme.WeSchemeIntentBus.notify("before-run", this);
-	this.interactions.reset();
-	this.interactions.runCode(
-	    this.defn.getCode(),
-	    "<definitions>",
-	    function() {
-		plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
-    if (after) { after(); that.isRunning = false; }
-	    });
+      var that = this;
+      // if the isRunning flag is true, bail
+      if(that.isRunning===true) return false;
+      // otherwise, set it to true
+      that.isRunning = true;
+      plt.wescheme.WeSchemeIntentBus.notify("before-run", this);
+      this.interactions.reset();
+      this.interactions.runCode(this.defn.getCode(),
+                                "<definitions>",
+                                function() {
+                                  // set isRunning to false
+                                  that.isRunning = false;
+                                  plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
+                                  if (after) { after(); }
+                                });
     };
 
     WeSchemeEditor.prototype.getDefinitionsText = function() {
