@@ -30,6 +30,32 @@ goog.require('plt.compiler.compile');
                                        + "a modern web browser (IE9+, Safari 6+, FF 20+, "
                                        + "Chrome 20+).")));
     };
+ 
+    // check to make sure it's JSON parseable before returning it.
+     function getError(e){
+      try{
+        var err =  JSON.parse(e),
+        structuredErr = JSON.parse(err['structured-error']);
+        return e;
+      } catch (JSONerror){
+        return "!! FATAL ERROR !!\n"+e.stack;
+      }
+    }
+    // logResults : code local server -> void
+    // send code, local error and server error to a Google spreadsheet
+    function logResults(code, local, server){
+       try{
+          console.log('Logging anonymized error message to GDocs');
+          document.getElementById('expr').value = code;
+          document.getElementById('local').value = plt.wescheme.BrowserDetect.versionString + " "
+                                                  + local.replace(/\s+/g,"").toLowerCase();
+          document.getElementById('server').value = server.replace(/\s+/g,"").toLowerCase();
+          document.getElementById('errorLogForm').submit();
+       } catch (e){
+          console.log('LOGGING FAILED.');
+       }
+    }
+
 
     function compile(programName, code, onDone, onDoneError) {
        // strip out nonbreaking whitespace chars from the code
@@ -40,29 +66,6 @@ goog.require('plt.compiler.compile');
           var nonASCII = str.split("").filter(function(c) { return (c.charCodeAt(0) > 127); });
           return nonASCII.map(function(c) { return c.charCodeAt(0);});
        }
-       // check to make sure it's JSON parseable before returning it.
-       function getError(e){
-        try{
-          var err =  JSON.parse(e),
-          structuredErr = JSON.parse(err['structured-error']);
-          return e;
-        } catch (JSONerror){
-          return "!! FATAL ERROR !!\n"+e.stack;
-        }
-      }
-      // logResults : code local server -> void
-      // send code, local error and server error to a Google spreadsheet
-      function logResults(code, local, server){
-         try{
-            console.log('Logging anonymized error message to GDocs');
-            document.getElementById('expr').value = code;
-            document.getElementById('local').value = local.replace(/\s+/g,"").toLowerCase();
-            document.getElementById('server').value = server.replace(/\s+/g,"").toLowerCase();
-            document.getElementById('errorLogForm').submit();
-         } catch (e){
-            console.log('LOGGING FAILED.');
-         }
-      }
 
       // compile it!
       try{
