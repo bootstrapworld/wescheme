@@ -343,7 +343,8 @@ if (typeof(world) === 'undefined') {
                               this.children.concat([[anImage, 
                                                      x - anImage.getWidth()/2,
                                                      y - anImage.getHeight()/2]]),
-                              this.withBorder);
+                              this.withBorder,
+                              this.color);
     };
 
     // render: 2d-context primitive-number primitive-number -> void
