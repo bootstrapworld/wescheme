@@ -99,7 +99,9 @@ plt.compiler = plt.compiler || {};
       bootstrapTiltTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-tilt-teachpack",
                                              bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-tilt-teachpack"'))),
       bootstrapTeachpack2015 = new moduleBinding("bootstrap2015/bootstrap-teachpack",
-                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2015/bootstrap-teachpack"')));
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2015/bootstrap-teachpack"'))),
+      bootstrapTiltTeachpack2015 = new moduleBinding("bootstrap2015/bootstrap-tilt-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2015/bootstrap-tilt-teachpack"')));
  
   // cage-teachpack
   var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",[["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
@@ -114,11 +116,13 @@ plt.compiler = plt.compiler || {};
   var functionTeachpack = new moduleBinding("bootstrap/function-teachpack",
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
       functionTeachpack2011 = new moduleBinding("bootstrap2011/function-teachpack",
-                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap2011/function-teachpack"'))),
       functionTeachpack2012 = new moduleBinding("bootstrap2012/function-teachpack",
-                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"'))),
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap2012/function-teachpack"'))),
       functionTeachpack2014 = new moduleBinding("bootstrap2014/function-teachpack",
-                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap/function-teachpack"')));
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap2014/function-teachpack"'))),
+      functionTeachpack2015 = new moduleBinding("bootstrap2015/function-teachpack",
+                                                [["start", 1, false]].map(makeFunctionBinding('"bootstrap2015/function-teachpack"')));
   
   // location module
   var locationModule     = new moduleBinding("location",
@@ -640,6 +644,7 @@ plt.compiler = plt.compiler || {};
                               , bootstrapTeachpack2015
                               , bootstrapTiltTeachpack2012
                               , bootstrapTiltTeachpack2014
+                              , bootstrapTiltTeachpack2015
                               , cageTeachpack
                               , cageTeachpack2011
                               , cageTeachpack2012
@@ -648,6 +653,7 @@ plt.compiler = plt.compiler || {};
                               , functionTeachpack2011
                               , functionTeachpack2012
                               , functionTeachpack2014
+                              , functionTeachpack2015
                               , locationModule
                               , tiltModule
                               , telephonyModule
