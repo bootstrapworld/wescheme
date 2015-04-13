@@ -1,5 +1,6 @@
 goog.provide('plt.compiler.topLevelModules');
 goog.provide('plt.compiler.knownModules');
+goog.provide('plt.compiler.knownCollections');
 
 goog.require("plt.compiler.moduleBinding");
 goog.require("plt.compiler.functionBinding");
@@ -96,7 +97,9 @@ plt.compiler = plt.compiler || {};
       bootstrapTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-teachpack",
                                              bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-teachpack"'))),
       bootstrapTiltTeachpack2014 = new moduleBinding("bootstrap2014/bootstrap-tilt-teachpack",
-                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-tilt-teachpack"')));
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2014/bootstrap-tilt-teachpack"'))),
+      bootstrapTeachpack2015 = new moduleBinding("bootstrap2015/bootstrap-teachpack",
+                                             bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2015/bootstrap-teachpack"')));
  
   // cage-teachpack
   var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",[["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
@@ -623,6 +626,8 @@ plt.compiler = plt.compiler || {};
   // The core environment includes the baseConstants, the topLevel bindings, and the world bindings
   // NOTE: worldModule *includes* worldEffects and worldHandlers, according to Danny's modules.ss file
  plt.compiler.topLevelModules = [topLevelModule, kernelMiscModule, , jsWorldModule, worldModule];
+ plt.compiler.knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014", "bootstrap2015"];
+ 
  
  plt.compiler.knownModules = [kernelMiscModule
                               , jsWorldModule
@@ -632,6 +637,7 @@ plt.compiler = plt.compiler || {};
                               , bootstrapTeachpack2011
                               , bootstrapTeachpack2012
                               , bootstrapTeachpack2014
+                              , bootstrapTeachpack2015
                               , bootstrapTiltTeachpack2012
                               , bootstrapTiltTeachpack2014
                               , cageTeachpack

@@ -1,5 +1,5 @@
 goog.provide('plt.compiler.throwError');
- 
+
 goog.provide('plt.compiler.Program');
 goog.provide('plt.compiler.couple');
 goog.provide('plt.compiler.defFunc');
@@ -42,6 +42,9 @@ goog.provide('plt.compiler.functionBinding');
 goog.provide('plt.compiler.constantBinding');
 goog.provide('plt.compiler.structBinding');
 goog.provide('plt.compiler.unnamedEnv');
+
+//goog.require("plt.compiler.knownCollections");
+
 
 // if not defined, declare the compiler object as part of plt
 window.plt   = window.plt   || {};
@@ -652,8 +655,7 @@ plt.compiler = plt.compiler || {};
   globalEnv.prototype = heir(env.prototype);
  
   // PINFO STRUCTS ////////////////////////////////////////////////////////////////
-  var knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014"],
-      defaultCurrentModulePath = "";
+  var defaultCurrentModulePath = "";
  
   // default-module-resolver: symbol -> (module-binding | false)
   // loop through known modules and see if we know this name
@@ -714,7 +716,7 @@ plt.compiler = plt.compiler || {};
     var parts = path.toString().split("/"),
         collectionName = parts[0],
         moduleName = parts.slice(1).join();
-    return ((knownCollections.indexOf(collectionName) > -1)
+    return ((plt.compiler.knownCollections.indexOf(collectionName) > -1)
             && plt.compiler.defaultModuleResolver(path.toString()))
           || /^wescheme\/\w+$/.exec(path);
   }
