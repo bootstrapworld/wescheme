@@ -76,29 +76,56 @@ function getError(e){
   }
 }
 
+var textFile = null,
+  makeTextFile = function (text) {
+    var data = new Blob([text], {type: 'text/plain'});
+
+    // If we are replacing a previously generated file we need to
+    // manually revoke the object URL to avoid memory leaks.
+    if (textFile !== null) {
+      window.URL.revokeObjectURL(textFile);
+    }
+
+    textFile = window.URL.createObjectURL(data);
+
+    // returns a URL you can use as a href
+    window.open(textFile, "_blank");
+  };
+
 function readFromRepl(event) {
   var key = event.keyCode;
+  var makeTeachpack = document.getElementById('makeTeachpack').checked,
+      programName=document.getElementById('teachpackName').value;
 
   if(key === 13) { // "\n"
     var aSource = repl_input.value;
     var progres;
     // run the local compiler
-    var debug = true;
+    var debug = false;
     var sexp      = plt.compiler.lex(aSource, undefined, debug);
     var AST       = plt.compiler.parse(sexp, debug);
     var ASTandPinfo = plt.compiler.desugar(AST, undefined, debug);
         program     = ASTandPinfo[0],
         pinfo       = ASTandPinfo[1];
     var pinfo       = plt.compiler.analyze(program, debug);
-    var optimized   = plt.compiler.optimize(program);
-    var response    = plt.compiler.compile(optimized, pinfo, debug);
-    response.bytecode = (0,eval)('(' + response.bytecode + ')');
-    console.log(response);
-//    pyretCheck(AST, pinfo);
+//    var optimized   = plt.compiler.optimize(program);
+    var response    = plt.compiler.compile(program, pinfo, debug);
+    if(makeTeachpack){
+      var teachpack = "window.COLLECTIONS = window.COLLECTIONS || {};\n"
+      + "window.COLLECTIONS[\""+programName+"\"]={\"name\":\""+programName+"\", "
+      + "\"bytecode\":";
+      teachpack += unescape(response.bytecode);
+      teachpack +="}";
+      makeTextFile(teachpack);
+    } else {
+      response.bytecode = (0,eval)('(' + response.bytecode + ')');
+      console.log(response);
+    }
+/*    pyretCheck(AST, pinfo);
     console.log(plt.compiler.toPyretString(AST, pinfo));
     console.log(plt.compiler.toPyretString(AST, pinfo).join("\n"));
     console.log(plt.compiler.toPyretAST(AST, pinfo));
- 
+*/
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
