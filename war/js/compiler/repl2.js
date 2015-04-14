@@ -76,33 +76,32 @@ function getError(e){
   }
 }
 
-var textFile = null,
-  makeTextFile = function (text) {
-    var data = new Blob([text], {type: 'text/plain'});
-
-    // If we are replacing a previously generated file we need to
-    // manually revoke the object URL to avoid memory leaks.
-    if (textFile !== null) {
-      window.URL.revokeObjectURL(textFile);
-    }
-
-    textFile = window.URL.createObjectURL(data);
-
-    // returns a URL you can use as a href
-    window.open(textFile, "_blank");
-  };
+function download(filename, text) {
+  var pom = document.createElement('a');
+  pom.setAttribute('href', 'data:text/javascript;charset=utf-8,' + encodeURIComponent(text));
+  pom.setAttribute('download', filename);
+  
+  pom.style.display = 'none';
+  document.body.appendChild(pom);
+  
+  pom.click();
+  
+  document.body.removeChild(pom);
+}
 
 function readFromRepl(event) {
   var key = event.keyCode;
-  var makeTeachpack = document.getElementById('makeTeachpack').checked,
-      programName=document.getElementById('teachpackName').value;
-
   if(key === 13) { // "\n"
+    compileREPL()
+  }
+}
+  function compileREPL(makeTeachpack){
+    var programName = makeTeachpack? prompt("What is the name of the teachpack?") : undefined;
     var aSource = repl_input.value;
     var progres;
     // run the local compiler
-    var debug = false;
-    var sexp      = plt.compiler.lex(aSource, undefined, debug);
+    var debug = true;
+    var sexp      = plt.compiler.lex(aSource, programName, debug);
     var AST       = plt.compiler.parse(sexp, debug);
     var ASTandPinfo = plt.compiler.desugar(AST, undefined, debug);
         program     = ASTandPinfo[0],
@@ -112,11 +111,13 @@ function readFromRepl(event) {
     var response    = plt.compiler.compile(program, pinfo, debug);
     if(makeTeachpack){
       var teachpack = "window.COLLECTIONS = window.COLLECTIONS || {};\n"
-      + "window.COLLECTIONS[\""+programName+"\"]={\"name\":\""+programName+"\", "
-      + "\"bytecode\":";
+      + "window.COLLECTIONS[\""+programName+"\"]={\"name\":\""+programName+"\""
+      + ",\"bytecode\":";
       teachpack += unescape(response.bytecode);
-      teachpack +="}";
-      makeTextFile(teachpack);
+      teachpack += ",\"provides\":";
+      teachpack += JSON.stringify(response.provides);
+      teachpack +="};";
+      download(programName, teachpack);
     } else {
       response.bytecode = (0,eval)('(' + response.bytecode + ')');
       console.log(response);
@@ -129,14 +130,4 @@ function readFromRepl(event) {
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
-
-  } else if(key === 38) {
-    repl_input.value = popElementFromHistory(1, repl_input.value);
-    return false;
-  } else if (key === 40) {
-    repl_input.value = popElementFromHistory(-1, repl_input.value);
-    return false;
-  } else {
-    return true;
-  }
 }

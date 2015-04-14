@@ -381,11 +381,9 @@ function runMemoryTest(){
   <option value="all">all</option>
 </select>
 <span style="font-size: 12px; display: none;" id="pyretUI"><input type="checkbox" id="pyretTest"/>Test Pyret</span>
-<br/>
-<span style="font-size: 12px;"><input type="checkbox" id="makeTeachpack"/>Make teachpack</span>
-<input type="text" value="" id="teachpackName"/>
-<br/>
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
+<br/>
+<input type="button" id="makeTeachpack" value="Download source as teachpack file" onclick="compileREPL(true)"/>
 <br/>
 <span id="status"></span>
 <table id="testResults" style="font-family:monospace;">
