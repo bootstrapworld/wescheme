@@ -350,20 +350,20 @@ var WeSchemeTextContainer;
 		var li = moveTo.handle;
 		var col = moveTo.column - 1; //off-by-one otherwise
 
-                this.editor.scrollIntoView({ line: li, ch:col }, margin);
+    this.editor.scrollIntoView({ line: li, ch:col }, margin);
 	};
 
 
 
 	CodeMirrorImplementation.prototype.setSelection = function(id, offset, line, column, span) {
-		offset--;
 		// For some reason, we're getting the offset from the highlighter
 		// as 1-offset, rather than 0-offset.
-		var startHandleAndColumn = this.findHandleAndColumn(parseInt(offset));
-		var endHandleAndColumn = this.findHandleAndColumn(parseInt(offset)+parseInt(span));
+    offset--;
+ 
+		var startHandleAndColumn = this.editor.posFromIndex(parseInt(offset));
+		var endHandleAndColumn = this.editor.posFromIndex(parseInt(offset)+parseInt(span));
 
-		this.editor.setSelection({line: startHandleAndColumn.handle, ch: startHandleAndColumn.column}, 
-								{line: endHandleAndColumn.handle, ch: endHandleAndColumn.column});
+		this.editor.setSelection(startHandleAndColumn, endHandleAndColumn);
 	};
 
 	CodeMirrorImplementation.prototype.unhighlightAll = function () {
@@ -377,58 +377,26 @@ var WeSchemeTextContainer;
 	// findHandleAndColumn: number -> { handle: handle, column: number }
 	// Figures out the line and column.
 	CodeMirrorImplementation.prototype.findHandleAndColumn = function(offset) {
-		var endHandle = 0;
-		var endColumn = 0;
-		while (offset > 0) {
-			if (this.editor.getLine(endHandle).length >= offset) {
-				endColumn += offset;
-				offset = 0;
-			} else {
-				offset = offset - this.editor.getLine(endHandle).length - 1;
-				endHandle += 1;
-			}
-		}
-		return { handle: endHandle, column: endColumn };
+    var pos = this.editor.posFromIndex(offset);
+    return { handle: pos.line, column: pos.ch };
 	};
 
 
 	CodeMirrorImplementation.prototype.getOffsetFromHandleAndColumn = function(handle, column) {
-		var startHandle = 0;
-		var offset = 0;
-		while (startHandle !== handle) {
-			offset += this.editor.getLine(startHandle).length + 1;
-			startHandle += 1
-		}
-		offset += column;
-		return offset;
+    return this.editor.indexFromPos({line: handle, ch: column});
 	};
 
 
 	CodeMirrorImplementation.prototype.getCursorStartPosition = function() {
-		var pos = this.editor.getCursor(true);
-		return this.getOffsetFromHandleAndColumn(pos.line,
-				pos.ch);
+		return this.editor.indexFromPos(this.editor.getCursor(true));
 	};
 
 	CodeMirrorImplementation.prototype.setCursorToBeginning = function() {
 		this.editor.setCursor(0,0)
-		/*
-		// TODO: Is there a better way to do this?
-		var startHandleAndColumn = this.findHandleAndColumn(0);
-		this.editor.selectLines(startHandleAndColumn.handle,
-				startHandleAndColumn.column,
-				startHandleAndColumn.handle,
-				startHandleAndColumn.column);
-				*/
 	};
 
 	CodeMirrorImplementation.prototype.setCursorToEnd = function() {
 		this.editor.setCursor({line:this.editor.lineCount()});
-		/*
-		var editor = this.editor;
-		editor.selectLines(editor.lastLine(),
-				editor.lineContent(editor.lastLine()).length);
-				*/
 	};
 
 	CodeMirrorImplementation.prototype.shutdown = function() {
