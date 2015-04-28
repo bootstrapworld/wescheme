@@ -122,11 +122,12 @@ function readFromRepl(event) {
       response.bytecode = (0,eval)('(' + response.bytecode + ')');
       console.log(response);
     }
-/*    pyretCheck(AST, pinfo);
-    console.log(plt.compiler.toPyretString(AST, pinfo));
-    console.log(plt.compiler.toPyretString(AST, pinfo).join("\n"));
+//    pyretCheck(AST, pinfo);
+//    console.log(plt.compiler.toPyretString(AST, pinfo));
+    console.log("PyretSrc:\n"+plt.compiler.toPyretString(AST, pinfo).join("\n"));
+    console.log("PyretAST:");
     console.log(plt.compiler.toPyretAST(AST, pinfo));
-*/
+
     repl_input.value = ""; // clear the input
     var temp = document.createElement("li"); // make an li element
     temp.textContent = aSource; // stick the program's text in there
