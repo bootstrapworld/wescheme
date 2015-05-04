@@ -4723,8 +4723,8 @@ PRIMITIVES['scene+line'] =
 			 // make a scene containing the image
        newScene = world.Kernel.sceneImage(jsnums.toFixnum(img.getWidth()),
                                           jsnums.toFixnum(img.getHeight()),
-                                          [],
                                           null,
+                                          [],
                                           false);
 			 newScene = newScene.add(img, img.getWidth()/2, img.getHeight()/2);
 			 // make an image containing the line
