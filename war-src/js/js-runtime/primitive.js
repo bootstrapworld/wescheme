@@ -4696,7 +4696,7 @@ PRIMITIVES['place-image/align'] =
 			 } else {
 			     var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                   background.getHeight(),
-                                                  null
+                                                  null,
                                                   [],
                                                   false);
 			     newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
@@ -4723,8 +4723,8 @@ PRIMITIVES['scene+line'] =
 			 // make a scene containing the image
        newScene = world.Kernel.sceneImage(jsnums.toFixnum(img.getWidth()),
                                           jsnums.toFixnum(img.getHeight()),
-                                          null,
                                           [],
+                                          null,
                                           false);
 			 newScene = newScene.add(img, img.getWidth()/2, img.getHeight()/2);
 			 // make an image containing the line
