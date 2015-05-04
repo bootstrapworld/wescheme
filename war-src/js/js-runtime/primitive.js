@@ -4636,9 +4636,10 @@ PRIMITIVES['put-image'] =
           return background.add(picture, jsnums.toFixnum(x), background.getHeight() - jsnums.toFixnum(y));
       } else {
           var newScene = world.Kernel.sceneImage(background.getWidth(),
-                  background.getHeight(),
-                  [],
-                  false);
+                                                 background.getHeight(),
+                                                 null,
+                                                 [],
+                                                 false);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
           newScene = newScene.add(picture, jsnums.toFixnum(x), background.getHeight() - jsnums.toFixnum(y));
           return newScene;
@@ -4660,9 +4661,10 @@ PRIMITIVES['place-image'] =
 			    return background.add(picture, jsnums.toFixnum(x), jsnums.toFixnum(y));
 			} else {
 			    var newScene = world.Kernel.sceneImage(background.getWidth(),
-								   background.getHeight(),
-								   [], 
-								   false);
+                                                 background.getHeight(),
+                                                 null,
+                                                 [],
+                                                 false);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
           newScene = newScene.add(picture, jsnums.toFixnum(x), jsnums.toFixnum(y));
 			    return newScene;
@@ -4694,6 +4696,7 @@ PRIMITIVES['place-image/align'] =
 			 } else {
 			     var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                   background.getHeight(),
+                                                  null
                                                   [],
                                                   false);
 			     newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
@@ -4720,6 +4723,7 @@ PRIMITIVES['scene+line'] =
 			 // make a scene containing the image
        newScene = world.Kernel.sceneImage(jsnums.toFixnum(img.getWidth()),
                                           jsnums.toFixnum(img.getHeight()),
+                                          null,
                                           [],
                                           false);
 			 newScene = newScene.add(img, img.getWidth()/2, img.getHeight()/2);
