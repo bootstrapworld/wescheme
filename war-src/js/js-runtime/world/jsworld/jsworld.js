@@ -797,20 +797,20 @@ var jsworld = {};
 
 	// Monitor for termination and register the other handlers.
 	var stopWhen = new StopWhenHandler(function(w, k2) { k2(false); },
-					   function(w, k2) { k2(w); });
+                                     function(w, k2) { k2(w); });
 	for(var i = 0 ; i < handlers.length; i++) {
 	    if (handlers[i] instanceof StopWhenHandler) {
-		stopWhen = handlers[i];
+        stopWhen = handlers[i];
 	    } else {
-		handlers[i].onRegister(top);
+        handlers[i].onRegister(top);
 	    }
 	}
 	function watchForTermination(w, oldW, k2) {
 	    stopWhen.test(w,
-		function(stop) {
-		    if (stop) {
-			Jsworld.shutdown();
-		        k(w);
+                    function(stop) {
+                      if (stop) {
+                        Jsworld.shutdown();
+                        k(w);
 	/*
 			stopWhen.receiver(world,
 			    function() {		    
@@ -823,9 +823,9 @@ var jsworld = {};
 				k();
 			    });
 	*/
-		    }
-		    else { k2(); }
-		});
+                      }
+                      else { k2(); }
+                    });
 	};
 	add_world_listener(watchForTermination);
 
