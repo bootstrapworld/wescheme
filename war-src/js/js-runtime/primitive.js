@@ -5845,7 +5845,20 @@ PRIMITIVES['step-count?']	= new PrimProc('step-count?', 1, false, false,
 /************************
  *** World Primitives ***
  ************************/
-
+var StopWhen = WorldConfigOption.extend({
+	init: function(handler, last_picture) {
+	    this._super('stop-when');
+      this.handler = handler;
+      this.last_picture = last_picture;
+	},
+                                            
+  configure: function(config) {
+      var newVals = {
+        stopWhen: this.handler,
+        lastPicture: this.last_picture
+      };
+      return config.updateAll(newVals);
+  }});
 
 
 var OnTickBang = WorldConfigOption.extend({
@@ -5858,15 +5871,22 @@ var OnTickBang = WorldConfigOption.extend({
 
 	configure: function(config) {
 	    var newVals = { 
-		onTick: this.handler,
-		onTickEffect: this.effectHandler,
-		tickDelay: jsnums.toFixnum(jsnums.multiply(1000, this.aDelay))
+        onTick: this.handler,
+        onTickEffect: this.effectHandler,
+        tickDelay: jsnums.toFixnum(jsnums.multiply(1000, this.aDelay))
 	    };
 	    return config.updateAll(newVals);
 	}});
 
+var ToDraw = WorldConfigOption.extend({
+   init: function(handler) {
+       this._super('on-redraw');
+       this.handler = handler;
+   },
 
-
+   configure: function(config) {
+       return config.updateAll({onRedraw: this.handler});
+   }});
 
  // The default tick delay is 28 times a second.
  // On slower browsers, we'll force all delays to be >= 1/10
@@ -5982,8 +6002,18 @@ PRIMITIVES['mouse=?'] =
 // PRIMITIVES['on-shake!'] = new PrimProc('on-shake!', 2, false, false, onEventBang('on-shake!', 'onShake'));
 
 
-PRIMITIVES['stop-when'] = new PrimProc('stop-when', 1, false, false,
-				       onEvent('stop-when', 'stopWhen', 1));
+PRIMITIVES['stop-when'] = new PrimProc('stop-when',
+			  1,
+			  false, false,
+			  function(aState, f) {
+			      check(aState, f, isFunction, "stop-when", "function name", 1);
+            return new StopWhen(f, new ToDraw(null));
+//                                 by default, there's no last picture handler
+//                                null,
+//                                new PrimProc('', 1, false, false, function(aState) { return types.EMPTY; })
+//                                );
+    });
+ 
 PRIMITIVES['stop-when!'] = new PrimProc('stop-when!', 2, false, false,
 					onEventBang('stop-when!', 'stopWhen'));
 
@@ -5994,15 +6024,7 @@ PRIMITIVES['on-redraw'] =
 		 false, false,
 		 function(aState, f) {
 		     check(aState, f, isFunction, 'on-redraw', "function name", 1);
-		     return new (WorldConfigOption.extend({
-				 init: function() {
-				     this._super('on-redraw');
-				 },
-
-				 configure: function(config) {
-				     return config.updateAll({'onRedraw': f});
-				 }}))();
-
+         return new ToDraw(f);
 		 });
 
 
@@ -6012,18 +6034,8 @@ PRIMITIVES['to-draw'] =
 		 false, false,
 		 function(aState, f) {
 		     check(aState, f, isFunction, 'to-draw', "function name", 1);
-		     return new (WorldConfigOption.extend({
-				 init: function() {
-				     this._super('on-redraw');
-				 },
-
-				 configure: function(config) {
-				     return config.updateAll({'onRedraw': f});
-				 }}))();
-
+         return new ToDraw(f);
 		 });
-
-
 
 
 PRIMITIVES['on-draw'] =

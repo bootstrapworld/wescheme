@@ -445,7 +445,7 @@
 	    }
 	}
 	config = config.updateAll({'changeWorld': Jsworld.updateWorld,
-				   'shutdownWorld': Jsworld.shutdownWorld});
+                            'shutdownWorld': Jsworld.shutdownWorld});
 	var stimuli = new world.stimuli.StimuliHandler(config, caller, restarter);
 	
 	var wrappedHandlers = [];
@@ -453,95 +453,101 @@
 	var wrappedRedrawCss;
 	
 
+  // on-draw may define separate DOM and CSS handlers
 	if (config.lookup('onDraw')) {
 	    wrappedRedraw = function(w, k) {
-		try {
-		    caller(config.lookup('onDraw'), [w],
-			    function(newDomTree) {
-			    	deepUnwrapJsObjects(newDomTree, function(unwrappedTree) {
-					checkWellFormedDomTree(unwrappedTree, unwrappedTree, undefined);
-					var result = [toplevelNode, 
-						      helpers.deepListToArray(unwrappedTree)];
-					k(result);
-				});
-			    });
-		} catch (e) {
-		    handleError(e);
-		}
+        try {
+            caller(config.lookup('onDraw'), [w],
+              function(newDomTree) {
+                deepUnwrapJsObjects(newDomTree, function(unwrappedTree) {
+              checkWellFormedDomTree(unwrappedTree, unwrappedTree, undefined);
+              var result = [toplevelNode, 
+                      helpers.deepListToArray(unwrappedTree)];
+              k(result);
+            });
+              });
+        } catch (e) {
+            handleError(e);
+        }
 	    }
 
 	    if (config.lookup('onDrawCss')) {
 		    wrappedRedrawCss = function(w, k) {
-			try {
-			    caller(config.lookup('onDrawCss'), [w],
-				    function(res) {
-					var result = helpers.deepListToArray(res);
-					k(result);
-				    });
-			} catch (e) {
-			    handleError(e);
-			}
+          try {
+              caller(config.lookup('onDrawCss'), [w],
+                function(res) {
+              var result = helpers.deepListToArray(res);
+              k(result);
+                });
+          } catch (e) {
+              handleError(e);
+          }
 		    }
-	    }
-	    else {
+	    } else {
 		    wrappedRedrawCss = function(w, k) { k([]); };
 	    }
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
-	} else if (config.lookup('onRedraw')) {
+	}
+ 
+  // on-redraw defines an image-producing handler, and a dummy CSS handler
+  else if (config.lookup('onRedraw')) {
 	    var reusableCanvas = undefined;
 	    var reusableCanvasNode = undefined;	    
 	    wrappedRedraw = function(w, k) {
-                var nextFrame = function(t) {
-		    try {
-                        // By the time we get here, the current world may have changed
-                        // already, so we need to reacquire the value of the
-                        // current world.
-                        w = _js.getCurrentWorld();
+        var nextFrame = function(t) {
+          try {
+            // By the time we get here, the current world may have changed
+            // already, so we need to reacquire the value of the
+            // current world.
+            w = _js.getCurrentWorld();
 		        caller(config.lookup('onRedraw'), [w],
 			       function(aScene) {
-				   // Performance hack: if we're using onRedraw, we know
-				   // we've got a scene, so we optimize away the repeated
-				   // construction of a canvas object.
-				   if ( world.Kernel.isImage(aScene) ) {
-				       var width = aScene.getWidth();
-				       var height = aScene.getHeight();
+               // Performance hack: if we're using onRedraw, we know
+               // we've got a scene, so we optimize away the repeated
+               // construction of a canvas object.
+               if ( world.Kernel.isImage(aScene) ) {
+                   var width = aScene.getWidth();
+                   var height = aScene.getHeight();
 
-				       if (! reusableCanvas) {
-					   reusableCanvas = world.Kernel.makeCanvas(width, height);
-					   // Note: the canvas object may itself manage objects,
-					   // as in the case of an excanvas.  In that case, we must make
-					   // sure jsworld doesn't try to disrupt its contents!
-					   reusableCanvas.jsworldOpaque = true;
-					   reusableCanvasNode = _js.node_to_tree(reusableCanvas);
-				       }
+                   if (! reusableCanvas) {
+                 reusableCanvas = world.Kernel.makeCanvas(width, height);
+                 // Note: the canvas object may itself manage objects,
+                 // as in the case of an excanvas.  In that case, we must make
+                 // sure jsworld doesn't try to disrupt its contents!
+                 reusableCanvas.jsworldOpaque = true;
+                 reusableCanvasNode = _js.node_to_tree(reusableCanvas);
+                   }
 
-				       setTimeout(
-					   function() {
-					       reusableCanvas.width = width;
-					       reusableCanvas.height = height;			
-					       var ctx = reusableCanvas.getContext("2d");
-					       aScene.render(ctx, 0, 0);
-					   },
-					   0);
+                   setTimeout(
+                 function() {
+                     reusableCanvas.width = width;
+                     reusableCanvas.height = height;			
+                     var ctx = reusableCanvas.getContext("2d");
+                     aScene.render(ctx, 0, 0);
+                 },
+                 0);
 
-				       k([toplevelNode, reusableCanvasNode]);
-				   } else {
-				       k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
-				   }
+                   k([toplevelNode, reusableCanvasNode]);
+               } else {
+                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
+               }
 			       });
-		    } catch (e) {
+          } catch (e) {
 		        handleError(e);
-		    }
-                };
-                window.requestAnimationFrame(nextFrame);
+          }
+        };
+        window.requestAnimationFrame(nextFrame);
 	    }
 	    wrappedRedrawCss = function(w, k) {
-		k([[reusableCanvas, 
-		    ["width", reusableCanvas.width + "px"],
-		    ["height", reusableCanvas.height + "px"]]]);
-	    }
+        k([[reusableCanvas,
+            ["width", reusableCanvas.width + "px"],
+            ["height", reusableCanvas.height + "px"]]]);
+      };
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
-	} else {
+	}
+ 
+  // if no draw handlers are defined, we just print the state of the world
+  else {
 	    wrappedHandlers.push(_js.on_world_change
 				 (function(w, k) { 
 				     Jsworld.printWorldHook(w, toplevelNode);
@@ -558,11 +564,68 @@
 	}
 
 	if (config.lookup('stopWhen')) {
-	    wrappedHandlers.push(_js.stop_when(
-			function(w, k) { 
-				caller(config.lookup('stopWhen'), [w],
-					function(res) { k(res); });
-			}));
+      var worldFunction = function(w, k) {
+                            caller(config.lookup('stopWhen'), [w],
+                                   function(res) { k(res); });
+      };
+      var reusableCanvas = undefined;
+      var reusableCanvasNode = undefined;
+      var lastPicture = function(w, k) {
+ console.log('inside raw last-picture handler!');
+        var nextFrame = function(t) {
+ console.log('inside nextFrame');
+          try {
+            // By the time we get here, the current world may have changed
+            // already, so we need to reacquire the value of the
+            // current world.
+//            w = _js.getCurrentWorld();
+ console.log(1);
+            caller(config.lookup('lastPicture'), [],
+             function(aScene) {
+                   console.log(2);
+               if ( world.Kernel.isImage(aScene) ) {
+                   console.log(3);
+                   var width = aScene.getWidth();
+                   var height = aScene.getHeight();
+                   console.log(4);
+                   if (! reusableCanvas) {
+                   console.log(5);
+                     reusableCanvas = world.Kernel.makeCanvas(width, height);
+                     reusableCanvas.jsworldOpaque = true;
+                     reusableCanvasNode = _js.node_to_tree(reusableCanvas);
+                   console.log(6);
+                   }
+                   setTimeout(
+                     function() {
+                              console.log(7);
+                         reusableCanvas.width = width;
+                         reusableCanvas.height = height;			
+                         var ctx = reusableCanvas.getContext("2d");
+                              console.log(8);
+                         aScene.render(ctx, 0, 0);
+                              console.log(9);
+                     },
+                     0);
+                   console.log(10);
+                   k([toplevelNode, reusableCanvasNode]);
+               } else {
+                   console.log(11);
+                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
+               }
+             });
+          } catch (e) {
+            handleError(e);
+          }
+        };
+        lastPictureCss = function(w, k) {
+          k([[reusableCanvas,
+              ["width", reusableCanvas.width + "px"],
+              ["height", reusableCanvas.height + "px"]]]);
+        };
+        var rawHandler = _js.on_draw(lastPicture, lastPictureCss)();
+        return rawHandler;
+      }
+      wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPicture));
 	}
 	
 

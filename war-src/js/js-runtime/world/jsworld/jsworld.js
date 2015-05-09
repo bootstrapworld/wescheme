@@ -809,22 +809,13 @@ var jsworld = {};
 	    stopWhen.test(w,
                     function(stop) {
                       if (stop) {
-                        Jsworld.shutdown();
-                        k(w);
-	/*
-			stopWhen.receiver(world,
-			    function() {		    
-				var currentRecord = runningBigBangs.pop();
-				if (currentRecord) { currentRecord.pause(); }
-				if (runningBigBangs.length > 0) {
-				    var restartingBigBang = runningBigBangs.pop();
-				    restartingBigBang.restart();
-				}
-				k();
-			    });
-	*/
-                      }
-                      else { k2(); }
+                        var handler = stopWhen.last_picture_handler();
+                        handler.onRegister(top);
+                        handler._listener(w, oldW, function(v) {
+                                            Jsworld.shutdown();
+                                            k2();
+                                          });
+                      } else { k2(); }
                     });
 	};
 	add_world_listener(watchForTermination);
@@ -1105,18 +1096,19 @@ var jsworld = {};
 
 
 
-    function StopWhenHandler(test, receiver) {
-	this.test = test;
-	this.receiver = receiver;
+    function StopWhenHandler(test, receiver, last_picture_handler) {
+      this.test = test;
+      this.receiver = receiver;
+      this.last_picture_handler = last_picture_handler;
     }
     // stop_when: CPS(world -> boolean) CPS(world -> boolean) -> handler
-    function stop_when(test, receiver) {
-	return function() {
-	    if (receiver == undefined) {
-		receiver = function(w, k) { k(w); };
-	    }
-	    return new StopWhenHandler(test, receiver);
-	};
+    function stop_when(test, receiver, last_picture_handler) {
+      return function() {
+          if (receiver == undefined) {
+            receiver = function(w, k) { k(w); };
+          }
+          return new StopWhenHandler(test, receiver, last_picture_handler);
+        };
     }
     Jsworld.stop_when = stop_when;
 
