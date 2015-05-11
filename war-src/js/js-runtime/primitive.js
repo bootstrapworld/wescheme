@@ -4637,9 +4637,9 @@ PRIMITIVES['put-image'] =
       } else {
           var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                  background.getHeight(),
-                                                 null,
                                                  [],
-                                                 false);
+                                                 false,
+                                                 null);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
           newScene = newScene.add(picture, jsnums.toFixnum(x), background.getHeight() - jsnums.toFixnum(y));
           return newScene;
@@ -4662,9 +4662,9 @@ PRIMITIVES['place-image'] =
 			} else {
 			    var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                  background.getHeight(),
-                                                 null,
                                                  [],
-                                                 false);
+                                                 false,
+                                                 null);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
           newScene = newScene.add(picture, jsnums.toFixnum(x), jsnums.toFixnum(y));
 			    return newScene;
@@ -4696,9 +4696,9 @@ PRIMITIVES['place-image/align'] =
 			 } else {
 			     var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                   background.getHeight(),
-                                                  null,
                                                   [],
-                                                  false);
+                                                  false,
+                                                  null);
 			     newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
 			     newScene = newScene.add(img, jsnums.toFixnum(x), jsnums.toFixnum(y));
 			     return  newScene;
@@ -4723,9 +4723,9 @@ PRIMITIVES['scene+line'] =
 			 // make a scene containing the image
        newScene = world.Kernel.sceneImage(jsnums.toFixnum(img.getWidth()),
                                           jsnums.toFixnum(img.getHeight()),
-                                          null,
                                           [],
-                                          false);
+                                          false,
+                                          null);
 			 newScene = newScene.add(img, img.getWidth()/2, img.getHeight()/2);
 			 // make an image containing the line
 			 line = world.Kernel.lineImage(jsnums.toFixnum(x2-x1),
