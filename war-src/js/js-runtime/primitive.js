@@ -6007,11 +6007,11 @@ PRIMITIVES['stop-when'] = new PrimProc('stop-when',
 			  false, false,
 			  function(aState, f) {
 			      check(aState, f, isFunction, "stop-when", "function name", 1);
-            return new StopWhen(f, new ToDraw(null));
-//                                 by default, there's no last picture handler
-//                                null,
-//                                new PrimProc('', 1, false, false, function(aState) { return types.EMPTY; })
-//                                );
+            return new StopWhen(f,
+//                                 by default, there's an empty last picture handler
+                                new ToDraw(new PrimProc('', 0, false, false,
+                                                        function(aState, w) { return types.effectDoNothing(); }))
+                                );
     });
  
 PRIMITIVES['stop-when!'] = new PrimProc('stop-when!', 2, false, false,

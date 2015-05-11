@@ -568,8 +568,6 @@
                             caller(config.lookup('stopWhen'), [w],
                                    function(res) { k(res); });
       };
-      var reusableCanvas = undefined;
-      var reusableCanvasNode = undefined;
       var lastPicture = function(w, k) {
  console.log('inside raw last-picture handler!');
         var nextFrame = function(t) {
@@ -578,8 +576,7 @@
             // By the time we get here, the current world may have changed
             // already, so we need to reacquire the value of the
             // current world.
-//            w = _js.getCurrentWorld();
- console.log(1);
+ console.log(config.lookup('lastPicture'));
             caller(config.lookup('lastPicture'), [],
              function(aScene) {
                    console.log(2);
@@ -622,9 +619,10 @@
               ["width", reusableCanvas.width + "px"],
               ["height", reusableCanvas.height + "px"]]]);
         };
-        var rawHandler = _js.on_draw(lastPicture, lastPictureCss)();
+        var rawHandler = _js.on_draw(nextFrame, lastPictureCss)();
         return rawHandler;
       }
+ console.log(lastPicture);
       wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPicture));
 	}
 	
