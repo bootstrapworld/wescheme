@@ -809,12 +809,13 @@ var jsworld = {};
 	    stopWhen.test(w,
                     function(stop) {
                       if (stop) {
+                        // install last_picture_handler and listener
                         var handler = stopWhen.last_picture_handler();
                         handler.onRegister(top);
-                        handler._listener(w, oldW, function(v) {
-                                            Jsworld.shutdown();
-                                            k2();
-                                          });
+                        handler._listener(w, oldW, function(v) { k2(); });
+                        // shut down the world
+                        Jsworld.shutdown();
+                        k(w);
                       } else { k2(); }
                     });
 	};

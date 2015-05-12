@@ -6002,17 +6002,25 @@ PRIMITIVES['mouse=?'] =
 // PRIMITIVES['on-shake!'] = new PrimProc('on-shake!', 2, false, false, onEventBang('on-shake!', 'onShake'));
 
 
-PRIMITIVES['stop-when'] = new PrimProc('stop-when',
+PRIMITIVES['stop-when'] =
+ new CasePrimitive('stop-when',
+    [new PrimProc('stop-when',
 			  1,
 			  false, false,
-			  function(aState, f) {
-			      check(aState, f, isFunction, "stop-when", "function name", 1);
-            return new StopWhen(f,
-//                                 by default, there's an empty last picture handler
-                                new ToDraw(new PrimProc('', 0, false, false,
-                                                        function(aState, w) { return types.effectDoNothing(); }))
-                                );
-    });
+			  function(aState, handler) {
+			      check(aState, handler, isFunction, "stop-when", "function name", 1);
+            // by default, there's an empty last picture handler
+            return new StopWhen(handler, null);
+        }),
+    new PrimProc('stop-when',
+			  2,
+			  false, false,
+			  function(aState, handler, lastPicture) {
+			      check(aState, handler, isFunction, "stop-when", "function name", 1);
+            check(aState, lastPicture, isFunction, "stop-when", "function name", 2);
+            return new StopWhen(handler, lastPicture);
+        })
+     ]);
  
 PRIMITIVES['stop-when!'] = new PrimProc('stop-when!', 2, false, false,
 					onEventBang('stop-when!', 'stopWhen'));

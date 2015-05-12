@@ -568,48 +568,28 @@
                             caller(config.lookup('stopWhen'), [w],
                                    function(res) { k(res); });
       };
-      var lastPicture = function(w, k) {
- console.log('inside raw last-picture handler!');
+      var lastPictureFunction = function(w, k) {
         var nextFrame = function(t) {
- console.log('inside nextFrame');
           try {
-            // By the time we get here, the current world may have changed
-            // already, so we need to reacquire the value of the
-            // current world.
- console.log(config.lookup('lastPicture'));
-            caller(config.lookup('lastPicture'), [],
-             function(aScene) {
-                   console.log(2);
-               if ( world.Kernel.isImage(aScene) ) {
-                   console.log(3);
-                   var width = aScene.getWidth();
-                   var height = aScene.getHeight();
-                   console.log(4);
-                   if (! reusableCanvas) {
-                   console.log(5);
-                     reusableCanvas = world.Kernel.makeCanvas(width, height);
-                     reusableCanvas.jsworldOpaque = true;
-                     reusableCanvasNode = _js.node_to_tree(reusableCanvas);
-                   console.log(6);
-                   }
-                   setTimeout(
-                     function() {
-                              console.log(7);
-                         reusableCanvas.width = width;
-                         reusableCanvas.height = height;			
-                         var ctx = reusableCanvas.getContext("2d");
-                              console.log(8);
-                         aScene.render(ctx, 0, 0);
-                              console.log(9);
-                     },
-                     0);
-                   console.log(10);
-                   k([toplevelNode, reusableCanvasNode]);
-               } else {
-                   console.log(11);
-                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
-               }
-             });
+            if(config.lookup('lastPicture')){
+              caller(config.lookup('lastPicture'), [w],
+               function(aScene) {
+                 if ( world.Kernel.isImage(aScene) ) {
+                     var width = aScene.getWidth();
+                     var height = aScene.getHeight();
+                     setTimeout(
+                       function() {
+                           reusableCanvas.width = width;
+                           reusableCanvas.height = height;			
+                           var ctx = reusableCanvas.getContext("2d");
+                           aScene.render(ctx, 0, 0);
+                       },
+                       0);
+                 } else {
+                     handleError("stop-when handler: is expected to return a scene or image");
+                 }
+               });
+            }
           } catch (e) {
             handleError(e);
           }
@@ -619,11 +599,10 @@
               ["width", reusableCanvas.width + "px"],
               ["height", reusableCanvas.height + "px"]]]);
         };
-        var rawHandler = _js.on_draw(nextFrame, lastPictureCss)();
-        return rawHandler;
-      }
- console.log(lastPicture);
-      wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPicture));
+        return _js.on_draw(nextFrame, lastPictureCss)();
+      };
+
+      wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPictureFunction));
 	}
 	
 
