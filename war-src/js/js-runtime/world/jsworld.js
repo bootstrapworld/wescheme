@@ -575,12 +575,10 @@
               caller(config.lookup('lastPicture'), [w],
                function(aScene) {
                  if ( world.Kernel.isImage(aScene) ) {
-                     var width = aScene.getWidth();
-                     var height = aScene.getHeight();
                      setTimeout(
                        function() {
-                           reusableCanvas.width = width;
-                           reusableCanvas.height = height;			
+                           reusableCanvas.width = aScene.getWidth();
+                           reusableCanvas.height = aScene.getHeight();
                            var ctx = reusableCanvas.getContext("2d");
                            aScene.render(ctx, 0, 0);
                        },
