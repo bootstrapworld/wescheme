@@ -445,7 +445,7 @@
 	    }
 	}
 	config = config.updateAll({'changeWorld': Jsworld.updateWorld,
-				   'shutdownWorld': Jsworld.shutdownWorld});
+                            'shutdownWorld': Jsworld.shutdownWorld});
 	var stimuli = new world.stimuli.StimuliHandler(config, caller, restarter);
 	
 	var wrappedHandlers = [];
@@ -453,95 +453,101 @@
 	var wrappedRedrawCss;
 	
 
+  // on-draw may define separate DOM and CSS handlers
 	if (config.lookup('onDraw')) {
 	    wrappedRedraw = function(w, k) {
-		try {
-		    caller(config.lookup('onDraw'), [w],
-			    function(newDomTree) {
-			    	deepUnwrapJsObjects(newDomTree, function(unwrappedTree) {
-					checkWellFormedDomTree(unwrappedTree, unwrappedTree, undefined);
-					var result = [toplevelNode, 
-						      helpers.deepListToArray(unwrappedTree)];
-					k(result);
-				});
-			    });
-		} catch (e) {
-		    handleError(e);
-		}
+        try {
+            caller(config.lookup('onDraw'), [w],
+              function(newDomTree) {
+                deepUnwrapJsObjects(newDomTree, function(unwrappedTree) {
+              checkWellFormedDomTree(unwrappedTree, unwrappedTree, undefined);
+              var result = [toplevelNode, 
+                      helpers.deepListToArray(unwrappedTree)];
+              k(result);
+            });
+              });
+        } catch (e) {
+            handleError(e);
+        }
 	    }
 
 	    if (config.lookup('onDrawCss')) {
 		    wrappedRedrawCss = function(w, k) {
-			try {
-			    caller(config.lookup('onDrawCss'), [w],
-				    function(res) {
-					var result = helpers.deepListToArray(res);
-					k(result);
-				    });
-			} catch (e) {
-			    handleError(e);
-			}
+          try {
+              caller(config.lookup('onDrawCss'), [w],
+                function(res) {
+              var result = helpers.deepListToArray(res);
+              k(result);
+                });
+          } catch (e) {
+              handleError(e);
+          }
 		    }
-	    }
-	    else {
+	    } else {
 		    wrappedRedrawCss = function(w, k) { k([]); };
 	    }
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
-	} else if (config.lookup('onRedraw')) {
+	}
+ 
+  // on-redraw defines an image-producing handler, and a dummy CSS handler
+  else if (config.lookup('onRedraw')) {
 	    var reusableCanvas = undefined;
 	    var reusableCanvasNode = undefined;	    
 	    wrappedRedraw = function(w, k) {
-                var nextFrame = function(t) {
-		    try {
-                        // By the time we get here, the current world may have changed
-                        // already, so we need to reacquire the value of the
-                        // current world.
-                        w = _js.getCurrentWorld();
+        var nextFrame = function(t) {
+          try {
+            // By the time we get here, the current world may have changed
+            // already, so we need to reacquire the value of the
+            // current world.
+            w = _js.getCurrentWorld();
 		        caller(config.lookup('onRedraw'), [w],
 			       function(aScene) {
-				   // Performance hack: if we're using onRedraw, we know
-				   // we've got a scene, so we optimize away the repeated
-				   // construction of a canvas object.
-				   if ( world.Kernel.isImage(aScene) ) {
-				       var width = aScene.getWidth();
-				       var height = aScene.getHeight();
+               // Performance hack: if we're using onRedraw, we know
+               // we've got a scene, so we optimize away the repeated
+               // construction of a canvas object.
+               if ( world.Kernel.isImage(aScene) ) {
+                   var width = aScene.getWidth();
+                   var height = aScene.getHeight();
 
-				       if (! reusableCanvas) {
-					   reusableCanvas = world.Kernel.makeCanvas(width, height);
-					   // Note: the canvas object may itself manage objects,
-					   // as in the case of an excanvas.  In that case, we must make
-					   // sure jsworld doesn't try to disrupt its contents!
-					   reusableCanvas.jsworldOpaque = true;
-					   reusableCanvasNode = _js.node_to_tree(reusableCanvas);
-				       }
+                   if (! reusableCanvas) {
+                 reusableCanvas = world.Kernel.makeCanvas(width, height);
+                 // Note: the canvas object may itself manage objects,
+                 // as in the case of an excanvas.  In that case, we must make
+                 // sure jsworld doesn't try to disrupt its contents!
+                 reusableCanvas.jsworldOpaque = true;
+                 reusableCanvasNode = _js.node_to_tree(reusableCanvas);
+                   }
 
-				       setTimeout(
-					   function() {
-					       reusableCanvas.width = width;
-					       reusableCanvas.height = height;			
-					       var ctx = reusableCanvas.getContext("2d");
-					       aScene.render(ctx, 0, 0);
-					   },
-					   0);
+                   setTimeout(
+                 function() {
+                     reusableCanvas.width = width;
+                     reusableCanvas.height = height;			
+                     var ctx = reusableCanvas.getContext("2d");
+                     aScene.render(ctx, 0, 0);
+                 },
+                 0);
 
-				       k([toplevelNode, reusableCanvasNode]);
-				   } else {
-				       k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
-				   }
+                   k([toplevelNode, reusableCanvasNode]);
+               } else {
+                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
+               }
 			       });
-		    } catch (e) {
+          } catch (e) {
 		        handleError(e);
-		    }
-                };
-                window.requestAnimationFrame(nextFrame);
+          }
+        };
+        window.requestAnimationFrame(nextFrame);
 	    }
 	    wrappedRedrawCss = function(w, k) {
-		k([[reusableCanvas, 
-		    ["width", reusableCanvas.width + "px"],
-		    ["height", reusableCanvas.height + "px"]]]);
-	    }
+        k([[reusableCanvas,
+            ["width", reusableCanvas.width + "px"],
+            ["height", reusableCanvas.height + "px"]]]);
+      };
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
-	} else {
+	}
+ 
+  // if no draw handlers are defined, we just print the state of the world
+  else {
 	    wrappedHandlers.push(_js.on_world_change
 				 (function(w, k) { 
 				     Jsworld.printWorldHook(w, toplevelNode);
@@ -558,11 +564,43 @@
 	}
 
 	if (config.lookup('stopWhen')) {
-	    wrappedHandlers.push(_js.stop_when(
-			function(w, k) { 
-				caller(config.lookup('stopWhen'), [w],
-					function(res) { k(res); });
-			}));
+      var worldFunction = function(w, k) {
+                            caller(config.lookup('stopWhen'), [w],
+                                   function(res) { k(res); });
+      };
+      var lastPictureFunction = function(w, k) {
+        var nextFrame = function(t) {
+          try {
+            if(config.lookup('lastPicture')){
+              caller(config.lookup('lastPicture'), [w],
+               function(aScene) {
+                 if ( world.Kernel.isImage(aScene) ) {
+                     setTimeout(
+                       function() {
+                           reusableCanvas.width = aScene.getWidth();
+                           reusableCanvas.height = aScene.getHeight();
+                           var ctx = reusableCanvas.getContext("2d");
+                           aScene.render(ctx, 0, 0);
+                       },
+                       0);
+                 } else {
+                     handleError("stop-when handler: is expected to return a scene or image");
+                 }
+               });
+            }
+          } catch (e) {
+            handleError(e);
+          }
+        };
+        lastPictureCss = function(w, k) {
+          k([[reusableCanvas,
+              ["width", reusableCanvas.width + "px"],
+              ["height", reusableCanvas.height + "px"]]]);
+        };
+        return _js.on_draw(nextFrame, lastPictureCss)();
+      };
+
+      wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPictureFunction));
 	}
 	
 
