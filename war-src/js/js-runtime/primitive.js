@@ -459,8 +459,10 @@ var isNonNegativeReal = function(x) {
 	return isReal(x) && jsnums.greaterThanOrEqual(x, 0);
 };
 
+// Determines if x is an angle, namely a real number (except not +inf.0, -inf.0 or +nan.0).
+// from: http://docs.racket-lang.org/teachpack/2htdpimage.html?q=rotate#%28def._%28%28lib._2htdp%2Fimage..rkt%29._angle~3f%29%29
 var isAngle = function(x) {
-	return isReal(x) && jsnums.greaterThanOrEqual(x, 0) && jsnums.lessThan(x, 360);
+	return isReal(x) && !(jsnums.equals(x, jsnums.inf) || jsnums.equals(x, jsnums.negative_inf));
 };
 var isSideCount = function(x) {
 	return isInteger(x) && jsnums.greaterThanOrEqual(x, 3);
@@ -469,7 +471,13 @@ var isStepCount = function(x) {
 	return isInteger(x) && jsnums.greaterThanOrEqual(x, 1);
 };
 
-
+var angleToProperRange = function(x){
+ var wholePart = jsnums.modulo(jsnums.round(x), 360);
+ var decimalPart = jsnums.subtract(x, jsnums.round(x));
+ return (jsnums.equals(wholePart, 0) && jsnums.lessThan(decimalPart,0))?
+        jsnums.add(360, decimalPart) : jsnums.add(wholePart, decimalPart);
+};
+ 
 var isSymbol = types.isSymbol;
 var isChar = types.isChar;
 var isString = types.isString;
@@ -4966,13 +4974,15 @@ PRIMITIVES['triangle/sas'] =
       false, false,
       function(aState, sideA, angleB, sideC, style, color) {
        check(aState, sideA, isNonNegativeReal, "triangle/sas", "non-negative number", 1, arguments);
-       check(aState, angleB, isAngle, "triangle/sas", "finite real number between 0 and 360", 2, arguments);
+       check(aState, angleB, isAngle, "triangle/sas", "finite real number", 2, arguments);
        check(aState, sideC, isNonNegativeReal, "triangle/sas", "non-negative number", 3, arguments);
        check(aState, style, isMode, "triangle/sas", 'style ("solid" or "outline" or [0-255])', 4, arguments);
        check(aState, color, isColor, "triangle/sas", "color", 5, arguments);
        if (colorDb.get(color)) { color = colorDb.get(color); }
        // cast to fixnums
-       sideA = jsnums.toFixnum(sideA); angleB = jsnums.toFixnum(angleB); sideC = jsnums.toFixnum(sideC);
+       sideA = jsnums.toFixnum(sideA);
+       angleB = jsnums.toFixnum(angleToProperRange(angleB));
+       sideC = jsnums.toFixnum(sideC);
        var sideB2 = cosRel(sideA, sideC, angleB);
        var sideB  = Math.sqrt(sideB2);
               
@@ -5030,13 +5040,16 @@ PRIMITIVES['triangle/ass'] =
       5,
       false, false,
       function(aState, angleA, sideB, sideC, style, color) {
-       check(aState, angleA, isAngle, "triangle/ass", "finite real number between 0 and 360", 1, arguments);
+       check(aState, angleA, isAngle, "triangle/ass", "finite real number", 1, arguments);
        check(aState, sideB, isNonNegativeReal, "triangle/ass", "non-negative number", 2, arguments);
        check(aState, sideC, isNonNegativeReal, "triangle/ass", "non-negative number", 3, arguments);
        check(aState, style, isMode, "triangle/ass", 'style ("solid" or "outline" or [0-255])', 4, arguments);
        check(aState, color, isColor, "triangle/ass", "color", 5, arguments);
        // cast to fixnums
-       angleA = jsnums.toFixnum(angleA); sideB = jsnums.toFixnum(sideB); sideC = jsnums.toFixnum(sideC);
+       angleA = jsnums.toFixnum(angleToProperRange(angleA));
+       sideB = jsnums.toFixnum(sideB);
+       sideC = jsnums.toFixnum(sideC);
+       
        if (colorDb.get(color)) { color = colorDb.get(color); }
        if (less(180, angleA)) {
          raise( types.incompleteExn(types.exnFailContract, "The given angle, side and side will not form a triangle: "
@@ -5056,12 +5069,14 @@ PRIMITIVES['triangle/ssa'] =
       function(aState, sideA, sideB, angleC, style, color) {
          check(aState, sideA, isNonNegativeReal, "triangle/ssa", "non-negative number", 1, arguments);
          check(aState, sideB, isNonNegativeReal, "triangle/ssa", "non-negative number", 2, arguments);
-         check(aState, angleC, isAngle, "triangle/ssa", "finite real number between 0 and 360", 3, arguments);
+         check(aState, angleC, isAngle, "triangle/ssa", "finite real number", 3, arguments);
          check(aState, style, isMode, "triangle/ssa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/ssa", "color", 5, arguments);
          if (colorDb.get(color)) { color = colorDb.get(color); }
          // cast to fixnums
-         sideA = jsnums.toFixnum(sideA); sideB = jsnums.toFixnum(sideB); angleC = jsnums.toFixnum(angleC);
+         sideA = jsnums.toFixnum(sideA);
+         sideB = jsnums.toFixnum(sideB);
+         angleC = jsnums.toFixnum(angleToProperRange(angleC));
          if (less(180, angleC)) {
            raise( types.incompleteExn(types.exnFailContract, "The given side, side and angle will not form a triangle: "
                                       + sideA + ", " + sideB + ", " + angleC, []) );
@@ -5094,14 +5109,16 @@ PRIMITIVES['triangle/aas'] =
         5,
         false, false,
         function(aState, angleA, angleB, sideC, style, color) {
-         check(aState, angleA, isAngle, "triangle/aas", "finite real number between 0 and 360", 1, arguments);
-         check(aState, angleB, isAngle, "triangle/aas", "finite real number between 0 and 360", 2, arguments);
+         check(aState, angleA, isAngle, "triangle/aas", "finite real number", 1, arguments);
+         check(aState, angleB, isAngle, "triangle/aas", "finite real number", 2, arguments);
          check(aState, sideC, isNonNegativeReal, "triangle/aas", "non-negative number", 3, arguments);
          check(aState, style, isMode, "triangle/aas", 'style ("solid" or "outline" or [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/aas", "color", 5, arguments);
         if (colorDb.get(color)) { color = colorDb.get(color); }
         // cast to fixnums
-        angleA = jsnums.toFixnum(angleA); angleB = jsnums.toFixnum(angleB); sideC = jsnums.toFixnum(sideC);
+        angleA = jsnums.toFixnum(angleToProperRange(angleA));
+        angleB = jsnums.toFixnum(angleToProperRange(angleB));
+        sideC = jsnums.toFixnum(sideC);
         var angleC = (180 - angleA - angleB);
         if (less(angleC, 0)) {
            raise( types.incompleteExn(types.exnFailContract, "The given angle, angle and side will not form a triangle: "
@@ -5110,7 +5127,7 @@ PRIMITIVES['triangle/aas'] =
         var hypotenuse = sideC / (Math.sin(angleC*Math.PI/180))
         var sideB = hypotenuse * Math.sin(angleB*Math.PI/180);
         return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
-                                         jsnums.toFixnum(angleA),
+                                         angleA,
                                          jsnums.toFixnum(sideB),
                                          style.toString(),
                                          color);
@@ -5121,14 +5138,16 @@ PRIMITIVES['triangle/asa'] =
           5,
           false, false,
           function(aState, angleA, sideB, angleC, style, color) {
-            check(aState, angleA, isAngle, "triangle/asa", "finite real number between 0 and 360", 1, arguments);
+            check(aState, angleA, isAngle, "triangle/asa", "finite real number", 1, arguments);
             check(aState, sideB, isNonNegativeReal, "triangle/asa", "non-negative number", 2, arguments);
-            check(aState, angleC, isAngle, "triangle/asa", "finite real number between 0 and 360", 3, arguments);
+            check(aState, angleC, isAngle, "triangle/asa", "finite real number", 3, arguments);
             check(aState, style, isMode, "triangle/asa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
             check(aState, color, isColor, "triangle/asa", "color", 5, arguments);
             if (colorDb.get(color)) { color = colorDb.get(color); }
             // cast to fixnums
-            angleA = jsnums.toFixnum(angleA); sideB = jsnums.toFixnum(sideB); angleC = jsnums.toFixnum(angleC);
+            angleA = jsnums.toFixnum(angleToProperRange(angleA));
+            sideB = jsnums.toFixnum(sideB);
+            angleC = jsnums.toFixnum(angleToProperRange(angleC));
             var angleB = (180 - angleA - angleC);
             if (less(angleB, 0)) {
               raise( types.incompleteExn(types.exnFailContract, "The given angle, side and angle will not form a triangle: "
@@ -5137,7 +5156,7 @@ PRIMITIVES['triangle/asa'] =
             var base = (sideB * Math.sin(angleA*Math.PI/180)) / (Math.sin(angleB*Math.PI/180));
             var sideC = (sideB * Math.sin(angleC*Math.PI/180)) / (Math.sin(angleB*Math.PI/180));
             return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
-                                             jsnums.toFixnum(angleA),
+                                             angleA,
                                              jsnums.toFixnum(sideB),
                                              style.toString(),
                                              color);
@@ -5149,19 +5168,21 @@ PRIMITIVES['triangle/saa'] =
             false, false,
             function(aState, sideA, angleB, angleC, style, color) {
              check(aState, sideA, isNonNegativeReal, "triangle/saa", "non-negative number", 1, arguments);
-             check(aState, angleB, isAngle, "triangle/saa", "finite real number between 0 and 360", 2, arguments);
-             check(aState, angleC, isAngle, "triangle/saa", "finite real number between 0 and 360", 3, arguments);
+             check(aState, angleB, isAngle, "triangle/saa", "finite real number", 2, arguments);
+             check(aState, angleC, isAngle, "triangle/saa", "finite real number", 3, arguments);
              check(aState, style, isMode, "triangle/saa", 'style ("solid" or "outline" or [0-255])', 4, arguments);
              check(aState, color, isColor, "triangle/saa", "color", 5, arguments);
              if (colorDb.get(color)) { color = colorDb.get(color); }
              // cast to fixnums
-             sideA = jsnums.toFixnum(sideA); angleB = jsnums.toFixnum(angleB); angleC = jsnums.toFixnum(angleC);
+             sideA = jsnums.toFixnum(sideA);
+             angleB = jsnums.toFixnum(angleToProperRange(angleB));
+             angleC = jsnums.toFixnum(angleToProperRange(angleC));
              var angleA = (180 - angleC - angleB);
              var hypotenuse = sideA / (Math.sin(angleA*Math.PI/180));
              var sideC = hypotenuse * Math.sin(angleC*Math.PI/180);
              var sideB = hypotenuse * Math.sin(angleB*Math.PI/180);
              return world.Kernel.triangleImage(jsnums.toFixnum(sideC),
-                                               jsnums.toFixnum(angleA),
+                                               angleA,
                                                jsnums.toFixnum(sideB),
                                                style.toString(),
                                                color);
@@ -5191,12 +5212,12 @@ new PrimProc('isosceles-triangle',
 			 false, false,
 			 function(aState, side, angleC, s, c) {
 			 check(aState, side, isNonNegativeReal, "isosceles-triangle", "non-negative number", 1, arguments);
-			 check(aState, angleC, isAngle, "isosceles-triangle", "finite real number between 0 and 360", 2, arguments);
+			 check(aState, angleC, isAngle, "isosceles-triangle", "finite real number", 2, arguments);
 			 check(aState, s, isMode, "isosceles-triangle", 'style ("solid" or "outline" or [0-255])', 3, arguments);
 			 check(aState, c, isColor, "isosceles-triangle", "color", 4, arguments);
 			 if (colorDb.get(c)) { c = colorDb.get(c); }
        // cast to fixnums
-       side = jsnums.toFixnum(side); angleC = jsnums.toFixnum(angleC);
+       side = jsnums.toFixnum(side); angleC = jsnums.toFixnum(angleToProperRange(angleC));
        var angleAB = (180-angleC)/2;
        var base = 2*side*Math.sin((angleC*Math.PI/180)/2);
        return world.Kernel.triangleImage(jsnums.toFixnum(base),
@@ -5483,10 +5504,11 @@ new PrimProc('rotate',
 			 2,
 			 false, false,
 			 function(aState, angle, img) {
-			 check(aState, angle, isAngle, "rotate", "finite real number between 0 and 360", 1, arguments);
+			 check(aState, angle, isAngle, "rotate", "angle", 1, arguments);
 			 check(aState, img, isImage, "rotate", "image", 2, arguments);
-				 // negate the angle, to make it a counterclockwise rotation
-			     return world.Kernel.rotateImage(jsnums.toFixnum(jsnums.multiply(-1, angle)), img);
+       angle = jsnums.toFixnum(angleToProperRange(angle));
+       // negate the angle, to make it a counterclockwise rotation
+       return world.Kernel.rotateImage(jsnums.toFixnum(jsnums.multiply(-1, angle)), img);
 			 });
 
 PRIMITIVES['scale/xy'] =
