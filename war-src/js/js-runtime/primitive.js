@@ -471,11 +471,8 @@ var isStepCount = function(x) {
 	return isInteger(x) && jsnums.greaterThanOrEqual(x, 1);
 };
 
-var angleToProperRange = function(x){
- var wholePart = jsnums.modulo(jsnums.round(x), 360);
- var decimalPart = jsnums.subtract(x, jsnums.round(x));
- return (jsnums.equals(wholePart, 0) && jsnums.lessThan(decimalPart,0))?
-        jsnums.add(360, decimalPart) : jsnums.add(wholePart, decimalPart);
+var angleToProperRange = function(angle){
+ return angle % 360;
 };
  
 var isSymbol = types.isSymbol;
