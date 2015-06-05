@@ -1117,12 +1117,11 @@ if (typeof(world) === 'undefined') {
         ctx.font        = this.font;
  
         // if 'outline' is enabled, use strokeText. Otherwise use fillText
+        ctx.fillStyle = this.outline? 'white' : colorString(this.color);
+        ctx.fillText(this.str, x, y);
         if(this.outline){
           ctx.strokeStyle = colorString(this.color);
           ctx.strokeText(this.str, x, y);
-        } else {
-          ctx.fillStyle = colorString(this.color);
-          ctx.fillText(this.str, x, y);
         }
         if(this.underline){
             ctx.beginPath();
