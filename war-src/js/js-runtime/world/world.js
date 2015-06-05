@@ -1065,14 +1065,15 @@ if (typeof(world) === 'undefined') {
     };
 
     //////////////////////////////////////////////////////////////////////
-    // TextImage: String Number Color String String String String any/c -> Image
-    var TextImage = function(str, size, color, face, family, style, weight, underline) {
+    // TextImage: String Number Color String String String String any/c Boolean -> Image
+    var TextImage = function(str, size, color, face, family, style, weight, underline, outline) {
         BaseImage.call(this);
         this.str        = str;
         this.size       = size;   // 18
         this.color      = color;  // red
         this.face       = face;   // Gill Sans
         this.family     = family; // 'swiss
+        this.outline    = outline || false;
         this.style      = (style === "slant")? "oblique" : style;  // Racket's "slant" -> CSS's "oblique"
         this.weight     = (weight=== "light")? "lighter" : weight; // Racket's "light" -> CSS's "lighter"
         this.underline  = underline;
@@ -1113,9 +1114,16 @@ if (typeof(world) === 'undefined') {
         ctx.save();
         ctx.textAlign   = 'left';
         ctx.textBaseline= 'top';
-        ctx.fillStyle   = colorString(this.color);
         ctx.font        = this.font;
-        ctx.fillText(this.str, x, y);
+ 
+        // if 'outline' is enabled, use strokeText. Otherwise use fillText
+        if(this.outline){
+          ctx.strokeStyle = colorString(this.color);
+          ctx.strokeText(this.str, x, y);
+        } else {
+          ctx.fillStyle = colorString(this.color);
+          ctx.fillText(this.str, x, y);
+        }
         if(this.underline){
             ctx.beginPath();
             ctx.moveTo(x, y+this.size);
@@ -1575,8 +1583,8 @@ if (typeof(world) === 'undefined') {
     world.Kernel.flipImage = function(img, direction) {
         return new FlipImage(img, direction);
     };
-    world.Kernel.textImage = function(str, size, color, face, family, style, weight, underline) {
-        return new TextImage(str, size, color, face, family, style, weight, underline);
+    world.Kernel.textImage = function(str, size, color, face, family, style, weight, underline, outline) {
+        return new TextImage(str, size, color, face, family, style, weight, underline, outline);
     };
     world.Kernel.fileImage = function(path, rawImage, afterInit) {
         return FileImage.makeInstance(path, rawImage, afterInit);

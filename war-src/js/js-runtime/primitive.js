@@ -5602,7 +5602,9 @@ PRIMITIVES['text'] =
 
 
 PRIMITIVES['text/font'] =
-new PrimProc('text/font',
+    new CasePrimitive('text/font',
+  // implementation to match htdp/image
+	[new PrimProc('text/font',
 			 8,
 			 false, false,
 			 function(aState, aString, aSize, aColor, aFace, aFamily, aStyle, aWeight, aUnderline) {
@@ -5618,16 +5620,33 @@ new PrimProc('text/font',
 			 check(aState, aUnderline,isBoolean,	"text/font", "underline?",8, arguments);
 			 
 			 if (colorDb.get(aColor)) { aColor = colorDb.get(aColor); }
-       try {
-         return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
-                                       aFace.toString(), aFamily.toString(), aStyle.toString(),
-                                       aWeight.toString(), aUnderline);
-      } catch(e) {
-      // Under IE 8, something breaks.  I don't know yet what it is.
-        return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
-                                      "normal", "Arial","","",false);
-      }
-    });
+       return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
+                                     aFace.toString(), aFamily.toString(), aStyle.toString(),
+                                     aWeight.toString(), aUnderline);
+    }),
+   // new, meme-generating version
+   new PrimProc('text/font',
+			 9,
+			 false, false,
+			 function(aState, aString, aSize, aColor, aFace, aFamily, aStyle, aWeight, aUnderline, outline) {
+			 check(aState, aString, isString,		"text/font", "string",	1, arguments);
+		     check(aState, aSize,	function(x) { return isNatural(x) && jsnums.greaterThan(x, 0) && isByte(x); },
+				   "text/font", "exact integer between 1 and 255",	2, arguments);
+			 check(aState, aColor,	isColor,		"text/font", "color",	3, arguments);
+			 check(aState, aFace,	function(x) {return isString(x) || !x;},		
+											"text/font", "face",	4, arguments);
+			 check(aState, aFamily,	isFontFamily,	"text/font", "family",	5, arguments);
+			 check(aState, aStyle,	isFontStyle,	"text/font", 'style ("solid" or "outline")',	6, arguments);
+			 check(aState, aWeight,	isFontWeight,	"text/font", "weight",	7, arguments);
+			 check(aState, aUnderline,isBoolean,	"text/font", "underline?",8, arguments);
+       check(aState, outline, isBoolean,	"text/font", "outline?",9, arguments);
+			 
+			 if (colorDb.get(aColor)) { aColor = colorDb.get(aColor); }
+       return world.Kernel.textImage(aString.toString(), jsnums.toFixnum(aSize), aColor,
+                                     aFace.toString(), aFamily.toString(), aStyle.toString(),
+                                     aWeight.toString(), aUnderline, outline);
+    })
+   ]);
  
 PRIMITIVES['play-sound'] =
     new PrimProc('play-sound',
