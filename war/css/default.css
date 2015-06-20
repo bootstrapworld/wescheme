@@ -222,7 +222,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     margin:			0px;
     border:         0px;
     background:		gray;
-    border-bottom:	solid 1px black;
+    border-top:	solid 1px black;
 }
 
 #inter .CodeMirror, #definitions>.CodeMirror {background: none;}

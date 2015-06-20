@@ -221,7 +221,7 @@ var initializeEditor;
 	var splitpane1 = new goog.ui.SplitPane(
 	    new goog.ui.Component(),
 	    new goog.ui.Component(),
-	    goog.ui.SplitPane.Orientation.VERTICAL);
+	    goog.ui.SplitPane.Orientation.HORIZONTAL);
 
 	splitpane1.decorate(splitpaneDiv);
 
