@@ -204,11 +204,13 @@ WeSchemeInteractions = (function () {
                 makeTransparentIframe: true,
                 readOnly: true,     // sets CM to readOnly mode, but still blinks the cursor
                 cursorBlinkRate: 0, // hides the cursor
-                matchBrackets: false },
+                matchBrackets: false
+            },
             function(container) {
                 var newId = makeFreshId();
                 that.interactions.previousInteractionsTextContainers[newId] = container;
                 that.interactions.runCode(nextCode, newId, function() {});
+                                                       console.log(container);
             });
         that.focus();
     };
