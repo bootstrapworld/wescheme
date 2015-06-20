@@ -210,7 +210,6 @@ WeSchemeInteractions = (function () {
                 var newId = makeFreshId();
                 that.interactions.previousInteractionsTextContainers[newId] = container;
                 that.interactions.runCode(nextCode, newId, function() {});
-                                                       console.log(container);
             });
         that.focus();
     };
