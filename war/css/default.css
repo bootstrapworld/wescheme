@@ -2,7 +2,7 @@
 html {
     height: 100%;
     min-width: 320px;
-    background: #f5deb3;
+    background: white;
     padding:		0px;
     margin:		0px;
     border: 0px;
@@ -69,7 +69,7 @@ body {
 
 
 .goog-splitpane-handle {
-    background: #ccc;
+    background: #B6D990;
     position: absolute;
 }
 
@@ -94,12 +94,13 @@ body {
 
 /* 65px: LOGO AND TITLE */
 #header{
-    width:			100%;
-    height:			65px;
-    background:		url(/css/images/icon-trans.png) ;
+    width:          100%;
+    height:         65px;
+    background:     url(/css/images/icon-trans.png) ;
     background-repeat:no-repeat;
     clear:          both;
     padding-bottom: 4px;
+    font-family:    Lato, Arial, Helvetica, sans-serif;
 }
 
 #headerToggle:hover {
@@ -133,13 +134,14 @@ h2 > a:hover{text-decoration: underline;}
 
 /* 30px: FILENAME & URL */
 #fileInfo{
-    width:			100%;
-    height:			24px;	/* leave room for the border */
-    clear:			both;
-    padding-top:	5px;
-    white-space:	nowrap;
+    width:        100%;
+    height:       24px;	/* leave room for the border */
+    clear:        both;
+    padding-top:   5px;
+    white-space:   nowrap;
     border-top:		solid 1px black;
-    margin:         0px;
+    margin:       0px;
+    background:   #B6D990;
 }
 
 #fileInfo *{
@@ -304,7 +306,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     padding:		1px 0px;
     border-top:		solid 1px black;
     color:			black;
-    background:		#f5deb3; /* prevent interactions from peeking through footer in short windows */
+    background:		#B6D990; /* prevent interactions from peeking through footer in short windows */
 }
 
 

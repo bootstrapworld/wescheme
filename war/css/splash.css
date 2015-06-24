@@ -4,7 +4,7 @@ body{
 	height:		100%;
 	padding:	0px;
 	margin:		0px;
-	background:	#f5deb3;
+	background:	white;
 	text-align:	center;
 }
 div#text{text-align: left; padding: 30px;}
@@ -15,7 +15,8 @@ div#text a:hover{text-decoration: none;}
 h1, h2{
 	text-align:	center;
 	width:		100%;
-	background: #f5deb3;
+	background: white;
+  font-family:    Lato, Arial, Helvetica, sans-serif;
 }
 
 h1{font-size: 60px; margin-bottom: 0px;}
