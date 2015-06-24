@@ -71,7 +71,7 @@ $(document).ready(function() {
     <input id="myPrograms" value="My Programs" type="button">
 <% } %>
 
-<img src="css/images/BigLogo.png">
+<img src="css/images/BigLogo.png" alt="WeScheme Logo">
 	
 
 <% if( s == null ) { %>

@@ -116,6 +116,7 @@ WeSchemeInteractions = (function () {
     WeSchemeInteractions.prototype.clearLine = function() {
         var clearDiv = document.createElement("div");
         clearDiv.style.clear = 'left';
+        clearDiv.setAttribute("aria-hidden", true); // ACCESSIBILITY: don't read the clear DIV
         this.addToInteractions(clearDiv);
     };
 
@@ -180,6 +181,8 @@ WeSchemeInteractions = (function () {
         var promptSpan = document.createElement('span');
         promptSpan.className = 'top-aligned-inline-block';
         promptSpan.appendChild(document.createTextNode(">"));
+        promptSpan.setAttribute("aria-hidden", true); // ACCESSIBILITY: don't read the ">"
+
 
         var textareaSpan = document.createElement("span");
         textareaSpan.className = 'top-aligned-inline-block';
@@ -204,14 +207,14 @@ WeSchemeInteractions = (function () {
                 makeTransparentIframe: true,
                 readOnly: true,     // sets CM to readOnly mode, but still blinks the cursor
                 cursorBlinkRate: 0, // hides the cursor
-                matchBrackets: false
-            },
+                inputStyle: "contenteditable", // ACCESSIBILITY: this hurts performance, but improves support for screen readers
+                matchBrackets: false },
             function(container) {
                 var newId = makeFreshId();
                 that.interactions.previousInteractionsTextContainers[newId] = container;
                 that.interactions.runCode(nextCode, newId, function() {});
             });
-        that.focus();
+            that.focus();
     };
 
     // TODO: historyPreviousIsOk and historyNextIsOk don't have to be methods.
@@ -435,10 +438,13 @@ WeSchemeInteractions = (function () {
                                         }
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
+                    // Accessibility: canvas elements serve as our image types
+                    thing.setAttribute("role", "img")
                 }
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
                 rewrapOutput(thing);
+                thing.setAttribute("role", "alert");
             },
             transformDom : function(dom) {
                 var result = that._transformDom(dom);
@@ -604,18 +610,19 @@ WeSchemeInteractions = (function () {
     // Adds a note to the interactions.
     WeSchemeInteractions.prototype.addToInteractions = function (interactionVal) {
         var that = this;
-        var newArea;
         var domNode;
+        // inform any potential screen-reader about the new value
+        // NOTE: it's up to the element to describe itself!
         this.notifyBus("before-add-to-interactions", this);
         if (isDomNode(interactionVal)) {
             domNode = jQuery(interactionVal);
             domNode.click(function(e){ e.stopPropagation(); });
             jQuery(this.previousInteractionsDiv).append(domNode);
         } else {
-            newArea = jQuery("<div style='width: 100%'></div>");
-            newArea.text(interactionVal);
-            newArea.click(function(e) { e.stopPropagation(); });
-            jQuery(this.previousInteractionsDiv).append(newArea);
+            domNode = jQuery("<div style='width: 100%'></div>");
+            domNode.text(interactionVal);
+            domNode.click(function(e) { e.stopPropagation(); });
+            jQuery(this.previousInteractionsDiv).append(domNode);
         }
         this._scrollToBottom();
         this.notifyBus("after-add-to-interactions", this);
