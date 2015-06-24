@@ -572,6 +572,10 @@
         var nextFrame = function(t) {
           try {
             if(config.lookup('lastPicture')){
+              // By the time we get here, the current world may have changed
+              // already, so we need to reacquire the value of the
+              // current world.
+              w = _js.getCurrentWorld();
               caller(config.lookup('lastPicture'), [w],
                function(aScene) {
                  if ( world.Kernel.isImage(aScene) ) {
