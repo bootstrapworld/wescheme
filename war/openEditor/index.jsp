@@ -216,17 +216,6 @@
       });
     </script>
 	<script>
-		jQuery(document).ready(function() {
-			jQuery('#headerToggle').toggle(function() {
-				jQuery('#header').addClass('header-minimized');
-				jQuery('#headerToggle').html('&raquo;');
-			}, function() {
-				jQuery('#header').removeClass('header-minimized');
-				jQuery('#headerToggle').html('&laquo;');
-			});
-		});
-	</script>
-	<script>
         jQuery(function()
         {
         		var viewportWidth = jQuery(window).width();
@@ -333,12 +322,12 @@
 
 
 	<div id="header">
-	  <h1>WeScheme <span id="headerToggle">&laquo;</span></h1>
+    <h1>WeScheme :: </h1>
 	  <h2>
-            <a id="docs">Documentation</a>
+            <a id="docs" href="">Documentation</a>
 	    <% if (userSession != null) { %>
             <a id="account" href="/console" target="console">Programs</a>
-            <a id="logout">Logout</a>
+            <a id="logout" href="">Logout</a>
 	    <% } %>
       </h2>
 	</div>
@@ -356,10 +345,6 @@
 	    <% } %>
         <li><a id="recipe"><span>Recipe</span></a></li>
 	  </ul>
-          <ul></ul>
-          <!-- This is here to force the div height.  This may be unnecessary
-               as soon as we figure out what's going on with the css/html
-               weirdness. -->
 	</div>
 
 
@@ -407,31 +392,7 @@
 
 
       <div id="bottom" class="bottom">
-
-	<div id="footer">
-	  <div id="statusbar" style="float: left; margin-left: 10px;" ></div>
-	  <div id="editorMode" style="float: right; margin-right: 10px;">
-            <input type="button"
-		   id="bespinMode"
-		   value="Bespin Editor Mode"
-                   style="display:none;"/>
-	  </div>
-
-	  <!-- Temporarily commented out until we fix the css styles -->
-
-<!-- 	  <div style="text-align: right; margin-right: 10px;">	     -->
-<!-- 	    Editor Style:&nbsp; -->
-<!-- 	    <select onchange="switchStyle(this.value)"> -->
-<!-- 	      <option value="default.css" selected="true">Default</option> -->
-<!-- 	      <option value="hacker.css">Hacker</option> -->
-<!-- 	      <option value="compact.css">Compact</option> -->
-<!-- 	      <option value="personal.css">Personal</option> -->
-
-<!-- 	    </select> -->
-<!-- 	  </div> -->
-
-	</div> <!-- end footer -->
-
+        <div id="statusbar"></div>
       </div> <!-- end bottom -->
 
     </div> <!-- end editor -->

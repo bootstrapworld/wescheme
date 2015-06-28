@@ -65,17 +65,13 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
         var index = 0;
         var that = this;
         isBlinking = true;
-        var oldBackground = (this.statusbar.parent().css("background") 
-                             || "wheat");
-        var oldTextcolor = this.statusbar.css("color") || "black";
+        var oldOpacity = this.statusbar.css("opacity") || "0";
 
         var toggle = function() {
             if (++index % 2 == 0) {
-                that.statusbar.parent().css("background", "white");
-                that.statusbar.css('color', 'black');
+              that.statusbar.css('opacity', '1');
             } else {
-                that.statusbar.parent().css("background", "black");
-                that.statusbar.css('color', 'white');
+              that.statusbar.css('opacity', '1');
             }
         }
         toggle();
@@ -84,8 +80,7 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
                       toggle();
                       if (index > 1) {
                           // reset
-                          that.statusbar.parent().css("background", oldBackground);
-                          that.statusbar.css("color", oldTextcolor);
+                          that.statusbar.css("opacity", oldOpacity);
                           isBlinking = false;
                           clearInterval(intervalId); 
                       }

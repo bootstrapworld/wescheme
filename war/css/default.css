@@ -69,7 +69,7 @@ body {
 
 
 .goog-splitpane-handle {
-    background: #B6D990;
+    background: lightgray;
     position: absolute;
 }
 
@@ -95,74 +95,53 @@ body {
 /* 65px: LOGO AND TITLE */
 #header{
     width:          100%;
-    height:         65px;
-    background:     url(/css/images/icon-trans.png) ;
+    height:         40px;
+    background:     url(/css/images/icon-trans.png) 8px black;
+    background-size: 40px 40px;
     background-repeat:no-repeat;
     clear:          both;
-    padding-bottom: 4px;
-    font-family:    Lato, Arial, Helvetica, sans-serif;
+    padding-bottom:  4px;
+    color:          white;
+    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
+    padding-left:     65px;
+    padding-top:      5px;
 }
 
-#headerToggle:hover {
-    text-decoration: underline;
-    cursor: pointer;
-}
+#header * {display: inline-block; vertical-align: middle;}
 
-#header.header-minimized {
-    background: none !important;
-    height: 20px !important;
-    padding-bottom: 0px;
-}
+h1{ font-size:	28px;	}
+h2{	font-size: 20px; font-weight: lighter;}
 
-.header-minimized h1 {
-    margin-left: 5px;
-    font-size: 1em;
-    display: inline-block;
-}
-
-.header-minimized h2 {
-    margin-left: 5px;
-    font-size: 1em;
-    display: inline-block;
-}
-
-h1{ font-size:	38px;	margin-left:	65px;}
-h2{	font-size: 14px; margin-left:	65px;}
-
-h2 a, h2 a:visited {color: black; margin-right: 15px; text-decoration: none;}
+h2 a, h2 a:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
 h2 > a:hover{text-decoration: underline;}
 
 /* 30px: FILENAME & URL */
 #fileInfo{
     width:        100%;
-    height:       24px;	/* leave room for the border */
+    height:       22px;	/* leave room for the border */
     clear:        both;
-    padding-top:   5px;
     white-space:   nowrap;
+    padding-top:   5px;
     border-top:		solid 1px black;
     margin:       0px;
-    background:   #B6D990;
+    background:   lightgray;
+    font-size:    12px;
+    font-family:   Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
 #fileInfo *{
-    width:                  auto;
+    width:     auto;
     float:			left;
     margin:			0px 10px;
 }
 
-
-
-
-
-
 /* 20px: TOOLBAR, BUTTONS, ETC */
 #toolbar{
-    width:			100%;
-    /* height:		19px;	/\* leave room for the border *\/ */
-    padding-bottom: 0px;
-    border-top:     solid 1px black;
-    background:		black;
-    clear:			both;
+    width:          100%;
+    height:         25px;	/* leave room for the border */
+    background:     #B6D990;
+    clear:          both;
+    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
 #toolbar ul{
@@ -175,8 +154,10 @@ h2 > a:hover{text-decoration: underline;}
     float:        left;
     text-align:		center;
     width:        16%;
-    max-width:      125px;
-    min-width:      80px;
+    height:       25px;
+    max-width:     125px;
+    min-width:     80px;
+    font-size:     14px;
 }
 
 #toolbar .button {
@@ -196,14 +177,15 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 #toolbar li a, #toolbar li a:visited{
     display:		block;
-    color:			white;
+    color:			black;
     width:			100%;
     text-decoration:none;
     vertical-align: top;
+    padding:    3px 0px;
 }
 
 #toolbar li a:hover{
-    background: #546DAF;
+    background:rgb(117, 50, 138);
     color: white;
     cursor: pointer;
 }
@@ -299,14 +281,21 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 
 /* 22px: FOOTER */
-#footer {
+#statusbar {
     clear:          both;
-    width:			100%;
-    height:			24px;
-    padding:		1px 0px;
-    border-top:		solid 1px black;
-    color:			black;
-    background:		#B6D990; /* prevent interactions from peeking through footer in short windows */
+    width:          100%;
+    height:         16px;
+    padding:        5px 10px;
+    border-top:     solid 1px black;
+    color:          white;
+    background:     #444;
+    position:       absolute;
+    top:            75px;
+    transition:     .5s;
+    opacity:        0;
+    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
+    z-index:        999;
+    font-size:      12px;
 }
 
 
