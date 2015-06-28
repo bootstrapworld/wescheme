@@ -6,6 +6,7 @@ body{
 	margin:		0px;
 	background:	white;
 	text-align:	center;
+  font-family:    Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 div#text{text-align: left; padding: 30px;}
 div#text li{padding-top: 10px;}
@@ -16,7 +17,6 @@ h1, h2{
 	text-align:	center;
 	width:		100%;
 	background: white;
-  font-family:    Lato, Arial, Helvetica, sans-serif;
 }
 
 h1{font-size: 60px; margin-bottom: 0px;}
@@ -81,6 +81,7 @@ input{
 	border:		solid 1px black;
 	background: lightsteelblue;
 	font-size:	1em;
+  font-family:    Lato, Century Gothic, Arial, Helvetica, sans-serif;
 	width:		120px;
 }
 input:hover{
