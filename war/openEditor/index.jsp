@@ -353,7 +353,9 @@
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
 	  <input id="filename" type="text" style="width: 20%"/>
-          <a id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+    <a id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+    <a id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+    <a id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
 	</div>
 
 

@@ -296,6 +296,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
     z-index:        999;
     font-size:      12px;
+    display:        none;
 }
 
 

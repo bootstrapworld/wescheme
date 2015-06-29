@@ -139,6 +139,8 @@ var initializeEditor;
             jQuery("#save").click(function() { myEditor.save(); });
             jQuery("#share").click(function()  { myEditor.share(); });
             jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
+            jQuery("#undo").click(function()  { myEditor.defn.impl.editor.undo(); });
+            jQuery("#redo").click(function()  { myEditor.defn.impl.editor.redo(); });
             jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
             jQuery("#logout").click(function() { 
                                   if(confirm("You will be logged out of WeScheme and other Google services.")) {
