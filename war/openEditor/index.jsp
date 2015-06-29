@@ -324,10 +324,10 @@
 	<div id="header">
     <h1>WeScheme :: </h1>
 	  <h2>
-            <a id="docs" href="">Documentation</a>
+      <a id="docs" href="#">Documentation</a>
 	    <% if (userSession != null) { %>
             <a id="account" href="/console" target="console">Programs</a>
-            <a id="logout" href="">Logout</a>
+            <a id="logout" href="#">Logout</a>
 	    <% } %>
       </h2>
 	</div>
