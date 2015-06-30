@@ -68,13 +68,9 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
         var oldOpacity = this.statusbar.css("opacity") || "0";
 
         var toggle = function() {
-            if (++index % 2 == 0) {
-              that.statusbar.css('opacity', '1');
-              that.statusbar.css('display', 'block');
-            } else {
-              that.statusbar.css('opacity', '1');
-              that.statusbar.css('display', 'block');
-            }
+          that.statusbar.css('display', 'block');
+          that.statusbar.css('opacity', '1');
+          index++;
         }
         toggle();
         var intervalId =
@@ -83,7 +79,7 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
                       if (index > 1) {
                           // reset
                           that.statusbar.css('opacity', oldOpacity);
-                          that.statusbar.css('display', 'none');
+                          setTimeout(function(){that.statusbar.css('display', 'none');}, 500);
                           isBlinking = false;
                           clearInterval(intervalId); 
                       }
