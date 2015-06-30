@@ -53,9 +53,6 @@
 <div id="publicId"
      style="display: none"><c:out escapeXml="true" value="<%= publicId %>" /></div>
 
-<div id="notes" style="white-space: pre">
-  <c:out escapeXml="true" value="<%= notes %>" />
-</div>
 
 <% if (aProgram == null) { %>
 <script type="text/javascript">
@@ -66,12 +63,12 @@ WeScheme is unable to find your program.
 </div>
 <% } %>
 
-
-
 <% if (aProgram != null) { %>
 <a id="runIt" class="linkbutton"
    href="/run?publicId=<%= encodedId %>">Play</a>
 <% } %>
+
+<img id="Logo" src="css/images/BigLogo.png" alt="WeScheme Logo">
 
 
 <% if (aProgram != null && isPublic) { %>
@@ -87,7 +84,11 @@ WeScheme is unable to find your program.
 <% } %>
 
 
-<h2><div id="socialBookmarks"></div></h2>	
+<div id="notes">
+<c:out escapeXml="true" value="<%= notes %>" />
+</div>
+
+<h2><div id="socialBookmarks"></div></h2>
 <h2 id="bottomMessage" style="display: none">Sometimes YouTube. Perhaps iPhone. Together, WeScheme!</h2>
 
 

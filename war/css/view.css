@@ -1,17 +1,17 @@
 body{
 	width:		100%;
-	min-width:	650px;
 	height:		100%;
 	padding:	0px;
 	margin:		0px;
-	background:	#f5deb3;
+  background:	white;
 	text-align:	center;
+  font-family:    Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
 h1, h2{
 	text-align:	center;
 	width:		100%;
-	background: #f5deb3;
+  font-weight: lighter;
 }
 
 h1{font-size: 60px;}
@@ -49,14 +49,17 @@ img{background: none;
 	padding:	0px;
 }
 
+div#notes{padding: 20px; max-width: 500px; margin: 0px auto;}
+
 a.linkbutton{
 	display:	inline-block; 
-	width:		25%;
+	width:		120px;
 	margin:		0px;
 	padding:	0px;
 	color:		white;
 	clear:		none;
 	text-decoration: none;
+  background:	#B6D990;
 }
 
 .programName {
@@ -66,7 +69,7 @@ a.linkbutton{
 }
 
 a:hover{
-	background: #546DAF;
+	background: rgb(117, 50, 138);
 	text-decoration: none;
 }
 
@@ -78,11 +81,8 @@ a:hover{
 	font-size:	1em;
 	width:		120px;
 }
-.linkbutton:hover{
-	background: gray;
-}
 
-
+img#Logo{width: 200px;}
 
 a.socialBookmarklet {
     border: 0px solid black;
@@ -90,4 +90,5 @@ a.socialBookmarklet {
 
 img.socialBookmarklet {
     border: 0px solid black;
+    margin: 10px;
 }
