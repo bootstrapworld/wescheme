@@ -69,8 +69,12 @@ body {
 
 
 .goog-splitpane-handle {
-    background: lightgray;
     position: absolute;
+    border: 1px solid #A6A6A6;
+    border-top: 0px;
+    border-bottom: 0px;
+    background: linear-gradient(to right, rgb(191, 191, 191) 0%, rgb(217, 217, 217) 40%, rgb(217, 217, 217) 60%, rgb(191, 191, 191) 100%);
+    min-width: 10px;
 }
 
 .goog-splitpane-handle-horizontal {
@@ -240,11 +244,12 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 /* INTERACTIONS */
 #interactions{
     border-top:		solid 1px black;
-    clear:			both;
-    width:			100%;
-    height:                     50%;
-    background:		white url(images/blank.gif) no-repeat;
-    overflow:           auto;
+    clear:         both;
+    width:         100%;
+    height:        50%;
+    background:		 white url(images/blank.gif) no-repeat;
+    overflow:      auto;
+    margin-left:   4px;
 }
 
 #interactions:hover{
