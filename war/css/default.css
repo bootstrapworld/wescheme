@@ -99,22 +99,21 @@ body {
 /* 65px: LOGO AND TITLE */
 #header{
     width:          100%;
-    height:         40px;
-    background:     url(/css/images/icon-trans.png) 8px black;
+    min-height:      40px;
+    background:     url(/css/images/icon-trans.png) 4px 4px black;
     background-size: 40px 40px;
     background-repeat:no-repeat;
     clear:          both;
     padding-bottom:  4px;
     color:          white;
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
-    padding-left:     65px;
     padding-top:      5px;
 }
 
 #header * {display: inline-block; vertical-align: middle;}
 
-h1{ font-size:	28px;	}
-h2{	font-size: 20px; font-weight: lighter;}
+h1{ font-size:	28px;	padding-left: 65px;}
+h2{	font-size: 20px; font-weight: lighter; padding-left: 4px;}
 
 h2 a, h2 a:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
 h2 > a:hover{text-decoration: underline;}
@@ -142,7 +141,7 @@ h2 > a:hover{text-decoration: underline;}
 /* 20px: TOOLBAR, BUTTONS, ETC */
 #toolbar{
     width:          100%;
-    height:         25px;	/* leave room for the border */
+/*    height:         25px;	/* leave room for the border */
     background:     #B6D990;
     clear:          both;
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
@@ -158,7 +157,7 @@ h2 > a:hover{text-decoration: underline;}
     float:        left;
     text-align:		center;
     width:        16%;
-    height:       25px;
+/*    height:       25px; */
     max-width:     125px;
     min-width:     80px;
     font-size:     14px;
@@ -294,8 +293,9 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     border-top:     solid 1px black;
     color:          white;
     background:     #444;
-    position:       absolute;
-    top:            75px;
+    position:       relative;
+    top:            -23px;
+    left:           -10px;
     transition:     .5s;
     opacity:        0;
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
@@ -416,6 +416,17 @@ span.top-aligned-inline-block {
   left:     0px;
 }
 
+
+/* clearix elements */
+#toolbar ul:after{
+  visibility: hidden;
+  display: block;
+  font-size: 0;
+  content: " ";
+  clear: both;
+  height: 0;
+}
+
 #printedCM{visibility: hidden; }
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
@@ -430,6 +441,9 @@ span.top-aligned-inline-block {
 		}
 
 	#toolbar li a:hover{background: none;}
+  #fileInfo *{ margin: 0px 5px; }
+  #header h1{display: none;}
+  #header h2{font-size: 16px; margin-left: 65px; margin-top: 8px;}
 }
 
 /* When printing, hide everything except the fileInfo and definitions areas */

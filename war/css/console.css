@@ -125,7 +125,7 @@ div#programList{
   z-index:		0;
 }
 
-#programList ul li input, #programList ul li span{
+.ProgramTitle, .ProgramModified, .ProgramPublished{
   display:		inline-block;
   border:			0px;
   background:		none;
@@ -133,7 +133,6 @@ div#programList{
 
 
 .EntryHeader{font-weight: bold; font-size: 12px; border-bottom: 1px black solid; width: 100%; padding: 5px 0px; margin-top: 20px;}
-.EntryHeader *, .ProgramEntry *{display: inline;}
 li.ProgramEntry{line-height: 24px;  padding: 5px 0px; width: 100%;}
 li.ProgramEntry:hover{ background: rgb(117, 50, 138);}
 li.ProgramEntry:hover * { color: white;}
@@ -202,4 +201,9 @@ img.socialBookmarklet {
 a.headerlink {
   color: black;
   text-decoration:none;
+}
+
+
+@media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
+  .ProgramModified{display: none;}
 }

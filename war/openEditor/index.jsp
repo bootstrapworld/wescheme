@@ -356,7 +356,10 @@
     <a id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
     <a id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
     <a id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+    <div id="statusbar"></div>
 	</div>
+
+
 
 
         <div id="documentation" class="documentation">
@@ -394,7 +397,6 @@
 
 
       <div id="bottom" class="bottom">
-        <div id="statusbar"></div>
       </div> <!-- end bottom -->
 
     </div> <!-- end editor -->
