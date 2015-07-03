@@ -74,7 +74,7 @@ body {
     border-top: 0px;
     border-bottom: 0px;
     background: linear-gradient(to right, rgb(191, 191, 191) 0%, rgb(217, 217, 217) 40%, rgb(217, 217, 217) 60%, rgb(191, 191, 191) 100%);
-    min-width: 10px;
+    min-width: 7px;
 }
 
 .goog-splitpane-handle-horizontal {
@@ -110,7 +110,7 @@ body {
     padding-top:      5px;
 }
 
-#header * {display: inline-block; vertical-align: middle;}
+#header * {display: inline-block; vertical-align: baseline;}
 
 h1{ font-size:	28px;	padding-left: 65px;}
 h2{	font-size: 20px; font-weight: lighter; padding-left: 4px;}
@@ -427,7 +427,13 @@ span.top-aligned-inline-block {
   height: 0;
 }
 
-#printedCM{visibility: hidden; }
+#printedCM{visibility: hidden; display: none;}
+
+/* touchscreen CSS overrides */
+@media only screen{
+  .goog-splitpane-handle {min-width: 10px;}
+  #toolbar li a:hover{ background: none; }
+}
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
 	#toolbar li {min-width: 50px;}
@@ -449,7 +455,7 @@ span.top-aligned-inline-block {
 /* When printing, hide everything except the fileInfo and definitions areas */
 @media print{
   #header, #toolbar, #footer, #splitpane{display: none;}
-  #printedCM{visibility: visible;}
+  #printedCM{visibility: visible; display: block;}
   #fileInfo{border-style: solid; border-color: black; border-width: 3px 0px;}
   #fileInfo img{display: none;}
 }
