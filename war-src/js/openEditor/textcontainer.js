@@ -198,16 +198,17 @@ var WeSchemeTextContainer;
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
         // (using bold/italic to emphasize parts), and then pastes it into WeScheme
-        this.editor.getWrapperElement().addEventListener("paste",
-          function(e){
-           var dirtyTxt = e.clipboardData? e.clipboardData.getData('text/plain') : window.clipboardData.getData('Text'),
-               cleanTxt = dirtyTxt.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
-           that.editor.replaceSelection(cleanTxt, "end");
-           e.preventDefault(); }
+        this.editor.on("beforeChange",
+          function(cm, changeObj){
+           function replaceQuotes(str){
+              return str.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+           }
+           changeObj.text = changeObj.text.map(replaceQuotes);
+           }
         );
 
-// Disabled CM keyrow extension. Needs to be tested on CM 4.6 (ask Emmanuel)
-//        extendEditorWithIOSKeys(this.editor);
+        // We're no longer using the keyrow extension, now that 3rd-party keyboards are supported on iOS and Android
+        //        extendEditorWithIOSKeys(this.editor);
 
         // Under IE 7, some of these style settings appear to die.
         try { this.editor.getWrapperElement().style.width = options.width || "100%"; } catch (e) {}
