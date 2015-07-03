@@ -203,7 +203,8 @@ var WeSchemeTextContainer;
            function replaceQuotes(str){
               return str.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
            }
-           changeObj.text = changeObj.text.map(replaceQuotes);
+           // bail if it's not a paste event
+           if(changeObj.origin==="paste") changeObj.text = changeObj.text.map(replaceQuotes);
            }
         );
 
