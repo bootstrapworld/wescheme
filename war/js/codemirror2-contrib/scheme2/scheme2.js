@@ -1,235 +1,143 @@
-var nextToken = (function() {
-	var isWhiteSpace = function(ch) {
-		// The messy regexp is because IE's regexp matcher is of the
-		// opinion that non-breaking spaces are no whitespace.
-		return ch != "\n" && /^[\s\u00a0]*$/.test(ch);
-	};
+  (function() {
+    /********************************************************
+     * Tokenizer
+     ********************************************************/
+    function nextToken(source, state) {
+                   
+        // eatUntilUnescaped: string-stream char -> boolean
+        // Advances the stream until the given character (not preceded by a
+        // backslash) is encountered.
+        // Returns true if we hit end of line without closing.
+        // Returns false otherwise.
+        var eatUntilUnescaped = function(source, end) {
+          var escaped = false;
+          while (true) {
+            if (source.eol()) {
+              return true;
+            }
+            var next = source.next();
+            if (next == end && !escaped)
+              return false;
+            escaped = !escaped && next == "\\";
+          }
+          return false;
+        }
+
+        // Some helper regexps
+        var isHexDigit = /[0-9A-Fa-f]/;
+
+        var whitespaceChar = new RegExp("[\\s\\u00a0]");
+
+        var isDelimiterChar = 
+          new RegExp("[\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]");
+
+        var isNotDelimiterChar = 
+          new RegExp("[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]");
+
+        var numberHeader = ("(?:(?:\\d+\\/\\d+)|"+
+            (  "(?:(?:\\d+\\.\\d+|\\d+\\.|\\.\\d+)(?:[eE][+\\-]?\\d+)?)|")+
+            (  "(?:\\d+(?:[eE][+\\-]?\\d+)?))"));
+        var numberPatterns = [
+                              // complex numbers
+                              new RegExp("^((?:(?:\\#[ei])?[+\\-]?" + numberHeader +")?"
+                                  + "(?:[+\\-]" + numberHeader + ")i$)"),
+                                  /^((?:\#[ei])?[+-]inf.0)$/,
+                                  /^((?:\#[ei])?[+-]nan.0)$/,
+                                  new RegExp("^((?:\\#[ei])?[+\\-]?" + numberHeader + "$)"),
+                                  new RegExp("^0[xX][0-9A-Fa-f]+$")];
 
 
-	// scanUntilUnescaped: string-stream char -> boolean
-	// Advances the stream until the given character (not preceded by a
-	// backslash) is encountered.
-	// Returns true if we hit end of line without closing.
-	// Returns false otherwise.
-	var scanUntilUnescaped = function(source, end) {
-		var escaped = false;
-		while (true) {
-			if (source.eol()) {
-				return true;
-			}
-			var next = source.next();
-			if (next == end && !escaped)
-				return false;
-			escaped = !escaped && next == "\\";
-		}
-		return false;
-	}
-
-
-	// Advance the stream until endline.
-	var scanUntilEndline = function(source, end) {
-		while (!source.eol()) {
-			source.next();
-		}
-	}
-
-
-	// Some helper regexps
-	var isHexDigit = /[0-9A-Fa-f]/;
-
-
-	var whitespaceChar = new RegExp("[\\s\\u00a0]");
-
-	var isDelimiterChar = 
-		new RegExp("[\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]");
-
-	var isNotDelimiterChar = 
-		new RegExp("[^\\s\\\(\\\)\\\[\\\]\\\{\\\}\\\"\\\,\\\'\\\`\\\;]");
-
-
-	var numberHeader = ("(?:(?:\\d+\\/\\d+)|"+
-			(  "(?:(?:\\d+\\.\\d+|\\d+\\.|\\.\\d+)(?:[eE][+\\-]?\\d+)?)|")+
-			(  "(?:\\d+(?:[eE][+\\-]?\\d+)?))"));
-	var numberPatterns = [
-	                      // complex numbers
-	                      new RegExp("^((?:(?:\\#[ei])?[+\\-]?" + numberHeader +")?"
-	                    		  + "(?:[+\\-]" + numberHeader + ")i$)"),
-	                    		  /^((?:\#[ei])?[+-]inf.0)$/,
-	                    		  /^((?:\#[ei])?[+-]nan.0)$/,
-	                    		  new RegExp("^((?:\\#[ei])?[+\\-]?" + numberHeader + "$)"),
-	                    		  new RegExp("^0[xX][0-9A-Fa-f]+$")];
-
-
-	// looksLikeNumber: string -> boolean
-	// Returns true if string s looks like a number.
-	var looksLikeNumber = function(s) {
-		for (var i = 0; i < numberPatterns.length; i++) {
-			if (numberPatterns[i].test(s)) {
-				return true;
-			}
-		}
-		return false;
-	};
-
-
-
-	var UNCLOSED_STRING = function(source, setState) {
-		var readNewline = function() {
-			var content = source.get();
-			return { type:'whitespace', style:'whitespace', content: content };
-		};
-
-		var ch = source.peek();
-		if (ch === '\n') {
-			source.next();
-			return readNewline();
-		} else {
-			var isUnclosedString = scanUntilUnescaped(source, '"');
-			if (isUnclosedString) {
-				setState(UNCLOSED_STRING);
-			} else {
-				setState(START);
-			}
-			var content = source.get();
-			return {type: "string", style: "scheme-string", content: content,
-				isUnclosed: isUnclosedString};
-		}
-	};
-
-
-
-	var START = function(source, setState) {
-		// Read a word, look it up in keywords. If not found, it is a
-		// variable, otherwise it is a keyword of the type found.
-		var readWordOrNumber = function() {
-			source.eatWhile(isNotDelimiterChar);
-			var word = source.current();
-			if (looksLikeNumber(word)) {
-				return {type: "number", style: "scheme-number", content: word};
-			} else if(word==="true" || word==="false"){
-				return {type: "variable", style: "scheme-boolean", content: word};
-      }	else {
-        return {type: "variable", style: "scheme-symbol", content: word};
-			}
-		};
-
-
-		var readString = function(quote) {
-			var isUnclosedString = scanUntilUnescaped(source, quote);
-			if (isUnclosedString) {
-				setState(UNCLOSED_STRING);
-			}
-			var word = source.current();
-			return {type: "string", style: "scheme-string", content: word,
-				isUnclosed: isUnclosedString};
-		};
-
-
-		var readPound = function() {
-			var text;
-			// FIXME: handle special things here
-			if (source.peek() === ";") {
-				source.next();
-				text = source.current();
-				return {type: text, 
-					style:"scheme-symbol",
-					content: text};
-			} else {
+        // looksLikeNumber: string -> boolean
+        // Returns true if string s looks like a number.
+        var looksLikeNumber = function(s) {
+          for (var i = 0; i < numberPatterns.length; i++) {
+            if (numberPatterns[i].test(s)) {
+              return true;
+            }
+          }
+          return false;
+        };
+                   
+      // Read a word, look it up in keywords. If not found, it is a
+      // variable, otherwise it is a keyword of the type found.
+      var readWordOrNumber = function() {
         source.eatWhile(isNotDelimiterChar);
-				text = source.current();
-				return looksLikeNumber(text)?
-                   {type : "number", style: "scheme-number", content: text}
-                 : {type : "symbol", style: "scheme-symbol", content: text};
-			}
+        var word = source.current();
+        if (looksLikeNumber(word)) {
+          return {type: "number", style: "scheme-number", content: word};
+        } else if(word==="true" || word==="false"){
+          return {type: "variable", style: "scheme-boolean", content: word};
+        }	else {
+          return {type: "variable", style: "scheme-symbol", content: word};
+        }
+      };
 
-		};
+      var readString = function(quote) {
+                   state.inString = true;
+        if (!eatUntilUnescaped(source, '"')) { state.inString = false; }
+        var word = source.current();
+        return {type: "string", style: "scheme-string", content: word};
+      };
 
-		var readLineComment = function() {
-			scanUntilEndline(source);
-			var text = source.current();
-			return { type: "comment", style: "scheme-comment", content: text};	
-		};
+      var readPound = function() {
+        var text;
+        // FIXME: handle special things here
+        if (source.peek() === ";") {
+          source.next();
+          text = source.current();
+          return {type: text, 
+            style:"scheme-symbol",
+            content: text};
+        } else {
+          source.eatWhile(isNotDelimiterChar);
+          text = source.current();
+          return looksLikeNumber(text)?
+                     {type : "number", style: "scheme-number", content: text}
+                   : {type : "symbol", style: "scheme-symbol", content: text};
+        }
 
+      };
 
-		var readWhitespace = function() {
-			source.eatWhile(isWhiteSpace);
-			var content = source.current();
-			var ret = { type: 'whitespace', style:'whitespace', content: content };
-			return ret;
-		};
+      var readLineComment = function() {
+        source.skipToEnd();
+        var text = source.current();
+        return { type: "comment", style: "scheme-comment", content: text};	
+      };
 
-		var readNewline = function() {
-			var content = source.current();
-			return { type:'whitespace', style:'whitespace', content: content };
-		};
+      var readWhitespace = function() {
+        source.eatSpace();
+        var content = source.current();
+        var ret = { type: 'whitespace', style:'whitespace', content: content };
+        return ret;
+      };
 
+      var readNewline = function() {
+        var content = source.current();
+        return { type:'whitespace', style:'whitespace', content: content };
+      };
 
-		// Fetch the next token. Dispatches on first character in the
-		// stream, or first two characters when the first is a slash.
-		var ch = source.next();
-		if (ch === '\n') {
-			return readNewline();
-		} else if (whitespaceChar.test(ch)) {
-			return readWhitespace();
-		} else if (ch === "#") {
-			return readPound();
-		} else if (ch ===';') {
-			return readLineComment();
-		} else if (ch === "\"") {
-			return readString(ch);
-		} else if (isDelimiterChar.test(ch)) {
-			return {type: ch, style: "scheme-punctuation"};
-		} else {
-			return readWordOrNumber();
-		}
-	}
-
-
-
-
-
-
-
-	var getNextToken = function(source, state) {
-		// Newlines are always a separate token.
-
-		var state = state;
-
-		var take = function(type) {
-			if (typeof(type) == "string")
-				type = {style: type, type: type};
-
-			type.content = source.current();
-			type.value = type.content;
-			type.column = source.column();
-			return type;
-		};
-
-		var next = function () {
-			if (!source.peek()) throw StopIteration;
-
-			var type;
-			while (!type) {
-				type = state(source, function(s) {
-					state = s;
-				});
-			}
-			var result = take(type);
-			return result;		    
-		};
-		return next();
-	};
-
-
-	// The external interface to the tokenizer.
-	return function(source, startState) {
-		return getNextToken(source, startState || START);
-	};
-})();
-
-(function() {
-
-
+      // Fetch the next token. Dispatches on first character in the
+      // stream, or first two characters when the first is a slash.
+      var ch = source.next();
+      if (ch === '\n') {
+        return readNewline();
+      }
+      if(state.inString) return readString(ch);
+      if (whitespaceChar.test(ch)) {
+        return readWhitespace();
+      } else if (ch === "#") {
+        return readPound();
+      } else if (ch ===';') {
+        return readLineComment();
+      } else if (ch === "\"") {
+        return readString(ch);
+      } else if (isDelimiterChar.test(ch)) {
+        return {type: ch, style: "scheme-punctuation"};
+      } else {
+        return readWordOrNumber();
+      }
+   };
+   
 	// isLparen: char -> boolean
 	var isLparen = function(ch) {
 		return ch === '(' || ch === '[' || ch === '{';
@@ -247,6 +155,9 @@ var nextToken = (function() {
 				(lparen === '{' && rparen === '}'));
 	};
 
+   /********************************************************
+    * Indenting
+    ********************************************************/
 
 	// Compute the indentation context enclosing the end of the token
 	// sequence tokens.
@@ -310,13 +221,7 @@ var nextToken = (function() {
 			}
 		}
 		return context;
-
-
 	};
-
-
-
-
 
 	// calculateIndentationFromContext: indentation-context number -> number
 	var calculateIndentationFromContext = function(context) {
@@ -334,8 +239,6 @@ var nextToken = (function() {
 		}
 		return beginLikeIndentation(context, 0);
 	};
-
-
 
 	// findContextElement: indentation-context number -> index or -1
 	var findContextElement = function(context, index) {
@@ -367,8 +270,6 @@ var nextToken = (function() {
 		}
 		return results;
 	};
-
-
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -419,8 +320,6 @@ var nextToken = (function() {
 			return context[indices[j]].column;
 		}
 	};
-
-
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -560,8 +459,6 @@ var nextToken = (function() {
 	};
 
 
-
-
 	//////////////////////////////////////////////////////////////////////
 	// Helpers
 	var isMember = function(x, l) {
@@ -570,8 +467,6 @@ var nextToken = (function() {
 		}
 		return false;
 	};
-
-
 
 	//////////////////////////////////////////////////////////////////////
 
@@ -591,66 +486,31 @@ var nextToken = (function() {
 	};
 
 	//////////////////////////////////////////////////////////////////////
-
-
-
-
-	var indentTo = function(tokenStack) {
-		var indentationContext = 
-			getIndentationContext(tokenStack);
-		return calculateIndentationFromContext(indentationContext);		
-	};
-
 	var startState = function() {
-		return {tokenStack: EMPTY_PAIR};
+    return {tokenStack: EMPTY_PAIR, inString: false};
 	};
 	
 	var token = function(source, state) {
-		var tok = nextToken(source);
-		state.tokenStack = pair(tok,state.tokenStack);
+		var tok = nextToken(source, state);
+		state.tokenStack = pair(tok, state.tokenStack);
 		return tok.style;
 	};
 	
 	var indent = function(state) {
-		return indentTo(state.tokenStack);
+    var indentationContext = getIndentationContext(state.tokenStack);
+    return calculateIndentationFromContext(indentationContext);
 	};
 	
 	var copyState = function(state) {
-		return {tokenStack: state.tokenStack};
+    return {tokenStack: state.tokenStack
+          ,inString: state.inString};
 	};
 	
 	var blankLine = function(state) {
 		var tok = { type:'whitespace', style:'whitespace', content: "\n" };
 		state.tokenStack = pair(tok, state.tokenStack);
 	};
-	
-	/*var startParse = function(source) {
-		source = tokenizeScheme(source);	
-		var tokenStack = EMPTY_PAIR;
-		var iter = {
-				next: function() {
-					var tok = source.next();
-					tokenStack = pair(tok, tokenStack);
-					if (tok.type === "whitespace") {
-						if (tok.value === "\n") {
-							tok.indentation = indentTo(tokenStack);
-						}
-					}
-					return tok;
-				},
 
-				copy: function() {
-					var _tokenStack = tokenStack;
-					var _tokenState = source.state;
-					return function(_source) {
-						tokenStack = _tokenStack;
-						source = tokenizeScheme(_source, _tokenState);
-						return iter;
-					};
-				}
-		};
-		return iter;
-	};*/
 	CodeMirror.defineMode("scheme2", function () {
 		return {
 			startState: startState,
