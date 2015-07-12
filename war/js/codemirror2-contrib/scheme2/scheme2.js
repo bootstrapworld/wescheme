@@ -72,11 +72,16 @@
         }
       };
 
-      var readString = function(quote) {
-                   state.inString = true;
-        if (!eatUntilUnescaped(source, '"')) { state.inString = false; }
-        var word = source.current();
-        return {type: "string", style: "scheme-string", content: word};
+      var readString = function(ch) {
+        // if we start with a quote and are within an unclosed string,
+        // close it and return the quote
+        if(ch === '"' && state.inString){
+          state.inString = false;
+        } else {
+          state.inString = true;
+          if (!eatUntilUnescaped(source, '"')) { state.inString = false; }
+        }
+        return {type: "string", style: "scheme-string", content: source.current()};
       };
 
       var readPound = function() {
