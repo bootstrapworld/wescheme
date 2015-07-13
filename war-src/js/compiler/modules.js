@@ -185,11 +185,14 @@ plt.compiler = plt.compiler || {};
                                            ["key=?"
                                             ,"play-sound"
                                             ,"big-bang"
+                                            // colors
                                             ,"make-color"
+                                            ,"color?"
                                             ,"color-red"
                                             ,"color-green"
                                             ,"color-blue"
                                             ,"color-alpha"
+                                            
                                             ,"empty-scene"
                                             ,"scene+line"
                                             ,"put-image"

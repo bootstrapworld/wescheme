@@ -2114,6 +2114,8 @@ PRIMITIVES['struct?'] = new PrimProc('struct?', 1, false, false,
                                      function(aState, v) { return types.isStruct(v); });
 PRIMITIVES['eof-object?'] = new PrimProc('eof-object?', 1, false, false,
                                          function(aState, x) { return x === types.EOF; });
+PRIMITIVES['color?'] = new PrimProc('color?', 1, false, false,
+                                    function(aState, v){ return types.isColor(v); });
 PRIMITIVES['posn?'] = new PrimProc('posn?', 1, false, false,
                                    function(aState, v){ return types.isPosn(v); });
 PRIMITIVES['bytes?'] = new PrimProc('bytes?', 1, false, false, 
