@@ -99,7 +99,7 @@ goog.require('plt.compiler.compile');
     var lastCompiledResult = null;
 
     // See if we can used a cached compilation. Otherwise, just compile
-    function cachedCompilation(programName, code, onDone, onDoneError) {
+    function cachedCompilation(programName, code, onDone, onDoneError, cm) {
       var onDoneWithCache = function() {
 
           // Cache the last result:
@@ -117,6 +117,8 @@ goog.require('plt.compiler.compile');
       }
       // try to compile the program
       compile(programName, code, onDoneWithCache, onDoneError);
+ console.log('compiled. now storing CM instance to window');
+ window.cm = cm;
     };
 
     //////////////////////////////////////////////////////////////////////

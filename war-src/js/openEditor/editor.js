@@ -674,7 +674,8 @@ var WeSchemeEditor;
                                   that.isRunning = false;
                                   plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
                                   if (after) { after(); }
-                                });
+                                },
+                                this.defn);
     };
 
     WeSchemeEditor.prototype.getDefinitionsText = function() {

@@ -680,7 +680,7 @@ WeSchemeInteractions = (function () {
     };
 
     // Evaluate the source code and accumulate its effects.
-    WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK) {
+    WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK, cm) {
         var that = this;
         setTimeout(
             withCancellingOnReset(
@@ -706,7 +706,8 @@ WeSchemeInteractions = (function () {
                                 that.enableInput();
                                 that.focusOnPrompt();
                                 contK();
-                            }));
+                            }),
+                        cm);
                 }),
             0);
     };
