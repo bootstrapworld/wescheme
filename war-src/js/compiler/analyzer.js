@@ -966,6 +966,7 @@ plt.compiler = plt.compiler || {};
                     this.location);
     }
     var binding = env.lookup_context(this.val);
+    this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
     if(binding){
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
