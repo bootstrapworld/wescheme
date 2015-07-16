@@ -128,8 +128,9 @@
       if (ch === '\n') {
         tok = readNewline();
       }
-      if(state.inString) tok = readString(ch);
-      if (whitespaceChar.test(ch)) {
+      if(state.inString){
+        tok = readString(ch);
+      } else if (whitespaceChar.test(ch)) {
         tok = readWhitespace();
       } else if (ch === "#") {
         tok = readPound();
