@@ -684,9 +684,7 @@ plt.compiler = plt.compiler || {};
            
                }
       });
- console.log('processing binding for definition of function: '+this.name.val);
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
- console.log(binding);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVar.prototype.collectDefinitions = function(pinfo){
@@ -884,7 +882,7 @@ plt.compiler = plt.compiler || {};
  };
  defFunc.prototype.analyzeUses = function(pinfo){
     // extend the env to include the function binding, then make a copy of all the bindings
-    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
+    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location)),
         oldKeys = oldEnv.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
     oldKeys.forEach(function(k){newBindings.put(k, oldEnv.bindings.get(k));});
@@ -968,9 +966,6 @@ plt.compiler = plt.compiler || {};
     }
     var binding = env.lookup_context(this.val);
     if(binding){
-if(!binding.loc.startChar) console.log(binding);
- console.log(this.val+' was used from '+this.location.startChar+' to '+this.location.endChar);
- console.log('it was defined from '+binding.loc.startChar+' to '+binding.loc.endChar);
       this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
