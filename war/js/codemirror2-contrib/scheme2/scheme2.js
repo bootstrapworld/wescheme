@@ -534,4 +534,52 @@
 			blankLine: blankLine
 		}
 	});
+
+  ///////////////////////////////////////////////////////////////////////////////
+  CodeMirror.defineInitHook(function (cm) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.style.position = 'absolute';
+    svg.style.top   = '0px';
+    svg.style.left  = '30px'; // HACK - the line number column is 30px wide
+    cm.getScrollerElement().appendChild(svg);
+                          
+    // build the arrow and line, add them to the document
+    var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+    var arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrow.setAttribute('id', "arrow");
+    arrow.setAttribute('markerWidth', "12");
+    arrow.setAttribute('markerHeight', "12");
+    arrow.setAttribute('refX', "2");
+    arrow.setAttribute('refY', "6");
+    arrow.setAttribute('orient', "auto");
+    arrowPath.setAttribute('d', "M2,2 L2,11 L10,6 L2,2");
+    arrowPath.setAttribute('style', "fill: blue");
+    svg.appendChild(defs);
+    defs.appendChild(arrow);
+    arrow.appendChild(arrowPath);
+    svg.appendChild(line);
+
+    CodeMirror.on(cm.getWrapperElement(), "mousemove", function(evt){
+      var node = evt.target || evt.srcElement;
+      if(line.parentNode) svg.removeChild(line); // clear the path
+      if(node && node.title){
+        var indices = node.title.split(","), start = indices[0], end = indices[1];
+            defRegion = cm.charCoords(cm.posFromIndex(Number(start)+1), "local"),
+            useRegion = cm.charCoords(cm.coordsChar({left:evt.clientX, top:evt.clientY}), "local"),
+            defCoords = {x: Math.floor(defRegion.right),
+                         y: Math.floor(defRegion.top+cm.defaultTextHeight()/2)},
+            useCoords = {x: Math.floor(useRegion.left),
+                         y: Math.floor(useRegion.top+cm.defaultTextHeight()/2)};
+        var pathStr = "M"+useCoords.x+","+useCoords.y+" "+"L"+defCoords.x+","+defCoords.y;
+        line.setAttribute('d', pathStr);
+        line.setAttribute('style', "stroke: blue; fill: none; stroke-width: 1px; marker-end: url(#arrow);");
+        svg.style.width = Math.max(useRegion.right, defRegion.right)+10+'px';
+        svg.style.height= Math.max(useRegion.bottom,defRegion.bottom)+10+'px';
+        svg.appendChild(line);
+      }
+    });
+  });
+   
 })();
