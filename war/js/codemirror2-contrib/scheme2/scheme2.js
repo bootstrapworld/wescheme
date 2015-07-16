@@ -123,24 +123,30 @@
 
       // Fetch the next token. Dispatches on first character in the
       // stream, or first two characters when the first is a slash.
-      var ch = source.next();
+      var ch = source.next(),
+          tok = null;
       if (ch === '\n') {
-        return readNewline();
+        tok = readNewline();
       }
-      if(state.inString) return readString(ch);
-      if (whitespaceChar.test(ch)) {
-        return readWhitespace();
+      if(state.inString){
+        tok = readString(ch);
+      } else if (whitespaceChar.test(ch)) {
+        tok = readWhitespace();
       } else if (ch === "#") {
-        return readPound();
+        tok = readPound();
       } else if (ch ===';') {
-        return readLineComment();
+        tok = readLineComment();
       } else if (ch === "\"") {
-        return readString(ch);
+        tok = readString(ch);
       } else if (isDelimiterChar.test(ch)) {
-        return {type: ch, style: "scheme-punctuation"};
+        tok = {type: ch, style: "scheme-punctuation"};
       } else {
-        return readWordOrNumber();
+        tok = readWordOrNumber();
       }
+      // save additional data that will be used for indenting content
+      tok.value = source.current();
+      tok.column = source.column();
+      return tok;
    };
    
 	// isLparen: char -> boolean
@@ -491,7 +497,12 @@
 	};
 
 	//////////////////////////////////////////////////////////////////////
-	var startState = function() {
+  var indentTo = function(tokenStack) {
+		var indentationContext = getIndentationContext(tokenStack);
+		return calculateIndentationFromContext(indentationContext);
+	};
+   
+  var startState = function() {
     return {tokenStack: EMPTY_PAIR, inString: false};
 	};
 	
@@ -502,8 +513,7 @@
 	};
 	
 	var indent = function(state) {
-    var indentationContext = getIndentationContext(state.tokenStack);
-    return calculateIndentationFromContext(indentationContext);
+    return indentTo(state.tokenStack);
 	};
 	
 	var copyState = function(state) {
