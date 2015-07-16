@@ -119,7 +119,7 @@ plt.compiler = plt.compiler || {};
       var useLoc = this.location, defLoc = this.bindingLoc;
       cm.markText(cm.posFromIndex(useLoc.startChar),
                   cm.posFromIndex(useLoc.endChar),
-                  {title: defLoc.startChar+','+defLoc.endChar});
+                  {_defLoc: {start: defLoc.startChar, end: defLoc.endChar}});
     }
  };
 

@@ -552,7 +552,7 @@
     arrow.setAttribute('id', "arrow");
     arrow.setAttribute('markerWidth', "12");
     arrow.setAttribute('markerHeight', "12");
-    arrow.setAttribute('refX', "2");
+    arrow.setAttribute('refX', "12");
     arrow.setAttribute('refY', "6");
     arrow.setAttribute('orient', "auto");
     arrowPath.setAttribute('d', "M2,2 L2,11 L10,6 L2,2");
@@ -565,10 +565,12 @@
     CodeMirror.on(cm.getWrapperElement(), "mousemove", function(evt){
       var node = evt.target || evt.srcElement;
       if(line.parentNode) svg.removeChild(line); // clear the path
-      if(node && node.title){
-        var indices = node.title.split(","), start = indices[0], end = indices[1];
-            defRegion = cm.charCoords(cm.posFromIndex(Number(start)+1), "local"),
-            useRegion = cm.charCoords(cm.coordsChar({left:evt.clientX, top:evt.clientY}), "local"),
+      // find the text marker at the location with a defLoc field, if it exists
+      var usePos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
+          marker = cm.findMarksAt(usePos).filter(function(m){return m._defLoc;})[0];
+      if(marker){
+        var defRegion = cm.charCoords(cm.posFromIndex(Number(marker._defLoc.start)+1), "local"),
+            useRegion = cm.charCoords(usePos, "local"),
             defCoords = {x: Math.floor(defRegion.right),
                          y: Math.floor(defRegion.top+cm.defaultTextHeight()/2)},
             useCoords = {x: Math.floor(useRegion.left),
