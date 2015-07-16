@@ -685,8 +685,9 @@ plt.compiler = plt.compiler || {};
            
                }
       });
- 
+ console.log('processing binding for definition of function: '+this.name.val);
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
+ console.log(binding);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVar.prototype.collectDefinitions = function(pinfo){
