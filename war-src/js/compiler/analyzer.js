@@ -883,7 +883,7 @@ plt.compiler = plt.compiler || {};
  };
  defFunc.prototype.analyzeUses = function(pinfo){
     // extend the env to include the function binding, then make a copy of all the bindings
-    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
+    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location)),
         oldKeys = oldEnv.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
     oldKeys.forEach(function(k){newBindings.put(k, oldEnv.bindings.get(k));});
