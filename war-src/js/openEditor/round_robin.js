@@ -8,6 +8,7 @@ goog.require('plt.compiler.parse');
 goog.require('plt.compiler.desugar');
 goog.require('plt.compiler.analyze');
 goog.require('plt.compiler.compile');
+goog.require('plt.compiler.annotateCM');
 
 (function() {
     "use strict";
@@ -56,8 +57,15 @@ goog.require('plt.compiler.compile');
        }
     }
 
+    function analyzeForAnnotation(code, editor){
+      var start = new Date().getTime();
+      var AST   = plt.compiler.parse(plt.compiler.lex(code, programName));
+      var pinfo = plt.compiler.analyze(plt.compiler.desugar(AST)[0]);
+      var end   = new Date().getTime();
+      console.log('analysis completed in '+(Math.floor(end-start))+'ms');
+    }
 
-    function compile(programName, code, onDone, onDoneError) {
+    function compile(programName, code, onDone, onDoneError, editor) {
        // strip out nonbreaking whitespace chars from the code
        code = code.replace(/[\uFEFF\u2060\u200B]/,'');
 
@@ -89,6 +97,7 @@ goog.require('plt.compiler.compile');
       }
       var end         = new Date().getTime(), localTime   = Math.floor(end-start);
       console.log("Compiled in: " + Math.floor(end-start) +"ms");
+      plt.compiler.annotateCM(desugared, editor);
     };
 
     // TODO: add a real LRU cache for compilations.
@@ -99,7 +108,7 @@ goog.require('plt.compiler.compile');
     var lastCompiledResult = null;
 
     // See if we can used a cached compilation. Otherwise, just compile
-    function cachedCompilation(programName, code, onDone, onDoneError, cm) {
+    function cachedCompilation(programName, code, onDone, onDoneError, editor) {
       var onDoneWithCache = function() {
 
           // Cache the last result:
@@ -116,9 +125,7 @@ goog.require('plt.compiler.compile');
           return onDone.apply(null, lastCompiledResult);
       }
       // try to compile the program
-      compile(programName, code, onDoneWithCache, onDoneError);
- console.log('compiled. now storing CM instance to window');
- window.cm = cm;
+      compile(programName, code, onDoneWithCache, onDoneError, editor);
     };
 
     //////////////////////////////////////////////////////////////////////

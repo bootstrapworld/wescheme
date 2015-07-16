@@ -182,10 +182,8 @@ var Evaluator = (function() {
 
 
 
-    // executeProgram: string string (-> void) (exn -> void) -> void
-    Evaluator.prototype.executeProgram = function(programName, code, onDone, onDoneError, cm) {
-                 console.log('inside evaluator.executeProgram');
-                 console.log(cm);
+    // executeProgram: string string (-> void) (exn -> void) CodeMirror -> void
+    Evaluator.prototype.executeProgram = function(programName, code, onDone, onDoneError, editor) {
         var that = this;
         this.compileProgram(programName, code,
                             function(responseText) {
@@ -197,7 +195,7 @@ var Evaluator = (function() {
 		                that._onCompilationFailure(JSON.parse(responseErrorText || '""'),
 					                   onDoneError);
                             },
-                            cm)
+                            editor)
     };
 
 
