@@ -684,8 +684,9 @@ plt.compiler = plt.compiler || {};
            
                }
       });
- 
+ console.log('processing binding for definition of function: '+this.name.val);
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
+ console.log(binding);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
  defVar.prototype.collectDefinitions = function(pinfo){
@@ -966,8 +967,11 @@ plt.compiler = plt.compiler || {};
                     this.location);
     }
     var binding = env.lookup_context(this.val);
-    this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
     if(binding){
+if(!binding.loc.startChar) console.log(binding);
+ console.log(this.val+' was used from '+this.location.startChar+' to '+this.location.endChar);
+ console.log('it was defined from '+binding.loc.startChar+' to '+binding.loc.endChar);
+      this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
