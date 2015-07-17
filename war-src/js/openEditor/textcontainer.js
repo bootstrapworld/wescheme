@@ -1,9 +1,9 @@
 goog.provide('plt.wescheme.WeSchemeTextContainer');
-
 goog.provide('plt.wescheme.fireEvent');
 
 goog.require('plt.wescheme.topKeymap');
 goog.require('plt.wescheme.BrowserDetect');
+goog.require('plt.wescheme.RoundRobin');
 
 //hack to fire events that CodeMirror will pick up
 
@@ -134,9 +134,8 @@ var WeSchemeTextContainer;
 		this.behaviorE = receiverE();
 		this.behavior = startsWith(this.behaviorE, "");
 
-		this.highlightedAreas = [];		
-				
-		
+		this.highlightedAreas = [];
+ 
 		var km = {};
 		jQuery.extend(km,options.extraKeys);
 		km["Tab"] = "indentAuto";
@@ -162,7 +161,16 @@ var WeSchemeTextContainer;
           cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
 				});
  
-        this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
+       // timer and annotation function
+       that.annotatorTimeout;
+       function annotate(){ plt.wescheme.RoundRobin.annotator(that.editor); }
+ 
+       // onChange, set the annotator to run 1s from now
+        this.editor.on('change', function() {
+          clearTimeout(that.annotatorTimeout);               // clear existing timeout, if it existed
+          that.annotatorTimeout = setTimeout(annotate, 500) // set new timeout
+          that.behaviorE.sendEvent(that.editor.getValue());
+        });
 
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
