@@ -87,6 +87,25 @@ plt.compiler = plt.compiler || {};
  
  //////////////////////////////////////////////////////////////////////////////
  // ANNOTATE CM //////////////////////////////////////////////////////////////
+ 
+ // addTarget : CM Location Location -> Void
+ // add a target location to a CM textMarker, which marks the source location
+ function addTarget(cm, srcLoc, destLoc, dir){
+    var marks = cm.findMarksAt(cm.posFromIndex(srcLoc.startChar),
+                               cm.posFromIndex(srcLoc.endChar)),
+        marker = marks.filter(function(m){return m._targets;})[0];
+    // If no marker exists, create one.
+    if(!marker){
+      marker = cm.markText(cm.posFromIndex(srcLoc.startChar),
+                           cm.posFromIndex(srcLoc.endChar),
+                           {_targets: []});
+    }
+    // add the target to an existing marker
+    marker._targets.push({start: destLoc.startChar,
+                         end: destLoc.endChar,
+                         dir: dir});
+ }
+ 
 
  // extend the Program class to annotated a CM instance with stored information
  // Program.annotateCM: cm -> voic
@@ -117,9 +136,8 @@ plt.compiler = plt.compiler || {};
  symbolExpr.prototype.annotateCM = function(cm){
     if(this.bindingLoc){
       var useLoc = this.location, defLoc = this.bindingLoc;
-      cm.markText(cm.posFromIndex(useLoc.startChar),
-                  cm.posFromIndex(useLoc.endChar),
-                  {_defLoc: {start: defLoc.startChar, end: defLoc.endChar}});
+      addTarget(cm, useLoc, defLoc, "use"); // point from the use to the def
+      addTarget(cm, defLoc, useLoc, "def"); // point from the def to the use
     }
  };
 

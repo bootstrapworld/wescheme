@@ -542,46 +542,54 @@
     svg.style.position = 'absolute';
     svg.style.top   = '0px';
     svg.style.left  = '30px'; // HACK - the line number column is 30px wide
+    svg.style.width = '0px';
+    svg.style.height = '0px';
     cm.getScrollerElement().appendChild(svg);
                           
     // build the arrow and line, add them to the document
-    var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    var arrow = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    var arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    var defs      = document.createElementNS('http://www.w3.org/2000/svg', 'defs'),
+        arrow     = document.createElementNS('http://www.w3.org/2000/svg', 'marker'),
+        arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path'),
+        paths     = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     arrow.setAttribute('id', "arrow");
-    arrow.setAttribute('markerWidth', "12");
-    arrow.setAttribute('markerHeight', "12");
+    arrow.setAttribute('markerWidth', "10");
+    arrow.setAttribute('markerHeight', "8");
     arrow.setAttribute('refX', "12");
     arrow.setAttribute('refY', "6");
     arrow.setAttribute('orient', "auto");
     arrowPath.setAttribute('d', "M2,2 L2,11 L10,6 L2,2");
-    arrowPath.setAttribute('style', "fill: blue");
+    arrowPath.setAttribute('style', "fill: black");
     svg.appendChild(defs);
     defs.appendChild(arrow);
     arrow.appendChild(arrowPath);
-    svg.appendChild(line);
-
+    svg.appendChild(paths);
+                            
     CodeMirror.on(cm.getWrapperElement(), "mousemove", function(evt){
       var node = evt.target || evt.srcElement;
-      if(line.parentNode) svg.removeChild(line); // clear the path
+      paths.innerHTML = ''; // clear the paths
       // find the text marker at the location with a defLoc field, if it exists
-      var usePos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
-          marker = cm.findMarksAt(usePos).filter(function(m){return m._defLoc;})[0];
-      if(marker){
-        var defRegion = cm.charCoords(cm.posFromIndex(Number(marker._defLoc.start)+1), "local"),
-            useRegion = cm.charCoords(usePos, "local"),
-            defCoords = {x: Math.floor(defRegion.right),
-                         y: Math.floor(defRegion.top+cm.defaultTextHeight()/2)},
-            useCoords = {x: Math.floor(useRegion.left),
-                         y: Math.floor(useRegion.top+cm.defaultTextHeight()/2)};
-        var pathStr = "M"+useCoords.x+","+useCoords.y+" "+"L"+defCoords.x+","+defCoords.y;
-        line.setAttribute('d', pathStr);
-        line.setAttribute('style', "stroke: blue; fill: none; stroke-width: 1px; marker-end: url(#arrow);");
-        svg.style.width = Math.max(useRegion.right, defRegion.right)+10+'px';
-        svg.style.height= Math.max(useRegion.bottom,defRegion.bottom)+10+'px';
-        svg.appendChild(line);
+      var srcPos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
+          marker = cm.findMarksAt(srcPos).filter(function(m){return m._targets;})[0];
+                  
+      function drawTarget(target){
+          var destRegion  = cm.charCoords(cm.posFromIndex(Number(target.start)), "local"),
+              srcRegion   = cm.charCoords(srcPos, "local"),
+              destCoords  = {x: Math.floor(destRegion.right),
+                              y: Math.floor(destRegion.top+cm.defaultTextHeight()/2)},
+              srcCoords   = {x: Math.floor(srcRegion.left),
+                            y: Math.floor(srcRegion.top+cm.defaultTextHeight()/2)},
+              color = (target.dir === "use")? "blue" : "red";
+          var pathStr = "M"+srcCoords.x+","+srcCoords.y+" "+"L"+destCoords.x+","+destCoords.y;
+          var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', pathStr);
+          path.setAttribute('style', "stroke: "+color+"; fill: none; stroke-width: 1px; marker-end: url(#arrow);");
+          svg.style.width = Math.max(parseInt(svg.style.width), srcRegion.right, destRegion.right)+10+'px';
+          svg.style.height= Math.max(parseInt(svg.style.height),srcRegion.bottom,destRegion.bottom)+10+'px';
+          paths.appendChild(path);
       }
+      
+      // if there is a marker, draw all of its targets
+      if(marker){ marker._targets.forEach(drawTarget); }
     });
   });
    
