@@ -538,6 +538,7 @@
 
   ///////////////////////////////////////////////////////////////////////////////
   CodeMirror.defineInitHook(function (cm) {
+    cm.showArrows = false;
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.position = 'absolute';
     svg.style.top   = '0px';
@@ -545,7 +546,7 @@
     svg.style.width = '0px';
     svg.style.height = '0px';
     cm.getScrollerElement().appendChild(svg);
-                          
+
     // build the arrow and line, add them to the document
     var defs      = document.createElementNS('http://www.w3.org/2000/svg', 'defs'),
         arrow     = document.createElementNS('http://www.w3.org/2000/svg', 'marker'),
@@ -565,6 +566,7 @@
     svg.appendChild(paths);
                             
     CodeMirror.on(cm.getWrapperElement(), "mousemove", function(evt){
+      if(!cm.getOption("showArrows")) return;
       var node = evt.target || evt.srcElement;
       paths.innerHTML = ''; // clear the paths
       // find the text marker at the location with a defLoc field, if it exists
@@ -587,10 +589,11 @@
           svg.style.height= Math.max(parseInt(svg.style.height),srcRegion.bottom,destRegion.bottom)+'px';
           paths.appendChild(path);
       }
-      
       // if there is a marker, draw all of its targets
       if(marker){ marker._targets.forEach(drawTarget); }
+      function toggleArrows(){cm.showArrows = !cm.showArrows; console.log(cm.showArrows); }
     });
   });
+ CodeMirror.defineOption("showArrows", false, function(){});
    
 })();

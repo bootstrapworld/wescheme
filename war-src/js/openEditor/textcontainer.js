@@ -123,7 +123,16 @@ var WeSchemeTextContainer;
  
        // timer and annotation function
        that.annotatorTimeout;
-       function annotate(){ plt.wescheme.RoundRobin.annotator(that.editor); }
+       function annotate(){ if(that.editor.getOption("showArrows")) plt.wescheme.RoundRobin.annotator(that.editor); }
+ 
+       // toggle the annotation option.
+       // if we're just now switching annotation on, annotate the editor
+       that.toggleAnnotation = function(){
+          var newValue = !that.editor.getOption("showArrows");
+          that.editor.setOption("showArrows", newValue);
+          if(newValue) annotate();
+          return newValue;
+       }
  
        // onChange, set the annotator to run Xs from now, based on the size of the document
         this.editor.on('change', function() {
