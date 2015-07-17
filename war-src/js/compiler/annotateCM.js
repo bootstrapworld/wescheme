@@ -144,8 +144,10 @@ plt.compiler = plt.compiler || {};
 
 /////////////////////////////////////////////////////////////
  // annotateCM : [listof Programs], cm -> void
+ // clear all textmarkers that contain _targets, then add new ones
  // annotate the CM tokens based on information stored in the AST
  function annotateCM(programs, cm){
+    cm.getAllMarks().filter(function(m){return m._targets;}).forEach(function(m){m.clear()});
     return programs.forEach(function(p){ return p.annotateCM(cm); });
  }
  

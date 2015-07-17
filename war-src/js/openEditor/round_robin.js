@@ -2,7 +2,6 @@
 /*jslint browser: true, vars: true, white: true, plusplus: true, maxerr: 50, indent: 4 */
 
 goog.provide("plt.wescheme.RoundRobin");
-
 goog.require('plt.compiler.lex');
 goog.require('plt.compiler.parse');
 goog.require('plt.compiler.desugar');
@@ -57,15 +56,17 @@ goog.require('plt.compiler.annotateCM');
        }
     }
 
-    function analyzeForAnnotation(code, editor){
+    // given an editor, extract its contents and annotate it
+    function annotateEditorContents(editor){
       var start = new Date().getTime();
-      var AST   = plt.compiler.parse(plt.compiler.lex(code, programName));
-      var pinfo = plt.compiler.analyze(plt.compiler.desugar(AST)[0]);
-      var end   = new Date().getTime();
-      console.log('analysis completed in '+(Math.floor(end-start))+'ms');
+      var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue())),
+          desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
+          pinfo       = plt.compiler.analyze(desugared);
+      plt.compiler.annotateCM(desugared, editor);
+      console.log('annotation completed in '+(Math.floor(new Date().getTime()-start))+'ms');
     }
 
-    function compile(programName, code, onDone, onDoneError, editor) {
+    function compile(programName, code, onDone, onDoneError) {
        // strip out nonbreaking whitespace chars from the code
        code = code.replace(/[\uFEFF\u2060\u200B]/,'');
 
@@ -97,7 +98,6 @@ goog.require('plt.compiler.annotateCM');
       }
       var end         = new Date().getTime(), localTime   = Math.floor(end-start);
       console.log("Compiled in: " + Math.floor(end-start) +"ms");
-      plt.compiler.annotateCM(desugared, editor);
     };
 
     // TODO: add a real LRU cache for compilations.
@@ -108,7 +108,7 @@ goog.require('plt.compiler.annotateCM');
     var lastCompiledResult = null;
 
     // See if we can used a cached compilation. Otherwise, just compile
-    function cachedCompilation(programName, code, onDone, onDoneError, editor) {
+    function cachedCompilation(programName, code, onDone, onDoneError) {
       var onDoneWithCache = function() {
 
           // Cache the last result:
@@ -125,11 +125,12 @@ goog.require('plt.compiler.annotateCM');
           return onDone.apply(null, lastCompiledResult);
       }
       // try to compile the program
-      compile(programName, code, onDoneWithCache, onDoneError, editor);
+      compile(programName, code, onDoneWithCache, onDoneError);
     };
 
     //////////////////////////////////////////////////////////////////////
 
     plt.wescheme.RoundRobin.initialize = initialize;
+    plt.wescheme.RoundRobin.annotator = annotateEditorContents;
     plt.wescheme.RoundRobin.roundRobinCompiler = cachedCompilation;
 }());

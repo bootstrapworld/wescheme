@@ -175,10 +175,6 @@ WeSchemeInteractions = (function () {
         var that = this;
         var nextCode = that.textContainer.getCode();
                         
-        // at one point, we abstracted away from using CM as our editor (see textcontainer.js)
-        // this isn't really necessary anymore, now that we're trying to pass the editor around directly
-        // NEEDS REVISITING
-        var editor = that.textContainer.impl.editor;
         // note that this line clobbers the contents of our editor
         that.textContainer.setCode("");
 
@@ -219,7 +215,7 @@ WeSchemeInteractions = (function () {
             function(container) {
                 var newId = makeFreshId();
                 that.interactions.previousInteractionsTextContainers[newId] = container;
-                that.interactions.runCode(nextCode, newId, function() {}, editor);
+                that.interactions.runCode(nextCode, newId, function() {});
             });
             that.focus();
     };
@@ -687,7 +683,7 @@ WeSchemeInteractions = (function () {
     };
 
     // Evaluate the source code and accumulate its effects.
-    WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK, editor) {
+    WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK) {
         var that = this;
         setTimeout(
             withCancellingOnReset(
@@ -713,8 +709,7 @@ WeSchemeInteractions = (function () {
                                 that.enableInput();
                                 that.focusOnPrompt();
                                 contK();
-                            }),
-                        editor);
+                            }));
                 }),
             0);
     };
