@@ -583,8 +583,8 @@
           var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
           path.setAttribute('d', pathStr);
           path.setAttribute('style', "stroke: "+color+"; fill: none; stroke-width: 1px; marker-end: url(#arrow);");
-          svg.style.width = Math.max(parseInt(svg.style.width), srcRegion.right, destRegion.right)+10+'px';
-          svg.style.height= Math.max(parseInt(svg.style.height),srcRegion.bottom,destRegion.bottom)+10+'px';
+          svg.style.width = Math.max(parseInt(svg.style.width), srcRegion.right, destRegion.right)+'px';
+          svg.style.height= Math.max(parseInt(svg.style.height),srcRegion.bottom,destRegion.bottom)+'px';
           paths.appendChild(path);
       }
       
