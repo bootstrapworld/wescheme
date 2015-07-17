@@ -225,7 +225,7 @@ plt.compiler = plt.compiler || {};
           accessorSymbol= new symbolExpr(that.name.val+'-'+f.val),
           defineVar = new defVar(accessorSymbol, makeFieldCall);
       // set location for all of these nodes
-      [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
+      [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = f.location});
       stxs.push(defineVar);
     }
     this.fields.forEach(makeAccessorDefn);
