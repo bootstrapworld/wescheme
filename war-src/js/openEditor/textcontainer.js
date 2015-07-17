@@ -125,10 +125,10 @@ var WeSchemeTextContainer;
        that.annotatorTimeout;
        function annotate(){ plt.wescheme.RoundRobin.annotator(that.editor); }
  
-       // onChange, set the annotator to run 1s from now
+       // onChange, set the annotator to run 5s from now
         this.editor.on('change', function() {
           clearTimeout(that.annotatorTimeout);               // clear existing timeout, if it existed
-          that.annotatorTimeout = setTimeout(annotate, 500) // set new timeout
+          that.annotatorTimeout = setTimeout(annotate, 5000) // set new timeout
           that.behaviorE.sendEvent(that.editor.getValue());
         });
 
