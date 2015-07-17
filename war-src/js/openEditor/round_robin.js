@@ -58,12 +58,14 @@ goog.require('plt.compiler.annotateCM');
 
     // given an editor, extract its contents and annotate it
     function annotateEditorContents(editor){
-      var start = new Date().getTime();
-      var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue())),
-          desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
-          pinfo       = plt.compiler.analyze(desugared);
-      plt.compiler.annotateCM(desugared, editor);
-      console.log('annotation completed in '+(Math.floor(new Date().getTime()-start))+'ms');
+      try{
+        var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue())),
+            desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
+            pinfo       = plt.compiler.analyze(desugared);
+        plt.compiler.annotateCM(desugared, editor);
+      } catch(e){
+        console.log('an error was thrown during annotation');
+      }
     }
 
     function compile(programName, code, onDone, onDoneError) {

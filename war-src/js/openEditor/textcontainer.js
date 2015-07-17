@@ -165,10 +165,10 @@ var WeSchemeTextContainer;
        that.annotatorTimeout;
        function annotate(){ plt.wescheme.RoundRobin.annotator(that.editor); }
  
-       // onChange, set the annotator to run 5s from now
+       // onChange, set the annotator to run Xs from now, based on the size of the document
         this.editor.on('change', function() {
-          clearTimeout(that.annotatorTimeout);               // clear existing timeout, if it existed
-          that.annotatorTimeout = setTimeout(annotate, 5000) // set new timeout
+          clearTimeout(that.annotatorTimeout);  // clear existing timeout, if it existed
+          that.annotatorTimeout = setTimeout(annotate, that.editor.lineCount() * 3);
           that.behaviorE.sendEvent(that.editor.getValue());
         });
 
