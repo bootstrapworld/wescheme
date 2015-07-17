@@ -705,13 +705,14 @@ plt.compiler = plt.compiler || {};
           predicateId   = id+"?",
           selectorIds   = fields.map(fieldToAccessor),
           mutatorIds    = fields.map(fieldToMutator),
+          structNameLoc = that.stx[1].location,  // location of <name> in (define-struct <name> (..))
           // build bindings out of these ids
           structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
-                                               selectorIds, mutatorIds, null, that.stx[1].location),
-          constructorBinding = bf(constructorId, false, fields.length, false, that.location),
-          predicateBinding   = bf(predicateId, false, 1, false, that.location),
-          mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
-          refBinding         = bf(id+"-ref", false, 1, false, that.location),
+                                               selectorIds, mutatorIds, null, structNameLoc),
+          constructorBinding = bf(constructorId, false, fields.length, false, structNameLoc),
+          predicateBinding   = bf(predicateId, false, 1, false, structNameLoc),
+          mutatorBinding     = bf(id+"-set!", false, 1, false, structNameLoc),
+          refBinding         = bf(id+"-ref", false, 1, false, structNameLoc),
  // COMMENTED OUT ON PURPOSE:
  // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
  //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
