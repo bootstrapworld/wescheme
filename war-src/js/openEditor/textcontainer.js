@@ -177,7 +177,7 @@ var WeSchemeTextContainer;
        // onChange, set the annotator to run Xs from now, based on the size of the document
         this.editor.on('change', function() {
           clearTimeout(that.annotatorTimeout);  // clear existing timeout, if it existed
-          that.annotatorTimeout = setTimeout(annotate, that.editor.lineCount() * 3);
+          that.annotatorTimeout = setTimeout(annotate, 500 + that.editor.lineCount() * 3);
           that.behaviorE.sendEvent(that.editor.getValue());
         });
 
