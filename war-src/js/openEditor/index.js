@@ -140,15 +140,16 @@ var initializeEditor;
             jQuery("#share").click(function()  { myEditor.share(); });
             jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
             jQuery("#undo").click(function()  { myEditor.defn.impl.editor.undo(); });
-            jQuery("#arrows").click(function()  { jQuery("#arrows").css("border", myEditor.defn.impl.toggleAnnotation()? "1px inset":"none"); });
             jQuery("#redo").click(function()  { myEditor.defn.impl.editor.redo(); });
             jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
             jQuery("#logout").click(function() { 
-                                  if(confirm("You will be logged out of WeScheme and other Google services.")) {
-                                      submitPost("/logout");
-                                  }
-                              });
-            jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
+              if(confirm("You will be logged out of WeScheme and other Google services.")) {
+                  submitPost("/logout");
+              }
+            });
+            jQuery("#arrows").click(function()  {
+              jQuery("#arrows").css("border", myEditor.defn.impl.toggleAnnotation()? "1px inset":"none");
+            });
             jQuery("#definitions").click(function() { defnInFocus = true;});
             var afterLoad1 = function() {
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }
