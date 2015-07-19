@@ -894,9 +894,7 @@ WeSchemeInteractions = (function () {
                     jQuery(msgDom).append("\u00ab"); // left-pointing-double-angle quotation mark
                     for (i = 0; i < part.locations.length; i++) {
                         box = jQuery("<tt/>");
-                        // white large box character.
-                        // http://www.fileformat.info/info/unicode/char/2b1c/index.htm
-                        box.text("\u2b1c"); 
+                        box.text(i); // number each part
                         colorAndLink(that, msgDom, locTints.slice(1)[i], 
                                      box, [locTints.slice(1)[i]], [part.locations[i]]);
                     }
