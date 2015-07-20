@@ -354,9 +354,10 @@
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
 	  <input id="filename" type="text" style="width: 20%"/>
-    <a id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-    <a id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-    <a id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+    <a id="updateNotes" class="clickableAnchor" title="Write notes"><img src="/images/small-info.png"></a>
+    <a id="undo" class="clickableAnchor" title="undo"><img src="/images/undo.png"></a>
+    <a id="redo" class="clickableAnchor" title="redo"><img src="/images/redo.png"></a>
+    <a id="arrows" class="clickableAnchor"  title="Show links" style="float:right;"><img src="/images/arrows.png"></a>
     <div id="statusbar"></div>
 	</div>
 
