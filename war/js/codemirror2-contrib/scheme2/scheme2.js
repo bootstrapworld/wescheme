@@ -570,6 +570,7 @@
       var node = evt.target || evt.srcElement;
 
       while(paths.firstChild) paths.removeChild(paths.firstChild); // clear the paths
+      svg.style.width = svg.style.height = '10px'; // reset the svg size
       // find the text marker at the location with a defLoc field, if it exists
       var srcPos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
           marker = cm.findMarksAt(srcPos).filter(function(m){return m._targets;})[0];
