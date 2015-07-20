@@ -439,13 +439,14 @@ plt.compiler = plt.compiler || {};
           pinfoAndTempSym = pinfo.gensym('tmp'),
           firstExprSym = pinfoAndTempSym[1],
           ifStx = new symbolExpr("if");
+      firstExprSym.notOriginalSource = true;
  
       // to match Racket's behavior, we override any expression's
       // stx to be "if", with the location of the whole expression
       if(firstExpr.stx && (firstExpr.stx.val !== "if")){
           ifStx.location = firstExpr.location;
-          firstExpr.stx=ifStx;
-       }
+          firstExpr.stx = ifStx;
+      }
       var pinfo = pinfoAndTempSym[0],
           tmpBinding = new couple(firstExprSym, forceBooleanContext(that.stx, that.stx.location, firstExpr)),
           secondExpr;
@@ -468,7 +469,6 @@ plt.compiler = plt.compiler || {};
       stxs.forEach(function(stx){return stx.location = that.location; });
       return let_exp.desugar(pinfo);
     }
- 
     return desugarOrExprs(exprs, pinfo);
  };
 
@@ -929,7 +929,7 @@ plt.compiler = plt.compiler || {};
     pinfo.env = plt.compiler.getBasePinfo("base").env;
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
  
-     // extend the env to include the function binding, then make a copy of all the bindings
+    // extend the env to include the function binding, then make a copy of all the bindings
     var envAfterDefs = pinfoAfterDefs.env, oldKeys = envAfterDefs.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
     oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});

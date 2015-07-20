@@ -129,6 +129,7 @@ plt.compiler = plt.compiler || {};
                           });
  }
  ifExpr.prototype.annotateCM = function(cm){
+ console.log(this);
     var exps = [this.predicate, this.consequence, this.alternative];
     return exps.forEach(function(exp){ exp.annotateCM(cm);});
  };
@@ -136,6 +137,7 @@ plt.compiler = plt.compiler || {};
  symbolExpr.prototype.annotateCM = function(cm){
     if(this.bindingLoc){
       var useLoc = this.location, defLoc = this.bindingLoc;
+      if(this.notOriginalSource){  return; }
       addTarget(cm, useLoc, defLoc, "use"); // point from the use to the def
       addTarget(cm, defLoc, useLoc, "def"); // point from the def to the use
     }
