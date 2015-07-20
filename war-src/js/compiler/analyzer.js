@@ -905,8 +905,8 @@ plt.compiler = plt.compiler || {};
  // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
  // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
-//    var env1 = pinfo.env, // FIXME: this is what the line *should* be
-    var env1 = plt.compiler.getBasePinfo("base").env,
+    var env1 = pinfo.env, // FIXME: this is what the line *should* be
+//    var env1 = plt.compiler.getBasePinfo("base").env, // this is what Danny's compiler originally used
         env2 = this.args.reduce(function(env, arg){
           return env.extend(new constantBinding(arg.val, false, [], arg.location));
         }, env1);
