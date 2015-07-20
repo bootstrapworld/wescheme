@@ -129,7 +129,6 @@ plt.compiler = plt.compiler || {};
                           });
  }
  ifExpr.prototype.annotateCM = function(cm){
- console.log(this);
     var exps = [this.predicate, this.consequence, this.alternative];
     return exps.forEach(function(exp){ exp.annotateCM(cm);});
  };
