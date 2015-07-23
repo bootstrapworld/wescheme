@@ -603,7 +603,7 @@ plt.compiler = plt.compiler || {};
       }
     };
  
-    // traverse the bindings of the module
+    // traverse rthe bindings of the module
     this.extendEnv_moduleBinding = function(module){
       return module.bindings.reduceRight(function(env, binding){ return env.extend(binding);}, this);
     };

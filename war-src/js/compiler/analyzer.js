@@ -883,7 +883,7 @@ plt.compiler = plt.compiler || {};
  };
  defFunc.prototype.analyzeUses = function(pinfo){
     // extend the env to include the function binding, then make a copy of all the bindings
-    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location)),
+    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.location)),
         oldKeys = oldEnv.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
     oldKeys.forEach(function(k){newBindings.put(k, oldEnv.bindings.get(k));});
@@ -966,7 +966,6 @@ plt.compiler = plt.compiler || {};
                     this.location);
     }
     var binding = env.lookup_context(this.val);
-    this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
     if(binding){
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
