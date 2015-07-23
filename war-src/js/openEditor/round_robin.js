@@ -57,6 +57,8 @@ goog.require('plt.compiler.annotateCM');
     }
 
     // given an editor, extract its contents and annotate it
+    // note: will run lex/parse/analyze at the will of the editor!!!!!
+    // should be as cheap as possible
     function annotateEditorContents(editor){
       try{
         var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue())),
