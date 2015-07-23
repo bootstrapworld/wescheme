@@ -469,6 +469,7 @@ plt.compiler = plt.compiler || {};
       stxs.forEach(function(stx){return stx.location = that.location; });
       return let_exp.desugar(pinfo);
     }
+ 
     return desugarOrExprs(exprs, pinfo);
  };
 
@@ -684,6 +685,7 @@ plt.compiler = plt.compiler || {};
            
                }
       });
+ 
     var binding = bf(this.name.val, false, this.args.length, false, this.name.location);
     return pinfo.accumulateDefinedBinding(binding, this.location);
  };
@@ -904,6 +906,8 @@ plt.compiler = plt.compiler || {};
     return pinfo;
  }
  defFunc.prototype.analyzeUses = function(pinfo){
+    // extend the env to include the function binding, then make a copy of all the bindings
+    pinfo.env = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location));
     return analyzeClosureUses(this, pinfo);
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
