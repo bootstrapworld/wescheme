@@ -357,11 +357,13 @@
 
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
-	  <input tabIndex="1" role="textbox" id="filename" type="text" style="width: 20%"/>
-    <a tabIndex="1" role="button"  id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-    <a tabIndex="1" role="button"  id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-    <a tabIndex="1" role="button"  id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
-    <a tabIndex="1" role="button"  id="arrows" class="clickableAnchor"  title="Show links" style="float:right;"><img src="/images/arrows.png"></a>
+	  <input id="filename" type="text" style="width: 20%"/>
+    <% if (userSession != null) { %>
+      <a id="updateNotes" class="clickableAnchor" title="Write notes"><img src="/images/small-info.png"></a>
+    <% } %>
+    <a id="undo" class="clickableAnchor" title="undo"><img src="/images/undo.png"></a>
+    <a id="redo" class="clickableAnchor" title="redo"><img src="/images/redo.png"></a>
+    <a id="arrows" class="clickableAnchor"  title="Show links" style="float:right;"><img src="/images/arrows.png"></a>
     <div id="statusbar"></div>
 	</div>
 
