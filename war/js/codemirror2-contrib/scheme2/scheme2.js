@@ -575,7 +575,7 @@
       var srcPos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
           marker = cm.findMarksAt(srcPos).filter(function(m){return m._targets;})[0];
                   
-      function drawTarget(target){
+      function drawArrow(target){
           var destRegion  = cm.charCoords(cm.posFromIndex(Number(target.start)), "local"),
               srcRegion   = cm.charCoords(srcPos, "local"),
               destCoords  = {x: Math.floor(destRegion.right),
@@ -592,7 +592,7 @@
           paths.appendChild(path);
       }
       // if there is a marker, draw all of its targets
-      if(marker){ marker._targets.forEach(drawTarget); }
+      if(marker){ marker._targets.forEach(drawarrow); }
       function toggleArrows(){cm.showArrows = !cm.showArrows; console.log(cm.showArrows); }
     });
   });
