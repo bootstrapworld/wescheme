@@ -881,23 +881,30 @@ plt.compiler = plt.compiler || {};
  defVars.prototype.analyzeUses = function(pinfo){
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
- defFunc.prototype.analyzeUses = function(pinfo){
-    // extend the env to include the function binding, then make a copy of all the bindings
-    var oldEnv = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location)),
+ // analyzeClosureUses : expr pinfo -> pinfo
+ // given the body of a lambda, an environment and a pinfo, analyze the body
+ function analyzeClosureUses(funcExpr, pinfo){
+    // 1) make a copy of all the bindings
+    var oldEnv = pinfo.env,
         oldKeys = oldEnv.bindings.keys(),
         newBindings = types.makeLowLevelEqHash();
     oldKeys.forEach(function(k){newBindings.put(k, oldEnv.bindings.get(k));});
  
-    // make a copy of the environment, using the newly-copied bindings
-    // add the args to this environment
+    // 2) make a copy of the environment, using the newly-copied bindings, and
+    //    add the args to this environment
     var newEnv = new plt.compiler.env(newBindings),
-        newEnv = this.args.reduce(function(env, arg){
+        newEnv = funcExpr.args.reduce(function(env, arg){
                                   return env.extend(new constantBinding(arg.val, false, [], arg.location));
                                 }, newEnv);
-    pinfo.env = newEnv;                           // install the post-arg env into pinfo
-    pinfo = this.body.analyzeUses(pinfo, newEnv); // analyze the body
-    pinfo.env = oldEnv;                           // install the pre-arg environment for pinfo
+    // 3) install the post-arg env into pinfo, analyze the body, and
+    //    install the original environment
+    pinfo.env = newEnv;
+    pinfo = funcExpr.body.analyzeUses(pinfo, newEnv);
+    pinfo.env = oldEnv;
     return pinfo;
+ }
+ defFunc.prototype.analyzeUses = function(pinfo){
+    return analyzeClosureUses(this, pinfo);
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
@@ -905,12 +912,7 @@ plt.compiler = plt.compiler || {};
  // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
  // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
-    var env1 = pinfo.env, // FIXME: this is what the line *should* be
-//    var env1 = plt.compiler.getBasePinfo("base").env, // this is what Danny's compiler originally used
-        env2 = this.args.reduce(function(env, arg){
-          return env.extend(new constantBinding(arg.val, false, [], arg.location));
-        }, env1);
-    return this.body.analyzeUses(pinfo, env2);
+  return analyzeClosureUses(this, pinfo.env, pinfo);
  };
 
  /*
