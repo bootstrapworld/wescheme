@@ -542,7 +542,8 @@
     var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.position = 'absolute';
     svg.style.top   = '0px';
-    svg.style.left  = '30px'; // HACK - the line number column is 30px wide
+    // make the svg line up right next to the width of the line number element
+    svg.style.left  = cm.getElementsByClassName('CodeMirror-linenumber')[0].style.width;
     svg.style.width = '0px';
     svg.style.height = '0px';
     cm.getScrollerElement().appendChild(svg);
@@ -592,7 +593,7 @@
           paths.appendChild(path);
       }
       // if there is a marker, draw all of its targets
-      if(marker){ marker._targets.forEach(drawarrow); }
+      if(marker){ marker._targets.forEach(drawArrow); }
       function toggleArrows(){cm.showArrows = !cm.showArrows; console.log(cm.showArrows); }
     });
   });
