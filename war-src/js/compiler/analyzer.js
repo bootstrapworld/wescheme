@@ -906,38 +906,23 @@ plt.compiler = plt.compiler || {};
     return pinfo;
  }
  defFunc.prototype.analyzeUses = function(pinfo){
-    // extend the env to include the function binding, then make a copy of all the bindings
+    // extend the env to include the function binding, then analyze the body as if it's a lambda
     pinfo.env = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location));
     return analyzeClosureUses(this, pinfo);
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
  };
- // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
- // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
     return analyzeClosureUses(this, pinfo);
  };
-
- // This is what we do to match Danny's compiler, which I think behaves incorrectly. It's a
- // horrible, horrible hack designed to get around the fact that we use immutable hashtables
- // SHOULD BE TESTED FURTHER
  localExpr.prototype.analyzeUses = function(pinfo, env){
-    // update pinfo with all the local's definitions
-    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
- 
-    // make a copy of all the environment bindings
-    var envAfterDefs = pinfoAfterDefs.env, oldKeys = envAfterDefs.bindings.keys(),
-        newBindings = types.makeLowLevelEqHash();
-    oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});
-
-    // analyze the body (and any new defs therein)
-    var bodyPinfo = this.body.analyzeUses(pinfoAfterDefs, envAfterDefs);
-    // rest the env to just before the definitions (ignoring any defs therein)
-    bodyPinfo.env = envAfterDefs;
-    return bodyPinfo;
+    // NOTE: Something about this still feels wrong
+    // I feel like we want to treat this as a closure, where we build a temp copy of the environment
+    // and then discard it after analyzinf the body. Can't find a test case that fails, though :/
+    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
+    return this.body.analyzeUses(pinfoAfterDefs, pinfoAfterDefs.env);
  };
- 
  callExpr.prototype.analyzeUses = function(pinfo, env){
     return [this.func].concat(this.args).reduce(function(p, arg){
                             return (arg instanceof Array)?
