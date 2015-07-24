@@ -919,21 +919,10 @@ plt.compiler = plt.compiler || {};
     return analyzeClosureUses(this, pinfo);
  };
 
- /*
- // If we don't care about matching Danny's compiler, the code *probably should be*
- localExpr.prototype.analyzeUses = function(pinfo, env){
-    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
-    return this.body.analyzeUses(pinfoAfterDefs, env);
- };
- */
- 
  // This is what we do to match Danny's compiler, which I think behaves incorrectly. It's a
  // horrible, horrible hack designed to get around the fact that we use immutable hashtables
  // SHOULD BE TESTED FURTHER
  localExpr.prototype.analyzeUses = function(pinfo, env){
-    var originalEnv = pinfo.env;
-//    pinfo.env = plt.compiler.getBasePinfo("base").env;
- 
     // update pinfo with all the local's definitions
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
  
