@@ -539,10 +539,10 @@
   ///////////////////////////////////////////////////////////////////////////////
   CodeMirror.defineInitHook(function (cm) {
     cm.showArrows = false;
-    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'),
-              wrapper = cm.getWrapperElement();
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.style.position = 'absolute';
     svg.style.top   = '0px';
+    svg.style.left  = '30px'; // HACK - the line number column is 30px wide
     svg.style.width = '0px';
     svg.style.height = '0px';
     cm.getScrollerElement().appendChild(svg);
@@ -570,11 +570,7 @@
       var node = evt.target || evt.srcElement;
 
       while(paths.firstChild) paths.removeChild(paths.firstChild); // clear the paths
-      // make the svg line up right next to the width of the line number element
-      // (must be dynamically calculated), and reset the height
-      svg.style.left  = wrapper.getElementsByClassName('CodeMirror-linenumber')[0].style.width;
-      svg.style.width = svg.style.height = '10px';
-                  
+      svg.style.width = svg.style.height = '10px'; // reset the svg size
       // find the text marker at the location with a defLoc field, if it exists
       var srcPos = cm.coordsChar({left:evt.clientX, top:evt.clientY}),
           marker = cm.findMarksAt(srcPos).filter(function(m){return m._targets;})[0];

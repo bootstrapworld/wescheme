@@ -363,7 +363,7 @@
     <% } %>
     <a id="undo" class="clickableAnchor" title="undo"><img src="/images/undo.png"></a>
     <a id="redo" class="clickableAnchor" title="redo"><img src="/images/redo.png"></a>
-    <a id="arrows" class="clickableAnchor"  title="Show links" style="float:right;"><img src="/images/arrows.png"></a>
+    <a id="arrows" class="clickableAnchor"  title="Toggle links" style="float:right;"><img src="/images/arrows.png"></a>
     <div id="statusbar"></div>
 	</div>
 
