@@ -137,6 +137,7 @@ h2 > a:hover{text-decoration: underline;}
     float:			left;
     margin:			0px 10px;
 }
+#fileInfo a{border: 1px solid transparent;}
 #fileInfo a:active{border: 1px inset;}
 
 /* 20px: TOOLBAR, BUTTONS, ETC */
