@@ -876,11 +876,16 @@ plt.compiler = plt.compiler || {};
  // Program.analyzeUses: pinfo -> pinfo
  Program.prototype.analyzeUses = function(pinfo, env){ return pinfo; };
  defVar.prototype.analyzeUses = function(pinfo){
-    // if it's a lambda, extend the environment with the function, then analyze as a lambda
-    if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.expr.args.length, false, this.location));
+    // extend the environment with the value or function, then analyze the expression
+    pinfo.env.extend((this.expr instanceof lambdaExpr)?
+                     bf(this.name.val, false, this.expr.args.length, false, this.location)
+                     :  new constantBinding(this.name.val, false, [], this.name.location));
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo){
+    this.names.forEach(function(id){
+        pinfo.env.extend(new constantBinding(id.val, false, [], id.location));
+      });
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  // analyzeClosureUses : expr pinfo -> pinfo
@@ -916,10 +921,10 @@ plt.compiler = plt.compiler || {};
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
     return analyzeClosureUses(this, pinfo);
  };
+ // NOTE: Something about this still feels wrong
+ // I feel like we want to treat this as a closure, where we build a temp copy of the environment
+ // and then discard it after analyzinf the body. Can't find a test case that fails, though :/
  localExpr.prototype.analyzeUses = function(pinfo, env){
-    // NOTE: Something about this still feels wrong
-    // I feel like we want to treat this as a closure, where we build a temp copy of the environment
-    // and then discard it after analyzinf the body. Can't find a test case that fails, though :/
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
     return this.body.analyzeUses(pinfoAfterDefs, pinfoAfterDefs.env);
  };
