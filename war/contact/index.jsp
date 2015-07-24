@@ -21,8 +21,8 @@
 <h2>Talk to us!</h2>
 <div id="text">
 <ul>
-	<li><a href="mailto:dyoo@cs.wpi.edu">Report a bug</a> : Contact Danny Yoo, lead WeScheme and moby developer.</li>
-	<li><a href="http://www.bootstrapworld.org/">Teach with it</a> : Contact Emmanuel Schanzer, developer of the <a href="http://www.bootstrapworld.org">Bootstrap</a> curriculum.</li>
+	<li><a href="mailto:schanzer@bootstrapworld.org">Report a bug</a> : Contact Emmanuel Schanzer, WeScheme developer.</li>
+	<li><a href="http://www.bootstrapworld.org/">Teach with it</a> : Use the Bootstrap curriculum with your students.</li>
 </ul>
 </div>
 
