@@ -133,7 +133,7 @@ h2 > a:hover{text-decoration: underline;}
     font-family:   Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
-#fileInfo *{
+#fileInfo>*{
     width:     auto;
     float:			left;
     margin:			0px 10px;
