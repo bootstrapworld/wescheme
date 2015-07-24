@@ -285,7 +285,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 }
 
 
-/* 22px: FOOTER */
+/* 23px: statusbar */
 #statusbar {
     clear:          both;
     width:          100%;
