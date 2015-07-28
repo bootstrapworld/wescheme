@@ -8,6 +8,7 @@ goog.require('plt.compiler.desugar');
 goog.require('plt.compiler.analyze');
 goog.require('plt.compiler.compile');
 goog.require('plt.compiler.annotateCM');
+goog.require('plt.compiler.convertToCircles');
 
 (function() {
     "use strict";
@@ -61,12 +62,14 @@ goog.require('plt.compiler.annotateCM');
     // should be as cheap as possible
     function annotateEditorContents(editor){
       try{
-        var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue())),
-            desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
+        var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue()));
+        plt.compiler.convertToCircles(AST, editor);
+        var desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
             pinfo       = plt.compiler.analyze(desugared);
         plt.compiler.annotateCM(desugared, editor);
       } catch(e){
-        console.log('an error was thrown during annotation');
+        console.log('an error was thrown during annotation:');
+ console.log(e);
       }
     }
 

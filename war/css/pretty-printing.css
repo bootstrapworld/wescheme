@@ -26,3 +26,51 @@ Define coloring for basic WeScheme types, and re-use them for our CM instances
 /* CM-only stuff */
 span.cm-scheme-punctuation                 {color: black;}
 span.cm-scheme-rparen                      {color: black;}
+
+/***********************************************
+ Circle of Evaluation and Code styling
+ */
+
+.operator:hover{cursor: pointer; background: black; color: white; }
+.codesexp, .circleevalsexp{display: inline-block;}
+
+/* spacing between elements */
+.codesexp>* {margin-right: 8px;}
+.codesexp>.lParen, .codesexp>*:nth-last-child(2){margin-right: 0px; clear: none;}
+
+/* code */
+.codesexp>.lParen, .codesexp>.rParen{display: inline;}
+.codesexp>.operator{
+  border-bottom-left-radius: 8px;
+  border-top-left-radius: 8px;
+  padding-left: 4px;
+}
+/* circles of evaluation */
+.circleevalsexp>.lParen, .circleevalsexp>.rParen{display: none;}
+.circleevalsexp{
+  margin:         5px;
+  clear:          none;
+  border:         2px solid black;
+  background:     white;
+  border-radius:  20px;
+  text-align:     center;
+  -moz-border-radius: 20px;
+  -webkit-border-radius:20px;
+}
+
+.circleevalsexp>*{
+  margin:         0px 10px 5px 10px;
+  vertical-align: top;
+}
+
+.circleevalsexp>.operator{
+  display:        block;
+  margin:         0px 0px 5px 0px;
+  height:         20px;
+  text-align:     center;
+  width:          100%;
+  border-bottom:  solid 2px black;
+  border-radius:  15px 15px 0px 0px; /* top left, top right, bottom right, bottom left */
+  background:     black;
+  color:          white;
+}
