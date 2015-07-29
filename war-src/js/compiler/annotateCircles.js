@@ -146,7 +146,7 @@ plt.compiler = plt.compiler || {};
     function markTextWithCircleWidget(circle){
       var from = cm.posFromIndex(circle.location.startChar),
           to   = cm.posFromIndex(circle.location.endChar);
-      cm.markText(from, to, {replacedWith: circle, handleMouseEvents: true});
+      cm.markText(from, to, {replacedWith: circle, handleMouseEvents: true, _circles: true });
     }
  
     circles.forEach(markTextWithCircleWidget);
@@ -190,7 +190,7 @@ plt.compiler = plt.compiler || {};
     expression.appendChild(operator);
     this.args.forEach(function(arg){ expression.appendChild(arg.toCircles(cm)); });
     expression.appendChild(rParen);
- expression.draggable="true";
+    expression.draggable="true";
     return expression;
  };
  andExpr.prototype.toCircles = function(cm){

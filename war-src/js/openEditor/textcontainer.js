@@ -123,7 +123,6 @@ var WeSchemeTextContainer;
 	//////////////////////////////////////////////////////////////////////
 
 	var CodeMirrorImplementation = function(parent, options, onSuccess) {
-
 		// Note: "parent" seems to be a "WeSchemeTextContainer".
 		//
 		// Note: "CodeMirrorImplementation.editor" is set by the "initCallback"
@@ -164,6 +163,7 @@ var WeSchemeTextContainer;
        // timer and annotation function
        that.annotatorTimeout;
        function annotate(){ if(that.editor.getOption("showArrows")) plt.wescheme.RoundRobin.annotator(that.editor); }
+       function clearAnnotations(){ cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()}); }
  
        // toggle the annotation option.
        // if we're just now switching annotation on, annotate the editor
@@ -220,13 +220,15 @@ var WeSchemeTextContainer;
       // if the 'clone' option is set, we create a linked doc that is updated as the definitions window changes
       // this doc is added to the 'middle' element, which likely ****BREAKS ABSTRACTION****
       // CSS is then used to hide everything except the clone
-      if(options.clone){
-        var clone = new CodeMirror(this.editor.getWrapperElement(),{value: this.editor.getDoc().linkedDoc()}),
-            cloneDOM = clone.getWrapperElement();
-        document.getElementById('middle').appendChild(cloneDOM);
-        clone.setOption("lineNumbers", this.editor.getOption("lineNumbers"));
-        cloneDOM.id = "printedCM";
+      if(options.clone && parent.div.id==="definitions"){
+        var cloneDOM = document.createElement('div');
+        cloneDOM.id  = "printedCM";
         cloneDOM.style.height = "auto";
+        document.getElementById('middle').appendChild(cloneDOM);
+        var clone    = new CodeMirror(cloneDOM),
+            buf = this.editor.getDoc().linkedDoc();
+        clone.swapDoc(buf);
+        clone.setOption("lineNumbers", this.editor.getOption("lineNumbers"));
       }
 	    onSuccess.call(that, that);
 	};
