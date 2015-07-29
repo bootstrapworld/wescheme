@@ -237,13 +237,15 @@ var WeSchemeTextContainer;
       // if the 'clone' option is set, we create a linked doc that is updated as the definitions window changes
       // this doc is added to the 'middle' element, which likely ****BREAKS ABSTRACTION****
       // CSS is then used to hide everything except the clone
-      if(options.clone){
-        var clone = new CodeMirror(this.editor.getWrapperElement(),{value: this.editor.getDoc().linkedDoc()}),
+      if(options.clone && parent.div.id==="definitions"){
+        var dummy = document.createElement('div');
+        document.getElementById('middle').appendChild(dummy);
+        var clone    = new CodeMirror(dummy,
+                                    {value: this.editor.getDoc().linkedDoc(),
+                                     lineNumbers: this.editor.getOption("lineNumbers"),
+                                     viewportMargin: Infinity}),
             cloneDOM = clone.getWrapperElement();
-        document.getElementById('middle').appendChild(cloneDOM);
-        clone.setOption("lineNumbers", this.editor.getOption("lineNumbers"));
-        cloneDOM.id = "printedCM";
-        cloneDOM.style.height = "auto";
+        cloneDOM.id  = "printedCM";
       }
 	    onSuccess.call(that, that);
 	};
