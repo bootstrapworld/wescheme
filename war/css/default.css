@@ -429,7 +429,7 @@ span.top-aligned-inline-block {
   height: 0;
 }
 
-#printedCM{visibility: hidden; display: none;}
+#printedCM{visibility: hidden; }
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
 	#toolbar li {min-width: 50px;}
@@ -450,7 +450,7 @@ span.top-aligned-inline-block {
 /* When printing, hide everything except the fileInfo and definitions areas */
 @media print{
   #header, #toolbar, #footer, #splitpane{display: none;}
-  #printedCM{visibility: visible; display: block;}
+  #printedCM{visibility: visible; display: block; height: auto;}
   #fileInfo{border-style: solid; border-color: black; border-width: 3px 0px;}
   #fileInfo img{display: none;}
 }

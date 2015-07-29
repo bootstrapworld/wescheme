@@ -221,14 +221,14 @@ var WeSchemeTextContainer;
       // this doc is added to the 'middle' element, which likely ****BREAKS ABSTRACTION****
       // CSS is then used to hide everything except the clone
       if(options.clone && parent.div.id==="definitions"){
-        var cloneDOM = document.createElement('div');
+        var dummy = document.createElement('div');
+        document.getElementById('middle').appendChild(dummy);
+        var clone    = new CodeMirror(dummy,
+                                    {value: this.editor.getDoc().linkedDoc(),
+                                     lineNumbers: this.editor.getOption("lineNumbers"),
+                                     viewportMargin: Infinity}),
+            cloneDOM = clone.getWrapperElement();
         cloneDOM.id  = "printedCM";
-        cloneDOM.style.height = "auto";
-        document.getElementById('middle').appendChild(cloneDOM);
-        var clone    = new CodeMirror(cloneDOM),
-            buf = this.editor.getDoc().linkedDoc();
-        clone.swapDoc(buf);
-        clone.setOption("lineNumbers", this.editor.getOption("lineNumbers"));
       }
 	    onSuccess.call(that, that);
 	};
