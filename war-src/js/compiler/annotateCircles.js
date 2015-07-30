@@ -81,75 +81,54 @@ plt.compiler = plt.compiler || {};
  // programToCircles : Listof Programs CM -> Listof DOM nodes
  // assign widgets representing circles of evaluation to tokens in CM
  function programToCircles(programs, cm){
-   var circles_ = document.querySelectorAll('.circleevalexp');
-   function handleDragStart(e) {
-     e.dataTransfer.effectAllowed = 'move';
-     e.dataTransfer.setData('text/html', this.innerHTML);
-     dragSrcEl_ = this;
-   console.log('dragstart!');
-     dragSrcEl_.style.opacity = '0.5';
-     // this/e.target is the source node.
-     this.addClassName('moving');
-   };
-   
-   function handleDragOver(e) {
-          if (e.preventDefault) {
-              e.preventDefault(); // Allows us to drop.
-          }
-          e.dataTransfer.dropEffect = 'move';
-          return false;
-   };
-   function handleDragEnter(e) {
-          this.addClassName('over');
-   };
-   function handleDragLeave(e) {
-          // this/e.target is previous target element.
-          this.removeClassName('over');
-   };
-   function handleDrop(e) {
-          // this/e.target is current target element.
-
-          if (e.stopPropagation) {
-              e.stopPropagation(); // stops the browser from redirecting.
-          }
-          // Don't do anything if we're dropping on the same box we're dragging.
-          if (dragSrcEl_ != this) {
-              dragSrcEl_.innerHTML = this.innerHTML;
-              this.innerHTML = e.dataTransfer.getData('text/html');
-          }
-          return false;
-    };
-    function handleDragEnd(e) {
-        // this/e.target is the source node.
-        this.style.opacity = '1';
-
-        [ ].forEach.call(circles_, function (box) {
-            box.removeClassName('over');
-            box.removeClassName('moving');
-        });
-    };
+    // 1) convert the AST to a list of DOM trees
     var circles = programs.map(function(p){
       var dom = p.toCircles(cm);
       dom.location = p.location;
       return dom;
     });
  
-    [ ].forEach.call(circles_, function (box) {
-        box.setAttribute('draggable', 'true');  // Enable boxes to be draggable.
-        box.addEventListener('dragstart', this.handleDragStart, false);
-        box.addEventListener('dragenter', this.handleDragEnter, false);
-        box.addEventListener('dragover', this.handleDragOver, false);
-        box.addEventListener('dragleave', this.handleDragLeave, false);
-        box.addEventListener('drop', this.handleDrop, false);
-        box.addEventListener('dragend', this.handleDragEnd, false);
-    });
     function markTextWithCircleWidget(circle){
       var from = cm.posFromIndex(circle.location.startChar),
           to   = cm.posFromIndex(circle.location.endChar);
-      cm.markText(from, to, {replacedWith: circle, handleMouseEvents: true, _circles: true });
+      cm.markText(from, to, {replacedWith: circle, handleMouseEvents: false, _circles: true });
+    }
+    // 2) for each tree, mark the equivalent text with the widget
+    circles.forEach(markTextWithCircleWidget);
+ 
+    // 3) collect all values, operators and expressions
+    var circles_   = document.querySelectorAll('.circleevalsexp'),
+        values_    = document.querySelectorAll('.value'),
+        operators_ = document.querySelectorAll('.operator');
+ 
+    function startEdit(e){
+      var node = e.target || e.srcElement;
+      node.addEventListener("keydown", function(e){
+        if (e.which===13){ node.blur(); e.preventDefault(); }
+      });
+      e.preventDefault();
     }
  
-    circles.forEach(markTextWithCircleWidget);
+    function saveEdit(e){
+      var node = e.target || e.srcElement;
+      node.removeEventListener("keyup");
+      console.log('changing value to '+node.innerText);
+      var from = cm.posFromIndex(node.location.startChar),
+          to   = cm.posFromIndex(node.location.endChar);
+      cm.replaceRange(node.innerHTML, from, to);
+    }
+ 
+    // 4) assign behaviors to all editable nodes
+    [ ].forEach.call(values_, function (span) {
+       span.addEventListener("click", startEdit);
+       span.addEventListener("blur", saveEdit);
+       span.addEventListener("dragenter", function(e){console.log(e);});
+    });
+    [ ].forEach.call(operators_, function (span) {
+       span.addEventListener("click", startEdit);
+       span.addEventListener("blur", saveEdit);
+    });
+ 
  }
  
  // Program.prototype.toCircles: CM -> DOM
@@ -182,6 +161,7 @@ plt.compiler = plt.compiler || {};
         endPos = cm.posFromIndex(this.location.endChar);
     expression.className = "circleevalsexp";
     operator.className = "operator";
+    operator.contentEditable = true;
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -191,6 +171,8 @@ plt.compiler = plt.compiler || {};
     this.args.forEach(function(arg){ expression.appendChild(arg.toCircles(cm)); });
     expression.appendChild(rParen);
     expression.draggable="true";
+    expression.location = this.location;
+    operator.location = this.func.location;
     return expression;
  };
  andExpr.prototype.toCircles = function(cm){
@@ -202,6 +184,7 @@ plt.compiler = plt.compiler || {};
         endPos = cm.posFromIndex(this.location.endChar);
     expression.className = "circleevalsexp";
     operator.className = "operator";
+    operator.contentEditable = true;
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -211,6 +194,7 @@ plt.compiler = plt.compiler || {};
     expression.appendChild(operator);
     this.exprs.forEach(function(arg){ expression.appendChild(arg.toCircles(cm)); });
     expression.appendChild(rParen);
+    expression.location = this.location;
     return expression;
  };
  orExpr.prototype.toCircles = function(cm){
@@ -222,6 +206,7 @@ plt.compiler = plt.compiler || {};
         endPos = cm.posFromIndex(this.location.endChar);
     expression.className = "circleevalsexp";
     operator.className = "operator";
+    operator.contentEditable = true;
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -231,39 +216,48 @@ plt.compiler = plt.compiler || {};
     expression.appendChild(operator);
     this.exprs.forEach(function(arg){ expression.appendChild(arg.toCircles(cm)); });
     expression.appendChild(rParen);
+    expression.location = this.location;
     return expression;
  };
  symbolExpr.prototype.toCircles = function(cm){
 //    var tok = cm.getTokenAt(cm.posFromIndex(this.location.endChar));
-    var value = document.createElement('span');
-    value.className = "value";
-    value.appendChild(document.createTextNode(this.val));
-    if(this.val === "true" || this.val === "false") value.className+=" wescheme-boolean"
-    return value;
+    var node = document.createElement('span');
+    node.className = "value";
+    node.contentEditable = true;
+    node.appendChild(document.createTextNode(this.val));
+    if(this.val === "true" || this.val === "false") node.className+=" wescheme-boolean";
+    node.location = this.location;
+    return node;
  };
  literal.prototype.toCircles = function(cm){
     // if it's a Rational, BigInt, FloatPoint, Complex or Char, we can take care of it
     if(this.val.toCircles) return this.val.toCircles(cm);
-    var value = document.createElement('span');
+    var node = document.createElement('span');
     // if it's Not A Number, assume it's a string. Otherwise, number.
-    value.className = "value " + (isNaN(this.val)? "wescheme-string" : "wescheme-number");
-    value.appendChild(document.createTextNode(this.toString()));
-    return value;
+    node.className = "value " + (isNaN(this.val)? "wescheme-string" : "wescheme-number");
+    node.contentEditable = true;
+    node.appendChild(document.createTextNode(this.toString()));
+    node.location = this.location;
+    return node;
  };
  jsnums.Rational.prototype.toCircles = function(cm){
-    var value = document.createElement('span');
-    value.className = "value wescheme-number";
-    value.appendChild(document.createTextNode(this.toString(cm)));
-    return value;
+    var node = document.createElement('span');
+    node.className = "value wescheme-number";
+    node.contentEditable = true;
+    node.appendChild(document.createTextNode(this.toString(cm)));
+    node.location = this.location;
+    return node;
  };
  jsnums.BigInteger.prototype.toCircles = jsnums.Rational.prototype.toCircles;
  jsnums.FloatPoint.prototype.toCircles = jsnums.Rational.prototype.toCircles;
  jsnums.Complex.prototype.toCircles = jsnums.Rational.prototype.toCircles;
  Char.prototype.toCircles = function(cm){
-    var value = document.createElement('span');
-    value.className = "value wescheme-character";
-    value.appendChild(document.createTextNode(this.toString()));
-    return value;
+    var node = document.createElement('span');
+    node.className = "value wescheme-character";
+    node.contentEditable = true;
+    node.appendChild(document.createTextNode(this.toString()));
+    node.location = this.location;
+    return node;
  };
  
  /////////////////////
