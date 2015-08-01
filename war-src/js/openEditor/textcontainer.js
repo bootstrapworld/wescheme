@@ -162,8 +162,12 @@ var WeSchemeTextContainer;
  
        // timer and annotation function
        that.annotatorTimeout;
-       function annotate(){ if(that.editor.getOption("showArrows")) plt.wescheme.RoundRobin.annotator(that.editor); }
-       function clearAnnotations(){ cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()}); }
+       function annotate(){
+          if(that.editor.getOption("showArrows")) plt.wescheme.RoundRobin.annotator(that.editor);
+       }
+       function clearAnnotations(){
+          cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
+       }
  
        // toggle the annotation option.
        // if we're just now switching annotation on, annotate the editor
@@ -289,22 +293,23 @@ var WeSchemeTextContainer;
 		var startHandleAndColumn = this.findHandleAndColumn(parseInt(offset));
 		var endHandleAndColumn = this.findHandleAndColumn(parseInt(offset)+parseInt(span));
 		
-		var stylesheet = document.styleSheets[0]; //this is default.css
+		var stylesheet = document.styleSheets[document.styleSheets.length-1]; // get last stylesheet
 		var name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 
 		currentHighlightNumber++;
             
-            if (stylesheet.insertRule) {
-                stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
-            } else {
-	        // IE8 compatibility
-                stylesheet.addRule("." + name, "background-color: " + color + "", 0);
-            }
-
-		
+    if (stylesheet.insertRule) {
+        stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
+    } else { // IE8 compatibility
+        stylesheet.addRule("." + name, "background-color: " + color + "", 0);
+    }
+ 
+    // highlight the code in the editor
 		var highlightedArea = this.editor.markText(this.handleAndColumnToPos(startHandleAndColumn), 
 					this.handleAndColumnToPos(endHandleAndColumn), 
 					{className: name});
+    // highlight circles of evaluation, if they're present
+    if(this.editor.circleIndices) this.editor.circleIndices[offset].classList.add(name);
 
  		this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);

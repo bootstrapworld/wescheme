@@ -31,7 +31,7 @@ span.cm-scheme-rparen                      {color: black;}
  Circle of Evaluation and Code styling
  */
 
-.circleevalsexp .over{border: solid 5px gray;}
+.circleevalsexp .over{background: gray;}
 
 .operator:hover, .value:hover{cursor: pointer; }
 .codesexp, .circleevalsexp{display: inline-block;}
@@ -46,10 +46,13 @@ span.cm-scheme-rparen                      {color: black;}
   clear:          none;
   border:         2px solid black;
   background:     white;
-  border-radius:  20px;
   text-align:     center;
+  border-radius:  20px;
   -moz-border-radius: 20px;
   -webkit-border-radius:20px;
+  box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
+  -moz-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
+  -webkit-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
 }
 
 .circleevalsexp>*{
@@ -57,10 +60,9 @@ span.cm-scheme-rparen                      {color: black;}
   vertical-align: top;
 }
 
-.circleevalsexp>.operator{
+.operator{
   display:        block;
   margin:         0px 0px 5px 0px;
-  height:         20px;
   text-align:     center;
   width:          100%;
   border-bottom:  solid 2px black;

@@ -73,8 +73,6 @@ plt.compiler = plt.compiler || {};
     expressionNode.className = (expressionNode.className==="codesexp")? "circleevalsexp" : "codesexp";
  }
  
- 
- 
  //////////////////////////////////////////////////////////////////////////////
  // ANNOTATE CIRCLES ////////////////////////////////////////////////////////////////
 
@@ -82,6 +80,7 @@ plt.compiler = plt.compiler || {};
  // assign widgets representing circles of evaluation to tokens in CM
  function programToCircles(programs, cm){
     cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
+    cm.circleIndices = [];
     // 1) convert the AST to a list of DOM trees
     var circles = programs.map(function(p){
       var dom = p.toCircles(cm);
@@ -207,17 +206,18 @@ plt.compiler = plt.compiler || {};
  // and convert all the arguments to circles as well
  callExpr.prototype.toCircles = function(cm){
     var expression = document.createElement('div'),
-        operator = this.func.toCircles(cm),
+        operator = document.createElement('span'),
         lParen = document.createElement('span'),
         rParen = document.createElement('span'),
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
-    expression.className = "circleevalsexp";
-    operator.className = "operator";
+    expression.classList.add("circleevalsexp");
+    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
     rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
+    operator.appendChild(this.func.toCircles(cm));
     expression.appendChild(lParen);
     expression.appendChild(operator);
     this.args.forEach(function(arg){ expression.appendChild(arg.toCircles(cm)); });
@@ -225,6 +225,7 @@ plt.compiler = plt.compiler || {};
     expression.draggable="true";
     expression.location = this.location;
     operator.location = this.func.location;
+    cm.circleIndices[this.location.startChar] = expression;
     return expression;
  };
  andExpr.prototype.toCircles = function(cm){
@@ -234,8 +235,8 @@ plt.compiler = plt.compiler || {};
         rParen = document.createElement('span'),
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
-    expression.className = "circleevalsexp";
-    operator.className = "operator";
+    expression.classList.add("circleevalsexp");
+    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -247,6 +248,7 @@ plt.compiler = plt.compiler || {};
     expression.appendChild(rParen);
     expression.draggable="true";
     expression.location = this.location;
+    cm.circleIndices[this.location.startChar] = expression;
     return expression;
  };
  orExpr.prototype.toCircles = function(cm){
@@ -256,8 +258,8 @@ plt.compiler = plt.compiler || {};
         rParen = document.createElement('span'),
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
-    expression.className = "circleevalsexp";
-    operator.className = "operator";
+    expression.classList.add("circleevalsexp");
+    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -269,16 +271,17 @@ plt.compiler = plt.compiler || {};
     expression.appendChild(rParen);
     expression.draggable="true";
     expression.location = this.location;
+    cm.circleIndices[this.location.startChar] = expression;
     return expression;
  };
  symbolExpr.prototype.toCircles = function(cm){
-//    var tok = cm.getTokenAt(cm.posFromIndex(this.location.endChar));
     var node = document.createElement('span');
     node.className = "value";
     node.appendChild(document.createTextNode(this.val));
     if(this.val === "true" || this.val === "false") node.className+=" wescheme-boolean";
     node.draggable="true";
     node.location = this.location;
+    cm.circleIndices[this.location.startChar] = node;
     return node;
  };
  literal.prototype.toCircles = function(cm){
@@ -290,6 +293,7 @@ plt.compiler = plt.compiler || {};
     node.appendChild(document.createTextNode(this.toString()));
     node.location = this.location;
     node.draggable="true";
+    cm.circleIndices[this.location.startChar] = node;
     return node;
  };
  jsnums.Rational.prototype.toCircles = function(cm){
@@ -298,6 +302,7 @@ plt.compiler = plt.compiler || {};
     node.appendChild(document.createTextNode(this.toString(cm)));
     node.location = this.location;
     node.draggable="true";
+    cm.circleIndices[this.location.startChar] = node;
     return node;
  };
  jsnums.BigInteger.prototype.toCircles = jsnums.Rational.prototype.toCircles;
@@ -309,6 +314,7 @@ plt.compiler = plt.compiler || {};
     node.appendChild(document.createTextNode(this.toString()));
     node.location = this.location;
     node.draggable="true";
+    cm.circleIndices[this.location.startChar] = node;
     return node;
  };
  
