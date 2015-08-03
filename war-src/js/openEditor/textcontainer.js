@@ -9,15 +9,15 @@ goog.require('plt.wescheme.RoundRobin');
 
 var fireEvent = function (element,event){
     if (document.createEventObject){
-    // dispatch for IE
-    var evt = document.createEventObject();
-    return element.fireEvent('on'+event,evt)
+      // dispatch for IE
+      var evt = document.createEventObject();
+      return element.fireEvent('on'+event,evt)
     }
     else{
-    // dispatch for firefox + others
-    var evt = document.createEvent("HTMLEvents");
-    evt.initEvent(event, true, true ); // event type,bubbling,cancelable
-    return !element.dispatchEvent(evt);
+      // dispatch for firefox + others
+      var evt = document.createEvent("HTMLEvents");
+      evt.initEvent(event, true, true ); // event type,bubbling,cancelable
+      return !element.dispatchEvent(evt);
     }
 }
 
@@ -100,8 +100,6 @@ var WeSchemeTextContainer;
 		this.impl.focus();
 	};
 
-
-
 	WeSchemeTextContainer.prototype.getCursorStartPosition = function() {
 		return this.impl.getCursorStartPosition();
 	};
@@ -113,8 +111,6 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.setCursorToEnd = function() {
 		this.impl.setCursorToEnd();
 	};
-
-
 
 	WeSchemeTextContainer.prototype.getCSS = function(pos){
 		return this.impl.getCSS(pos);
@@ -204,13 +200,12 @@ var WeSchemeTextContainer;
             // If dynamic height, we'll be doing something special below.
             try { this.editor.getWrapperElement().style.height = options.height || "100%"; } catch(e) {}
         }
-
         try {
           this.editor.getScrollerElement().style.width = "100%";
         } catch (e) {}
 
         // Setting overflow to visible to auto-resize the editor to fit
-        // its content.  It may be that IE doesn't support setting some
+        // its content.  It may be that IE <9 doesn't support setting some
         // of these attributes, so we are really crazy about putting
         // exception handling around this.
         if (options.dynamicHeight) {
@@ -315,10 +310,10 @@ var WeSchemeTextContainer;
  		this.scrollIntoView(offset, span);
 
  		//return highlightedArea;
- 		return { clear: function()  { return highlightedArea.clear(); },
- 				 find: function() {return highlightedArea.find();},
- 				 styleName: name
- 				}
+ 		return {clear: function() { return highlightedArea.clear(); },
+            find:  function() { return highlightedArea.find(); },
+            styleName: name
+            }
 	};
 	
 	CodeMirrorImplementation.prototype.moveCursor = function(offset) {
@@ -335,7 +330,6 @@ var WeSchemeTextContainer;
  			this.editor.setCursor({line: li, ch: col});
  		}
 	};
-
     
 	CodeMirrorImplementation.prototype.scrollIntoView = function(offset, margin) {
 		var moveTo = this.findHandleAndColumn(offset);
@@ -344,8 +338,6 @@ var WeSchemeTextContainer;
 
     this.editor.scrollIntoView({ line: li, ch:col }, margin);
 	};
-
-
 
 	CodeMirrorImplementation.prototype.setSelection = function(id, offset, line, column, span) {
 		// For some reason, we're getting the offset from the highlighter
@@ -365,7 +357,6 @@ var WeSchemeTextContainer;
 		this.highlightedAreas = []; 
 	};
 
-
 	// findHandleAndColumn: number -> { handle: handle, column: number }
 	// Figures out the line and column.
 	CodeMirrorImplementation.prototype.findHandleAndColumn = function(offset) {
@@ -373,11 +364,9 @@ var WeSchemeTextContainer;
     return { handle: pos.line, column: pos.ch };
 	};
 
-
 	CodeMirrorImplementation.prototype.getOffsetFromHandleAndColumn = function(handle, column) {
     return this.editor.indexFromPos({line: handle, ch: column});
 	};
-
 
 	CodeMirrorImplementation.prototype.getCursorStartPosition = function() {
 		return this.editor.indexFromPos(this.editor.getCursor(true));
@@ -394,14 +383,13 @@ var WeSchemeTextContainer;
 	CodeMirrorImplementation.prototype.shutdown = function() {
 	};
 
-
 	CodeMirrorImplementation.prototype.focus = function() {
-            // The try/catch blocks are meant to work around
-            // an issue in IE8 and CodeMirror 3.1.  It may be obsolete
-            // as soon as the issue is resolved:
-            // https://github.com/marijnh/CodeMirror/issues/1200
-	    try { this.editor.focus(); } catch (e) {}
-            try { this.editor.refresh(); } catch (e) {}
+      // The try/catch blocks are meant to work around
+      // an issue in IE8 and CodeMirror 3.1.  It may be obsolete
+      // as soon as the issue is resolved:
+      // https://github.com/marijnh/CodeMirror/issues/1200
+	    try { this.editor.focus();   } catch (e) {}
+      try { this.editor.refresh(); } catch (e) {}
 	};
 	
 	CodeMirrorImplementation.prototype.refresh = function() {
