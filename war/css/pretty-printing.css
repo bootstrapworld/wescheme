@@ -33,7 +33,7 @@ span.cm-scheme-rparen                      {color: black;}
 
 .circleevalsexp .over{background: gray;}
 
-.operator:hover, .value:hover{cursor: pointer; }
+.circleevalsexp>*:nth-child(2):hover, .value:hover{cursor: pointer; }
 .codesexp, .circleevalsexp{display: inline-block;}
 
 /* spacing between elements */
@@ -48,6 +48,7 @@ span.cm-scheme-rparen                      {color: black;}
   background:     white;
   text-align:     center;
   border-radius:  20px;
+  min-height:     40px;
   -moz-border-radius: 20px;
   -webkit-border-radius:20px;
   box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
@@ -60,7 +61,7 @@ span.cm-scheme-rparen                      {color: black;}
   vertical-align: top;
 }
 
-.operator{
+.circleevalsexp>*:nth-child(2){
   display:        block;
   margin:         0px 0px 5px 0px;
   text-align:     center;

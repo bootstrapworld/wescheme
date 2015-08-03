@@ -99,13 +99,32 @@ plt.compiler = plt.compiler || {};
     // 3) collect all values, operators and expressions
     var circles_   = document.querySelectorAll('.circleevalsexp'),
         values_    = document.querySelectorAll('.value'),
-        operators_ = document.querySelectorAll('.operator');
+        operators_ = document.querySelectorAll('.circleevalsexp>*:nth-child(2)');
  
     function startEdit(e){
       var node = e.target || e.srcElement;
       node.contentEditable = "true";
       node.addEventListener("keydown", function(e){
-        if (e.which===13){ node.contentEditable = "false"; node.blur(); e.preventDefault(); }
+        if (e.which===13){         // RETURN: blur() to save
+          node.contentEditable = "false";
+          node.blur();
+          e.preventDefault();
+        } else if (e.which===32){// :SPACE, blur(), make a newNode, and edit it
+          node.contentEditable = "false";
+          node.blur();
+          var newNode = document.createElement("span");
+          // if node.nextSibling is null, insertBefore will append to the list
+          node.parentNode.insertBefore(newNode, node.nextSibling);
+console.log(node.nextSibling);
+          newNode.classList.add("value");
+          newNode.addEventListener("click", startEdit);
+          newNode.addEventListener("blur", saveEdit);
+                            console.log('focusing');
+          node.focus();
+                            console.log('clicking');
+          node.nextSibling.click();
+          e.preventDefault();
+        }
       });
       e.preventDefault();
       node.focus();
@@ -212,7 +231,6 @@ plt.compiler = plt.compiler || {};
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
     expression.classList.add("circleevalsexp");
-    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -236,7 +254,6 @@ plt.compiler = plt.compiler || {};
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
     expression.classList.add("circleevalsexp");
-    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
@@ -259,7 +276,6 @@ plt.compiler = plt.compiler || {};
         startPos = cm.posFromIndex(this.location.startChar+1),
         endPos = cm.posFromIndex(this.location.endChar);
     expression.classList.add("circleevalsexp");
-    operator.classList.add("operator");
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
