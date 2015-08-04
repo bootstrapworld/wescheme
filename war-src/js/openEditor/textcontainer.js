@@ -6,21 +6,16 @@ goog.require('plt.wescheme.BrowserDetect');
 goog.require('plt.wescheme.RoundRobin');
 
 //hack to fire events that CodeMirror will pick up
-
 var fireEvent = function (element,event){
-    if (document.createEventObject){
-      // dispatch for IE
+    if (document.createEventObject){ // dispatch for IE
       var evt = document.createEventObject();
       return element.fireEvent('on'+event,evt)
-    }
-    else{
-      // dispatch for firefox + others
+    } else{ // dispatch for firefox + others
       var evt = document.createEvent("HTMLEvents");
       evt.initEvent(event, true, true ); // event type,bubbling,cancelable
       return !element.dispatchEvent(evt);
     }
 }
-
 plt.wescheme.fireEvent = fireEvent;
 
 var WeSchemeTextContainer;
@@ -62,7 +57,6 @@ var WeSchemeTextContainer;
 		return this.impl.getSourceB();
 	};
 
-
 	WeSchemeTextContainer.prototype.getDiv = function() {
 		return this.div;
 	};
@@ -71,7 +65,6 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.getCode = function() {
 		return normalizeString(this.impl.getCode.apply(this.impl, arguments));
 	};
-
 
 	// setCode: string -> void
 	WeSchemeTextContainer.prototype.setCode = function(code) {

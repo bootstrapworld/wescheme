@@ -109,7 +109,7 @@ plt.compiler = plt.compiler || {};
           node.contentEditable = "false";
           node.blur();
           e.preventDefault();
-        } else if (e.which===32){// :SPACE, blur(), make a newNode, and edit it
+        }/* else if (e.which===32){// SPACE, blur(), make a newNode, and edit it
           node.contentEditable = "false";
           node.blur();
           var newNode = document.createElement("span");
@@ -124,7 +124,7 @@ console.log(node.nextSibling);
                             console.log('clicking');
           node.nextSibling.click();
           e.preventDefault();
-        }
+        }*/
       });
       e.preventDefault();
       node.focus();
