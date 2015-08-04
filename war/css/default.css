@@ -427,7 +427,7 @@ span.top-aligned-inline-block {
   height: 0;
 }
 
-#printedCM{visibility: hidden; }
+#printedCM{visibility: hidden; height: 0px;}
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
 	#toolbar li {min-width: 50px;}
