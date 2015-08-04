@@ -1,32 +1,10 @@
 goog.provide('plt.wescheme.WeSchemeTextContainer');
-
-goog.provide('plt.wescheme.fireEvent');
-
 goog.require('plt.wescheme.topKeymap');
 goog.require('plt.wescheme.BrowserDetect');
-
-//hack to fire events that CodeMirror will pick up
-
-var fireEvent = function (element,event){
-    if (document.createEventObject){
-    // dispatch for IE
-    var evt = document.createEventObject();
-    return element.fireEvent('on'+event,evt)
-    }
-    else{
-    // dispatch for firefox + others
-    var evt = document.createEvent("HTMLEvents");
-    evt.initEvent(event, true, true ); // event type,bubbling,cancelable
-    return !element.dispatchEvent(evt);
-    }
-}
-
-plt.wescheme.fireEvent = fireEvent;
 
 var WeSchemeTextContainer;
 
 //TextContainers should support the following:
-
 //onchange attribute: called whenever the text changes, with this bound to the container.
 
 (function() {
@@ -56,28 +34,21 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.refresh = function() {
 		this.impl.refresh();
 	};
-
 	// Returns a behavior of the source code
 	WeSchemeTextContainer.prototype.getSourceB = function() {
 		return this.impl.getSourceB();
 	};
-
-
 	WeSchemeTextContainer.prototype.getDiv = function() {
 		return this.div;
 	};
-
 	// getCode: void -> string
 	WeSchemeTextContainer.prototype.getCode = function() {
 		return normalizeString(this.impl.getCode.apply(this.impl, arguments));
 	};
-
-
 	// setCode: string -> void
 	WeSchemeTextContainer.prototype.setCode = function(code) {
 		return this.impl.setCode(normalizeString(code));
 	};
-
 	WeSchemeTextContainer.prototype.highlight = function(id, offset, line, column, span, color) {
 		return this.impl.highlight(id, offset, line, column, span, color);
 	};
@@ -87,25 +58,18 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.moveCursor = function(offset) {
 		return this.impl.moveCursor(offset);
 	};
-
 	WeSchemeTextContainer.prototype.scrollIntoView = function(offset, margin) {
 		this.impl.scrollIntoView(offset, margin);
 	};
-
 	WeSchemeTextContainer.prototype.setSelection = function(id, offset, line, column, span) {
 		return this.impl.setSelection(id, offset, line, column, span);
 	};
-	
 	WeSchemeTextContainer.prototype.focus = function() {
 		this.impl.focus();
 	};
-
-
-
 	WeSchemeTextContainer.prototype.getCursorStartPosition = function() {
 		return this.impl.getCursorStartPosition();
 	};
-
 	WeSchemeTextContainer.prototype.setCursorToBeginning = function() {
 		this.impl.setCursorToBeginning();
 	};
@@ -113,20 +77,10 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.setCursorToEnd = function() {
 		this.impl.setCursorToEnd();
 	};
-
-
-
-	WeSchemeTextContainer.prototype.getCSS = function(pos){
+  WeSchemeTextContainer.prototype.getCSS = function(pos){
 		return this.impl.getCSS(pos);
 	}
-
 	//////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
 
     // extendEditorWithIOSKeys: editor -> void
     //
@@ -146,12 +100,9 @@ var WeSchemeTextContainer;
                             {key:'<img src="/images/ios-keyboard/undo.png">', fn: function(){editor.undo();}},
                             {key:'<img src="/images/ios-keyboard/redo.png">', fn: function(){editor.redo();}}
                            ];
-//            editor.addKeyrow(keyArray);
+            editor.addKeyrow(keyArray);
         }
     };
-
-
-
 
 	var CodeMirrorImplementation = function(parent, options, onSuccess) {
 
@@ -164,7 +115,6 @@ var WeSchemeTextContainer;
 		var that = this;
 		this.behaviorE = receiverE();
 		this.behavior = startsWith(this.behaviorE, "");
-
 		this.highlightedAreas = [];		
 				
 		
@@ -208,8 +158,8 @@ var WeSchemeTextContainer;
            }
         );
 
-        // We're no longer using the keyrow extension, now that 3rd-party keyboards are supported on iOS and Android
-        //        extendEditorWithIOSKeys(this.editor);
+        // NOTE: We're no longer using the keyrow extension, now that 3rd-party keyboards are supported on iOS and Android
+        // extendEditorWithIOSKeys(this.editor);
 
         // Under IE 7, some of these style settings appear to die.
         try { this.editor.getWrapperElement().style.width = options.width || "100%"; } catch (e) {}
@@ -281,60 +231,37 @@ var WeSchemeTextContainer;
 		this.editor.refresh();
 	};
  
-	CodeMirrorImplementation.prototype.handleAndColumnToPos = function (handle) {
-		return {
-			line: handle.handle,
-			ch: handle.column
-		}
-	}
-
-	//takes in location info, returns css
-	//fixme: is this used anywhere?
-	CodeMirrorImplementation.prototype.getCSS = function(pos) {
-		//return this.editor.getTokenAt(pos);
-		return this.editor.findMarksAt(pos);
-		//return this.editor.historySize();
-	};
-
 	//name for the current highlight's css
-    var currentHighlightNumber = 0;
-
+  var currentHighlightNumber = 0;
 	CodeMirrorImplementation.prototype.highlight = function(id, offset, line, column, span, color) {
-		offset--;
-		// For some reason, we're getting the offset from the highlighter
-		// as 1-offset, rather than 0-offset.
-		var startHandleAndColumn = this.findHandleAndColumn(parseInt(offset));
-		var endHandleAndColumn = this.findHandleAndColumn(parseInt(offset)+parseInt(span));
-		
-		var stylesheet = document.styleSheets[0]; //this is default.css
-		var name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
+		offset--; //off-by-one otherwise
+		var stylesheet = document.styleSheets[0], //this is default.css
+        name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 
 		currentHighlightNumber++;
             
-            if (stylesheet.insertRule) {
-                stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
-            } else {
-	        // IE8 compatibility
-                stylesheet.addRule("." + name, "background-color: " + color + "", 0);
-            }
+    if (stylesheet.insertRule) {
+      stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
+    } else { // IE8 compatibility
+      stylesheet.addRule("." + name, "background-color: " + color + "", 0);
+    }
 
-		
-		var highlightedArea = this.editor.markText(this.handleAndColumnToPos(startHandleAndColumn), 
-					this.handleAndColumnToPos(endHandleAndColumn), 
-					{className: name});
+		var start = this.editor.posFromIndex(parseInt(offset)),
+        end = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
+        highlightedArea = this.editor.markText(start, end, {className: name});
 
  		this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);
 
  		//return highlightedArea;
- 		return { clear: function()  { return highlightedArea.clear(); },
- 				 find: function() {return highlightedArea.find();},
- 				 styleName: name
+ 		return {clear: function() { return highlightedArea.clear(); },
+            find: function() { return highlightedArea.find();  },
+            styleName: name
  				}
 	};
 	
 	CodeMirrorImplementation.prototype.moveCursor = function(offset) {
-		var moveTo = this.findHandleAndColumn(offset);
+		var moveTo = this.editor.posFromIndex(offset);
 		var li = moveTo.handle;
 		var col = moveTo.column - 1; //off-by-one otherwise
 		var currLine = this.editor.getCursor(false).line;
@@ -348,48 +275,23 @@ var WeSchemeTextContainer;
  		}
 	};
 
-    
 	CodeMirrorImplementation.prototype.scrollIntoView = function(offset, margin) {
-		var moveTo = this.findHandleAndColumn(offset);
-		var li = moveTo.handle;
-		var col = moveTo.column - 1; //off-by-one otherwise
-
-    this.editor.scrollIntoView({ line: li, ch:col }, margin);
+		var moveTo = this.editor.posFromIndex(offset);
+    moveTo.ch--; //off-by-one otherwise
+    this.editor.scrollIntoView(moveTo, margin);
 	};
-
-
 
 	CodeMirrorImplementation.prototype.setSelection = function(id, offset, line, column, span) {
-		// For some reason, we're getting the offset from the highlighter
-		// as 1-offset, rather than 0-offset.
-    offset--;
- 
-		var startHandleAndColumn = this.editor.posFromIndex(parseInt(offset));
-		var endHandleAndColumn = this.editor.posFromIndex(parseInt(offset)+parseInt(span));
-
-		this.editor.setSelection(startHandleAndColumn, endHandleAndColumn);
+    offset--; //off-by-one otherwise
+		var start = this.editor.posFromIndex(parseInt(offset));
+		var end = this.editor.posFromIndex(parseInt(offset)+parseInt(span));
+		this.editor.setSelection(start, end);
 	};
-
+  // clear all textMarkers, and reset the highlightedAreas array
 	CodeMirrorImplementation.prototype.unhighlightAll = function () {
-		for(var i = 0; i < this.highlightedAreas.length; i++) {
-		    this.highlightedAreas[i].clear();
-		}
-		this.highlightedAreas = []; 
+    this.highlightedAreas.forEach(function(ha){ ha.clear(); });
+		this.highlightedAreas = [];
 	};
-
-
-	// findHandleAndColumn: number -> { handle: handle, column: number }
-	// Figures out the line and column.
-	CodeMirrorImplementation.prototype.findHandleAndColumn = function(offset) {
-    var pos = this.editor.posFromIndex(offset);
-    return { handle: pos.line, column: pos.ch };
-	};
-
-
-	CodeMirrorImplementation.prototype.getOffsetFromHandleAndColumn = function(handle, column) {
-    return this.editor.indexFromPos({line: handle, ch: column});
-	};
-
 
 	CodeMirrorImplementation.prototype.getCursorStartPosition = function() {
 		return this.editor.indexFromPos(this.editor.getCursor(true));
@@ -406,55 +308,28 @@ var WeSchemeTextContainer;
 	CodeMirrorImplementation.prototype.shutdown = function() {
 	};
 
-
 	CodeMirrorImplementation.prototype.focus = function() {
-            // The try/catch blocks are meant to work around
-            // an issue in IE8 and CodeMirror 3.1.  It may be obsolete
-            // as soon as the issue is resolved:
-            // https://github.com/marijnh/CodeMirror/issues/1200
-	    try { this.editor.focus(); } catch (e) {}
-            try { this.editor.refresh(); } catch (e) {}
+    // The try/catch blocks are meant to work around
+    // an issue in IE8 and CodeMirror 3.1.  It may be obsolete
+    // as soon as the issue is resolved:
+    // https://github.com/marijnh/CodeMirror/issues/1200
+    try { this.editor.focus();   } catch (e) {}
+    try { this.editor.refresh(); } catch (e) {}
 	};
 	
 	CodeMirrorImplementation.prototype.refresh = function() {
 		this.editor.refresh();
 	};
-
-
+ 
+ 	//takes in location info, returns css
+	CodeMirrorImplementation.prototype.getCSS = function(pos) {
+		return this.editor.findMarksAt(pos);
+	};
 	//////////////////////////////////////////////////////////////////////
 	// Helpers
-
-
 	var normalizeString = function(s) {
 		return s.replace(/\r\n/g, "\n");
 	};
-
-
-
-	var hasClass = function(element, className) {
-		var classes = element.className;
-		return classes && new RegExp("(^| )" + className + "($| )").test(classes);
-	};
-
-
-	var addClass = function(element, className) {
-		if (!hasClass(element, className)) {
-			element.className = ((element.className.split(" ")).concat([className])).join(" ");
-		}
-	};
-
-	var removeClass = function(element, className) {
-		if (hasClass(element, className)) {
-			var classes = element.className.split(" ");
-			for (var i = classes.length - 1 ; i >= 0; i--) {
-				if (classes[i] === className) {
-					classes.splice(i, 1);
-				}
-			}
-			element.className = classes.join(" ");
-		}
-	};
-
 
 })();
 
