@@ -49,6 +49,7 @@ body {
     padding: 0px;
     margin: 0px;
     border: 0px;
+    font-size: 10pt;
 }
 
 #splitpane {
@@ -228,8 +229,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     height:			100%;
     overflow:		auto;
     background:		white url(/css/images/fadeIcon.png) no-repeat right bottom;
-    font-size:		12px; 
-    font-family:	Monaco, sans-serif; 
+    font-family:	Monaco, sans-serif;
     padding:        0px;
     margin: 		0px;
     borders:		0px;
@@ -261,7 +261,6 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     margin:		0px;
     overflow:		auto;
     font-family:	Monaco, sans-serif;
-    font-size:		12px;
     background:         none;
     position: absolute;
 }
@@ -276,8 +275,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 #inter input{
     width:              90%;
     height:             100%;
-    font-size:		12px; 
-    font-family:	Monaco, sans-serif; 
+    font-family:	Monaco, sans-serif;
     border:		0px;
     outline: 0 !important; /* disable focus ring in Safari */
     background:         none;
@@ -315,7 +313,6 @@ div.moby-error {
     border-width: 1px 0px;
     color: red;
     width: 100%;
-   /*font-size: large;*/
 }
 
 .colored-link {

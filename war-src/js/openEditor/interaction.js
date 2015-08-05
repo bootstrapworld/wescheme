@@ -200,8 +200,6 @@ WeSchemeInteractions = (function () {
             textareaSpan,
             {   dynamicHeight: true,
                 lineNumbers: false,
-                theme: "scheme-interactive",
-                //stylesheet: "/js/codemirror/contrib/scheme/css/schemecolors-interactive.css",
                 content: nextCode,
                 makeTransparentIframe: true,
                 readOnly: true,     // sets CM to readOnly mode, but still blinks the cursor
