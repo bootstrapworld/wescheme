@@ -66,12 +66,16 @@ plt.wescheme.topKeymap = function(e) {
         (plt.wescheme.BrowserDetect.OS==="Mac" ? e.metaKey : e.ctrlKey)) {
       var size = parseInt(document.getElementById('middle').style.fontSize) || 10;
       document.getElementById('middle').style.fontSize=(size+1)+'pt';
+      var cms = document.getElementsByClassName('CodeMirror');
+      for(var i=0; i<cms.length; i++){ cms[i].CodeMirror.refresh(); }
       return false;
     }
     if (e.keyCode === ZOOMOUT_KEYCODE &&
         (plt.wescheme.BrowserDetect.OS==="Mac" ? e.metaKey : e.ctrlKey)) {
       var size = parseInt(document.getElementById('middle').style.fontSize) || 10;
       document.getElementById('middle').style.fontSize=(size-1)+'pt';
+      var cms = document.getElementsByClassName('CodeMirror');
+      for(var i=0; i<cms.length; i++){ cms[i].CodeMirror.refresh(); }
       return false;
     }
 
