@@ -62,6 +62,7 @@ plt.wescheme.topKeymap = function(e) {
       }
       return false;
     }
+  
     if (e.keyCode === ZOOMIN_KEYCODE &&
         (plt.wescheme.BrowserDetect.OS==="Mac" ? e.metaKey : e.ctrlKey)) {
       var size = parseInt(document.getElementById('middle').style.fontSize) || 10;
