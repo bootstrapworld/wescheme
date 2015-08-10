@@ -91,7 +91,6 @@ goog.require('plt.compiler.compile');
           dom.appendChild(document.createTextNode("at: line " + stacktrace[i].line +
                                                   ", column " + stacktrace[i].column));
         }
-
         return dom;
     };
 
@@ -131,8 +130,19 @@ goog.require('plt.compiler.compile');
             programCode = null, // Set it to null, so that the client-side compiler is invoked.
             permissions = aProgram.getPermissions(),
             notes       = aProgram.getNotes();
+ console.log(aProgram);
  
-            var j = jQuery("#interactions");
+            var j = jQuery("#interactions"),
+                b = document.getElementsByTagName("body")[0],
+                desc = document.createElement("div"),
+                titlespan = document.createElement("span"),
+                notesspan = document.createElement("span");
+ 
+            desc.id = "description";
+            titlespan.id = "title";
+            notesspan.id = "notes";
+            titlespan.appendChild(document.createTextNode(title));
+            notesspan.appendChild(document.createTextNode(notes));
 
             var supportsFullScreen = function() {
                 var elem = document.createElement('div');
@@ -152,12 +162,15 @@ goog.require('plt.compiler.compile');
                 }
             };
             if(supportsFullScreen()) {
-                jQuery("<div><img src='/images/fullscreen.png' id='fullscreenButton' width='16' height='16'></div>")
-                    .css("float", "right")
-                    .css("cursor", "auto")
+                jQuery("<input type='button' value='Run Fullscreen'>")
+                    .css("margin-top", "20px")
                     .click(toggleFullscreen)
-                    .appendTo(j);
+                    .appendTo(b);
             }
+ 
+ b.insertBefore(titlespan, b.firstChild);
+ desc.appendChild(notesspan);
+ b.appendChild(desc);
 
             // Change the title of the document to that of the program.
             document.title = title;

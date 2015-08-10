@@ -31,9 +31,25 @@
   body{
     background: url(css/images/bootBG.png) no-repeat fixed white;
     background-position: bottom right; width: 100%;
+    margin: 0px;
+    font-family: Lato, Century Gothic, Arial, Helvetica, sans-serif;
+    text-align: center;
   }
-
+  #description{
+    margin: 20px;
+    display: block;
+    border-top: solid 2px black;
+  }
+  #title{
+    display: block;
+    font-size: 40px;
+    border-bottom: solid 2px;
+    margin: 20px;
+    padding-bottom: 20px;
+  }
+  #interactions{ white-space: pre; font-family: monospace; }
   #fullscreenButton{ margin-right: 20px; }
+
 </style>
 <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
 <script src="/editor/jquery.createdomnodes-min.js" type="text/javascript"></script>
