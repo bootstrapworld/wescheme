@@ -27,7 +27,14 @@
 <jsp:include page="/js/compat/compat.jsp"/>
 
 <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" id="style" />
+<style>
+  body{
+    background: url(css/images/bootBG.png) no-repeat fixed white;
+    background-position: bottom right; width: 100%;
+  }
 
+  #fullscreenButton{ margin-right: 20px; }
+</style>
 <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
 <script src="/editor/jquery.createdomnodes-min.js" type="text/javascript"></script>
 <script src="/js/easyXDM/easyXDM-min.js" type="text/javascript"></script>

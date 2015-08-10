@@ -28,12 +28,9 @@ goog.require('plt.compiler.compile');
     var Runner = function(compilationServerUrl, interactionsDiv) {
         var that = this;
         this.interactionsDiv = jQuery(interactionsDiv);
-        this.evaluator = new Evaluator({
-	    write: function(thing) {
-	        that.addToInteractions(thing);
-	    },
-	    compilationServletUrl: compilationServerUrl
-        });
+        this.evaluator = new Evaluator({ write: function(thing) { that.addToInteractions(thing); },
+                                        compilationServletUrl: compilationServerUrl
+                                       });
         this.evaluator.setImageProxy("/imageProxy");
         this.evaluator.setRootLibraryPath("/js/mzscheme-vm/collects");
         this.evaluator.setDynamicModuleLoader(
@@ -43,50 +40,38 @@ goog.require('plt.compiler.compile');
 
     Runner.prototype.runCompiledCode = function(compiledCode, permStringArray) {
         var that = this;
-        var onSuccessRun = function() {
-        };
-        var onFailRun = function(exn) {
-	    that.renderErrorAsDomNode(exn);
-        };
+        var onSuccessRun = function() { };
+        var onFailRun = function(exn) { that.renderErrorAsDomNode(exn); };
         this.evaluator.executeCompiledProgram((0,eval)('(' + compiledCode + ')'),
-					      onSuccessRun,
-					      onFailRun);
+                                              onSuccessRun,
+                                              onFailRun);
     };
-
 
     Runner.prototype.runSourceCode = function(title, sourceCode, permStringArray) {
         var that = this;
-        var onSuccessRun = function() {
-        };
-        var onFailRun = function(exn) {
-	    that.renderErrorAsDomNode(exn);
-        };
+        var onSuccessRun = function() { };
+        var onFailRun = function(exn) { that.renderErrorAsDomNode(exn); };
         this.evaluator.executeProgram(title,
                                       sourceCode,
-				      onSuccessRun,
-				      onFailRun);
+                                      onSuccessRun,
+                                      onFailRun);
     };
-
-
 
     // Returns if x is a dom node.
     function isDomNode(x) {
         return (x.nodeType != undefined);
     }
 
-
     Runner.prototype.addToInteractions = function (interactionVal) {
-        if (isDomNode(interactionVal)) {
-	    this.interactionsDiv.append(interactionVal);
-        } else {
-	    var newArea = jQuery("<div style='width: 100%'></div>");
-	    newArea.text(interactionVal);
-	    this.interactionsDiv.append(newArea);
-        }
-        this.interactionsDiv.attr("scrollTop", this.interactionsDiv.attr("scrollHeight"));
+      if (isDomNode(interactionVal)) {
+        this.interactionsDiv.append(interactionVal);
+      } else {
+        var newArea = jQuery("<div style='width: 100%'></div>");
+        newArea.text(interactionVal);
+        this.interactionsDiv.append(newArea);
+      }
+      this.interactionsDiv.attr("scrollTop", this.interactionsDiv.attr("scrollHeight"));
     };
-
-
 
     // renderErrorAsDomNode: exception -> element
     // Given an exception, produces error dom node to be displayed.
@@ -103,8 +88,8 @@ goog.require('plt.compiler.compile');
 
         var stacktrace = this.evaluator.getTraceFromExn(err);
         for (var i = 0; i < stacktrace.length; i++) {
-	    dom.appendChild(document.createTextNode("at: line " + stacktrace[i].line + 
-						    ", column " + stacktrace[i].column));
+          dom.appendChild(document.createTextNode("at: line " + stacktrace[i].line +
+                                                  ", column " + stacktrace[i].column));
         }
 
         return dom;
@@ -139,16 +124,15 @@ goog.require('plt.compiler.compile');
 
 
     function init(compilationServerUrl, publicId) { 
-        var runner = 
-	    new Runner(compilationServerUrl, document.getElementById('interactions'));
-        var afterLoad = function(aProgram) {
-	    var title = aProgram.getTitle();
-	    var sourceCode = aProgram.getSourceCode();
-        var programCode = null; // Set it to null, so that the client-side compiler is invoked.
-	    var permissions = aProgram.getPermissions();
-            
+      var runner = new Runner(compilationServerUrl, document.getElementById('interactions'));
+      var afterLoad = function(aProgram) {
+        var title = aProgram.getTitle(),
+            sourceCode = aProgram.getSourceCode(),
+            programCode = null, // Set it to null, so that the client-side compiler is invoked.
+            permissions = aProgram.getPermissions(),
+            notes       = aProgram.getNotes();
+ 
             var j = jQuery("#interactions");
-
 
             var supportsFullScreen = function() {
                 var elem = document.createElement('div');
@@ -156,26 +140,19 @@ goog.require('plt.compiler.compile');
                          elem.mozRequestFullScreen || 
                          elem.requestFullscreen) !== undefined);
             };
-
             var toggleFullscreen = function() {
                 var elem;
-                if (j.find("canvas").length == 1) {
-                    elem = j.find("canvas").get(0);
-                } else {
-                    elem = j.get(0);
-                }
+                if (j.find("canvas").length == 1) { elem = j.find("canvas").get(0); }
+                else { elem = j.get(0); }
                 if (elem.webkitRequestFullscreen) {
                     elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
                 } else {
-                    if (elem.mozRequestFullScreen) {
-                        elem.mozRequestFullScreen();
-                    } else {
-                        elem.requestFullscreen();
-                    }
+                    if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
+                    else { elem.requestFullscreen(); }
                 }
             };
             if(supportsFullScreen()) {
-                jQuery("<div><img src='/images/fullscreen.png' width='16' height='16'></div>")
+                jQuery("<div><img src='/images/fullscreen.png' id='fullscreenButton' width='16' height='16'></div>")
                     .css("float", "right")
                     .css("cursor", "auto")
                     .click(toggleFullscreen)
@@ -185,17 +162,15 @@ goog.require('plt.compiler.compile');
             // Change the title of the document to that of the program.
             document.title = title;
             if (programCode) {
-	        runner.runCompiledCode(programCode, permissions);
+              runner.runCompiledCode(programCode, permissions);
             } else  {
-
-
                 ///
                 // FIXME: add call to queue/retrieve a server-side compilation here.
                 ///
                 // Only do this if we have no other choice.
                 initializeRoundRobinCompilation(runner.evaluator,
                                                 function() {
-	                                            runner.runSourceCode(title, sourceCode, permissions);
+                                                  runner.runSourceCode(title, sourceCode, permissions);
                                                 });
             }
         };
