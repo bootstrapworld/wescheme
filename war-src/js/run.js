@@ -130,7 +130,6 @@ goog.require('plt.compiler.compile');
             programCode = null, // Set it to null, so that the client-side compiler is invoked.
             permissions = aProgram.getPermissions(),
             notes       = aProgram.getNotes();
- console.log(aProgram);
  
             var j = jQuery("#interactions"),
                 b = document.getElementsByTagName("body")[0],
@@ -168,9 +167,9 @@ goog.require('plt.compiler.compile');
                     .appendTo(b);
             }
  
- b.insertBefore(titlespan, b.firstChild);
- desc.appendChild(notesspan);
- b.appendChild(desc);
+            b.insertBefore(titlespan, b.firstChild);
+            desc.appendChild(notesspan);
+            b.appendChild(desc);
 
             // Change the title of the document to that of the program.
             document.title = title;
