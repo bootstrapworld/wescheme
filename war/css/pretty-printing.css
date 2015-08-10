@@ -34,7 +34,7 @@ span.cm-scheme-rparen                      {color: black;}
 .circleevalsexp .over{background: gray;}
 
 .circleevalsexp>*:nth-child(2):hover, .value:hover{cursor: pointer; }
-.codesexp, .circleevalsexp{display: inline-block;}
+.codesexp, .circleevalsexp{display: inline-block; font-family: "Droid Sans Mono", Monaco, monospace;}
 
 /* spacing between elements */
 .codesexp>* {margin-right: 8px;}
