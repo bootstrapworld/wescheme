@@ -15,6 +15,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 <title>WeScheme</title>
 
@@ -47,7 +48,7 @@
     margin: 20px;
     padding-bottom: 20px;
   }
-  #interactions{ white-space: pre; font-family: monospace; }
+  #interactions{ white-space: pre; font-family: monospace; display: inline-block;}
   #fullscreenButton{ margin-right: 20px; }
 
 </style>

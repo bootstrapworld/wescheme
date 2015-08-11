@@ -64,10 +64,12 @@ goog.require('plt.compiler.compile');
 
     Runner.prototype.addToInteractions = function (interactionVal) {
       if (isDomNode(interactionVal)) {
+        interactionVal.style.display="inline-block";
         this.interactionsDiv.append(interactionVal);
       } else {
         var newArea = jQuery("<div style='width: 100%'></div>");
         newArea.text(interactionVal);
+        newArea.style.display="inline-block";
         this.interactionsDiv.append(newArea);
       }
       this.interactionsDiv.attr("scrollTop", this.interactionsDiv.attr("scrollHeight"));
@@ -142,23 +144,40 @@ goog.require('plt.compiler.compile');
             notesspan.id = "notes";
             titlespan.appendChild(document.createTextNode(title));
             notesspan.appendChild(document.createTextNode(notes));
-
+ 
             var supportsFullScreen = function() {
-                var elem = document.createElement('div');
-                return ((elem.webkitRequestFullscreen ||
-                         elem.mozRequestFullScreen || 
-                         elem.requestFullscreen) !== undefined);
+                var elem = document.createElement("div");
+                return ((elem.webkitRequestFullscreen
+                        || elem.mozRequestFullScreen
+                        || elem.msRequestFullscreen
+                        || elem.requestFullscreen) !== undefined);
             };
+ 
             var toggleFullscreen = function() {
-                var elem;
-                if (j.find("canvas").length == 1) { elem = j.find("canvas").get(0); }
-                else { elem = j.get(0); }
-                if (elem.webkitRequestFullscreen) {
-                    elem.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
-                } else {
-                    if (elem.mozRequestFullScreen) { elem.mozRequestFullScreen(); }
-                    else { elem.requestFullscreen(); }
-                }
+              // obtain the element being added
+              var elem;
+              if (j.find("canvas").length == 1) { elem = j.find("canvas").get(0); }
+              else { elem = j.get(0); }
+
+              // assign fullscreen functions to be be native, or the vendor-prefixed function
+              elem.requestFullscreen = elem.requestFullscreen
+                                    || elem.mozRequestFullScreen // firefox capitalizes the 'S'
+                                    || elem.webkitRequestFullscreen
+                                    || elem.msRequestFullscreen;
+              document.exitFullscreen = document.exitFullscreen
+                                    || document.webkitExitFullscreen
+                                    || document.msExitFullscreen
+                                    || document.mozCancelFullScreen;  // firefox is weird
+                                   
+              var fullscreenElement = document.fullscreenElement
+                                    || document.mozFullScreenElement // firefox capitalizes the 'S'
+                                    || document.webkitFullscreenElement
+                                    || document.msFullscreenElement;
+
+              // get fullscreen access
+              if(!fullscreenElement) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+              else document.exitFullscreen();
+ 
             };
             if(supportsFullScreen()) {
                 jQuery("<input type='button' value='Run Fullscreen'>")
