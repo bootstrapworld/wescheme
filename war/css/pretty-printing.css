@@ -31,38 +31,42 @@ span.cm-scheme-rparen                      {color: black;}
  Circle of Evaluation and Code styling
  */
 
-.circleevalsexp .over{background: gray;}
-
-.circleevalsexp>*:nth-child(2):hover, .value:hover{cursor: pointer; }
-.codesexp, .circleevalsexp{display: inline-block; font-family: "Droid Sans Mono", Monaco, monospace;}
+#circlesEditor, .sexp{display: inline-block; font-family: monospace; font-size: 13px; }
+#circlesEditor>.cm-whitespace {display: block;}
 
 /* spacing between elements */
-.codesexp>* {margin-right: 8px;}
-.codesexp>.lParen, .codesexp>*:nth-last-child(2){margin-right: 0px; clear: none;}
+.circles .sexp>* {margin-right: 8px;}
+.circles .sexp>.lParen, .circles .sexp>*:nth-last-child(2){margin-right: 0px; clear: none;}
 
-.circleevalsexp>.lParen, .circleevalsexp>.rParen{display: none;}
-.circleevalsexp{
+.circles .sexp>.lParen, .circles .sexp>.rParen{display: none;}
+.circles .sexp>.sexp{margin: 3px;}
+.circles .sexp{
   margin:         5px;
   clear:          none;
   border:         2px solid black;
   background:     white;
+  cursor:         move;
   text-align:     center;
   border-radius:  20px;
   min-height:     40px;
+  min-width       20px;
+  transition:     background 5s ease-in;
   -moz-border-radius: 20px;
   -webkit-border-radius:20px;
   box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
   -moz-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
   -webkit-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
 }
+.code .sexp{display: inline; max-width: 100%;}
 
-.circleevalsexp>*{
-  margin:         0px 10px 5px 10px;
+
+.circles .sexp>*{
+  margin:         0px;
   min-height:     20px;
   vertical-align: top;
 }
 
-.circleevalsexp>*:nth-child(2){
+.circles .sexp>*:nth-child(2){
   display:        block;
   margin:         0px 0px 5px 0px;
   text-align:     center;
@@ -71,4 +75,41 @@ span.cm-scheme-rparen                      {color: black;}
   border-radius:  15px 15px 0px 0px; /* top left, top right, bottom right, bottom left */
   background:     black;
   color:          white;
+  transition:     background 3s ease-in;
 }
+.value{
+  display:        inline-block;
+  transition:     min-width .2s;
+  border-radius:   8px;
+  cursor:         pointer;
+  border:         solid transparent 2px;
+}
+.circles .value{text-align: center; min-width: 10px; max-width: 150px; }
+.code .value{max-width: inherit; display: inline; }
+
+.circles .sexp>:nth-child(2)>*{ color: white; }
+
+.cm-whitespace{
+  min-width:      0px;
+  display:        inline-block;
+  min-height:     15px;
+  transition:     min-width .2s;
+  cursor:         pointer;
+}
+
+.sexp, .value{
+  word-wrap:      break-word;
+  white-space:    pre-wrap;
+  word-break:     normal;
+}
+
+.circles .cm-whitespace{ white-space: pre-line; min-width: 10px; }
+
+.lineBreak{display: block;}
+.circles .lineBreak{display: none;}
+.code .cm-whitespace{min-width: 0px; height: inherit; min-height: none; vertical-align: bottom;}
+.editing, .insert, .replace, .circles .cm-whitespace:hover{ min-width: 20px; border-radius:  5px;}
+.circles .cm-whitespace+.lineBreak+.cm-whitespace{display: none;}
+.circles .cm-whitespace:hover, .insert{background: lightblue;}
+.replace{background: red;}
+.code :focus, .circles :focus{outline:none; border: solid 2px orange; }

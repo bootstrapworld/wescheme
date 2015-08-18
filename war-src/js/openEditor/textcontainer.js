@@ -234,8 +234,8 @@ var WeSchemeTextContainer;
   var currentHighlightNumber = 0;
 	CodeMirrorImplementation.prototype.highlight = function(id, offset, line, column, span, color) {
 		offset--; //off-by-one otherwise
-		var stylesheet = document.styleSheets[0], //this is default.css
-        name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
+		var stylesheet = document.styleSheets[document.styleSheets.length-1]; // get last stylesheet
+    var name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 
 		currentHighlightNumber++;
             
@@ -249,7 +249,10 @@ var WeSchemeTextContainer;
         end = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
         highlightedArea = this.editor.markText(start, end, {className: name});
 
- 		this.highlightedAreas.push(highlightedArea);
+    // highlight circles of evaluation, if they're present
+    if(this.editor.circleIndices) this.editor.circleIndices[offset].classList.add(name);
+ 
+    this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);
 
  		//return highlightedArea;
