@@ -120,7 +120,8 @@ var WeSchemeTextContainer;
 					matchBrackets: (options.matchBrackets !== undefined ? options.matchBrackets : true),
 					value: options.content || "",
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
+          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
+          autoCloseBrackets: true
 				});
  
        // timer and annotation function
@@ -250,7 +251,8 @@ var WeSchemeTextContainer;
         highlightedArea = this.editor.markText(start, end, {className: name});
 
     // highlight circles of evaluation, if they're present
-    if(this.editor.circleIndices) this.editor.circleIndices[offset].classList.add(name);
+    if(this.editor.circleIndices && this.editor.circleIndices[offset])
+      this.editor.circleIndices[offset].classList.add(name);
  
     this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);

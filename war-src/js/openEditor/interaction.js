@@ -140,6 +140,7 @@ WeSchemeInteractions = (function () {
               theme: "scheme-interactive",
               //stylesheet: "/js/codemirror/contrib/scheme/css/schemecolors-interactive.css",
               makeTransparentIframe: true,
+              autoCloseBrackets: true,
               extraKeys: {
                   "Enter":function (ed) {
                       if (that.hasCompleteExpression()) {
