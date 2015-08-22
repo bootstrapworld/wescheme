@@ -44,13 +44,11 @@ span.cm-scheme-rparen                      {color: black;}
   margin:         5px;
   clear:          none;
   border:         2px solid black;
-  background:     white;
   cursor:         move;
   text-align:     center;
   border-radius:  20px;
-  min-height:     40px;
-  min-width       20px;
-  transition:     background 5s ease-in;
+  min-height:     50px;
+  min-width:       40px;
   -moz-border-radius: 20px;
   -webkit-border-radius:20px;
   box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
@@ -82,14 +80,13 @@ span.cm-scheme-rparen                      {color: black;}
   transition:     min-width .2s;
   border-radius:   8px;
   cursor:         pointer;
-  border:         solid transparent 2px;
 }
-.circles .value{text-align: center; min-width: 10px; max-width: 150px; }
+.circles .value{text-align: center; min-width: 10px; max-width: 150px; border: solid transparent 2px;}
 .code .value{max-width: inherit; display: inline; }
 
 .circles .sexp>:nth-child(2)>*{ color: white; }
 
-.cm-whitespace{
+.circles .cm-whitespace{
   min-width:      0px;
   display:        inline-block;
   min-height:     15px;
@@ -103,7 +100,7 @@ span.cm-scheme-rparen                      {color: black;}
   word-break:     normal;
 }
 
-.circles .cm-whitespace{ white-space: pre-line; min-width: 10px; }
+.circles .cm-whitespace{ white-space: pre-line; min-width: 10px; vertical-align: middle;}
 
 .lineBreak{display: block;}
 .circles .lineBreak{display: none;}
@@ -112,4 +109,4 @@ span.cm-scheme-rparen                      {color: black;}
 .circles .cm-whitespace+.lineBreak+.cm-whitespace{display: none;}
 .circles .cm-whitespace:hover, .insert{background: lightblue;}
 .replace{background: red;}
-.code :focus, .circles :focus{outline:none; border: solid 2px orange; }
+.code :focus, .circles :focus{outline:none; border: solid 2px orange; border-radius:  20px;}

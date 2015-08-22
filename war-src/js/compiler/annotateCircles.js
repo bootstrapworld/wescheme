@@ -108,6 +108,7 @@ plt.compiler = plt.compiler || {};
     circles.forEach(function(circle){
       var from = cm.posFromIndex(circle.location.startChar),
           to   = cm.posFromIndex(circle.location.endChar);
+//  console.log('inserting marking between '+circle.location.startChar+'-'+circle.location.endChar);
       cm.markText(from, to, {replacedWith: circle
                           , handleMouseEvents: false
                           , _circles: true
@@ -359,14 +360,15 @@ plt.compiler = plt.compiler || {};
                                       
   function makeExpression(func, args, location, cm){
     var expression = document.createElement('div'),
-        operator = document.createElement('span'),
+        ariaStr = (func? func.val : "empty") +
+                  " expression, " + args.length+" argument" +
+                  (args.length===1 ? "" : "s"),
         lParen = document.createElement('span'),
         rParen = document.createElement('span'),
         startPos = cm.posFromIndex(location.startChar+1),
         endPos = cm.posFromIndex(location.endChar);
     expression.classList.add("sexp");
     expression.location = location;
-    operator.location = func.location;
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.location = location.start();
@@ -374,12 +376,16 @@ plt.compiler = plt.compiler || {};
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
     rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
     expression.appendChild(lParen);
-    operator.appendChild(func.toCircles(cm));
-    expression.appendChild(operator);
+    if(func){
+      var operator = document.createElement('span');
+      operator.location = func.location;
+      operator.appendChild(func.toCircles(cm));
+      expression.appendChild(operator);
+    }
     args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles(cm), cm); });
     addChildAfterPos(expression, rParen, cm);
     expression.draggable="true";
-    expression.setAttribute('aria-label', func.val+" expression, "+args.length+" arguments");
+    expression.setAttribute('aria-label', ariaStr);
     expression.setAttribute('role', "treeitem");
     cm.circleIndices[location.startChar] = expression;
     return expression;
