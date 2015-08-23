@@ -105,7 +105,7 @@ span.cm-scheme-rparen                      {color: black;}
 .lineBreak{display: block;}
 .circles .lineBreak{display: none;}
 .code .cm-whitespace{min-width: 0px; height: inherit; min-height: none; vertical-align: bottom;}
-.editing, .insert, .replace, .circles .cm-whitespace:hover{ min-width: 20px; border-radius:  5px;}
+.editing, .insert, .replace, .circles .sexp .cm-whitespace:hover{ min-width: 20px; border-radius:  5px;}
 .circles .cm-whitespace+.lineBreak+.cm-whitespace{display: none;}
 .circles .cm-whitespace:hover, .insert{background: lightblue;}
 .replace{background: red;}

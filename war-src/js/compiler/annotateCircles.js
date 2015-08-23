@@ -73,30 +73,52 @@ plt.compiler = plt.compiler || {};
  // programToCircles : Listof Programs CM -> Listof DOM nodes
  // assign widgets representing circles of evaluation to tokens in CM
  function programToCircles(programs, cm){
-    cm.circleIndices = [];
-    cm.selectedNode = null;
     console.log('refreshing');
+    cm.circleIndices = [];
+    var updateCursorTime, lastKey, lastIndex = null;
+ 
+    // set up offscreen textarea
+    var buffer = document.getElementById('buffer') ||
+                            document.createElement("textarea");
+    buffer.id = "buffer"; buffer.style.opacity = "0";
+    buffer.style.position = "absolute";
+    if(!document.getElementById('buffer')) document.body.appendChild(buffer);
  
     cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
  
     // Tab always selects the node after the cursor, or after the currently-selected node
-    cm.on("keydown", function(cm, e){if(e.which===9) e.codemirrorIgnore = true; });
+    cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
+    document.oncopy = handleCopyCut;
+    document.oncut = handleCopyCut;
 
+    function handleCopyCut(e){
+      var active = document.activeElement;
+      if(active.classList.contains("value") ||
+         active.classList.contains("sexp")){
+        e.stopPropagation();
+        buffer.innerText = cm.getRange(active.from, active.to);
+        buffer.select();
+        try{ document.execCommand(e.type); }
+        catch(e) { console.log('problem with execCommand("copy")'); }
+        setTimeout(function(){active.focus();}, 100);
+      }
+      if(e.type==="cut") cm.replaceRange('', active.from, active.to);
+    };
+ 
     // avoid addEventListener, since it will register duplicate handlers
     cm.getWrapperElement().onkeydown = handleKey;
     function handleKey(e){
+      lastKey = e.which;
       var active = document.activeElement
       if(e.which===8 && active){
-      e.preventDefault();
-          var from = cm.posFromIndex(active.location.startChar),
-              to   = cm.posFromIndex(active.location.endChar);
-          cm.replaceRange('', from, to);
+        e.preventDefault();
+        cm.replaceRange('', active.from, active.to);
       }
       if(e.which===9){
         e.codemirrorIgnore = true; e.stopPropagation();
       }
     };
-
+ 
     // 1) convert the AST to a list of DOM trees
     var circles = programs.map(function(p){
       var dom = p.toCircles(cm);
@@ -106,14 +128,10 @@ plt.compiler = plt.compiler || {};
 
     // 2) for each tree, mark the equivalent text with the widget
     circles.forEach(function(circle){
-      var from = cm.posFromIndex(circle.location.startChar),
-          to   = cm.posFromIndex(circle.location.endChar);
-//  console.log('inserting marking between '+circle.location.startChar+'-'+circle.location.endChar);
-      cm.markText(from, to, {replacedWith: circle
-                          , handleMouseEvents: false
-                          , _circles: true
-                          , inclusiveLeft: false
-                          , inclusiveRight: false});
+      cm.markText(circle.from, circle.to,
+                  {replacedWith: circle
+                  , handleMouseEvents: false
+                  , _circles: true});
     });
  
     // 4) event handlers
@@ -130,7 +148,9 @@ plt.compiler = plt.compiler || {};
          node.classList.contains("sexp")){
          node.focus();
       } else {
-        if(node.parentNode.classList.contains("sexp")) node.parentNode.focus();
+        if(node.parentNode.classList.contains("sexp")){
+          node.parentNode.focus();
+        }
         else alert('IMPOSSIBLE: node has a non-sexp parent');
       }
       var active = document.activeElement;
@@ -158,14 +178,12 @@ plt.compiler = plt.compiler || {};
       node.onkeydown = null;
       node.contentEditable = "false";
       node.classList.remove('editing');
-      var from = cm.posFromIndex(node.location.startChar),
-          to   = cm.posFromIndex(node.location.endChar);
       var text = node.innerText;
       // add spaces if we're inserting new text
       if(node.classList.contains("cm-whitespace")){
         text = " "+node.innerText+" ";
       }
-      cm.replaceRange(text, from, to);
+      cm.replaceRange(text, node.from, node.to);
     }
  
     function insertNew(e){
@@ -184,10 +202,8 @@ plt.compiler = plt.compiler || {};
       if(document.activeElement) document.activeElement.classList.remove("selected");
       node.classList.add("selected");
       var node = e.target || e.srcElement;
-      var from = cm.posFromIndex(node.location.startChar),
-          to   = cm.posFromIndex(node.location.endChar);
       e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text', cm.getRange(from, to));
+      e.dataTransfer.setData('text', cm.getRange(node.from, node.to));
       console.log('dragging: '+(e.dataTransfer.getData('text')));
     }
     function handleDragOver(e) {
@@ -234,17 +250,13 @@ plt.compiler = plt.compiler || {};
           active.location = {startChar: idx, endChar: idx};
           return;
         }
-        var destFrom = cm.posFromIndex(node.location.startChar),
-            destTo   = cm.posFromIndex(node.location.endChar),
-            srcFrom  = cm.posFromIndex(active.location.startChar),
-            srcTo    = cm.posFromIndex(active.location.endChar),
-            text     = e.dataTransfer.getData('text');
+        var text     = e.dataTransfer.getData('text');
         // if we're inserting new text, decide if we need extra spaces
         if(node.classList.contains("cm-whitespace")){
           var start = node.location.startChar,
               end   = node.location.endChar,
-              prev  = cm.getRange(cm.posFromIndex(start-1), cm.posFromIndex(start)),
-              next  = cm.getRange(cm.posFromIndex(end), cm.posFromIndex(end+1));
+              prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
+              next  = cm.getRange(node.to, cm.posFromIndex(end+1));
           var spaceOrBracket = /\s|[\(\[\{\)\}\]]/;
           text =  (spaceOrBracket.test(prev)? "" : " ") +
                   e.dataTransfer.getData('text') +
@@ -253,14 +265,12 @@ plt.compiler = plt.compiler || {};
         // Modify the src or dest first, depending on which comes earlier in the document
         // Be sure to combine both operations into one, so undo works properly
         cm.operation(function(){
-         console.log('replacing '+node.location.startChar+'-'+node.location.endChar+
-                     ' with '+active.location.startChar+'-'+active.location.endChar);
-          if(node.location.startChar > active.location.endChar){
-            cm.replaceRange(text, destFrom, destTo);
-            cm.replaceRange('', srcFrom, srcTo);
+          if(cm.indexFromPos(active.to) < cm.indexFromPos(node.from)){
+            cm.replaceRange(text, node.from, node.to);
+            cm.replaceRange('', active.from, active.to);
           } else {
-            cm.replaceRange('', srcFrom, srcTo);
-            cm.replaceRange(text, destFrom, destTo);
+            cm.replaceRange('', active.from, active.to);
+            cm.replaceRange(text, node.from, node.to);
           }
         });
       }
@@ -278,37 +288,37 @@ plt.compiler = plt.compiler || {};
         dropTargets_=document.querySelectorAll('.cm-whitespace'),
         parent = cm.getWrapperElement();
             
-    [ ].forEach.call(values_, function (span) {
-       span.addEventListener("click",    startEdit);
-       span.addEventListener("dragstart", handleDragStart, true);
-       span.addEventListener("dragover",  handleDragOver,  true);
-       span.addEventListener("dragenter", handleDragEnter, true);
-       span.addEventListener("dragleave", handleDragLeave, true);
-       span.addEventListener("dragend",   handleDragEnd,   true);
-       span.addEventListener("drop",      handleDrop,      true);
+    [ ].forEach.call(values_, function (elt) {
+       elt.addEventListener("click",    startEdit);
+       elt.addEventListener("dragstart", handleDragStart, true);
+       elt.addEventListener("dragover",  handleDragOver,  true);
+       elt.addEventListener("dragenter", handleDragEnter, true);
+       elt.addEventListener("dragleave", handleDragLeave, true);
+       elt.addEventListener("dragend",   handleDragEnd,   true);
+       elt.addEventListener("drop",      handleDrop,      true);
     });
-    [ ].forEach.call(operators_, function (span) {
-       span.addEventListener("click",    selectNode);
-       span.addEventListener("dragstart", handleDragStart, true);
-       span.addEventListener("dragover",  handleDragOver,  true);
-       span.addEventListener("dragenter", handleDragEnter, true);
-       span.addEventListener("dragleave", handleDragLeave, true);
-       span.addEventListener("dragend",   handleDragEnd,   true);
-       span.addEventListener("drop",      handleDrop,      true);
+    [ ].forEach.call(operators_, function (elt) {
+       elt.addEventListener("click",    selectNode);
+       elt.addEventListener("dragstart", handleDragStart, true);
+       elt.addEventListener("dragover",  handleDragOver,  true);
+       elt.addEventListener("dragenter", handleDragEnter, true);
+       elt.addEventListener("dragleave", handleDragLeave, true);
+       elt.addEventListener("dragend",   handleDragEnd,   true);
+       elt.addEventListener("drop",      handleDrop,      true);
     });
-    [ ].forEach.call(circles_, function (span) {
-       span.addEventListener("click",    selectNode);
-       span.addEventListener("dragstart", handleDragStart, true);
-       span.addEventListener("dragover",  handleDragOver,  true);
-       span.addEventListener("dragend",   handleDragEnd,   true);
+    [ ].forEach.call(circles_, function (elt) {
+       elt.addEventListener("click",    selectNode);
+       elt.addEventListener("dragstart", handleDragStart, true);
+       elt.addEventListener("dragover",  handleDragOver,  true);
+       elt.addEventListener("dragend",   handleDragEnd,   true);
     });
-    [ ].forEach.call(dropTargets_, function (span) {
-       span.addEventListener("click",    startEdit);
-       span.addEventListener("dragover",  handleDragOver,  true);
-       span.addEventListener("dragenter", handleDragEnter, true);
-       span.addEventListener("dragleave", handleDragLeave, true);
-       span.addEventListener("dragend",   handleDragEnd,   true);
-       span.addEventListener("drop",      handleDrop,      true);
+    [ ].forEach.call(dropTargets_, function (elt) {
+       elt.addEventListener("click",    startEdit);
+       elt.addEventListener("dragover",  handleDragOver,  true);
+       elt.addEventListener("dragenter", handleDragEnter, true);
+       elt.addEventListener("dragleave", handleDragLeave, true);
+       elt.addEventListener("dragend",   handleDragEnd,   true);
+       elt.addEventListener("drop",      handleDrop,      true);
     });
     parent.addEventListener("dragenter", handleDragEnter, false);
     parent.addEventListener("dragover",  handleDragOver,  false);
@@ -328,20 +338,22 @@ plt.compiler = plt.compiler || {};
         lines   = str.split("\n"),
         spansMultipleLines = lines.length>1;
     br.style.height = "0"; br.className = "lineBreak";
-    parent.appendChild(makeWhitespace(startCh, lines[0]));
+    parent.appendChild(makeWhitespace(startCh, lines[0], cm));
     for(var i=1; i<lines.length; i++){
       parent.appendChild(br.cloneNode(true));
-      parent.appendChild(makeWhitespace(startCh, lines[i]));
+      parent.appendChild(makeWhitespace(startCh, lines[i], cm));
       startCh+=lines[i].length+1;
     }
     parent.appendChild(child);
     return spansMultipleLines;
  }
                                       
-  function makeWhitespace(startCh, txt){
+  function makeWhitespace(startCh, txt, cm){
     var space   = document.createElement('span');
     space.className="cm-whitespace";
     space.location = {startChar: startCh, endChar: startCh+txt.length};
+    space.from = cm.posFromIndex(startCh);
+    space.to = cm.posFromIndex(startCh+txt.length);
     space.appendChild(document.createTextNode(txt));
     return space;
   }
@@ -351,6 +363,8 @@ plt.compiler = plt.compiler || {};
     node.className = "value "+className;
     node.appendChild(document.createTextNode(valueTxt));
     node.location = location;
+    node.from = cm.posFromIndex(location.startChar);
+    node.to   = cm.posFromIndex(location.endChar);
     node.draggable="true";
     node.setAttribute('aria-label', valueTxt);
     node.setAttribute('role', "treeitem");
@@ -369,6 +383,8 @@ plt.compiler = plt.compiler || {};
         endPos = cm.posFromIndex(location.endChar);
     expression.classList.add("sexp");
     expression.location = location;
+    expression.from = cm.posFromIndex(location.startChar);
+    expression.to   = cm.posFromIndex(location.endChar);
     lParen.className = "lParen";
     rParen.className = "rParen";
     lParen.location = location.start();
