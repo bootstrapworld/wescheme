@@ -88,8 +88,7 @@ plt.compiler = plt.compiler || {};
  
     // Tab always selects the node after the cursor, or after the currently-selected node
     cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
-    document.oncopy = handleCopyCut;
-    document.oncut = handleCopyCut;
+    document.oncut = document.oncopy = handleCopyCut;
 
     function handleCopyCut(e){
       var active = document.activeElement;
@@ -99,7 +98,7 @@ plt.compiler = plt.compiler || {};
         buffer.innerText = cm.getRange(active.from, active.to);
         buffer.select();
         try{ document.execCommand(e.type); }
-        catch(e) { console.log('problem with execCommand("copy")'); }
+        catch(e) { console.log('problem with execCommand("'+e.type+'")'); }
         setTimeout(function(){active.focus();}, 100);
       }
       if(e.type==="cut") cm.replaceRange('', active.from, active.to);
@@ -122,7 +121,6 @@ plt.compiler = plt.compiler || {};
     // 1) convert the AST to a list of DOM trees
     var circles = programs.map(function(p){
       var dom = p.toCircles(cm);
-      dom.location = p.location;
       return dom;
     });
 
@@ -253,8 +251,8 @@ plt.compiler = plt.compiler || {};
         var text     = e.dataTransfer.getData('text');
         // if we're inserting new text, decide if we need extra spaces
         if(node.classList.contains("cm-whitespace")){
-          var start = node.location.startChar,
-              end   = node.location.endChar,
+          var start = cm.indexFromPos(node.from),
+              end   = cm.indexFromPos(node.to),
               prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
               next  = cm.getRange(node.to, cm.posFromIndex(end+1));
           var spaceOrBracket = /\s|[\(\[\{\)\}\]]/;

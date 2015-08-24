@@ -48,7 +48,8 @@ span.cm-scheme-rparen                      {color: black;}
   text-align:     center;
   border-radius:  20px;
   min-height:     50px;
-  min-width:       40px;
+  min-width:      40px;
+  background:     white;
   -moz-border-radius: 20px;
   -webkit-border-radius:20px;
   box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
