@@ -143,13 +143,11 @@ var initializeEditor;
             jQuery("#redo").click(function()  { myEditor.defn.impl.editor.redo(); });
             jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
             jQuery("#logout").click(function() { 
-              if(confirm("You will be logged out of WeScheme and other Google services.")) {
-                  submitPost("/logout");
-              }
-            });
-            jQuery("#arrows").click(function()  {
-              jQuery("#arrows").css("border", myEditor.defn.impl.toggleAnnotation()? "1px inset":"none");
-            });
+                                  if(confirm("You will be logged out of WeScheme and other Google services.")) {
+                                      submitPost("/logout");
+                                  }
+                              });
+            jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
             jQuery("#definitions").click(function() { defnInFocus = true;});
             var afterLoad1 = function() {
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }

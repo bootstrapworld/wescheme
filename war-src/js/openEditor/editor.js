@@ -661,7 +661,6 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.run = function(after) {
       var that = this;
- 
       // if the isRunning flag is true, bail
       if(that.isRunning===true) return false;
       // otherwise, set it to true
