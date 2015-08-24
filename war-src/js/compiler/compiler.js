@@ -89,7 +89,11 @@ plt.compiler = plt.compiler || {};
       return 'types.bignum("'+this.toString()+'")';
     };
     jsnums.FloatPoint.prototype.toBytecode = function(){
-      return 'types["float"]('+this.toString()+')';
+      var num = this.toString();
+      if(num==="+nan.0") num = "NaN";
+      if(num==="+inf.0") num = "Infinity";
+      if(num==="-inf.0") num = "-Infinity";
+      return 'types["float"]('+num+')';
     };
     jsnums.Complex.prototype.toBytecode = function(){
       return 'types.complex('+convertToBytecode(this.r)+', '+convertToBytecode(this.i)+')';
