@@ -225,7 +225,7 @@ plt.compiler = plt.compiler || {};
           accessorSymbol= new symbolExpr(that.name.val+'-'+f.val),
           defineVar = new defVar(accessorSymbol, makeFieldCall);
       // set location for all of these nodes
-      [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = that.location});
+      [defineVar, makeFieldFunc, makeFieldCall, accessorSymbol].concat(makeFieldArgs).forEach(function(p){p.location = f.location});
       stxs.push(defineVar);
     }
     this.fields.forEach(makeAccessorDefn);
@@ -330,8 +330,8 @@ plt.compiler = plt.compiler || {};
         exhaustedLoc = new quotedExpr(new literal(this.location.toVector())),
         expr = tagApplicationOperator_Module(new callExpr(condExhausted, [exhaustedLoc])
                                              , "moby/runtime/kernel/misc");
- var ifStx = new symbolExpr("if");
- ifStx.location = this.stx.location;
+    var ifStx = new symbolExpr("if");
+    ifStx.location = this.stx.location;
  
     expr.location = condExhausted.location = exhaustedLoc.location = this.location;
     for(var i=this.clauses.length-1; i>-1; i--){
@@ -439,6 +439,7 @@ plt.compiler = plt.compiler || {};
           pinfoAndTempSym = pinfo.gensym('tmp'),
           firstExprSym = pinfoAndTempSym[1],
           ifStx = new symbolExpr("if");
+      firstExprSym.notOriginalSource = true;
  
       // to match Racket's behavior, we override any expression's
       // stx to be "if", with the location of the whole expression
@@ -706,13 +707,14 @@ plt.compiler = plt.compiler || {};
           predicateId   = id+"?",
           selectorIds   = fields.map(fieldToAccessor),
           mutatorIds    = fields.map(fieldToMutator),
+          structNameLoc = that.stx[1].location,  // location of <name> in (define-struct <name> (..))
           // build bindings out of these ids
           structureBinding = new structBinding(id, false, fields, constructorId, predicateId,
                                                selectorIds, mutatorIds, null, that.stx[1].location),
-          constructorBinding = bf(constructorId, false, fields.length, false, that.location),
-          predicateBinding   = bf(predicateId, false, 1, false, that.location),
-          mutatorBinding     = bf(id+"-set!", false, 1, false, that.location),
-          refBinding         = bf(id+"-ref", false, 1, false, that.location),
+          constructorBinding = bf(constructorId, false, fields.length, false, structNameLoc),
+          predicateBinding   = bf(predicateId, false, 1, false, structNameLoc),
+          mutatorBinding     = bf(id+"-set!", false, 1, false, structNameLoc),
+          refBinding         = bf(id+"-ref", false, 1, false, structNameLoc),
  // COMMENTED OUT ON PURPOSE:
  // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
  //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
@@ -874,11 +876,16 @@ plt.compiler = plt.compiler || {};
  // Program.analyzeUses: pinfo -> pinfo
  Program.prototype.analyzeUses = function(pinfo, env){ return pinfo; };
  defVar.prototype.analyzeUses = function(pinfo){
-    // if it's a lambda, extend the environment with the function, then analyze as a lambda
-    if(this.expr instanceof lambdaExpr) pinfo.env.extend(bf(this.name.val, false, this.expr.args.length, false, this.location));
+    // extend the environment with the value or function, then analyze the expression
+    pinfo.env.extend((this.expr instanceof lambdaExpr)?
+                     bf(this.name.val, false, this.expr.args.length, false, this.location)
+                     :  new constantBinding(this.name.val, false, [], this.name.location));
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  defVars.prototype.analyzeUses = function(pinfo){
+    this.names.forEach(function(id){
+        pinfo.env.extend(new constantBinding(id.val, false, [], id.location));
+      });
     return this.expr.analyzeUses(pinfo, pinfo.env);
  };
  // analyzeClosureUses : expr pinfo -> pinfo
@@ -904,44 +911,20 @@ plt.compiler = plt.compiler || {};
     return pinfo;
  }
  defFunc.prototype.analyzeUses = function(pinfo){
-    // extend the env to include the function binding, then make a copy of all the bindings
+    // extend the env to include the function binding, then analyze the body as if it's a lambda
     pinfo.env = pinfo.env.extend(bf(this.name.val, false, this.args.length, false, this.name.location));
     return analyzeClosureUses(this, pinfo);
  };
- // FIXME: Danny says that using a basePInfo is almost certainly a bug, but we're going to do it for now
- // to match the behavior in Moby, which promotes any closed variables to a global.
  lambdaExpr.prototype.analyzeUses = function(pinfo, env){
     return analyzeClosureUses(this, pinfo);
  };
  beginExpr.prototype.analyzeUses = function(pinfo, env){
     return this.exprs.reduce(function(p, expr){return expr.analyzeUses(p, env);}, pinfo);
  };
- /*
- // If we don't care about matching Danny's compiler, the code *probably should be*
  localExpr.prototype.analyzeUses = function(pinfo, env){
     var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo, env); }, pinfo);
-    return this.body.analyzeUses(pinfoAfterDefs, env);
+    return this.body.analyzeUses(pinfoAfterDefs, pinfoAfterDefs.env);
  };
- */
- 
- // This is what we do to match Danny's compiler, which I think behaves incorrectly. It's a
- // horrible, horrible hack designed to get around the fact that we use immutable hashtables
- // SHOULD BE TESTED FURTHER
- localExpr.prototype.analyzeUses = function(pinfo, env){
-//    var originalEnv = pinfo.env;
-    pinfo.env = plt.compiler.getBasePinfo("base").env;
-    var pinfoAfterDefs = this.defs.reduce(function(pinfo, d){ return d.analyzeUses(pinfo);}, pinfo);
- 
-    // extend the env to include the function binding, then make a copy of all the bindings
-    var envAfterDefs = pinfoAfterDefs.env, oldKeys = envAfterDefs.bindings.keys(),
-        newBindings = types.makeLowLevelEqHash();
-    oldKeys.forEach(function(k){newBindings.put(k, envAfterDefs.bindings.get(k));});
-
-    var bodyPinfo = this.body.analyzeUses(pinfoAfterDefs, envAfterDefs);
-    bodyPinfo.env = envAfterDefs;
-    return bodyPinfo;
- };
- 
  callExpr.prototype.analyzeUses = function(pinfo, env){
     return [this.func].concat(this.args).reduce(function(p, arg){
                             return (arg instanceof Array)?
@@ -970,6 +953,7 @@ plt.compiler = plt.compiler || {};
     }
     var binding = env.lookup_context(this.val);
     if(binding){
+      this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
       return pinfo.accumulateFreeVariableUse(this.val, pinfo);
