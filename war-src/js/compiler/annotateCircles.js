@@ -75,20 +75,22 @@ plt.compiler = plt.compiler || {};
  function programToCircles(programs, cm){
     console.log('refreshing');
     cm.circleIndices = {};
-    var updateCursorTime;
     // clear circles
     cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
     // set up offscreen textarea
     var buffer = document.getElementById('buffer') ||
-                            document.createElement("textarea");
+                document.body.appendChild(document.createElement("textarea"));
     buffer.id = "buffer"; buffer.style.opacity = "0";
     buffer.style.position = "absolute";
-    if(!document.getElementById('buffer')) document.body.appendChild(buffer);
  
+    // helper functions
     function isWhitespace(elt){return elt.classList.contains("cm-whitespace");}
     function isValue(elt){    return elt.classList.contains("value");}
     function isCircle(elt){   return elt.classList.contains("sexp");}
     function isSexp(elt){     return isValue(elt) || isCircle(elt); }
+    function getNodeFromStoppedEvent(e){
+      if(e){ e.stopPropagation(); return e.target || e.srcElement; }
+    }
  
     // Tab always selects the node after the cursor, or after the currently-selected node
     cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
@@ -103,7 +105,7 @@ plt.compiler = plt.compiler || {};
         buffer.select();
         try{ document.execCommand(e.type); }
         catch(e) { console.log('problem with execCommand("'+e.type+'")'); }
-        setTimeout(function(){active.focus();}, 100);
+        setTimeout(function(){active.focus();}, 200);
       }
       if(e.type==="cut") cm.replaceRange('', active.from, active.to);
     };
@@ -112,7 +114,7 @@ plt.compiler = plt.compiler || {};
     cm.getWrapperElement().onkeydown = handleKey;
     function handleKey(e){
       var active = document.activeElement
-      if(e.which===8 && isSexp(active)){  // DELETE
+      if(e.which===8 && isSexp(active)){    // DELETE
         e.preventDefault();
         cm.replaceRange('', active.from, active.to);
       }
@@ -120,20 +122,19 @@ plt.compiler = plt.compiler || {};
         e.preventDefault();
         startEdit(false, active);
       }
-      if(e.which===9){                          // TAB
+      if(e.which===9){                      // TAB
         e.codemirrorIgnore = true; e.stopPropagation();
       }
-      if(e.which===57){                         // OPEN PAREN
-        e.codemirrorIgnore = true; e.stopPropagation(); e.preventDefault();
+      if(e.which===57){                     // OPEN PAREN
+        e.preventDefault();
         cm.replaceRange('()', cm.getCursor(), cm.getCursor());
         var idx = cm.indexFromPos(cm.getCursor());
       }
-      if(e.which===48 && isSexp(active)){ // CLOSE PAREN
-        e.codemirrorIgnore = true; e.stopPropagation(); e.preventDefault();
-        var topLevelExp = active;
-        while(!topLevelExp.classList.contains("CodeMirror-widget"))
-          topLevelExp = topLevelExp.parentNode;
-        var endIndex = cm.indexFromPos(topLevelExp.firstChild.to);
+      if(e.which===48 && isSexp(active)){   // CLOSE PAREN
+        e.preventDefault();
+        while(!active.classList.contains("CodeMirror-widget"))
+          active = active.parentNode;
+        var endIndex = cm.indexFromPos(active.firstChild.to);
         cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
       }
     };
@@ -153,17 +154,14 @@ plt.compiler = plt.compiler || {};
  
     // select the highlighted node.
     function selectNode(e, node){
-      if(e){e.preventDefault(); e.stopPropagation();}
-      node = e.target || e.srcElement || node;
+      node = getNodeFromStoppedEvent(e) || node;
       if(isWhitespace(node) || isSexp(node)){ node.focus(); }
       else { node.parentNode.focus(); }
-      var active = document.activeElement;
     }
  
     // insert cursor at beginning of node.
     function startEdit(e, node){
-      if(e) e.stopPropagation();
-      var node = node || e.target || e.srcElement;
+      node = getNodeFromStoppedEvent(e) || node;
       node.contentEditable = "true";
       node.onblur = function(){saveEdit(node)};
       node.onkeydown = function(e){
@@ -190,52 +188,42 @@ plt.compiler = plt.compiler || {};
       cm.replaceRange(text, node.from, node.to);
     }
  
-    // make draggable things translucent
-    function handleDragStart(e) {
-      e.stopPropagation();
-      var node = e.target || e.srcElement;
+    function handleDragStart(e){// make draggable things translucent
+      var node = getNodeFromStoppedEvent(e) || node;
       node.style.opacity = '0.2';
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text', cm.getRange(node.from, node.to));
     }
-    function handleDragOver(e) {
-      e.stopPropagation(); e.preventDefault();
+    function handleDragOver(e){ // apparently HTML5 requires this?!?!?
+      e.stopPropagation();
       e.dataTransfer.dropEffect = 'move';
       return false;
     }
-
-    function colorTarget(e) {
-      e.stopPropagation(); e.preventDefault();
-      var node = e.target || e.srcElement;
+    function colorTarget(e) {   // add dragover styles
+      var node = getNodeFromStoppedEvent(e) || node;
       if(!document.activeElement.contains(node)){
         node.classList.add(isWhitespace(node)? 'insert' : 'replace');
       }
     }
-    function unColorTarget(e) {
-      e.stopPropagation(); e.preventDefault();
-      var node = e.target || e.srcElement;
+    function unColorTarget(e) { // remove dragover styles
+      var node = getNodeFromStoppedEvent(e) || node;
       node.classList.remove('insert', 'replace');
     }
- 
-    // make sure nothing is left partially-opaque
-    function cleanUp(e) {
-      e.stopPropagation(); e.preventDefault();
-      var node = e.target || e.srcElement;
+    function cleanUp(e) {       // make sure nothing is left partially-opaque
+      var node = getNodeFromStoppedEvent(e) || node;
       node.style.opacity = '1.0';
     }
- 
     // if we've dropped one element into a different one, perform the CM modifications
     function handleDrop(e) {
-      e.stopPropagation(); e.preventDefault(); e.codemirrorIgnore = true;
-      var node = e.target || e.srcElement, active = document.activeElement;
+      e.codemirrorIgnore = true;
+      var node = getNodeFromStoppedEvent(e) || node, active = document.activeElement;
       if(!node.location){
         var pos = cm.coordsChar({left: e.pageX, top: e.pageY});
         node.location = {startChar: pos.ch, endChar: pos.ch};
       }
       node.classList.remove('insert', 'replace');
       if (!active.contains(node)) {
-        // for dropping into the parent
-        if(active === cm.getInputField()){
+        if(active === cm.getInputField()){ // for dropping into the parent
           var idx = cm.getValue().length+1;
           cm.replaceRange(text, node.from, node.to);
           active.location = {startChar: idx, endChar: idx};
@@ -274,7 +262,7 @@ plt.compiler = plt.compiler || {};
       cm.circleIndices[k].tabIndex=tabIndex++;
     });
             
-    // 4) collect all values, operators and expressions
+    // Assign Event Handlers (avoid addEventListener, which allows duplicates)
     var whitespace  = document.querySelectorAll('.cm-whitespace'),
         sexpElts    = document.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
         draggable   = document.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
