@@ -74,9 +74,10 @@ plt.compiler = plt.compiler || {};
  // assign widgets representing circles of evaluation to tokens in CM
  function programToCircles(programs, cm){
     console.log('refreshing');
-    cm.circleIndices = [];
-    var updateCursorTime, lastKey, lastIndex = null;
- 
+    cm.circleIndices = {};
+    var updateCursorTime;
+    // clear circles
+    cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
     // set up offscreen textarea
     var buffer = document.getElementById('buffer') ||
                             document.createElement("textarea");
@@ -84,16 +85,19 @@ plt.compiler = plt.compiler || {};
     buffer.style.position = "absolute";
     if(!document.getElementById('buffer')) document.body.appendChild(buffer);
  
-    cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
+    function isWhitespace(elt){return elt.classList.contains("cm-whitespace");}
+    function isValue(elt){    return elt.classList.contains("value");}
+    function isCircle(elt){   return elt.classList.contains("sexp");}
+    function isSexp(elt){     return isValue(elt) || isCircle(elt); }
  
     // Tab always selects the node after the cursor, or after the currently-selected node
     cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
+ 
+    // Copy / Cut events must be captured and simulated
     document.oncut = document.oncopy = handleCopyCut;
-
     function handleCopyCut(e){
       var active = document.activeElement;
-      if(active.classList.contains("value") ||
-         active.classList.contains("sexp")){
+      if(isSexp(active)){
         e.stopPropagation();
         buffer.innerText = cm.getRange(active.from, active.to);
         buffer.select();
@@ -107,53 +111,56 @@ plt.compiler = plt.compiler || {};
     // avoid addEventListener, since it will register duplicate handlers
     cm.getWrapperElement().onkeydown = handleKey;
     function handleKey(e){
-      lastKey = e.which;
       var active = document.activeElement
-      if(e.which===8 && active){
+      if(e.which===8 && isSexp(active)){  // DELETE
         e.preventDefault();
         cm.replaceRange('', active.from, active.to);
       }
-      if(e.which===9){
+      if (e.which===13 && isValue(active)){ // RETURN
+        e.preventDefault();
+        startEdit(false, active);
+      }
+      if(e.which===9){                          // TAB
         e.codemirrorIgnore = true; e.stopPropagation();
+      }
+      if(e.which===57){                         // OPEN PAREN
+        e.codemirrorIgnore = true; e.stopPropagation(); e.preventDefault();
+        cm.replaceRange('()', cm.getCursor(), cm.getCursor());
+        var idx = cm.indexFromPos(cm.getCursor());
+      }
+      if(e.which===48 && isSexp(active)){ // CLOSE PAREN
+        e.codemirrorIgnore = true; e.stopPropagation(); e.preventDefault();
+        var topLevelExp = active;
+        while(!topLevelExp.classList.contains("CodeMirror-widget"))
+          topLevelExp = topLevelExp.parentNode;
+        var endIndex = cm.indexFromPos(topLevelExp.firstChild.to);
+        cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
       }
     };
  
     // 1) convert the AST to a list of DOM trees
-    var circles = programs.map(function(p){
-      var dom = p.toCircles(cm);
-      return dom;
-    });
-
-    // 2) for each tree, mark the equivalent text with the widget
-    circles.forEach(function(circle){
+    programs.forEach(function(p){
+      var circle = p.toCircles(cm);
       cm.markText(circle.from, circle.to,
-                  {replacedWith: circle
-                  , handleMouseEvents: false
-                  , _circles: true});
-    });
+                 {replacedWith: circle
+                 , handleMouseEvents: false
+                 , _circles: true});    });
  
-    // 4) event handlers
+    function setCursor(startChar, offset){
+      var node = cm.circleIndices[startChar];
+      node.focus(); return node;
+    }
  
-    // select the highlighted node. Can be used as an event handler or directly, by passing in (null, <node>)
+    // select the highlighted node.
     function selectNode(e, node){
       if(e){e.preventDefault(); e.stopPropagation();}
       node = e.target || e.srcElement || node;
-      if(document.activeElement){ // if a node is already selected, un-select it and remove contenteditable
-        document.activeElement.contentEditable = false;
-      }
-      if(node.classList.contains("value")      ||
-         node.classList.contains("cm-whitespace") ||
-         node.classList.contains("sexp")){
-         node.focus();
-      } else {
-        if(node.parentNode.classList.contains("sexp")){
-          node.parentNode.focus();
-        }
-        else alert('IMPOSSIBLE: node has a non-sexp parent');
-      }
+      if(isWhitespace(node) || isSexp(node)){ node.focus(); }
+      else { node.parentNode.focus(); }
       var active = document.activeElement;
     }
  
+    // insert cursor at beginning of node.
     function startEdit(e, node){
       if(e) e.stopPropagation();
       var node = node || e.target || e.srcElement;
@@ -163,32 +170,24 @@ plt.compiler = plt.compiler || {};
         e.stopPropagation();
         e.codemirrorIgnore = true;
         if (e.which===13 || e.which===9){        // RETURN / TAB: blur() to save
-          node.contentEditable = "false";
           node.blur();
-          selectNode(e, node);
-        } else if(e.which===32){  // SPACE: ignore?
-          console.log('Space is pressed while editing');
+        } else if(e.which===32){                 // SPACE: ignore?
         }
       };
+      var range = document.createRange();
+      range.setStart(node, 0);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
     }
- 
+    // remove keyhandlers and update CM
     function saveEdit(node){
       node.onkeydown = null;
       node.contentEditable = "false";
       node.classList.remove('editing');
       var text = node.innerText;
       // add spaces if we're inserting new text
-      if(node.classList.contains("cm-whitespace")){
-        text = " "+node.innerText+" ";
-      }
+      if(isWhitespace(node)){ text = " "+node.innerText+" "; }
       cm.replaceRange(text, node.from, node.to);
-    }
- 
-    function insertNew(e){
-      var node = e.target || e.srcElement;
-      node.classList.add("value");
-      node.addEventListener("click", startEdit);
-      node.click();
     }
  
     // make draggable things translucent
@@ -196,13 +195,8 @@ plt.compiler = plt.compiler || {};
       e.stopPropagation();
       var node = e.target || e.srcElement;
       node.style.opacity = '0.2';
-      // grab selection
-      if(document.activeElement) document.activeElement.classList.remove("selected");
-      node.classList.add("selected");
-      var node = e.target || e.srcElement;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text', cm.getRange(node.from, node.to));
-      console.log('dragging: '+(e.dataTransfer.getData('text')));
     }
     function handleDragOver(e) {
       e.stopPropagation(); e.preventDefault();
@@ -210,47 +204,46 @@ plt.compiler = plt.compiler || {};
       return false;
     }
 
-    // add/remove outlines from the droptargets
-    function handleDragEnter(e) {
+    function colorTarget(e) {
       e.stopPropagation(); e.preventDefault();
       var node = e.target || e.srcElement;
       if(!document.activeElement.contains(node)){
-        node.classList.add(node.classList.contains('cm-whitespace')? 'insert' : 'replace');
+        node.classList.add(isWhitespace(node)? 'insert' : 'replace');
       }
     }
-    function handleDragLeave(e) {
+    function unColorTarget(e) {
       e.stopPropagation(); e.preventDefault();
       var node = e.target || e.srcElement;
       node.classList.remove('insert', 'replace');
     }
  
     // make sure nothing is left partially-opaque
-    function handleDragEnd(e) {
+    function cleanUp(e) {
       e.stopPropagation(); e.preventDefault();
       var node = e.target || e.srcElement;
       node.style.opacity = '1.0';
-      node.classList.remove("selected");
     }
  
     // if we've dropped one element into a different one, perform the CM modifications
     function handleDrop(e) {
       e.stopPropagation(); e.preventDefault(); e.codemirrorIgnore = true;
-      var node = e.target || e.srcElement,
-          active = document.activeElement;
+      var node = e.target || e.srcElement, active = document.activeElement;
       if(!node.location){
         var pos = cm.coordsChar({left: e.pageX, top: e.pageY});
         node.location = {startChar: pos.ch, endChar: pos.ch};
       }
       node.classList.remove('insert', 'replace');
       if (!active.contains(node)) {
+        // for dropping into the parent
         if(active === cm.getInputField()){
           var idx = cm.getValue().length+1;
+          cm.replaceRange(text, node.from, node.to);
           active.location = {startChar: idx, endChar: idx};
           return;
         }
         var text     = e.dataTransfer.getData('text');
         // if we're inserting new text, decide if we need extra spaces
-        if(node.classList.contains("cm-whitespace")){
+        if(isWhitespace(node)){
           var start = cm.indexFromPos(node.from),
               end   = cm.indexFromPos(node.to),
               prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
@@ -276,51 +269,38 @@ plt.compiler = plt.compiler || {};
     }
  
  setTimeout(function(){
-    var tabIndex=1;
-    cm.circleIndices.forEach(function(v,i){ v.tabIndex=tabIndex++;});
+    var tabIndex=1; // assign tab order
+    Object.keys(cm.circleIndices).forEach(function(k,i){
+      cm.circleIndices[k].tabIndex=tabIndex++;
+    });
             
     // 4) collect all values, operators and expressions
-    var circles_   = document.querySelectorAll('.sexp'),
-        values_    = document.querySelectorAll('.value'),
-        operators_ = document.querySelectorAll('.sexp>*:nth-child(2)'),
-        dropTargets_=document.querySelectorAll('.cm-whitespace'),
+    var whitespace  = document.querySelectorAll('.cm-whitespace'),
+        sexpElts    = document.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+        draggable   = document.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+        dragTargets = document.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
+        dropTargets = document.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace'),
+        editable    = document.querySelectorAll('.value'),
         parent = cm.getWrapperElement();
             
-    [ ].forEach.call(values_, function (elt) {
-       elt.addEventListener("click",    startEdit);
-       elt.addEventListener("dragstart", handleDragStart, true);
-       elt.addEventListener("dragover",  handleDragOver,  true);
-       elt.addEventListener("dragenter", handleDragEnter, true);
-       elt.addEventListener("dragleave", handleDragLeave, true);
-       elt.addEventListener("dragend",   handleDragEnd,   true);
-       elt.addEventListener("drop",      handleDrop,      true);
-    });
-    [ ].forEach.call(operators_, function (elt) {
-       elt.addEventListener("click",    selectNode);
-       elt.addEventListener("dragstart", handleDragStart, true);
-       elt.addEventListener("dragover",  handleDragOver,  true);
-       elt.addEventListener("dragenter", handleDragEnter, true);
-       elt.addEventListener("dragleave", handleDragLeave, true);
-       elt.addEventListener("dragend",   handleDragEnd,   true);
-       elt.addEventListener("drop",      handleDrop,      true);
-    });
-    [ ].forEach.call(circles_, function (elt) {
-       elt.addEventListener("click",    selectNode);
-       elt.addEventListener("dragstart", handleDragStart, true);
-       elt.addEventListener("dragover",  handleDragOver,  true);
-       elt.addEventListener("dragend",   handleDragEnd,   true);
-    });
-    [ ].forEach.call(dropTargets_, function (elt) {
-       elt.addEventListener("click",    startEdit);
-       elt.addEventListener("dragover",  handleDragOver,  true);
-       elt.addEventListener("dragenter", handleDragEnter, true);
-       elt.addEventListener("dragleave", handleDragLeave, true);
-       elt.addEventListener("dragend",   handleDragEnd,   true);
-       elt.addEventListener("drop",      handleDrop,      true);
-    });
-    parent.addEventListener("dragenter", handleDragEnter, false);
+    // editable things can be edited on dblclick
+    [ ].forEach.call(editable,  function (elt){elt.ondblclick = startEdit;});
+    // whitespace becomes editable the moment you click
+    [ ].forEach.call(whitespace,  function (elt){elt.onclick = startEdit;});
+    // values and expressions can be clicked and dragged
+    [ ].forEach.call(sexpElts,    function (elt){
+       elt.onclick = selectNode; elt.ondragstart = handleDragStart; });
+    // all elements can be dragged over
+    [ ].forEach.call(dragTargets, function (elt){
+       elt.ondragover = handleDragOver; elt.ondragend = cleanUp; });
+    // anything but a circe can be dropped into/over
+    [ ].forEach.call(dropTargets, function (elt){
+       elt.ondragenter = colorTarget; elt.ondragleave = unColorTarget;
+       elt.ondrop = handleDrop; });
+            
+    parent.addEventListener("dragenter", colorTarget,     false);
     parent.addEventListener("dragover",  handleDragOver,  false);
-    parent.addEventListener("dragleave", handleDragLeave, false);
+    parent.addEventListener("dragleave", unColorTarget,   false);
     parent.addEventListener("drop",      handleDrop,      false);
  
   }, 400);
@@ -375,6 +355,7 @@ plt.compiler = plt.compiler || {};
         ariaStr = (func? func.val : "empty") +
                   " expression, " + args.length+" argument" +
                   (args.length===1 ? "" : "s"),
+        operator = document.createElement('span'),
         lParen = document.createElement('span'),
         rParen = document.createElement('span'),
         startPos = cm.posFromIndex(location.startChar+1),
@@ -383,21 +364,26 @@ plt.compiler = plt.compiler || {};
     expression.location = location;
     expression.from = cm.posFromIndex(location.startChar);
     expression.to   = cm.posFromIndex(location.endChar);
-    lParen.className = "lParen";
-    rParen.className = "rParen";
-    lParen.location = location.start();
-    rParen.location = location.end();
+    lParen.className = "lParen";        rParen.className = "rParen";
+    lParen.location = location.start(); rParen.location = location.end();
     lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
     rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
     expression.appendChild(lParen);
-    if(func){
-      var operator = document.createElement('span');
-      operator.location = func.location;
-      operator.appendChild(func.toCircles(cm));
-      expression.appendChild(operator);
-    }
+    operator.location = func? func.location :
+                {startChar: location.startChar+1, endChar: location.endChar-1};
+    var funcValue = func? func.toCircles(cm) :
+                    makeValue(" ", "cm-whitespace", operator.location, cm);
+    funcValue.location = operator.location;
+    operator.appendChild(funcValue);
+    expression.appendChild(operator);
     args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles(cm), cm); });
-    addChildAfterPos(expression, rParen, cm);
+    if(func){ addChildAfterPos(expression, rParen, cm); } 
+    else {
+      var filler = document.createElement("span");
+      filler.style.cssText = "min-height: 15px; display: inline-block; vertical-align: middle;";
+      expression.appendChild(filler);
+      expression.appendChild(rParen);
+    }
     expression.draggable="true";
     expression.setAttribute('aria-label', ariaStr);
     expression.setAttribute('role', "treeitem");

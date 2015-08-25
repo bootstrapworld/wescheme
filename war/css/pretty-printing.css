@@ -108,6 +108,6 @@ span.cm-scheme-rparen                      {color: black;}
 .code .cm-whitespace{min-width: 0px; height: inherit; min-height: none; vertical-align: bottom;}
 .editing, .insert, .replace, .circles .sexp .cm-whitespace:hover{ min-width: 20px; border-radius:  5px;}
 .circles .cm-whitespace+.lineBreak+.cm-whitespace{display: none;}
-.circles .cm-whitespace:hover, .insert{background: lightblue;}
+.circles .sexp .cm-whitespace:hover, .insert{background: lightblue;}
 .replace{background: red;}
 .code :focus, .circles :focus{outline:none; border: solid 2px orange; border-radius:  20px;}
