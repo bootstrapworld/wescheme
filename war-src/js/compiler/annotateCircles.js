@@ -44,10 +44,8 @@ function BubbleEditor(cm, parser){
   
   that.nodeFromPos = function(pos){
     function isBefore(p1, p2){
-      return (p1.line<p2.line) || ((p1.line===p2.line) && (p1.ch<=p2.ch));
-    }
+      return (p1.line<p2.line) || ((p1.line===p2.line) && (p1.ch<=p2.ch)); }
     function comesBetween(a, b, c){ return isBefore(a, b) && isBefore(b, c); }
-
     function findNodeInTree(t, p){
       for(var i = 0; i<t.children.length && isBefore(t.children[i].from, p); i++){
         var child = t.children[i];
@@ -55,7 +53,6 @@ function BubbleEditor(cm, parser){
       }
       return t;
     }
-    
     for (var i in that.circleIndices) {
       if (that.circleIndices.hasOwnProperty(i)) {
         var n = that.circleIndices[i];
@@ -64,17 +61,17 @@ function BubbleEditor(cm, parser){
       }
     }
     return false;
-  }
+  };
   
-  that.nearestCommonAncestor = function(from, to){
-    var fromPath=[];
-    for(var pf=from; pf && isSexp(pf); pf=pf.parentNode){ fromPath.push(pf); }
-    for(var pt=to;   pt && isSexp(pt); pt=pt.parentNode){
-      if(fromPath.indexOf(pt) > -1) return pt; }
-    return false;
-  }
-
   that.processChange = function(cm, change){
+    function nearestCommonAncestor(from, to){
+      var fromPath=[];
+      for(var pf=from; pf && isSexp(pf); pf=pf.parentNode){ fromPath.push(pf); }
+      for(var pt=to;   pt && isSexp(pt); pt=pt.parentNode){
+        if(fromPath.indexOf(pt) > -1) return pt; }
+      return false;
+    }    
+    
     console.log('patching the bubble editor with:');
     console.log(change);
     change.from.ch++; // HACK!!! Need to align startCh with CM.getTokenAt().start
@@ -83,7 +80,7 @@ function BubbleEditor(cm, parser){
     nca.to.ch = nca.to.ch + (change.text[0].length - change.removed[0].length);
     var text = cm.getRange(nca.from, nca.to);
     reparseNodeAndUpdateTree(nca, text);
-  }
+  };
 
   // if a node is modified in-place, update the location of ancestors and siblings
   function reparseNodeAndUpdateTree(node, newText){
@@ -124,15 +121,12 @@ function BubbleEditor(cm, parser){
     var circles = AST.map(function(p){return p.toCircles(cm);})
     console.log(that.circleIndices);
     console.log(that.circleIndices[cm.indexFromPos(node.from)]);
-    // removing node from circleIndices
     delete that.circleIndices[cm.indexFromPos(node.from)];
-    console.log(that.circleIndices);
     circles.forEach(function(c){
-                    console.log(c.from);
+      shiftNode(c, cm.indexFromPos(node.from));
       that.circleIndices[cm.indexFromPos(c.from)] = c;
       c.classList.add('patched'); parent.insertBefore(c, node);
     });
-    console.log(that.circleIndices);
     setTimeout(function(){assignEvents(parent);}, 500);
     node.parentNode.removeChild(node);
   }
