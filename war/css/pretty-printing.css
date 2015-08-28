@@ -50,14 +50,8 @@ span.cm-scheme-rparen                      {color: black;}
   min-height:     50px;
   min-width:      40px;
   background:     white;
-  -moz-border-radius: 20px;
-  -webkit-border-radius:20px;
-  box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
-  -moz-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
-  -webkit-box-shadow: 0px 0px 6px 1px rgba(255,255,255,1);
 }
 .code .sexp{display: inline; max-width: 100%;}
-
 
 .circles .sexp>*{
   margin:         0px;
@@ -111,3 +105,6 @@ span.cm-scheme-rparen                      {color: black;}
 .circles .sexp .cm-whitespace:hover, .insert{background: lightblue;}
 .replace{background: red;}
 .code :focus, .circles :focus{outline:none; border: solid 2px orange; border-radius:  20px;}
+
+
+.circles .patched{background: pink;}
