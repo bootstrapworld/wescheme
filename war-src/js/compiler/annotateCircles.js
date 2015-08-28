@@ -68,14 +68,15 @@ function BubbleEditor(cm, parser){
   
   that.nearestCommonAncestor = function(from, to){
     var fromPath=[];
-    for(var pf=from; isSexp(pf); pf=pf.parentNode){ fromPath.push(pf); }
-    for(var pt=to;   isSexp(pt); pt=pt.parentNode){
+    for(var pf=from; pf && isSexp(pf); pf=pf.parentNode){ fromPath.push(pf); }
+    for(var pt=to;   pt && isSexp(pt); pt=pt.parentNode){
       if(fromPath.indexOf(pt) > -1) return pt; }
     return false;
   }
 
   that.processChange = function(cm, change){
     console.log('patching the bubble editor with:');
+    console.log(change);
     change.from.ch++; // HACK!!! Need to align startCh with CM.getTokenAt().start
     var nca = that.nearestCommonAncestor(that.nodeFromPos(change.from),
                                          that.nodeFromPos(change.to));
@@ -121,7 +122,17 @@ function BubbleEditor(cm, parser){
     var AST   = that.parser(newText), parent = node.parentNode;
     console.log(AST);
     var circles = AST.map(function(p){return p.toCircles(cm);})
-    circles.forEach(function(c){ c.classList.add('patched'); parent.insertBefore(c, node); });
+    console.log(that.circleIndices);
+    console.log(that.circleIndices[cm.indexFromPos(node.from)]);
+    // removing node from circleIndices
+    delete that.circleIndices[cm.indexFromPos(node.from)];
+    console.log(that.circleIndices);
+    circles.forEach(function(c){
+                    console.log(c.from);
+      that.circleIndices[cm.indexFromPos(c.from)] = c;
+      c.classList.add('patched'); parent.insertBefore(c, node);
+    });
+    console.log(that.circleIndices);
     setTimeout(function(){assignEvents(parent);}, 500);
     node.parentNode.removeChild(node);
   }
@@ -317,13 +328,13 @@ function BubbleEditor(cm, parser){
     setTimeout(function(){assignEvents(that.wrapper)}, 400);
   }
                   
-  function addChildAfterPos(parent, child, cm){
+  function addChildAfterPos(parent, child){
       var startCh = parent.lastChild? parent.lastChild.location.endChar : parent.location.startChar,
           startLn = parent.lastChild? parent.lastChild.location.endRow : parent.location.startRow,
           endCh   = child.location.startChar,
           endLn   = child.location.startRow,
           br      = document.createElement('span'),
-          str     = cm.getRange(cm.posFromIndex(startCh), cm.posFromIndex(endCh),"\n"),
+          str     = that.cm.getRange(that.cm.posFromIndex(startCh), that.cm.posFromIndex(endCh),"\n"),
           lines   = str.split("\n"),
           spansMultipleLines = lines.length>1;
       br.style.height = "0"; br.className = "lineBreak";
@@ -339,23 +350,23 @@ function BubbleEditor(cm, parser){
       return spansMultipleLines;
    }
                                         
-    function makeWhitespace(startCh, txt, cm){
+    function makeWhitespace(startCh, txt){
       var space   = document.createElement('span');
       space.className="cm-whitespace";
       space.location = {startChar: startCh, endChar: startCh+txt.length};
-      space.from = cm.posFromIndex(startCh);
-      space.to = cm.posFromIndex(startCh+txt.length);
+      space.from = that.cm.posFromIndex(startCh);
+      space.to = that.cm.posFromIndex(startCh+txt.length);
       space.appendChild(document.createTextNode(txt));
       return space;
     }
                                         
-    that.makeValue = function(valueTxt, className, location, cm){
+    that.makeValue = function(valueTxt, className, location){
       var node = document.createElement('span');
       node.className = "value "+className;
       node.appendChild(document.createTextNode(valueTxt));
       node.location = location;
-      node.from = cm.posFromIndex(location.startChar);
-      node.to   = cm.posFromIndex(location.endChar);
+      node.from = that.cm.posFromIndex(location.startChar);
+      node.to   = that.cm.posFromIndex(location.endChar);
       node.draggable="true";
       node.setAttribute('aria-label', valueTxt);
       node.setAttribute('role', "treeitem");
@@ -363,7 +374,7 @@ function BubbleEditor(cm, parser){
       return node;
     }
                                         
-    that.makeExpression = function(func, args, location, cm){
+    that.makeExpression = function(func, args, location){
       var expression = document.createElement('div'),
           ariaStr = (func? func.val : "empty") +
                     " expression, " + args.length+" argument" +
@@ -371,25 +382,25 @@ function BubbleEditor(cm, parser){
           operator = document.createElement('span'),
           lParen = document.createElement('span'),
           rParen = document.createElement('span'),
-          startPos = cm.posFromIndex(location.startChar+1),
-          endPos = cm.posFromIndex(location.endChar);
+          startPos = that.cm.posFromIndex(location.startChar+1),
+          endPos = that.cm.posFromIndex(location.endChar);
       expression.classList.add("sexp");
       expression.location = location;
-      expression.from = cm.posFromIndex(location.startChar);
-      expression.to   = cm.posFromIndex(location.endChar);
+      expression.from = that.cm.posFromIndex(location.startChar);
+      expression.to   = that.cm.posFromIndex(location.endChar);
       lParen.className = "lParen";        rParen.className = "rParen";
       lParen.location = location.start(); rParen.location = location.end();
-      lParen.from = cm.posFromIndex(location.startChar);
-      lParen.to = cm.posFromIndex(location.startChar+1);
-      lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
-      rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
-      rParen.from = cm.posFromIndex(location.endChar);
-      rParen.to = cm.posFromIndex(location.endChar+1);
+      lParen.from = that.cm.posFromIndex(location.startChar);
+      lParen.to   = that.cm.posFromIndex(location.startChar+1);
+      lParen.appendChild(document.createTextNode(that.cm.getTokenAt(startPos).string));
+      rParen.appendChild(document.createTextNode(that.cm.getTokenAt(endPos).string));
+      rParen.from = that.cm.posFromIndex(location.endChar);
+      rParen.to = that.cm.posFromIndex(location.endChar+1);
       expression.appendChild(lParen);
       operator.location = func? func.location :
                   {startChar: location.startChar+1, endChar: location.endChar-1};
-      operator.from = cm.posFromIndex(operator.location.startChar);
-      operator.to = cm.posFromIndex(operator.location.endChar);
+      operator.from = that.cm.posFromIndex(operator.location.startChar);
+      operator.to   = that.cm.posFromIndex(operator.location.endChar);
       var funcValue = func? func.toCircles(cm) :
                       makeValue(" ", "cm-whitespace", operator.location, cm);
       funcValue.location = operator.location;
@@ -411,33 +422,33 @@ function BubbleEditor(cm, parser){
    }
                   
    // Program.prototype.toCircles: CM -> DOM
-   plt.compiler.Program.prototype.toCircles = function(cm){
+   plt.compiler.Program.prototype.toCircles = function(){
       throw this.constructor.name+" cannot be made into a Circle of Evaluation";
    };
     
    // make an expression, convert the operator to a circle, assign it the "operator" class,
    // and convert all the arguments to circles as well
-   plt.compiler.callExpr.prototype.toCircles = function(cm){
-      return that.makeExpression(this.func, this.args, this.location, cm);
+   plt.compiler.callExpr.prototype.toCircles = function(){
+      return that.makeExpression(this.func, this.args, this.location);
    };
-   plt.compiler.symbolExpr.prototype.toCircles = function(cm){
-      return that.makeValue(this.val, "wescheme-symbol", this.location, cm);
+   plt.compiler.symbolExpr.prototype.toCircles = function(){
+      return that.makeValue(this.val, "wescheme-symbol", this.location);
    };
-   plt.compiler.literal.prototype.toCircles = function(cm){
+   plt.compiler.literal.prototype.toCircles = function(){
       // if it's a Rational, BigInt, FloatPoint, Complex or Char, we can take care of it
-      if(this.val.toCircles) return this.val.toCircles(cm);
+      if(this.val.toCircles) return this.val.toCircles();
       // if it's Not A Number, assume it's a string. Otherwise, number.
       var className = isNaN(this.val)? "wescheme-string" : "wescheme-number";
-      return that.makeValue(this.toString(), className, this.location, cm);
+      return that.makeValue(this.toString(), className, this.location);
    };
-   jsnums.Rational.prototype.toCircles = function(cm){
-      return that.makeValue(this.toString(), "wescheme-number", this.location, cm);
+   jsnums.Rational.prototype.toCircles = function(){
+      return that.makeValue(this.toString(), "wescheme-number", this.location);
    };
    jsnums.BigInteger.prototype.toCircles = jsnums.Rational.prototype.toCircles;
    jsnums.FloatPoint.prototype.toCircles = jsnums.Rational.prototype.toCircles;
    jsnums.Complex.prototype.toCircles = jsnums.Rational.prototype.toCircles;
-   Char.prototype.toCircles = function(cm){
-      return that.makeValue(this.toString(), "wescheme-character", this.location, cm);
+   Char.prototype.toCircles = function(){
+      return that.makeValue(this.toString(), "wescheme-character", this.location);
    };
    
     that.refresh();
