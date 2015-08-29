@@ -75,7 +75,7 @@ function BubbleEditor(cm, parser){
     console.log('patching the bubble editor with:');
     console.log(change);
     change.from.ch++; // HACK!!! Need to align startCh with CM.getTokenAt().start
-    var nca = that.nearestCommonAncestor(that.nodeFromPos(change.from),
+    var nca = nearestCommonAncestor(that.nodeFromPos(change.from),
                                          that.nodeFromPos(change.to));
     nca.to.ch = nca.to.ch + (change.text[0].length - change.removed[0].length);
     var text = cm.getRange(nca.from, nca.to);
@@ -86,21 +86,24 @@ function BubbleEditor(cm, parser){
   function reparseNodeAndUpdateTree(node, newText){
     // given a node and delta, move it and all its' children by that delta
     function shiftNode(node, delta){
+      console.log('shifting node and children by '+delta+': '+node.innerText);
       if(node.className === "lineBreak") return;
       delete that.circleIndices[cm.indexFromPos(node.from)];
       node.from.ch += delta; node.to.ch += delta;
-      that.circleIndices[cm.indexFromPos(node.from)];
+      that.circleIndices[cm.indexFromPos(node.from)] = node;
       for(var i = 0; i<node.children.length && node.children[i].from.line===line; i++){
         shiftNode(node.children[i], delta); };
     }
     // any following siblings on the same line should be *shifted* by delta
     function shiftSiblings(node, delta){
+      console.log('shifting sibling of by '+delta+': '+node.innerText);
       for(var sib = node.nextSibling; sib && sib.from && (sib.from.line===line);
           sib = sib.nextSibling){ shiftNode(sib, delta); }
     }
     // If an Ancestor ends on the same line, it should be *extended* by delta,
     // with its' siblings shifted by the same amount
     function extendAncestors(node, delta){
+      console.log('extending parent of by '+delta+':'+node.innerText);
       for(var parent = node.parentNode; isCircle(parent) && parent.to.line===line;
           parent = parent.parentNode){
         parent.to.ch += delta; shiftSiblings(parent, delta);
@@ -109,7 +112,7 @@ function BubbleEditor(cm, parser){
     console.log('replacing node at '+node.from.ch+'-'+node.to.ch+' with '+newText);
     // adjust the location information for the entire tree, based on the change
     var from  = node.from, to = node.to, line = to.line,
-        delta = newText.length - (node.to.ch - node.from.ch);
+        delta = newText.length - node.innerText.length;
     console.log('delta is: '+delta );
     node.to.ch = node.to.ch + delta; // adjust the node's location information
     shiftSiblings(node, delta);      // shift any siblings over
@@ -271,18 +274,16 @@ function BubbleEditor(cm, parser){
   }
 
    function assignEvents(parent){
-      var tabIndex=1; // assign tab order
-      Object.keys(that.circleIndices).forEach(function(k,i){
-        that.circleIndices[k].tabIndex=tabIndex++;
-      });
-              
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
       var whitespace  = parent.querySelectorAll('.cm-whitespace'),
-          sexpElts    = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+          sexpElts    = parent.querySelectorAll('.value, .sexp'),
           draggable   = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
           dragTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
           dropTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace'),
           editable    = parent.querySelectorAll('.value');
+              
+      // assign tab order
+      [].forEach.call(sexpElts, function(elt){ elt.tabIndex = 1;});
               
       // editable things can be edited on dblclick
       [ ].forEach.call(editable,  function (elt){elt.ondblclick = startEdit;});
