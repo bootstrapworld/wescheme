@@ -3,11 +3,6 @@ goog.provide('plt.compiler.convertToCircles');
 goog.require("plt.compiler.literal");
 goog.require("plt.compiler.symbolExpr");
 goog.require("plt.compiler.Program");
-goog.require("plt.compiler.couple");
-goog.require("plt.compiler.andExpr");
-goog.require("plt.compiler.orExpr");
-goog.require("plt.compiler.condExpr");
-goog.require("plt.compiler.lambdaExpr");
 goog.require("plt.compiler.callExpr");
 
 // if not defined, declare the compiler object as part of plt
@@ -87,33 +82,6 @@ function BubbleEditor(cm, parser){
     }
   };
 
-  // if a node is modified in-place, update the location of ancestors and siblings
-  function inPlaceChange(node){
-    // given a node and delta, move it and all its' children by that delta
-    function shiftNode(node, delta){
-      if(node.className==="lineBreak") return;
-      node.from.ch += delta; node.to.ch += delta;
-      for(var i = 0; i<node.children.length && node.children[i].from.line===line; i++){
-        shiftNode(node.children[i], delta); };
-    }
-    // any following siblings on the same line should be *shifted* by delta
-    function shiftSiblings(node, delta){
-      for(var sib = node.nextSibling; sib && sib.from && (sib.from.line===line);
-          sib = sib.nextSibling){ shiftNode(sib, delta); }
-    }
-    // If an Ancestor ends on the same line, it should be *extended* by delta,
-    // with its' siblings shifted by the same amount
-    function extendAncestors(node, delta){
-      for(var parent = node.parentNode; isCircle(parent) && parent.to.line===line;
-          parent = parent.parentNode){ parent.to.ch += delta; shiftSiblings(parent, delta); }
-    }
-    var from = node.from, to = node.to, line = to.line,
-        delta = node.innerText.length - ((node.to.ch) - (node.from.ch));
-    node.to.ch = node.to.ch + delta; // adjust the node's location information
-    shiftSiblings(node, delta);      // shift any siblings over
-    extendAncestors(node, delta);    // extend any ancestors
-  }
-
   function sanitizeWhitespace(node, txt){
     var start = cm.indexFromPos(node.from),
         end   = cm.indexFromPos(node.to),
@@ -124,9 +92,7 @@ function BubbleEditor(cm, parser){
 
   // select the highlighted node.
   function selectNode(e, node){
-    node = getNodeFromStoppedEvent(e) || node;
-    if(isWhitespace(node) || isSexp(node)){ node.focus(); }
-    else { node.parentNode.focus(); }
+    (getNodeFromStoppedEvent(e) || node).focus();
   }
 
   // insert cursor at beginning of node.
@@ -155,11 +121,11 @@ function BubbleEditor(cm, parser){
     node.classList.remove('editing');
     cm.replaceRange(sanitizeWhitespace(node, node.innerText), node.from, node.to);
   }
-
   function handleDragStart(e){// make draggable things translucent
     var node = getNodeFromStoppedEvent(e) || node;
     node.style.opacity = '0.2';
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setDragImage(node, -5, -5);
     e.dataTransfer.setData('text', cm.getRange(node.from, node.to));
   }
   function handleDragOver(e){ // apparently HTML5 requires this?!?!?
@@ -213,17 +179,15 @@ function BubbleEditor(cm, parser){
   }
 
    function assignEvents(){
-      var tabIndex=1; // assign tab order
       Object.keys(that.circleIndices).forEach(function(k,i){
-        that.circleIndices[k].tabIndex=tabIndex++;
+        that.circleIndices[k].tabIndex=1;
       });
               
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
       var whitespace  = that.wrapper.querySelectorAll('.cm-whitespace'),
-          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
-          draggable   = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
-          dragTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
-          dropTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace'),
+          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp'),
+          dragTargets = that.wrapper.querySelectorAll('.value, .sexp, .cm-whitespace'),
+          dropTargets = that.wrapper.querySelectorAll('.value, .cm-whitespace'),
           editable    = that.wrapper.querySelectorAll('.value');
               
       // editable things can be edited on dblclick
@@ -244,7 +208,6 @@ function BubbleEditor(cm, parser){
       that.cm.on("drop", function(cm, e){ e.CodeMirrorIgnore = true; handleDrop(e); });
     }
 
-
   // remove all bubbles and regenerate them, based on CM instance
   that.refresh = function(){
     console.log('refreshing entire bubble editor');
@@ -259,45 +222,45 @@ function BubbleEditor(cm, parser){
     setTimeout(assignEvents, 400);
   }
                   
-  function addChildAfterPos(parent, child, cm){
+  function addChildAfterPos(parent, child){
       var startCh = parent.lastChild? parent.lastChild.location.endChar : parent.location.startChar,
           startLn = parent.lastChild? parent.lastChild.location.endRow : parent.location.startRow,
           endCh   = child.location.startChar,
           endLn   = child.location.startRow,
           br      = document.createElement('span'),
-          str     = cm.getRange(cm.posFromIndex(startCh), cm.posFromIndex(endCh),"\n"),
+          str     = that.cm.getRange(cm.posFromIndex(startCh), cm.posFromIndex(endCh),"\n"),
           lines   = str.split("\n"),
           spansMultipleLines = lines.length>1;
       br.style.height = "0"; br.className = "lineBreak";
-      parent.appendChild(makeWhitespace(startCh, lines[0], cm));
+      parent.appendChild(makeWhitespace(startCh, lines[0]));
       for(var i=1; i<lines.length; i++){
         var lineBreak = br.cloneNode(true);
         lineBreak.from = lineBreak.to = child.from;
         parent.appendChild(lineBreak);
-        parent.appendChild(makeWhitespace(startCh, lines[i], cm));
+        parent.appendChild(makeWhitespace(startCh, lines[i]));
         startCh+=lines[i].length+1;
       }
       parent.appendChild(child);
       return spansMultipleLines;
    }
                                         
-    function makeWhitespace(startCh, txt, cm){
+    function makeWhitespace(startCh, txt){
       var space   = document.createElement('span');
       space.className="cm-whitespace";
       space.location = {startChar: startCh, endChar: startCh+txt.length};
-      space.from = cm.posFromIndex(startCh);
+      space.from = that.cm.posFromIndex(startCh);
       space.to = cm.posFromIndex(startCh+txt.length);
       space.appendChild(document.createTextNode(txt));
       return space;
     }
                                         
-    function makeValue(valueTxt, className, location, cm){
+    that.makeValue = function(valueTxt, className, location){
       var node = document.createElement('span');
       node.className = "value "+className;
       node.appendChild(document.createTextNode(valueTxt));
       node.location = location;
-      node.from = cm.posFromIndex(location.startChar);
-      node.to   = cm.posFromIndex(location.endChar);
+      node.from = that.cm.posFromIndex(location.startChar);
+      node.to   = that.cm.posFromIndex(location.endChar);
       node.draggable="true";
       node.setAttribute('aria-label', valueTxt);
       node.setAttribute('role', "treeitem");
@@ -305,12 +268,11 @@ function BubbleEditor(cm, parser){
       return node;
     }
                                         
-    function makeExpression(func, args, location, cm){
+    that.makeExpression = function(func, args, location){
       var expression = document.createElement('div'),
           ariaStr = (func? func.val : "empty") +
                     " expression, " + args.length+" argument" +
                     (args.length===1 ? "" : "s"),
-          operator = document.createElement('span'),
           lParen = document.createElement('span'),
           rParen = document.createElement('span'),
           startPos = cm.posFromIndex(location.startChar+1),
@@ -321,27 +283,24 @@ function BubbleEditor(cm, parser){
       expression.to   = cm.posFromIndex(location.endChar);
       lParen.className = "lParen";        rParen.className = "rParen";
       lParen.location = location.start(); rParen.location = location.end();
-      lParen.from = cm.posFromIndex(location.startChar);
-      lParen.to = cm.posFromIndex(location.startChar+1);
-      lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
-      rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
-      rParen.from = cm.posFromIndex(location.endChar);
-      rParen.to = cm.posFromIndex(location.endChar+1);
+      lParen.from = that.cm.posFromIndex(location.startChar);
+      lParen.to   = that.cm.posFromIndex(location.startChar+1);
+      lParen.appendChild(document.createTextNode(that.cm.getTokenAt(startPos).string));
+      rParen.appendChild(document.createTextNode(that.cm.getTokenAt(endPos).string));
+      rParen.from = that.cm.posFromIndex(location.endChar);
+      rParen.to   = that.cm.posFromIndex(location.endChar+1);
       expression.appendChild(lParen);
-      operator.location = func? func.location :
+      var funcLoc = func? func.location :
                   {startChar: location.startChar+1, endChar: location.endChar-1};
-      operator.from = cm.posFromIndex(operator.location.startChar);
-      operator.to = cm.posFromIndex(operator.location.endChar);
       var funcValue = func? func.toCircles(cm) :
-                      makeValue(" ", "cm-whitespace", operator.location, cm);
-      funcValue.location = operator.location;
-      operator.appendChild(funcValue);
-      expression.appendChild(operator);
-      args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles(cm), cm); });
-      if(func){ addChildAfterPos(expression, rParen, cm); } 
+                      that.makeValue(" ", "cm-whitespace", funcLoc, cm);
+      funcValue.location = funcLoc;
+      expression.appendChild(funcValue);
+      args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles()); });
+      if(func){ addChildAfterPos(expression, rParen); }
       else {
         var filler = document.createElement("span");
-        filler.style.cssText = "min-height: 15px; display: inline-block; vertical-align: middle;";
+        filler.style.cssText = "min-height: 10px; display: inline-block; vertical-align: middle;";
         expression.appendChild(filler);
         expression.appendChild(rParen);
       }
@@ -353,48 +312,23 @@ function BubbleEditor(cm, parser){
     }
                   
    // Program.prototype.toCircles: CM -> DOM
-   plt.compiler.Program.prototype.toCircles = function(cm){
+   plt.compiler.Program.prototype.toCircles = function(){
       throw this.constructor.name+" cannot be made into a Circle of Evaluation";
    };
-    
    // make an expression, convert the operator to a circle, assign it the "operator" class,
    // and convert all the arguments to circles as well
-   plt.compiler.callExpr.prototype.toCircles = function(cm){
-      return makeExpression(this.func, this.args, this.location, cm);
+   plt.compiler.callExpr.prototype.toCircles = function(){
+      return that.makeExpression(this.func, this.args, this.location);
    };
-   plt.compiler.symbolExpr.prototype.toCircles = function(cm){
-      return makeValue(this.val, "wescheme-symbol", this.location, cm);
+   plt.compiler.symbolExpr.prototype.toCircles = function(){
+      return that.makeValue(this.val, "wescheme-symbol", this.location);
    };
-   plt.compiler.literal.prototype.toCircles = function(cm){
-      // if it's a Rational, BigInt, FloatPoint, Complex or Char, we can take care of it
-      if(this.val.toCircles) return this.val.toCircles(cm);
-      // if it's Not A Number, assume it's a string. Otherwise, number.
+   plt.compiler.literal.prototype.toCircles = function(){
+      // if it's not A Number, assume it's a string.
       var className = isNaN(this.val)? "wescheme-string" : "wescheme-number";
-      return makeValue(this.toString(), className, this.location, cm);
-   };
-   jsnums.Rational.prototype.toCircles = function(cm){
-      return makeValue(this.toString(), "wescheme-number", this.location, cm);
-   };
-   jsnums.BigInteger.prototype.toCircles = jsnums.Rational.prototype.toCircles;
-   jsnums.FloatPoint.prototype.toCircles = jsnums.Rational.prototype.toCircles;
-   jsnums.Complex.prototype.toCircles = jsnums.Rational.prototype.toCircles;
-   Char.prototype.toCircles = function(cm){
-      return makeValue(this.toString(), "wescheme-character", this.location, cm);
+      return that.makeValue(this.stx||this.toString(), className, this.location);
    };
    
     that.refresh();
     return that;
 }
- /////////////////////
- /* Export Bindings */
- /////////////////////
- plt.compiler.convertToCircles = function(p, cm){
-    var start       = new Date().getTime();
-    try {
-      return programToCircles(p, cm, true); // do the actual work
-    } catch (e) { console.log("toCircles() ERROR"); throw e; }
-    var end = new Date().getTime();
-    if(debug){
-      console.log("Converted toCircles in "+(Math.floor(end-start))+"ms");
-    }
-  };

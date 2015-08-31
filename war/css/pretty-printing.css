@@ -49,7 +49,7 @@ span.cm-scheme-rparen                      {color: black;}
   border-radius:  20px;
   min-height:     50px;
   min-width:      40px;
-  background:     white;
+  background:     white url('operatorBG.png') repeat-x;
 }
 .code .sexp{display: inline; max-width: 100%;}
 
@@ -60,31 +60,24 @@ span.cm-scheme-rparen                      {color: black;}
 }
 
 .circles .sexp>*:nth-child(2){
-  display:        block;
-  margin:         0px 0px 5px 0px;
   text-align:     center;
-  width:          100%;
-  border-bottom:  solid 2px black;
-  border-radius:  15px 15px 0px 0px; /* top left, top right, bottom right, bottom left */
-  background:     black;
   color:          white;
-  transition:     background 3s ease-in;
 }
 .value{
-  display:        inline-block;
+  display:        inline;
   transition:     min-width .2s;
   border-radius:   8px;
   cursor:         pointer;
+  line-height:    25px;
 }
 .circles .value{text-align: center; min-width: 10px; max-width: 150px; border: solid transparent 2px;}
-.code .value{max-width: inherit; display: inline; }
+.code .value{max-width: inherit; display: inline; line-height: inherit;}
 
-.circles .sexp>:nth-child(2)>*{ color: white; }
+.circles .sexp>:nth-child(2):after{ content:'\A'; }
 
 .circles .cm-whitespace{
-  min-width:      0px;
+  min-width:      10px;
   display:        inline-block;
-  min-height:     15px;
   transition:     min-width .2s;
   cursor:         pointer;
 }
