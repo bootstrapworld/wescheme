@@ -28,7 +28,7 @@ function BubbleEditor(cm, parser){
   that.buffer.id = "buffer"; that.buffer.style.opacity = "0";
   that.buffer.style.position = "absolute";
 
-  // clear everything
+  // clear circles
   that.clear = function(){
     that.cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
   }
@@ -41,97 +41,77 @@ function BubbleEditor(cm, parser){
   function getNodeFromStoppedEvent(e){
     if(e){ e.stopPropagation(); return e.target || e.srcElement; }
   }
-  
-  that.nodeFromPos = function(pos){
-    function isBefore(p1, p2){
-      return (p1.line<p2.line) || ((p1.line===p2.line) && (p1.ch<=p2.ch)); }
-    function comesBetween(a, b, c){ return isBefore(a, b) && isBefore(b, c); }
-    function findNodeInTree(t, p){
-      for(var i = 0; i<t.children.length && isBefore(t.children[i].from, p); i++){
-        var child = t.children[i];
-        if(comesBetween(child.from, p, child.to)){ return findNodeInTree(child, p); }
-      }
-      return t;
+
+  function handleCopyCut(e){
+    var active = document.activeElement;
+    if(isSexp(active)){
+      e.stopPropagation();
+      buffer.innerText = cm.getRange(active.from, active.to);
+      buffer.select();
+      try{ document.execCommand(e.type); }
+      catch(e) { console.log('problem with execCommand("'+e.type+'")'); }
+      setTimeout(function(){active.focus();}, 200);
     }
-    for (var i in that.circleIndices) {
-      if (that.circleIndices.hasOwnProperty(i)) {
-        var n = that.circleIndices[i];
-        if(comesBetween(n.from, pos, n.to)){ return findNodeInTree(n, pos); }
-        else { continue; }
-      }
-    }
-    return false;
+    if(e.type==="cut") cm.replaceRange('', active.from, active.to);
   };
-  
-  that.processChange = function(cm, change){
-    function nearestCommonAncestor(from, to){
-      var fromPath=[];
-      for(var pf=from; pf && isSexp(pf); pf=pf.parentNode){ fromPath.push(pf); }
-      for(var pt=to;   pt && isSexp(pt); pt=pt.parentNode){
-        if(fromPath.indexOf(pt) > -1) return pt; }
-      return false;
-    }    
-    
-    console.log('patching the bubble editor with:');
-    console.log(change);
-    change.from.ch++; // HACK!!! Need to align startCh with CM.getTokenAt().start
-    var nca = nearestCommonAncestor(that.nodeFromPos(change.from),
-                                         that.nodeFromPos(change.to));
-    nca.to.ch = nca.to.ch + (change.text[0].length - change.removed[0].length);
-    var text = cm.getRange(nca.from, nca.to);
-    reparseNodeAndUpdateTree(nca, text);
+
+  // Copy / Cut events must be captured and simulated
+  document.oncut = document.oncopy = handleCopyCut;
+  // Tab always selects the node after the cursor, or after the currently-selected node
+  that.cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
+  that.wrapper.onkeydown = handleKey;
+  function handleKey(e){
+    var active = document.activeElement
+    if(e.which===8 && isSexp(active)){    // DELETE
+      e.preventDefault();
+      cm.replaceRange('', active.from, active.to);
+    }
+    if (e.which===13 && isValue(active)){ // RETURN
+      e.preventDefault();
+      startEdit(false, active);
+    }
+    if(e.which===9){                      // TAB
+      e.codemirrorIgnore = true; e.stopPropagation();
+    }
+    if(e.which===57){                     // OPEN PAREN
+      e.preventDefault();
+      cm.replaceRange('()', cm.getCursor(), cm.getCursor());
+      var idx = cm.indexFromPos(cm.getCursor());
+    }
+    if(e.which===48 && isSexp(active)){   // CLOSE PAREN
+      e.preventDefault();
+      while(!active.classList.contains("CodeMirror-widget"))
+        active = active.parentNode;
+      var endIndex = cm.indexFromPos(active.firstChild.to);
+      cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
+    }
   };
 
   // if a node is modified in-place, update the location of ancestors and siblings
-  function reparseNodeAndUpdateTree(node, newText){
+  function inPlaceChange(node){
     // given a node and delta, move it and all its' children by that delta
     function shiftNode(node, delta){
-      console.log('shifting node and children by '+delta+': '+node.innerText);
-      if(node.className === "lineBreak") return;
-      delete that.circleIndices[cm.indexFromPos(node.from)];
+      if(node.className==="lineBreak") return;
       node.from.ch += delta; node.to.ch += delta;
-      that.circleIndices[cm.indexFromPos(node.from)] = node;
       for(var i = 0; i<node.children.length && node.children[i].from.line===line; i++){
         shiftNode(node.children[i], delta); };
     }
     // any following siblings on the same line should be *shifted* by delta
     function shiftSiblings(node, delta){
-      console.log('shifting sibling of by '+delta+': '+node.innerText);
       for(var sib = node.nextSibling; sib && sib.from && (sib.from.line===line);
           sib = sib.nextSibling){ shiftNode(sib, delta); }
     }
     // If an Ancestor ends on the same line, it should be *extended* by delta,
     // with its' siblings shifted by the same amount
     function extendAncestors(node, delta){
-      console.log('extending parent of by '+delta+':'+node.innerText);
       for(var parent = node.parentNode; isCircle(parent) && parent.to.line===line;
-          parent = parent.parentNode){
-        parent.to.ch += delta; shiftSiblings(parent, delta);
-      }
+          parent = parent.parentNode){ parent.to.ch += delta; shiftSiblings(parent, delta); }
     }
-    console.log('replacing node at '+node.from.ch+'-'+node.to.ch+' with '+newText);
-    // adjust the location information for the entire tree, based on the change
-    var from  = node.from, to = node.to, line = to.line,
-        delta = newText.length - node.innerText.length;
-    console.log('delta is: '+delta );
+    var from = node.from, to = node.to, line = to.line,
+        delta = node.innerText.length - ((node.to.ch) - (node.from.ch));
     node.to.ch = node.to.ch + delta; // adjust the node's location information
     shiftSiblings(node, delta);      // shift any siblings over
     extendAncestors(node, delta);    // extend any ancestors
-    
-    // remove the node being modified, and replace it with new nodes
-    var AST   = that.parser(newText), parent = node.parentNode;
-    console.log(AST);
-    var circles = AST.map(function(p){return p.toCircles(cm);})
-    console.log(that.circleIndices);
-    console.log(that.circleIndices[cm.indexFromPos(node.from)]);
-    delete that.circleIndices[cm.indexFromPos(node.from)];
-    circles.forEach(function(c){
-      shiftNode(c, cm.indexFromPos(node.from));
-      that.circleIndices[cm.indexFromPos(c.from)] = c;
-      c.classList.add('patched'); parent.insertBefore(c, node);
-    });
-    setTimeout(function(){assignEvents(parent);}, 500);
-    node.parentNode.removeChild(node);
   }
 
   function sanitizeWhitespace(node, txt){
@@ -168,48 +148,7 @@ function BubbleEditor(cm, parser){
     window.getSelection().removeAllRanges();
     window.getSelection().addRange(range);
   }
-                  
-  /////////  EVENT HANDLERS ///////////////////////////////
-  function handleCopyCut(e){
-    var active = document.activeElement;
-    if(isSexp(active)){
-      e.stopPropagation();
-      buffer.innerText = cm.getRange(active.from, active.to);
-      buffer.select();
-      try{ document.execCommand(e.type); }
-      catch(e) { console.log('problem with execCommand("'+e.type+'")'); }
-      setTimeout(function(){active.focus();}, 200);
-    }
-    if(e.type==="cut") cm.replaceRange('', active.from, active.to);
-  };
-
-  function handleKey(e){
-    var active = document.activeElement
-    if(e.which===8 && isSexp(active)){    // DELETE
-      e.preventDefault();
-      cm.replaceRange('', active.from, active.to);
-    }
-    if (e.which===13 && isValue(active)){ // RETURN
-      e.preventDefault();
-      startEdit(false, active);
-    }
-    if(e.which===9){                      // TAB
-      e.codemirrorIgnore = true; e.stopPropagation();
-    }
-    if(e.which===57){                     // OPEN PAREN
-      e.preventDefault();
-      cm.replaceRange('()', cm.getCursor(), cm.getCursor());
-      var idx = cm.indexFromPos(cm.getCursor());
-    }
-    if(e.which===48 && isSexp(active)){   // CLOSE PAREN
-      e.preventDefault();
-      while(!active.classList.contains("CodeMirror-widget"))
-        active = active.parentNode;
-      var endIndex = cm.indexFromPos(active.firstChild.to);
-      cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
-    }
-  };
-                  
+  // remove keyhandlers and update CM
   function saveEdit(node){
     node.onkeydown = null;
     node.contentEditable = "false";
@@ -273,17 +212,19 @@ function BubbleEditor(cm, parser){
     return false;
   }
 
-   function assignEvents(parent){
-      // Assign Event Handlers (avoid addEventListener, which allows duplicates)
-      var whitespace  = parent.querySelectorAll('.cm-whitespace'),
-          sexpElts    = parent.querySelectorAll('.value, .sexp'),
-          draggable   = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
-          dragTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
-          dropTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace'),
-          editable    = parent.querySelectorAll('.value');
+   function assignEvents(){
+      var tabIndex=1; // assign tab order
+      Object.keys(that.circleIndices).forEach(function(k,i){
+        that.circleIndices[k].tabIndex=tabIndex++;
+      });
               
-      // assign tab order
-      [].forEach.call(sexpElts, function(elt){ elt.tabIndex = 1;});
+      // Assign Event Handlers (avoid addEventListener, which allows duplicates)
+      var whitespace  = that.wrapper.querySelectorAll('.cm-whitespace'),
+          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+          draggable   = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+          dragTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
+          dropTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace'),
+          editable    = that.wrapper.querySelectorAll('.value');
               
       // editable things can be edited on dblclick
       [ ].forEach.call(editable,  function (elt){elt.ondblclick = startEdit;});
@@ -301,11 +242,6 @@ function BubbleEditor(cm, parser){
          elt.ondrop = handleDrop; });
       // allow dropping into the CM element
       that.cm.on("drop", function(cm, e){ e.CodeMirrorIgnore = true; handleDrop(e); });
-      // Copy / Cut events must be captured and simulated
-      document.oncut = document.oncopy = handleCopyCut;
-      // Tab always selects the node after the cursor, or after the currently-selected node
-      that.cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
-      that.wrapper.onkeydown = handleKey;
     }
 
 
@@ -320,16 +256,16 @@ function BubbleEditor(cm, parser){
                        , handleMouseEvents: false
                        , _circles: true});
     });
-    setTimeout(function(){assignEvents(that.wrapper)}, 400);
+    setTimeout(assignEvents, 400);
   }
                   
-  function addChildAfterPos(parent, child){
+  function addChildAfterPos(parent, child, cm){
       var startCh = parent.lastChild? parent.lastChild.location.endChar : parent.location.startChar,
           startLn = parent.lastChild? parent.lastChild.location.endRow : parent.location.startRow,
           endCh   = child.location.startChar,
           endLn   = child.location.startRow,
           br      = document.createElement('span'),
-          str     = that.cm.getRange(that.cm.posFromIndex(startCh), that.cm.posFromIndex(endCh),"\n"),
+          str     = cm.getRange(cm.posFromIndex(startCh), cm.posFromIndex(endCh),"\n"),
           lines   = str.split("\n"),
           spansMultipleLines = lines.length>1;
       br.style.height = "0"; br.className = "lineBreak";
@@ -345,23 +281,23 @@ function BubbleEditor(cm, parser){
       return spansMultipleLines;
    }
                                         
-    function makeWhitespace(startCh, txt){
+    function makeWhitespace(startCh, txt, cm){
       var space   = document.createElement('span');
       space.className="cm-whitespace";
       space.location = {startChar: startCh, endChar: startCh+txt.length};
-      space.from = that.cm.posFromIndex(startCh);
-      space.to = that.cm.posFromIndex(startCh+txt.length);
+      space.from = cm.posFromIndex(startCh);
+      space.to = cm.posFromIndex(startCh+txt.length);
       space.appendChild(document.createTextNode(txt));
       return space;
     }
                                         
-    that.makeValue = function(valueTxt, className, location){
+    function makeValue(valueTxt, className, location, cm){
       var node = document.createElement('span');
       node.className = "value "+className;
       node.appendChild(document.createTextNode(valueTxt));
       node.location = location;
-      node.from = that.cm.posFromIndex(location.startChar);
-      node.to   = that.cm.posFromIndex(location.endChar);
+      node.from = cm.posFromIndex(location.startChar);
+      node.to   = cm.posFromIndex(location.endChar);
       node.draggable="true";
       node.setAttribute('aria-label', valueTxt);
       node.setAttribute('role', "treeitem");
@@ -369,7 +305,7 @@ function BubbleEditor(cm, parser){
       return node;
     }
                                         
-    that.makeExpression = function(func, args, location){
+    function makeExpression(func, args, location, cm){
       var expression = document.createElement('div'),
           ariaStr = (func? func.val : "empty") +
                     " expression, " + args.length+" argument" +
@@ -377,25 +313,25 @@ function BubbleEditor(cm, parser){
           operator = document.createElement('span'),
           lParen = document.createElement('span'),
           rParen = document.createElement('span'),
-          startPos = that.cm.posFromIndex(location.startChar+1),
-          endPos = that.cm.posFromIndex(location.endChar);
+          startPos = cm.posFromIndex(location.startChar+1),
+          endPos = cm.posFromIndex(location.endChar);
       expression.classList.add("sexp");
       expression.location = location;
-      expression.from = that.cm.posFromIndex(location.startChar);
-      expression.to   = that.cm.posFromIndex(location.endChar);
+      expression.from = cm.posFromIndex(location.startChar);
+      expression.to   = cm.posFromIndex(location.endChar);
       lParen.className = "lParen";        rParen.className = "rParen";
       lParen.location = location.start(); rParen.location = location.end();
-      lParen.from = that.cm.posFromIndex(location.startChar);
-      lParen.to   = that.cm.posFromIndex(location.startChar+1);
-      lParen.appendChild(document.createTextNode(that.cm.getTokenAt(startPos).string));
-      rParen.appendChild(document.createTextNode(that.cm.getTokenAt(endPos).string));
-      rParen.from = that.cm.posFromIndex(location.endChar);
-      rParen.to = that.cm.posFromIndex(location.endChar+1);
+      lParen.from = cm.posFromIndex(location.startChar);
+      lParen.to = cm.posFromIndex(location.startChar+1);
+      lParen.appendChild(document.createTextNode(cm.getTokenAt(startPos).string));
+      rParen.appendChild(document.createTextNode(cm.getTokenAt(endPos).string));
+      rParen.from = cm.posFromIndex(location.endChar);
+      rParen.to = cm.posFromIndex(location.endChar+1);
       expression.appendChild(lParen);
       operator.location = func? func.location :
                   {startChar: location.startChar+1, endChar: location.endChar-1};
-      operator.from = that.cm.posFromIndex(operator.location.startChar);
-      operator.to   = that.cm.posFromIndex(operator.location.endChar);
+      operator.from = cm.posFromIndex(operator.location.startChar);
+      operator.to = cm.posFromIndex(operator.location.endChar);
       var funcValue = func? func.toCircles(cm) :
                       makeValue(" ", "cm-whitespace", operator.location, cm);
       funcValue.location = operator.location;
@@ -414,36 +350,36 @@ function BubbleEditor(cm, parser){
       expression.setAttribute('role', "treeitem");
       that.circleIndices[location.startChar] = expression;
       return expression;
-   }
+    }
                   
    // Program.prototype.toCircles: CM -> DOM
-   plt.compiler.Program.prototype.toCircles = function(){
+   plt.compiler.Program.prototype.toCircles = function(cm){
       throw this.constructor.name+" cannot be made into a Circle of Evaluation";
    };
     
    // make an expression, convert the operator to a circle, assign it the "operator" class,
    // and convert all the arguments to circles as well
-   plt.compiler.callExpr.prototype.toCircles = function(){
-      return that.makeExpression(this.func, this.args, this.location);
+   plt.compiler.callExpr.prototype.toCircles = function(cm){
+      return makeExpression(this.func, this.args, this.location, cm);
    };
-   plt.compiler.symbolExpr.prototype.toCircles = function(){
-      return that.makeValue(this.val, "wescheme-symbol", this.location);
+   plt.compiler.symbolExpr.prototype.toCircles = function(cm){
+      return makeValue(this.val, "wescheme-symbol", this.location, cm);
    };
-   plt.compiler.literal.prototype.toCircles = function(){
+   plt.compiler.literal.prototype.toCircles = function(cm){
       // if it's a Rational, BigInt, FloatPoint, Complex or Char, we can take care of it
-      if(this.val.toCircles) return this.val.toCircles();
+      if(this.val.toCircles) return this.val.toCircles(cm);
       // if it's Not A Number, assume it's a string. Otherwise, number.
       var className = isNaN(this.val)? "wescheme-string" : "wescheme-number";
-      return that.makeValue(this.toString(), className, this.location);
+      return makeValue(this.toString(), className, this.location, cm);
    };
-   jsnums.Rational.prototype.toCircles = function(){
-      return that.makeValue(this.toString(), "wescheme-number", this.location);
+   jsnums.Rational.prototype.toCircles = function(cm){
+      return makeValue(this.toString(), "wescheme-number", this.location, cm);
    };
    jsnums.BigInteger.prototype.toCircles = jsnums.Rational.prototype.toCircles;
    jsnums.FloatPoint.prototype.toCircles = jsnums.Rational.prototype.toCircles;
    jsnums.Complex.prototype.toCircles = jsnums.Rational.prototype.toCircles;
-   Char.prototype.toCircles = function(){
-      return that.makeValue(this.toString(), "wescheme-character", this.location);
+   Char.prototype.toCircles = function(cm){
+      return makeValue(this.toString(), "wescheme-character", this.location, cm);
    };
    
     that.refresh();
