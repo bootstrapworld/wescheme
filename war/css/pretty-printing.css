@@ -49,6 +49,7 @@ span.cm-scheme-rparen                      {color: black;}
   border-radius:  20px;
   min-height:     50px;
   min-width:      40px;
+  vertical-align: top;
   background:     white url('operatorBG.png') repeat-x;
 }
 .code .sexp{display: inline; max-width: 100%;}
@@ -70,10 +71,12 @@ span.cm-scheme-rparen                      {color: black;}
   cursor:         pointer;
   line-height:    25px;
 }
+
 .circles .value{text-align: center; min-width: 10px; max-width: 150px; border: solid transparent 2px;}
 .code .value{max-width: inherit; display: inline; line-height: inherit;}
 
 .circles .sexp>:nth-child(2):after{ content:'\A'; }
+.circles .sexp>.cm-whitespace:nth-child(2):after{ line-height: 0px; }
 
 .circles .cm-whitespace{
   min-width:      10px;

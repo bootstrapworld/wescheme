@@ -80,9 +80,28 @@ function BubbleEditor(cm, parser){
       var endIndex = cm.indexFromPos(active.firstChild.to);
       cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
     }
+    if(e.which===37 || e.which===39){     // ARROW KEYS
+      var cursor = cm.getCursor();
+      if(isSexp(active)){
+          var edge    = (e.which===37)? active.from : active.to,
+              newPos = {line: edge.line, ch: edge.ch+(e.which===37? 0 : 1)};
+        cm.setCursor(newPos);
+        cm.focus();
+      } else {
+        for(var i in that.circleIndices){
+          if (!that.circleIndices.hasOwnProperty(i)) continue;
+          var node = that.circleIndices[i],
+              edge = (e.which===39)? node.to : node.from;
+          if(edge.line === cursor.line && edge.ch === cursor.ch){
+            selectNode(false, node); break;
+          }
+        }
+      }
+    }
   };
 
   function sanitizeWhitespace(node, txt){
+    console.log(node);
     var start = cm.indexFromPos(node.from),
         end   = cm.indexFromPos(node.to),
         prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
@@ -148,6 +167,7 @@ function BubbleEditor(cm, parser){
     node.style.opacity = '1.0';
   }
   // if we've dropped one element into a different one, perform the CM modifications
+  function dropWrapper(cm, e){ handleDrop(e); }
   function handleDrop(e) {
     e.codemirrorIgnore = true; e.preventDefault();
     var node = getNodeFromStoppedEvent(e) || node, active = document.activeElement;
@@ -158,11 +178,13 @@ function BubbleEditor(cm, parser){
     node.classList.remove('insert', 'replace');
     if (!active.contains(node)) {
       var text     = e.dataTransfer.getData('text');
-      if(node.classList.contains('CodeMirror-line')){ // for dropping into the parent
+      if(node.classList.contains('CodeMirror-line')
+        || node.parentNode.classList.contains('CodeMirror-line')){ // for dropping into the parent
         var pos = cm.coordsChar({left: e.pageX, top: e.pageY});
         node.from = node.to = pos;
       }
       text = sanitizeWhitespace(node, text);
+                  console.log("'"+text+"'");
       // Modify the src or dest first, depending on which comes earlier in the document
       // Be sure to combine both operations into one, so undo works properly
       cm.operation(function(){
@@ -205,13 +227,15 @@ function BubbleEditor(cm, parser){
          elt.ondragenter = colorTarget; elt.ondragleave = unColorTarget;
          elt.ondrop = handleDrop; });
       // allow dropping into the CM element
-      that.cm.on("drop", function(cm, e){ e.CodeMirrorIgnore = true; handleDrop(e); });
+      that.cm.off("drop", dropWrapper);
+      that.cm.on("drop", dropWrapper);
     }
 
   // remove all bubbles and regenerate them, based on CM instance
   that.refresh = function(){
-    console.log('refreshing entire bubble editor');
+    console.log('refreshing entire bubble editor with:\n'+that.cm.getValue());
     that.clear();
+    that.circleIndices = [];
     that.parser(that.cm.getValue()).forEach(function(p){
       var circle = p.toCircles(cm);
       that.cm.markText(circle.from, circle.to,
@@ -219,6 +243,7 @@ function BubbleEditor(cm, parser){
                        , handleMouseEvents: false
                        , _circles: true});
     });
+                  console.log(that.circleIndices);
     setTimeout(assignEvents, 400);
   }
                   
@@ -253,7 +278,7 @@ function BubbleEditor(cm, parser){
       space.appendChild(document.createTextNode(txt));
       return space;
     }
-                                        
+                  
     that.makeValue = function(valueTxt, className, location){
       var node = document.createElement('span');
       node.className = "value "+className;
@@ -324,8 +349,9 @@ function BubbleEditor(cm, parser){
       return that.makeValue(this.val, "wescheme-symbol", this.location);
    };
    plt.compiler.literal.prototype.toCircles = function(){
-      // if it's not A Number, assume it's a string.
-      var className = isNaN(this.val)? "wescheme-string" : "wescheme-number";
+      // if it's not parseable as a native num, nor is it a number structure, it's a string
+      var className = (isNaN(this.val.toString()) && !this.val.isFinite)?
+            "wescheme-string" : "wescheme-number";
       return that.makeValue(this.stx||this.toString(), className, this.location);
    };
    
