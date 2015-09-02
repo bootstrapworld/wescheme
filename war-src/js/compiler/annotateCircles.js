@@ -24,8 +24,8 @@ function BubbleEditor(cm, parser){
   that.buffer.style.position = "absolute";
 
   // clear circles
-  that.clear = function(){
-    that.cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
+  cm.clearCircles = function(){
+    cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
   }
 
   // helper functions
@@ -252,7 +252,7 @@ function BubbleEditor(cm, parser){
   // remove all bubbles and regenerate them, based on CM instance
   that.refresh = function(){
     console.log('refreshing entire bubble editor with:\n'+that.cm.getValue());
-    that.clear();
+    cm.clearCircles();
     cm.circleIndices = [];
     that.parser(that.cm.getValue()).forEach(function(p){
       var circle = p.toCircles(cm);

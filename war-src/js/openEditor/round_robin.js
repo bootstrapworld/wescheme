@@ -63,8 +63,7 @@ goog.require('plt.compiler.convertToCircles');
     function annotateEditorContents(editor){
       var parser = function (t){ return plt.compiler.parse(plt.compiler.lex(t));};
       try{
-        var bubbles = new BubbleEditor(editor, parser);
- console.log(bubbles);
+        return new BubbleEditor(editor, parser);
       } catch(e){
         console.log('an error was thrown during annotation:');
         console.log(e);

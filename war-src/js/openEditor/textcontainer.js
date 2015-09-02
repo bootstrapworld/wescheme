@@ -136,7 +136,7 @@ var WeSchemeTextContainer;
           var newValue = !that.editor.getOption("showArrows");
           that.editor.setOption("showArrows", newValue);
           if(newValue) annotate();
- console.log('toggled annotation');
+          else that.editor.clearCircles();
           return newValue;
        }
  
