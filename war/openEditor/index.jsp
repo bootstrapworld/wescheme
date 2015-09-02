@@ -324,7 +324,7 @@
 
 
 	<div id="header">
-    <h1><a tabIndex="1" href="/" style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
+    <h1><a tabIndex="1" aria-label="WeScheme Homepage" href="/" style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
 	  <h2>
       <a  tabIndex="1" id="docs" href="#">Documentation</a>
 	    <% if (userSession != null) { %>
@@ -338,14 +338,14 @@
   <div id="result"></div>
 	<div id="toolbar">
 	  <ul>
-	    <li><a  tabIndex="1" id="run"><span>Run</span></a></li>
-	    <li><a  tabIndex="1" id="stop"><span>Stop</span></a></li>
+	    <li><a  tabIndex="1" role="button" id="run"><span>Run</span></a></li>
+	    <li><a  tabIndex="1" role="button" id="stop"><span>Stop</span></a></li>
 	    <% if (userSession != null) { %>
-	    <li><a  tabIndex="1" id="save"><span>Save</span></a></li>
-	    <li><a  tabIndex="1" id="share"><span>Share</span></a></li>
-      <li><a  tabIndex="1" id="images"><span>Images</span></a></li>
+	    <li><a  tabIndex="1" role="button" id="save"><span>Save</span></a></li>
+	    <li><a  tabIndex="1" role="button" id="share"><span>Share</span></a></li>
+      <li><a  tabIndex="1" role="button" id="images"><span>Images</span></a></li>
 	    <% } %>
-        <li><a  tabIndex="1" id="recipe"><span>Recipe</span></a></li>
+        <li><a  tabIndex="1" role="button" id="recipe"><span>Recipe</span></a></li>
 	  </ul>
 	</div>
 
@@ -354,13 +354,13 @@
 
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
-	  <input  tabIndex="1" id="filename" type="text" style="width: 20%"/>
+	  <input  tabIndex="1" role="textbox" id="filename" type="text" style="width: 20%"/>
     <% if (userSession != null) { %>
-      <a  tabIndex="1" id="updateNotes" class="clickableAnchor" title="Write notes"><img src="/images/small-info.png"></a>
+      <a  tabIndex="1" role="button" id="updateNotes" class="clickableAnchor" title="Write notes"><img src="/images/small-info.png"></a>
     <% } %>
-    <a  tabIndex="1" id="undo" class="clickableAnchor" title="undo"><img src="/images/undo.png"></a>
-    <a  tabIndex="1" id="redo" class="clickableAnchor" title="redo"><img src="/images/redo.png"></a>
-    <a  tabIndex="1" id="annotation" class="clickableAnchor"  title="Toggle links" style="float:right;"><img src="/images/arrows.png"></a>
+    <a  tabIndex="1" role="button" id="undo" class="clickableAnchor" title="undo"><img src="/images/undo.png"></a>
+    <a  tabIndex="1" role="button" id="redo" class="clickableAnchor" title="redo"><img src="/images/redo.png"></a>
+    <a  tabIndex="1" role="button" id="annotation" class="clickableAnchor"  title="Toggle links" style="float:right;"><img src="/images/arrows.png"></a>
     <div id="statusbar"></div>
 	</div>
 
@@ -384,7 +384,7 @@
 
       <div id="middle" class="middle">
 	<div id="splitpane" class="goog-splitpane">
-	  <div id="definitions" class="goog-splitpane-first-container">
+	  <div id="definitions" class="circles goog-splitpane-first-container">
             <textarea id="defn">&#59;  Write your code here
 </textarea>
 	  </div>
