@@ -17,7 +17,7 @@ function BubbleEditor(cm, parser){
   that.cm = cm;
   that.parser = parser;
   that.wrapper = cm.getWrapperElement();
-  that.circleIndices = {};
+  cm.circleIndices = {};
   that.buffer = document.getElementById('buffer') ||
                 document.body.appendChild(document.createElement("textarea"));
   that.buffer.id = "buffer"; that.buffer.style.opacity = "0";
@@ -36,7 +36,7 @@ function BubbleEditor(cm, parser){
   function getNodeFromStoppedEvent(e){
     if(e){ e.stopPropagation(); return e.target || e.srcElement; }
   }
-
+  
   function handleCopyCut(e){
     var active = document.activeElement;
     if(isSexp(active)){
@@ -56,7 +56,7 @@ function BubbleEditor(cm, parser){
   that.cm.on("keydown", function(cm, e){ if(e.which===9) e.codemirrorIgnore = true; });
   that.wrapper.onkeydown = handleKey;
   function handleKey(e){
-    var active = document.activeElement
+    var active = document.activeElement, cursor = cm.getCursor();
     if(e.which===8 && isSexp(active)){    // DELETE
       e.preventDefault();
       cm.replaceRange('', active.from, active.to);
@@ -70,8 +70,8 @@ function BubbleEditor(cm, parser){
     }
     if(e.which===57){                     // OPEN PAREN
       e.preventDefault();
-      cm.replaceRange('()', cm.getCursor(), cm.getCursor());
-      var idx = cm.indexFromPos(cm.getCursor());
+      cm.replaceRange('()', cursor, cursor);
+      var idx = cm.indexFromPos(cursor);
     }
     if(e.which===48 && isSexp(active)){   // CLOSE PAREN
       e.preventDefault();
@@ -80,18 +80,41 @@ function BubbleEditor(cm, parser){
       var endIndex = cm.indexFromPos(active.firstChild.to);
       cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
     }
-    if(e.which===37 || e.which===39){     // ARROW KEYS
-      var cursor = cm.getCursor();
+    if(e.which===37){     // LEFT ARROW
       if(isSexp(active)){
-          var edge    = (e.which===37)? active.from : active.to,
-              newPos = {line: edge.line, ch: edge.ch+(e.which===37? 0 : 1)};
-        cm.setCursor(newPos);
-        cm.focus();
+        if(active.parentNode.classList.contains("CodeMirror-widget")){
+          cm.setCursor(active.from); cm.focus();
+        } else {
+          console.log('span[tabIndex="'+(active.tabIndex-1)+'"]');
+          var prev = that.wrapper.querySelectorAll('[tabIndex="'+(active.tabIndex-1)+'"]')[0];
+          selectNode(false, prev);
+        }
       } else {
-        for(var i in that.circleIndices){
-          if (!that.circleIndices.hasOwnProperty(i)) continue;
-          var node = that.circleIndices[i],
-              edge = (e.which===39)? node.to : node.from;
+        for(var i in cm.circleIndices){
+          if (!cm.circleIndices.hasOwnProperty(i)) continue;
+          var node = cm.circleIndices[i], edge = node.from;
+          if(edge.line === cursor.line && edge.ch === cursor.ch){
+            while(node.childNodes.length>2){
+              node = node.lastChild.previousSibling.previousSibling;
+            }
+            selectNode(false, node); break;
+          }
+        }
+      }
+    }
+    if(e.which===39){     // RIGHT ARROW
+      if(isSexp(active)){
+        if(active.parentNode.classList.contains("CodeMirror-widget")){
+          cm.setCursor(active.to); cm.focus();
+        } else {
+          console.log('span[tabIndex="'+(active.tabIndex+1)+'"]');
+          var prev = that.wrapper.querySelectorAll('[tabIndex="'+(active.tabIndex+1)+'"]')[0];
+          selectNode(false, prev);
+        }
+      } else {
+        for(var i in cm.circleIndices){
+          if (!cm.circleIndices.hasOwnProperty(i)) continue;
+          var node = cm.circleIndices[i], edge = node.to;
           if(edge.line === cursor.line && edge.ch === cursor.ch){
             selectNode(false, node); break;
           }
@@ -110,9 +133,7 @@ function BubbleEditor(cm, parser){
   }
 
   // select the highlighted node.
-  function selectNode(e, node){
-    (getNodeFromStoppedEvent(e) || node).focus();
-  }
+  function selectNode(e, node){ (getNodeFromStoppedEvent(e) || node).focus(); }
 
   // insert cursor at beginning of node.
   function startEdit(e, node){
@@ -159,12 +180,10 @@ function BubbleEditor(cm, parser){
     }
   }
   function unColorTarget(e) { // remove dragover styles
-    var node = getNodeFromStoppedEvent(e) || node;
-    node.classList.remove('insert', 'replace');
+   (getNodeFromStoppedEvent(e) || node).classList.remove('insert', 'replace');
   }
   function cleanUp(e) {       // make sure nothing is left partially-opaque
-    var node = getNodeFromStoppedEvent(e) || node;
-    node.style.opacity = '1.0';
+    (getNodeFromStoppedEvent(e) || node).style.opacity = '1.0';
   }
   // if we've dropped one element into a different one, perform the CM modifications
   function dropWrapper(cm, e){ handleDrop(e); }
@@ -184,7 +203,6 @@ function BubbleEditor(cm, parser){
         node.from = node.to = pos;
       }
       text = sanitizeWhitespace(node, text);
-                  console.log("'"+text+"'");
       // Modify the src or dest first, depending on which comes earlier in the document
       // Be sure to combine both operations into one, so undo works properly
       cm.operation(function(){
@@ -201,8 +219,8 @@ function BubbleEditor(cm, parser){
   }
 
    function assignEvents(){
-      Object.keys(that.circleIndices).forEach(function(k,i){
-        that.circleIndices[k].tabIndex=1;
+      Object.keys(cm.circleIndices).forEach(function(k,i){
+        cm.circleIndices[k].tabIndex=2;
       });
               
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
@@ -235,7 +253,7 @@ function BubbleEditor(cm, parser){
   that.refresh = function(){
     console.log('refreshing entire bubble editor with:\n'+that.cm.getValue());
     that.clear();
-    that.circleIndices = [];
+    cm.circleIndices = [];
     that.parser(that.cm.getValue()).forEach(function(p){
       var circle = p.toCircles(cm);
       that.cm.markText(circle.from, circle.to,
@@ -243,8 +261,7 @@ function BubbleEditor(cm, parser){
                        , handleMouseEvents: false
                        , _circles: true});
     });
-                  console.log(that.circleIndices);
-    setTimeout(assignEvents, 400);
+    setTimeout(assignEvents, 300);
   }
                   
   function addChildAfterPos(parent, child){
@@ -289,7 +306,7 @@ function BubbleEditor(cm, parser){
       node.draggable="true";
       node.setAttribute('aria-label', valueTxt);
       node.setAttribute('role', "treeitem");
-      that.circleIndices[location.startChar] = node;
+      cm.circleIndices[location.startChar] = node;
       return node;
     }
                                         
@@ -332,7 +349,7 @@ function BubbleEditor(cm, parser){
       expression.draggable="true";
       expression.setAttribute('aria-label', ariaStr);
       expression.setAttribute('role', "treeitem");
-      that.circleIndices[location.startChar] = expression;
+      cm.circleIndices[location.startChar] = expression;
       return expression;
     }
                   

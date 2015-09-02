@@ -61,15 +61,13 @@ goog.require('plt.compiler.convertToCircles');
     // note: will run lex/parse/analyze at the will of the editor!!!!!
     // should be as cheap as possible
     function annotateEditorContents(editor){
+      var parser = function (t){ return plt.compiler.parse(plt.compiler.lex(t));};
       try{
-        var AST   = plt.compiler.parse(plt.compiler.lex(editor.getValue()));
-        plt.compiler.convertToCircles(AST, editor);
-        var desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
-            pinfo       = plt.compiler.analyze(desugared);
-        plt.compiler.annotateCM(desugared, editor);
+        var bubbles = new BubbleEditor(editor, parser);
+ console.log(bubbles);
       } catch(e){
         console.log('an error was thrown during annotation:');
- console.log(e);
+        console.log(e);
       }
     }
 

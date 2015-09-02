@@ -129,9 +129,6 @@ var WeSchemeTextContainer;
        function annotate(){
           if(that.editor.getOption("showArrows")) plt.wescheme.RoundRobin.annotator(that.editor);
        }
-       function clearAnnotations(){
-          cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
-       }
  
        // toggle the annotation option.
        // if we're just now switching annotation on, annotate the editor
@@ -139,13 +136,14 @@ var WeSchemeTextContainer;
           var newValue = !that.editor.getOption("showArrows");
           that.editor.setOption("showArrows", newValue);
           if(newValue) annotate();
+ console.log('toggled annotation');
           return newValue;
        }
  
        // onChange, set the annotator to run Xs from now, based on the size of the document
         this.editor.on('change', function() {
           clearTimeout(that.annotatorTimeout);  // clear existing timeout, if it existed
-          that.annotatorTimeout = setTimeout(annotate, 500 + that.editor.lineCount() * 3);
+          that.annotatorTimeout = setTimeout(annotate, 100 + that.editor.lineCount() * 3);
           that.behaviorE.sendEvent(that.editor.getValue());
         });
 

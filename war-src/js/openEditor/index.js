@@ -147,7 +147,9 @@ var initializeEditor;
                                       submitPost("/logout");
                                   }
                               });
-            jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
+            jQuery("#annotation").click(function()  {
+              jQuery("#annotation").css("border", myEditor.defn.impl.toggleAnnotation()? "1px inset":"none");
+            });
             jQuery("#definitions").click(function() { defnInFocus = true;});
             var afterLoad1 = function() {
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }

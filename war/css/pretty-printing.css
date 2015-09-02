@@ -50,7 +50,8 @@ span.cm-scheme-rparen                      {color: black;}
   min-height:     50px;
   min-width:      40px;
   vertical-align: top;
-  background:     white url('operatorBG.png') repeat-x;
+  background-image: url('operatorBG.png');
+  background-repeat: repeat-x;
 }
 .code .sexp{display: inline; max-width: 100%;}
 
@@ -76,7 +77,7 @@ span.cm-scheme-rparen                      {color: black;}
 .code .value{max-width: inherit; display: inline; line-height: inherit;}
 
 .circles .sexp>:nth-child(2):after{ content:'\A'; }
-.circles .sexp>.cm-whitespace:nth-child(2):after{ line-height: 0px; }
+.circles .sexp>.cm-whitespace:nth-child(2){ line-height: 20px; }
 
 .circles .cm-whitespace{
   min-width:      10px;
