@@ -325,8 +325,8 @@
 	  <h2>
       <a tabIndex="1" id="docs" href="#">Documentation</a>
 	    <% if (userSession != null) { %>
-            <a tabIndex="1" id="account" href="/console" target="console">Programs</a>
-            <a tabIndex="1" id="logout" href="#">Logout</a>
+            <a tabIndex="1" role="button"  id="account" href="/console" target="console">Programs</a>
+            <a tabIndex="1" role="button"  id="logout" href="#">Logout</a>
 	    <% } %>
       </h2>
 	</div>
@@ -335,14 +335,14 @@
   <div id="result"></div>
 	<div id="toolbar">
 	  <ul>
-	    <li><a tabIndex="1" id="run"><span>Run</span></a></li>
-	    <li><a tabIndex="1" id="stop"><span>Stop</span></a></li>
+	    <li><a tabIndex="1" role="button"  id="run"><span>Run</span></a></li>
+	    <li><a tabIndex="1" role="button"  id="stop"><span>Stop</span></a></li>
 	    <% if (userSession != null) { %>
-	    <li><a tabIndex="1" id="save"><span>Save</span></a></li>
-	    <li><a tabIndex="1" id="share"><span>Share</span></a></li>
-      <li><a tabIndex="1" id="images"><span>Images</span></a></li>
+	    <li><a tabIndex="1" role="button"  id="save"><span>Save</span></a></li>
+	    <li><a tabIndex="1" role="button"  id="share"><span>Share</span></a></li>
+      <li><a tabIndex="1" role="button"  id="images"><span>Images</span></a></li>
 	    <% } %>
-        <li><a tabIndex="1" id="recipe"><span>Recipe</span></a></li>
+        <li><a tabIndex="1" role="button"  id="recipe"><span>Recipe</span></a></li>
 	  </ul>
 	</div>
 
@@ -351,10 +351,10 @@
 
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
-	  <input tabIndex="1" id="filename" type="text" style="width: 20%"/>
-    <a tabIndex="1" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-    <a tabIndex="1" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-    <a tabIndex="1" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+	  <input tabIndex="1" role="textbox" id="filename" type="text" style="width: 20%"/>
+    <a tabIndex="1" role="button"  id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+    <a tabIndex="1" role="button"  id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+    <a tabIndex="1" role="button"  id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
     <div id="statusbar"></div>
 	</div>
 
@@ -363,7 +363,7 @@
 
         <div id="documentation" class="documentation">
 	  <!-- <input id="docButton" type="button" value="Click me to hide documentation"/> -->
-	  <input tabIndex="1" id="resetButton" type="image" src="/images/home.png"/>
+	  <input tabIndex="1" role="button"  id="resetButton" type="image" src="/images/home.png"/>
           <iframe id="docFrame" style="width:97%; height:95%"></iframe>
         </div>
 
