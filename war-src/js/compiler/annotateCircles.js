@@ -37,6 +37,47 @@ function BubbleEditor(cm, parser){
     if(e){ e.stopPropagation(); return e.target || e.srcElement; }
   }
   
+  function sanitizeWhitespace(node, txt){
+    console.log(node);
+    var start = cm.indexFromPos(node.from),
+        end   = cm.indexFromPos(node.to),
+        prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
+        next  = cm.getRange(node.to, cm.posFromIndex(end+1));
+    return  (/\s|[\(\[\{]/.test(prev)? "":" ")+ txt.trim() +(/\s|[\)\]\}]/.test(next)? "":" ");
+  }
+
+  // select the highlighted node.
+  function selectNode(e, node){
+    node = getNodeFromStoppedEvent(e) || node;
+    if(isWhitespace(node) || isSexp(node)){ node.focus(); }
+    else { node.parentNode.focus(); }
+  }
+  // insert cursor at beginning of node.
+  function startEdit(e, node){
+    node = getNodeFromStoppedEvent(e) || node;
+    node.contentEditable = "true";
+    node.onblur = function(){saveEdit(node)};
+    node.ondblclick = null; // allow dblclick to work normally
+    node.onkeydown = function(e){
+      e.stopPropagation();
+      e.codemirrorIgnore = true;
+      if (e.which===13 || e.which===9){        // RETURN / TAB: blur() to save
+        node.blur();
+      } else if(e.which===32){                 // SPACE: ignore?
+      }
+    };
+    var range = document.createRange();
+    range.setStart(node, 0);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  }
+  // remove keyhandlers and update CM
+  function saveEdit(node){
+    node.onkeydown = null;
+    node.contentEditable = "false";
+    node.classList.remove('editing');
+    cm.replaceRange(sanitizeWhitespace(node, node.innerText), node.from, node.to);
+  }
   function handleCopyCut(e){
     var active = document.activeElement;
     if(isSexp(active)){
@@ -121,48 +162,6 @@ function BubbleEditor(cm, parser){
         }
       }
     }
-  };
-
-  function sanitizeWhitespace(node, txt){
-    console.log(node);
-    var start = cm.indexFromPos(node.from),
-        end   = cm.indexFromPos(node.to),
-        prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
-        next  = cm.getRange(node.to, cm.posFromIndex(end+1));
-    return  (/\s|[\(\[\{]/.test(prev)? "":" ")+ txt.trim() +(/\s|[\)\]\}]/.test(next)? "":" ");
-  }
-
-  // select the highlighted node.
-  function selectNode(e, node){
-    node = getNodeFromStoppedEvent(e) || node;
-    if(isWhitespace(node) || isSexp(node)){ node.focus(); }
-    else { node.parentNode.focus(); }
-  }
-  // insert cursor at beginning of node.
-  function startEdit(e, node){
-    node = getNodeFromStoppedEvent(e) || node;
-    node.contentEditable = "true";
-    node.onblur = function(){saveEdit(node)};
-    node.ondblclick = null; // allow dblclick to work normally
-    node.onkeydown = function(e){
-      e.stopPropagation();
-      e.codemirrorIgnore = true;
-      if (e.which===13 || e.which===9){        // RETURN / TAB: blur() to save
-        node.blur();
-      } else if(e.which===32){                 // SPACE: ignore?
-      }
-    };
-    var range = document.createRange();
-    range.setStart(node, 0);
-    window.getSelection().removeAllRanges();
-    window.getSelection().addRange(range);
-  }
-  // remove keyhandlers and update CM
-  function saveEdit(node){
-    node.onkeydown = null;
-    node.contentEditable = "false";
-    node.classList.remove('editing');
-    cm.replaceRange(sanitizeWhitespace(node, node.innerText), node.from, node.to);
   }
   function handleDragStart(e){// make draggable things translucent
     var node = getNodeFromStoppedEvent(e) || node;
@@ -221,17 +220,17 @@ function BubbleEditor(cm, parser){
     return false;
   }
 
-   function assignEvents(){
+   function assignEvents(parent){
       Object.keys(cm.circleIndices).forEach(function(k,i){
         cm.circleIndices[k].tabIndex=2;
       });
               
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
-      var whitespace  = that.wrapper.querySelectorAll('.cm-whitespace'),
-          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
-          dragTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
-          dropTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace')
-          editable    = that.wrapper.querySelectorAll('.value');
+      var whitespace  = parent.querySelectorAll('.cm-whitespace'),
+          sexpElts    = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+          dragTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
+          dropTargets = parent.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace')
+          editable    = parent.querySelectorAll('.value');
               
       // editable things can be edited on dblclick
       [ ].forEach.call(editable,  function (elt){elt.ondblclick = startEdit;});
@@ -264,7 +263,7 @@ function BubbleEditor(cm, parser){
                        , handleMouseEvents: false
                        , _circles: true});
     });
-    setTimeout(assignEvents, 300);
+    setTimeout(function(){assignEvents(that.wrapper);}, 300);
   }
                   
   function addChildAfterPos(parent, child){
