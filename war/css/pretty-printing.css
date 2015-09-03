@@ -50,7 +50,6 @@ span.cm-scheme-rparen                      {color: black;}
   min-height:     50px;
   min-width:      40px;
   vertical-align: top;
-  background:     white;
 }
 .code .sexp{display: inline; max-width: 100%;}
 
@@ -71,6 +70,7 @@ span.cm-scheme-rparen                      {color: black;}
   transition:     background 3s ease-in;
 }
 
+.sexp{ background: white; }
 .value{
   display:        inline-block;
   transition:     min-width .2s;
