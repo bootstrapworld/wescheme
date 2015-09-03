@@ -133,8 +133,11 @@ function BubbleEditor(cm, parser){
   }
 
   // select the highlighted node.
-  function selectNode(e, node){ (getNodeFromStoppedEvent(e) || node).focus(); }
-
+  function selectNode(e, node){
+    node = getNodeFromStoppedEvent(e) || node;
+    if(isWhitespace(node) || isSexp(node)){ node.focus(); }
+    else { node.parentNode.focus(); }
+  }
   // insert cursor at beginning of node.
   function startEdit(e, node){
     node = getNodeFromStoppedEvent(e) || node;
@@ -225,9 +228,9 @@ function BubbleEditor(cm, parser){
               
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
       var whitespace  = that.wrapper.querySelectorAll('.cm-whitespace'),
-          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp'),
-          dragTargets = that.wrapper.querySelectorAll('.value, .sexp, .cm-whitespace'),
-          dropTargets = that.wrapper.querySelectorAll('.value, .cm-whitespace'),
+          sexpElts    = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp'),
+          dragTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .sexp, .cm-whitespace'),
+          dropTargets = that.wrapper.querySelectorAll('.value, .sexp>*:nth-child(2), .cm-whitespace')
           editable    = that.wrapper.querySelectorAll('.value');
               
       // editable things can be edited on dblclick
@@ -317,6 +320,7 @@ function BubbleEditor(cm, parser){
                     (args.length===1 ? "" : "s"),
           lParen = document.createElement('span'),
           rParen = document.createElement('span'),
+          operator = document.createElement('span'),
           startPos = cm.posFromIndex(location.startChar+1),
           endPos = cm.posFromIndex(location.endChar);
       expression.classList.add("sexp");
@@ -332,14 +336,17 @@ function BubbleEditor(cm, parser){
       rParen.from = that.cm.posFromIndex(location.endChar);
       rParen.to   = that.cm.posFromIndex(location.endChar+1);
       expression.appendChild(lParen);
-      var funcLoc = func? func.location :
+      operator.location = func? func.location :
                   {startChar: location.startChar+1, endChar: location.endChar-1};
+      operator.from = cm.posFromIndex(operator.location.startChar);
+      operator.to = cm.posFromIndex(operator.location.endChar);
       var funcValue = func? func.toCircles(cm) :
-                      that.makeValue(" ", "cm-whitespace", funcLoc, cm);
-      funcValue.location = funcLoc;
-      expression.appendChild(funcValue);
+                      that.makeValue(" ", "cm-whitespace", operator.location, cm);
+      funcValue.location = operator.location;
+      operator.appendChild(funcValue);
+      expression.appendChild(operator);
       args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles()); });
-      if(func){ addChildAfterPos(expression, rParen); }
+      if(func){ addChildAfterPos(expression, rParen); } 
       else {
         var filler = document.createElement("span");
         filler.style.cssText = "min-height: 10px; display: inline-block; vertical-align: middle;";

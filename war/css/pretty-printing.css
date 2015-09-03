@@ -50,8 +50,7 @@ span.cm-scheme-rparen                      {color: black;}
   min-height:     50px;
   min-width:      40px;
   vertical-align: top;
-  background-image: url('operatorBG.png');
-  background-repeat: repeat-x;
+  background:     white;
 }
 .code .sexp{display: inline; max-width: 100%;}
 
@@ -62,25 +61,31 @@ span.cm-scheme-rparen                      {color: black;}
 }
 
 .circles .sexp>*:nth-child(2){
+  display:        block;
+  margin:         0px 0px 5px 0px;
   text-align:     center;
-  color:          white;
+  width:          100%;
+  border-bottom:  solid 2px black;
+  border-radius:  15px 15px 0px 0px; /* top left, top right, bottom right, bottom left */
+  background:     black;
+  transition:     background 3s ease-in;
 }
+
 .value{
-  display:        inline;
+  display:        inline-block;
   transition:     min-width .2s;
   border-radius:   8px;
   cursor:         pointer;
-  line-height:    25px;
 }
-
+.circles .sexp>:nth-child(2)>*{ color: white; }
+.circles .sexp>:nth-child(2)>.sexp{box-shadow: 0px 0px 10px 1px white;}
 .circles .value{text-align: center; min-width: 10px; max-width: 150px; border: solid transparent 2px;}
-.code .value{max-width: inherit; display: inline; line-height: inherit;}
 
-.circles .sexp>:nth-child(2):after{ content:'\A'; }
 .circles .sexp>.cm-whitespace:nth-child(2){ line-height: 20px; }
 
 .circles .cm-whitespace{
   min-width:      10px;
+  min-height:      15px;
   display:        inline-block;
   transition:     min-width .2s;
   cursor:         pointer;
