@@ -37,12 +37,18 @@ function BubbleEditor(cm, parser){
     if(e){ e.stopPropagation(); return e.target || e.srcElement; }
   }
   
+  function rebuildIndices(){
+    that.cm.circleIndices = {};
+    that.cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){
+     that.cm.circleIndices[cm.indexFromPos(m.find().from)] = m.replacedWith;
+    });
+  }
+  
   function sanitizeWhitespace(node, txt){
-    console.log(node);
-    var start = cm.indexFromPos(node.from),
-        end   = cm.indexFromPos(node.to),
-        prev  = cm.getRange(cm.posFromIndex(start-1), node.from),
-        next  = cm.getRange(node.to, cm.posFromIndex(end+1));
+    var start = cm.indexFromPos(node.tm.find().from),
+        end   = cm.indexFromPos(node.tm.find().to),
+        prev  = cm.getRange(cm.posFromIndex(start-1), node.tm.find().from),
+        next  = cm.getRange(node.tm.find().to, cm.posFromIndex(end+1));
     return  (/\s|[\(\[\{]/.test(prev)? "":" ")+ txt.trim() +(/\s|[\)\]\}]/.test(next)? "":" ");
   }
 
@@ -76,19 +82,20 @@ function BubbleEditor(cm, parser){
     node.onkeydown = null;
     node.contentEditable = "false";
     node.classList.remove('editing');
-    cm.replaceRange(sanitizeWhitespace(node, node.innerText), node.from, node.to);
+    cm.replaceRange(sanitizeWhitespace(node, node.innerText),
+                    node.tm.find().from, node.tm.find().to);
   }
   function handleCopyCut(e){
     var active = document.activeElement;
     if(isSexp(active)){
       e.stopPropagation();
-      buffer.innerText = cm.getRange(active.from, active.to);
+      buffer.innerText = cm.getRange(active.tm.find().from, active.tm.find().to);
       buffer.select();
       try{ document.execCommand(e.type); }
       catch(e) { console.log('problem with execCommand("'+e.type+'")'); }
       setTimeout(function(){active.focus();}, 200);
     }
-    if(e.type==="cut") cm.replaceRange('', active.from, active.to);
+    if(e.type==="cut") cm.replaceRange('', active.tm.find().from, active.tm.find().to);
   };
 
   // Copy / Cut events must be captured and simulated
@@ -100,7 +107,7 @@ function BubbleEditor(cm, parser){
     var active = document.activeElement, cursor = cm.getCursor();
     if(e.which===8 && isSexp(active)){    // DELETE
       e.preventDefault();
-      cm.replaceRange('', active.from, active.to);
+      cm.replaceRange('', active.tm.find().from, active.tm.find().to);
     }
     if (e.which===13 && isValue(active)){ // RETURN
       e.preventDefault();
@@ -109,10 +116,11 @@ function BubbleEditor(cm, parser){
     if(e.which===9){                      // TAB
       e.codemirrorIgnore = true; e.stopPropagation();
     }
-    if(e.which===57){                     // OPEN PAREN
+    if(e.which===57 && !isSexp(active)){ // OPEN PAREN
       e.preventDefault();
       cm.replaceRange('()', cursor, cursor);
-      var idx = cm.indexFromPos(cursor);
+      that.refresh(cursor, {line: cursor.line, ch: cursor.ch+2});
+      
     }
     if(e.which===48 && isSexp(active)){   // CLOSE PAREN
       e.preventDefault();
@@ -121,54 +129,13 @@ function BubbleEditor(cm, parser){
       var endIndex = cm.indexFromPos(active.firstChild.to);
       cm.setCursor(cm.posFromIndex(endIndex+1)); cm.focus();
     }
-    if(e.which===37){     // LEFT ARROW
-      if(isSexp(active)){
-        if(active.parentNode.classList.contains("CodeMirror-widget")){
-          cm.setCursor(active.from); cm.focus();
-        } else {
-          console.log('span[tabIndex="'+(active.tabIndex-1)+'"]');
-          var prev = that.wrapper.querySelectorAll('[tabIndex="'+(active.tabIndex-1)+'"]')[0];
-          selectNode(false, prev);
-        }
-      } else {
-        for(var i in cm.circleIndices){
-          if (!cm.circleIndices.hasOwnProperty(i)) continue;
-          var node = cm.circleIndices[i], edge = node.from;
-          if(edge.line === cursor.line && edge.ch === cursor.ch){
-            while(node.childNodes.length>2){
-              node = node.lastChild.previousSibling.previousSibling;
-            }
-            selectNode(false, node); break;
-          }
-        }
-      }
-    }
-    if(e.which===39){     // RIGHT ARROW
-      if(isSexp(active)){
-        if(active.parentNode.classList.contains("CodeMirror-widget")){
-          cm.setCursor(active.to); cm.focus();
-        } else {
-          console.log('span[tabIndex="'+(active.tabIndex+1)+'"]');
-          var prev = that.wrapper.querySelectorAll('[tabIndex="'+(active.tabIndex+1)+'"]')[0];
-          selectNode(false, prev);
-        }
-      } else {
-        for(var i in cm.circleIndices){
-          if (!cm.circleIndices.hasOwnProperty(i)) continue;
-          var node = cm.circleIndices[i], edge = node.to;
-          if(edge.line === cursor.line && edge.ch === cursor.ch){
-            selectNode(false, node); break;
-          }
-        }
-      }
-    }
   }
   function handleDragStart(e){// make draggable things translucent
     var node = getNodeFromStoppedEvent(e) || node;
     node.style.opacity = '0.2';
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setDragImage(node, -5, -5);
-    e.dataTransfer.setData('text', cm.getRange(node.from, node.to));
+    e.dataTransfer.setData('text', cm.getRange(node.tm.find().from, node.tm.find().to));
   }
   function handleDragOver(e){ // apparently HTML5 requires this?!?!?
     e.stopPropagation();
@@ -205,15 +172,16 @@ function BubbleEditor(cm, parser){
         node.from = node.to = pos;
       }
       text = sanitizeWhitespace(node, text);
+                  
       // Modify the src or dest first, depending on which comes earlier in the document
       // Be sure to combine both operations into one, so undo works properly
       cm.operation(function(){
-        if(cm.indexFromPos(active.to) < cm.indexFromPos(node.from)){
-          cm.replaceRange(text, node.from, node.to);
-          cm.replaceRange('', active.from, active.to);
+        if(cm.indexFromPos(active.tm.find().to) < cm.indexFromPos(node.tm.find().from)){
+          cm.replaceRange(text, node.tm.find().from, node.tm.find().to);
+          cm.replaceRange('', active.tm.find().from, active.tm.find().to);
         } else {
-          cm.replaceRange('', active.from, active.to);
-          cm.replaceRange(text, node.from, node.to);
+          cm.replaceRange('', active.tm.find().from, active.tm.find().to);
+          cm.replaceRange(text, node.tm.find().from, node.tm.find().to);
         }
       });
     }
@@ -222,7 +190,7 @@ function BubbleEditor(cm, parser){
 
    function assignEvents(parent){
       Object.keys(cm.circleIndices).forEach(function(k,i){
-        cm.circleIndices[k].tabIndex=2;
+        that.cm.circleIndices[k].tabIndex=2;
       });
               
       // Assign Event Handlers (avoid addEventListener, which allows duplicates)
@@ -251,18 +219,29 @@ function BubbleEditor(cm, parser){
       that.cm.on("drop", dropWrapper);
     }
 
+  // mark text with a node, and save the marker in the node
+  // if the marker won't stick (zero-width marking), add a bookmark instead
+  // but simulate the behavior of the textMarker.find() function
+  function markWithNode(from, to, n){
+    var tm = that.cm.markText(from, to, {replacedWith: n, _circles: true});
+                  console.log(tm);
+    if(!tm.find()){
+      tm = that.cm.setBookmark(from, {widget: n, _circles: true});
+      tm._find = tm.find;
+      tm.find = function(){return {from: this._find(), to: this._find()};}
+    }
+    n.tm = tm;
+    return n;
+  }
+                  
   // remove all bubbles and regenerate them, based on CM instance
-  that.refresh = function(){
-    console.log('refreshing entire bubble editor with:\n'+that.cm.getValue());
+  that.refresh = function(from, to){
+    if(!from) from = {line: 0, ch: 0};
+    if(!to)   to   = {line: cm.lineCount(), ch: 0};
+//    console.log('refreshing bubble editor with:\n'+that.cm.getRange(from, to));
     cm.clearCircles();
-    cm.circleIndices = [];
-    that.parser(that.cm.getValue()).forEach(function(p){
-      var circle = p.toCircles(cm);
-      that.cm.markText(circle.from, circle.to,
-                       {replacedWith: circle
-                       , handleMouseEvents: false
-                       , _circles: true});
-    });
+    that.parser(that.cm.getValue()).forEach(function(p){ p.toCircles(cm); });
+                  rebuildIndices();
     setTimeout(function(){assignEvents(that.wrapper);}, 300);
   }
                   
@@ -289,27 +268,26 @@ function BubbleEditor(cm, parser){
    }
                                         
     function makeWhitespace(startCh, txt){
-      var space   = document.createElement('span');
+      var space   = document.createElement('span'),
+          from    = that.cm.posFromIndex(startCh),
+          to      = cm.posFromIndex(startCh+txt.length);
       space.className="cm-whitespace";
       space.location = {startChar: startCh, endChar: startCh+txt.length};
-      space.from = that.cm.posFromIndex(startCh);
-      space.to = cm.posFromIndex(startCh+txt.length);
       space.appendChild(document.createTextNode(txt));
-      return space;
+      return markWithNode(from, to, space);
     }
                   
     that.makeValue = function(valueTxt, className, location){
-      var node = document.createElement('span');
+      var node = document.createElement('span'),
+          from = that.cm.posFromIndex(location.startChar),
+          to   = that.cm.posFromIndex(location.endChar);
       node.className = "value "+className;
       node.appendChild(document.createTextNode(valueTxt));
       node.location = location;
-      node.from = that.cm.posFromIndex(location.startChar);
-      node.to   = that.cm.posFromIndex(location.endChar);
       node.draggable="true";
       node.setAttribute('aria-label', valueTxt);
       node.setAttribute('role', "treeitem");
-      cm.circleIndices[location.startChar] = node;
-      return node;
+      return markWithNode(from, to, node);
     }
                                         
     that.makeExpression = function(func, args, location){
@@ -321,31 +299,23 @@ function BubbleEditor(cm, parser){
           rParen = document.createElement('span'),
           operator = document.createElement('span'),
           startPos = cm.posFromIndex(location.startChar+1),
-          endPos = cm.posFromIndex(location.endChar);
+          endPos = cm.posFromIndex(location.endChar)
       expression.classList.add("sexp");
       expression.location = location;
-      expression.from = cm.posFromIndex(location.startChar);
-      expression.to   = cm.posFromIndex(location.endChar);
       lParen.className = "lParen";        rParen.className = "rParen";
       lParen.location = location.start(); rParen.location = location.end();
-      lParen.from = that.cm.posFromIndex(location.startChar);
-      lParen.to   = that.cm.posFromIndex(location.startChar+1);
       lParen.appendChild(document.createTextNode(that.cm.getTokenAt(startPos).string));
       rParen.appendChild(document.createTextNode(that.cm.getTokenAt(endPos).string));
-      rParen.from = that.cm.posFromIndex(location.endChar);
-      rParen.to   = that.cm.posFromIndex(location.endChar+1);
       expression.appendChild(lParen);
       operator.location = func? func.location :
                   {startChar: location.startChar+1, endChar: location.endChar-1};
-      operator.from = cm.posFromIndex(operator.location.startChar);
-      operator.to = cm.posFromIndex(operator.location.endChar);
       var funcValue = func? func.toCircles(cm) :
                       that.makeValue(" ", "cm-whitespace", operator.location, cm);
       funcValue.location = operator.location;
       operator.appendChild(funcValue);
       expression.appendChild(operator);
       args.forEach(function(arg){ addChildAfterPos(expression, arg.toCircles()); });
-      if(func){ addChildAfterPos(expression, rParen); } 
+      if(func){ addChildAfterPos(expression, rParen); }
       else {
         var filler = document.createElement("span");
         filler.style.cssText = "min-height: 10px; display: inline-block; vertical-align: middle;";
@@ -355,8 +325,9 @@ function BubbleEditor(cm, parser){
       expression.draggable="true";
       expression.setAttribute('aria-label', ariaStr);
       expression.setAttribute('role', "treeitem");
-      cm.circleIndices[location.startChar] = expression;
-      return expression;
+      return markWithNode(that.cm.posFromIndex(location.startChar),
+                          that.cm.posFromIndex(location.endChar),
+                          expression);
     }
                   
    // Program.prototype.toCircles: CM -> DOM
