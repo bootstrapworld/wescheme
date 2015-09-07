@@ -23,11 +23,6 @@ function BubbleEditor(cm, parser){
   that.buffer.id = "buffer"; that.buffer.style.opacity = "0";
   that.buffer.style.position = "absolute";
 
-  // clear circles
-  cm.clearCircles = function(){
-    cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){m.clear()});
-  }
-
   // helper functions
   function isWhitespace(elt){return elt.classList.contains("cm-whitespace");}
   function isValue(elt){    return elt.classList.contains("value");}
@@ -35,13 +30,6 @@ function BubbleEditor(cm, parser){
   function isSexp(elt){     return isValue(elt) || isCircle(elt); }
   function getNodeFromStoppedEvent(e){
     if(e){ e.stopPropagation(); return e.target || e.srcElement; }
-  }
-  
-  function rebuildIndices(){
-    that.cm.circleIndices = {};
-    that.cm.getAllMarks().filter(function(m){return m._circles;}).forEach(function(m){
-     that.cm.circleIndices[cm.indexFromPos(m.find().from)] = m.replacedWith;
-    });
   }
   
   function sanitizeWhitespace(node, txt){
@@ -70,6 +58,9 @@ function BubbleEditor(cm, parser){
       if (e.which===13 || e.which===9){        // RETURN / TAB: blur() to save
         node.blur();
       } else if(e.which===32){                 // SPACE: ignore?
+//        var pos = node.tm.find().from;
+//        node.blur();
+//        that.setCursor(pos);
       }
     };
     var range = document.createRange();
@@ -118,8 +109,10 @@ function BubbleEditor(cm, parser){
     }
     if(e.which===57 && !isSexp(active)){ // OPEN PAREN
       e.preventDefault();
-      cm.replaceRange('()', cursor, cursor);
-      that.refresh(cursor, {line: cursor.line, ch: cursor.ch+2});
+      cm.replaceRange('( )', cursor, cursor);
+      that.refresh();
+      cursor.ch+=1;
+      setTimeout(function(){that.setCursor(cursor);}, 200);
       
     }
     if(e.which===48 && isSexp(active)){   // CLOSE PAREN
@@ -223,8 +216,8 @@ function BubbleEditor(cm, parser){
   // if the marker won't stick (zero-width marking), add a bookmark instead
   // but simulate the behavior of the textMarker.find() function
   function markWithNode(from, to, n){
-    var tm = that.cm.markText(from, to, {replacedWith: n, _circles: true});
-                  console.log(tm);
+    var tm = that.cm.markText(from, to, {replacedWith: n, _circles: true,
+                              inclusiveRight: false, inclusiveLeft: false});
     if(!tm.find()){
       tm = that.cm.setBookmark(from, {widget: n, _circles: true});
       tm._find = tm.find;
@@ -233,15 +226,97 @@ function BubbleEditor(cm, parser){
     n.tm = tm;
     return n;
   }
+    
+/*  that.setCursor = function(pos){
+    
+    console.log(pos);
+    var markers = cm.findMarksAt(pos).filter(function(m){return m._circles;}),
+        fromCircles = markers.map(function(m){return m.replacedWith}).sort(containedBy);
+    console.log(fromCircles[0]);
+    startEdit(false, fromCircles[0]);
+  }
+*/
+  that.rebuildIndices = function(){
+    that.cm.circleIndices = {};
+    that.cm.getAllMarks().filter(function(m){ return m._circles && !isWhitespace(m.replacedWith);
+      }).forEach(function(m){
+          that.cm.circleIndices[cm.indexFromPos(m.find().from)] = m.replacedWith;
+        });
+  }
+
+  // does {line,ch} <= {line,ch}
+  function comesBefore(a, b){ return a.line < b.line || (a.line===b.line && a.ch<=b.ch) }
                   
-  // remove all bubbles and regenerate them, based on CM instance
+  // a < b if b.contains(a)
+  function containedBy(a,b){
+    if(a.contains(b)) return 1; else if(b.contains(a)) return -1;
+    else if (a===b) return 0; else throw "IMPOSSIBLE";
+  }
+         
+  // findDamage uses the pre-change coord system to identify nodes that will need to be repainted
+  // after the change has been made.
+  that.findDamage = function(cm, change){
+    var fromMarkers = that.cm.findMarksAt(change.from).filter(function(m){
+                        return m._circles && !comesBefore(m.find().to, change.from); } ),
+        toMarkers   = that.cm.findMarksAt(change.to).filter(function(m){
+                        return m._circles && !comesBefore(change.to, m.find().from); } );
+    var fromCircles = fromMarkers.map(function(m){return m.replacedWith}).sort(containedBy),
+        toCircles   = toMarkers.map(  function(m){return m.replacedWith}).sort(containedBy);
+                  
+    var nca   = false, i = -1; // iterate through toMarkers to find a common ancestor
+    while((i++ < toCircles.length) && !nca){
+      if(fromCircles.indexOf(toCircles[i]) > -1) nca = toCircles[i];
+    }
+    // if an NCA exists, use its from/to. otherwise use the outermost nodes' from and to
+    var fromNode = nca || fromCircles[fromCircles.length-1]
+        toNode   = nca || toCircles[toCircles.length-1];
+    var fromPos = fromNode? fromNode.tm.find().from : change.from,
+        toPos   = toNode  ? toNode.tm.find().to     : change.to;
+                  
+    console.log('{line:'+fromPos.line+',ch:'+fromPos.ch+'}-{line:'+toPos.line+',ch:' +toPos.ch+'}\ndamaged code: '+that.cm.getRange(fromPos, toPos));
+                  
+    // identify damaged nodes
+    that.cm.findMarks(fromPos, toPos).filter(function(m){
+      return m._circles && comesBefore(fromPos, m.find().from) && comesBefore(m.find().to, toPos);
+    }).forEach(function(m){m.replacedWith.style.background='pink'; m.replacedWith.damaged = true; m.clear();});
+    alert('found damage');
+  };
+                  
+  that.processChange = function(cm, change){
+    console.log(change);
+    var damaged = [];
+    for (var i in that.cm.circleIndices) {
+      if (that.cm.circleIndices.hasOwnProperty(i)) {
+        if(that.cm.circleIndices[i].damaged) damaged.push(Number(i));
+      }
+    }
+    damaged.sort(function(a,b){return a-b}); // put damaged node indices in order
+    console.log('damaged nodes to be cleared:');
+                  console.log(damaged);
+                  console.log(damaged.map(function(i){return that.cm.circleIndices[i];}));
+//                  damaged.forEach(function(m){m.clear()});
+  };
+                  
+  // clear all markers whose markers are entirely contained within [from, to]
+  that.clearMarkers = function(from, to){
+    that.cm.findMarks(from, to).filter(function(m){
+      return m._circles && comesBefore(from, m.find().from) && comesBefore(m.find().to, to);
+    }).forEach(function(m){ m.clear(); });
+  };
+                  
+  // remove all bubbles between {from} and {to} and regenerate them, based on CM instance
   that.refresh = function(from, to){
-    if(!from) from = {line: 0, ch: 0};
-    if(!to)   to   = {line: cm.lineCount(), ch: 0};
-//    console.log('refreshing bubble editor with:\n'+that.cm.getRange(from, to));
-    cm.clearCircles();
-    that.parser(that.cm.getValue()).forEach(function(p){ p.toCircles(cm); });
-                  rebuildIndices();
+    from = from || {line: 0, ch: 0};
+    to   = to   || {line: that.cm.lineCount(), ch: 0};
+    that.clearMarkers(from, to);
+                  console.log('refreshing');
+                  console.log(from);
+                  console.log(to);
+    var filler = new Array(that.cm.indexFromPos(from)+1).join(" "),
+        code   = filler + that.cm.getRange(from, to);
+                  console.log('parsing '+code);
+    that.parser(code).forEach(function(p){ p.toCircles(cm).tm.find(); });
+    that.rebuildIndices();
     setTimeout(function(){assignEvents(that.wrapper);}, 300);
   }
                   
