@@ -522,6 +522,7 @@ var helpers = {};
 			 }
 			 else {
 				 keyname = String.fromCharCode(code).toLowerCase();
+         if(e.shiftKey) keyname = keyname.toUpperCase();
 			 }
 			 break;
 	    }
