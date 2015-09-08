@@ -858,33 +858,47 @@ var jsworld = {};
     Jsworld.on_tick = on_tick;
 
 
+    // NOTE:keypresses are handled by both keydown AND keypress events
+    // this is done because non-printable keys (shift, scroll, etc) are only fired
+    // on keydown, but the keydown handler doesn't provide enough information
+    // to reconstruct the printable character ("é", for example)
+    // ASSUMPTION: the "press" handler is smart enough to produce the null character
+    // for printable keydowns!!!
     function on_key(press) {
-	return function() {
-            var stillPressing = false;
-            var clearPressing = function() {
-                stillPressing = false;
-            };
-            var e;
-            var f = function(w, k) { press(w, e, k); };
-	    var wrappedPress = function(e_) {
-                // If the keyCode is ESCAPE, let it pass through.
-                // That is, ignore it:
-                if (e_.keyCode == 27) { return; }
+      return function() {
+        var stillPressing = false;
+        var clearPressing = function() {
+            stillPressing = false;
+        };
+        var e;
+        var f = function(w, k) { press(w, e, k); };
+        var wrappedPress = function(e_) {
+            // If the keyCode is ESCAPE, let it pass through.
+            // That is, ignore it:
+            if (e_.keyCode == 27) { return; }
 
-                e = e_;
-		preventDefault(e);
-		stopPropagation(e);
-                if (! stillPressing) {
-                    stillPressing = true;
-		    change_world(f, clearPressing);
-                }
-	    };
-	    return {
-		onRegister: function(top) { attachEvent(top, 'keydown', wrappedPress); },
-		onUnregister: function(top) { detachEvent(top, 'keydown', wrappedPress); }
-	    };
-	}
+            e = e_;
+ // we prevent default in order to allow keypress to fire after keydown
+ //            preventDefault(e);
+            stopPropagation(e);
+            // get around keydown press events blocking keypress events by
+            // making sure the stillPressing flag was set by the appropriate event type
+            if (stillPressing !== e.type) {
+                stillPressing = e.type;
+                change_world(f, clearPressing);
+            }
+        };
+        return {
+          onRegister:   function(top) {attachEvent(top, 'keypress', wrappedPress);
+                                      attachEvent(top, 'keydown',  wrappedPress);
+                                     },
+          onUnregister: function(top) {detachEvent(top, 'keypress', wrappedPress);
+                                      detachEvent(top, 'keydown',  wrappedPress);
+                                     }
+        };
+      }
     }
+ 
     Jsworld.on_key = on_key;
 
     function on_mouse(mouse) {

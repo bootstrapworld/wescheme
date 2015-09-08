@@ -496,37 +496,17 @@ var helpers = {};
 		case 42: keyname = "print"; break;
 		case 45: keyname = "insert"; break;
 		case 46: keyname = String.fromCharCode(127); break;
-		case 106: keyname = "*"; break;
-		case 107: keyname = "+"; break;
-		case 109: keyname = "-"; break;
-		case 110: keyname = "."; break;
-		case 111: keyname = "/"; break;
 		case 144: keyname = "numlock"; break;
 		case 145: keyname = "scroll"; break;
-		case 186: keyname = ";"; break;
-		case 187: keyname = "="; break;
-		case 188: keyname = ","; break;
-		case 189: keyname = "-"; break;
-		case 190: keyname = "."; break;
-		case 191: keyname = "/"; break;
-		case 192: keyname = "`"; break;
-		case 219: keyname = "["; break;
-		case 220: keyname = "\\"; break;
-		case 221: keyname = "]"; break;
-		case 222: keyname = "'"; break;
-		default: if (code >= 96 && code <= 105) {
-				 keyname = (code - 96).toString();
-			 }
-			 else if (code >= 112 && code <= 123) {
+		default:
+      if (code >= 112 && code <= 123) {
 				 keyname = "f" + (code - 111);
-			 }
-			 else {
-				 keyname = String.fromCharCode(code).toLowerCase();
-         if(e.shiftKey) keyname = keyname.toUpperCase();
-			 }
-			 break;
-	    }
-	    return keyname;
+      }  else {
+				 keyname = "";
+      }
+      break;
+    }
+    return keyname;
 	};
 
 
@@ -635,10 +615,10 @@ var helpers = {};
 
 	helpers.getKeyCodeName = getKeyCodeName;
 
-        helpers.maybeCallAfterAttach = maybeCallAfterAttach;
+  helpers.maybeCallAfterAttach = maybeCallAfterAttach;
 
-        helpers.makeLocationDom = makeLocationDom;
-        helpers.isLocationDom = isLocationDom;
+  helpers.makeLocationDom = makeLocationDom;
+  helpers.isLocationDom = isLocationDom;
 
 })();
 

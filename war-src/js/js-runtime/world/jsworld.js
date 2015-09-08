@@ -613,10 +613,14 @@
 	    // // TODO: add virtual key bindings
 	    // var removeVirtualKeys = addVirtualKeys(stimuli, toplevelNode);
 	    // shutdownListeners.push(function() { removeVirtualKeys(); });
-		
 
 	    var wrappedKey = function(w, e, k) {
-		    caller(config.lookup('onKey'), [w, helpers.getKeyCodeName(e)], k);
+       var keycode = e.charCode || e.keyCode;
+ 
+        // get control character names on keydown, otherwise use unicode equivalent for key
+        var keyChar = e.type==="keydown"? helpers.getKeyCodeName(e)
+                                       : String.fromCharCode(e.which);
+          caller(config.lookup('onKey'), [w, keyChar], k);
 	    }
 	    wrappedHandlers.push(_js.on_key(wrappedKey));
 	    toplevelNode.focus();
