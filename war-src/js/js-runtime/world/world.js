@@ -93,25 +93,6 @@ if (typeof(world) === 'undefined') {
     };
 
 
-    // getKeyCodeName: keyEvent -> String
-    // Given an event, try to get the name of the key.
-    var getKeyCodeName = function(e) {
-        var code = e.charCode || e.keyCode;
-        var keyname;
-        if (code === 37) {
-            keyname = "left";
-        } else if (code === 38) {
-            keyname = "up";
-        } else if (code === 39) {
-            keyname = "right";
-        } else if (code === 40) {
-            keyname = "down";
-        } else {
-            keyname = String.fromCharCode(code); 
-        }
-        return keyname;
-    };
-
     // resetWorld: -> void
     // Resets all of the world global values.
     var resetWorld = function() {
