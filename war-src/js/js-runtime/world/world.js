@@ -1075,7 +1075,7 @@ if (typeof(world) === 'undefined') {
         parent.style.font = this.font;                // use the same font settings as the context
         image.width = 42; image.height = 1;           // we use a dataURL to reduce dependency on external image files
         image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWM4MbPgPwAGzwLR05RbqwAAAABJRU5ErkJggg==";
-        container.style.cssText = "position: absolute; top: 0px; left: 0px;  zIndex=-1";
+        container.style.cssText = "position: absolute; top: 0px; left: 0px; zIndex=-1; white-space: pre;";
         parent.appendChild(document.createTextNode(str));
         parent.appendChild(image);
         container.appendChild(parent);
