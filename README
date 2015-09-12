@@ -1,23 +1,34 @@
+WeScheMe is an online programming environment based on DrRacket and
+Scheme. Like DrRacket, it provides an interactive evaluator and an
+interface for editing and running programs. In contrast to DrRacket,
+WeScheme evaluates on the browser with JavaScript. Its main audience
+is the Bootstrap curriculum, a middle-school curriculum for teaching
+algebra through programming.
 
-The source to WeScheme can be found at github:
-
-   https://github.com/bootstrapworld/wescheme2012
+This repo contains the source code of the WeScheme server. The
+official live server can be found at : http://www.wescheme.org/
 
 The user-level documentation for the project is maintained in:
 
    https://github.com/dyoo/wescheme-docs
 
-
+ 
 ----------------------------------------------------------------------
 Build dependencies:
 
-Java 1.7 SDK should be installed, as should Apache Ant.  Racket 5.3.1 is
-also a dependency.  All these should be accessible from $PATH.
-Finally, our current build tools assume a Unix-like environment to run
-shell commands, including 'unzip' and 'git'.
+In order to build the server, the following tools are needed:
+ - Python 2.X
+ - Git
+ - Java Development Kit
+ - Racket
+ - Apache Ant.
+ 
+All these should be accessible from $PATH. The tools assume a
+Unix-like environment to run shell commands, including 'unzip'. See
+the section below, if you're building the project on a Windows
+machine. 
 
-Note: Additionally, do not use python 3; use python 2. The file
-calcdeps.py is incompatible with python 3.
+Note: Do not use python 3.X: the build tools are only working on python 2.X.
 
 You will also need to make sure that the DEFAULT_ENCODING environment variable 
 on your system is set to "UTF-8". On some systems, the build will fail if 
@@ -31,14 +42,6 @@ Installing WeScheme for local development
 1.  First, check out the WeScheme repository from Github.
 
    $ git clone git://github.com/bootstrapworld/wescheme2012
-
-Don't forget: we're using git submodules, so also make sure to:
-
-   $ git submodule init
-   $ git submodule update
-
-to grab the external dependendies as well.  As of this writing, the
-external dependency is CodeMirror.
 
 
 2. You might also need to change wescheme.properties if you are
@@ -69,7 +72,7 @@ After running build-console-and-editor.rkt, use Apache Ant with the
 
    $ ant runserver
 
-This will bring up a locally-running Webserver running off port 8080.
+This will bring up a locally-running Webserver running off port 8081.
 
 
 ----------------------------------------------------------------------
@@ -105,6 +108,25 @@ per application page.
         editing environment.
 
 ----------------------------------------------------------------------
+Building on a Windows Machine
+
+The build tools of this project requires a unix-like environment. The
+bash shell that is part of the standard installation of "GIT for
+Windows" will do perfectly. Get it here, if you don't have it yet.
+
+http://git-for-windows.github.io/
+
+To install WeScheme, follow the instructions of the section
+"Installing WeScheme for local development" above, but before you
+execute the script 'build-console-and-editor.rkt', make sure that a
+softlink to your java.exe is defined the current directory. You can
+create such a link with the command:
+  
+   ln -s "C:\Program Files (x86)\Java\jdk1.7.0_79\bin\java.exe" java
+
+Note that the link must be named "java" and not "java.exe".
+
+----------------------------------------------------------------------
 The Selenium Test Suite.
 
 We use Selenium (http://seleniumhq.org)
@@ -125,16 +147,3 @@ Note that the tests as currently written are have not yet been coded
 to respect some of the delays introduced by asynchronous JavaScript, so
 many of the tests will fail unless the speed of the testing framework is
 set to slightly slower than the "Fast" speed.
-
-
-
-
-----------------------------------------------------------------------
-----------------------------------------------------------------------
-----------------------------------------------------------------------
-Things still to change, from summer 2012:
-(list (define x 5)) -> define: this variable is not defined should read "define: found a definition that is not at the top level"
-(x) -> x: this variable is not defined should read "this function is not defined"
-
-To turn off color highlighting, change the colors in war-src/js/openEditor/interaction.js to white (i.e. new Color(255, 255, 255)).
-
