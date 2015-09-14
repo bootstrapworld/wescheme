@@ -887,8 +887,13 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
             if (e_.keyCode == 27) { return; }
 
             e = e_;
- // we prevent default in order to allow keypress to fire after keydown
- //            preventDefault(e);
+            // jump out of handler if we want to speed ahead to keypress
+            if(e.type==="keydown" && helpers.getKeyCodeName(e) === ""){
+              return false;
+            // preventDefault if we can (helps trap arrow and backspace calls on FF)
+            } else if(e.type==="keydown" && helpers.getKeyCodeName(e) !== ""){
+              preventDefault(e);
+            }
             stopPropagation(e);
             // get around keydown press events blocking keypress events by
             // making sure the stillPressing flag was set by the appropriate event type
