@@ -451,6 +451,7 @@
 	var wrappedHandlers = [];
 	var wrappedRedraw;
 	var wrappedRedrawCss;
+  var lastThreeFrameDraws = []; // for FPS calculation
 	
 
   // on-draw may define separate DOM and CSS handlers
@@ -495,6 +496,10 @@
 	    var reusableCanvasNode = undefined;	    
 	    wrappedRedraw = function(w, k) {
         var nextFrame = function(t) {
+          lastThreeFrameDraws = [t/1000].concat(lastThreeFrameDraws); // save the # ms
+          lastThreeFrameDraws = lastThreeFrameDraws.slice(0,3); // only keep the last 3 saves
+          if(lastThreeFrameDraws.length===3)
+            console.log(Math.round(3 / (lastThreeFrameDraws[0] - lastThreeFrameDraws[2]))+"fps");
           try {
             // By the time we get here, the current world may have changed
             // already, so we need to reacquire the value of the
@@ -613,7 +618,6 @@
 	    // var removeVirtualKeys = addVirtualKeys(stimuli, toplevelNode);
 	    // shutdownListeners.push(function() { removeVirtualKeys(); });
 	    var wrappedKey = function(w, e, k) {
-        var keycode = e.charCode || e.keyCode;
         // get control character names on keydown, otherwise use ASCII equivalent for key
         // remove all non-printable chars on keypress
         var keyChar = e.type==="keydown"? helpers.getKeyCodeName(e)

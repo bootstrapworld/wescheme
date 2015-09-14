@@ -613,8 +613,8 @@ var jsworld = {};
     }
 
 
-
-    function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, k) {
+var cached_redraw, cached_redraw_css;
+function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, k) {
 	if (oldWorld instanceof InitialWorld) {
 	    // Simple path
 	    redraw_func(world,
@@ -632,11 +632,11 @@ var jsworld = {};
 	} else {
 	    maintainingSelection(
 		function(k2) {
-		    // For legibility, here is the non-CPS version of the same function:
+		    // For legibility, here is a non-working-but-non-CPS version of the same code:
 		    /*
-			var oldRedraw = redraw_func(oldWorld);
+			var oldRedraw = cached_redraw || redraw_func(oldWorld);
  			var newRedraw = redraw_func(world);	    
- 			var oldRedrawCss = redraw_css_func(oldWorld);
+ 			var oldRedrawCss = cached_redraw_css || redraw_css_func(oldWorld);
 			var newRedrawCss = redraw_css_func(world);
 			var t = sexp2tree(newRedraw);
  			var ns = nodes(t);
@@ -657,14 +657,21 @@ var jsworld = {};
 				}
  			}
 		    */
+                           
+       function cached_redraw_func(w, k){
+         return cached_redraw? k(cached_redraw) : redraw_func(w, k);
+       }
+       function cached_redraw_css_func(w, k){
+         return cached_redraw_css? k(cached_redraw_css) : redraw_css_func(w, k);
+       }
 
 		    // We try to avoid updating the dom if the value
 		    // hasn't changed.
-		    redraw_func(oldWorld,
+    cached_redraw_func(oldWorld,
 			function(oldRedraw) {
 			    redraw_func(world,
 				function(newRedraw) {
-				    redraw_css_func(oldWorld,
+				    cached_redraw_css_func(oldWorld,
 					function(oldRedrawCss) {
 					    redraw_css_func(world,
 						function(newRedrawCss) {
@@ -675,6 +682,7 @@ var jsworld = {};
 						    // dom updates.
 
  						    if(oldRedraw !== newRedraw) {
+//                  cached_redraw = newRedraw;
 							// Kludge: update the CSS styles first.
 							// This is a workaround an issue with excanvas: any style change
 							// clears the content of the canvas, so we do this first before
@@ -683,6 +691,7 @@ var jsworld = {};
 							update_dom(toplevelNode, ns, relations(t));
 						    } else {
 							if (oldRedrawCss !== newRedrawCss) {
+//                  cached_redraw_css = newRedrawCss;
 							    update_css(ns, sexp2css(newRedrawCss));
 							}
 						    }

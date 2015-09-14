@@ -480,7 +480,6 @@ var helpers = {};
 	var getKeyCodeName = function(e) {
 	    var code = e.charCode || e.keyCode;
 	    var keyname;
- console.log(code);
 	    switch(code) {
     case 8:  keyname = "\b"; break;
 		case 16: keyname = "shift"; break;
