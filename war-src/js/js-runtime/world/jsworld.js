@@ -609,17 +609,15 @@
 	
 
 	if (config.lookup('onKey')) {
-
 	    // // TODO: add virtual key bindings
 	    // var removeVirtualKeys = addVirtualKeys(stimuli, toplevelNode);
 	    // shutdownListeners.push(function() { removeVirtualKeys(); });
-
 	    var wrappedKey = function(w, e, k) {
-       var keycode = e.charCode || e.keyCode;
- 
-        // get control character names on keydown, otherwise use unicode equivalent for key
+        var keycode = e.charCode || e.keyCode;
+        // get control character names on keydown, otherwise use ASCII equivalent for key
+        // remove all non-printable chars on keypress
         var keyChar = e.type==="keydown"? helpers.getKeyCodeName(e)
-                                       : String.fromCharCode(e.which);
+                : String.fromCharCode(e.which).replace(/[^\x20-\x7E]+/g, '');
           caller(config.lookup('onKey'), [w, keyChar], k);
 	    }
 	    wrappedHandlers.push(_js.on_key(wrappedKey));

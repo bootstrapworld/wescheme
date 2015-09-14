@@ -480,7 +480,9 @@ var helpers = {};
 	var getKeyCodeName = function(e) {
 	    var code = e.charCode || e.keyCode;
 	    var keyname;
+ console.log(code);
 	    switch(code) {
+    case 8:  keyname = "\b"; break;
 		case 16: keyname = "shift"; break;
 		case 17: keyname = "control"; break;
 		case 19: keyname = "pause"; break;
@@ -499,9 +501,9 @@ var helpers = {};
 		case 144: keyname = "numlock"; break;
 		case 145: keyname = "scroll"; break;
 		default:
-      if (code >= 112 && code <= 123) {
+      if (code >= 112 && code <= 123){  // fn keys
 				 keyname = "f" + (code - 111);
-      }  else {
+      } else {
 				 keyname = "";
       }
       break;
