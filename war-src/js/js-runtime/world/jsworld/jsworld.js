@@ -682,7 +682,7 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
 						    // dom updates.
 
  						    if(oldRedraw !== newRedraw) {
-//                  cached_redraw = newRedraw;
+                  cached_redraw = newRedraw;
 							// Kludge: update the CSS styles first.
 							// This is a workaround an issue with excanvas: any style change
 							// clears the content of the canvas, so we do this first before
@@ -691,7 +691,7 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
 							update_dom(toplevelNode, ns, relations(t));
 						    } else {
 							if (oldRedrawCss !== newRedrawCss) {
-//                  cached_redraw_css = newRedrawCss;
+                  cached_redraw_css = newRedrawCss;
 							    update_css(ns, sexp2css(newRedrawCss));
 							}
 						    }
