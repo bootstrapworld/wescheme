@@ -39,10 +39,18 @@
                          (make-directory* (path-only pipe-output-to)))
                        (open-output-file pipe-output-to #:exists 'replace))
                      (current-output-port)))
+
+  (define resolved-cmd-standard
+    (if (file-exists? cmd) cmd
+      (find-executable-path cmd)))
+
+  (define resolved-cmd-windows
+    (and (equal? (system-type) 'windows) 
+         (and (string? cmd)
+              (find-executable-path (string-append cmd ".exe")))))
+
   (define resolved-cmd
-    (if (file-exists? cmd)
-        cmd
-        (find-executable-path cmd)))
+    (or resolved-cmd-standard resolved-cmd-windows))
 
   (unless resolved-cmd
     (error 'build (format "I could not find ~s in your PATH" cmd)))
