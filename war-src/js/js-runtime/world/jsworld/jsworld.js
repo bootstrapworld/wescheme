@@ -888,7 +888,7 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
 
             e = e_;
             // jump out of handler if we want to speed ahead to keypress
-            if(e.type==="keydown" && helpers.getKeyCodeName(e) === ""){
+            if(e.type==="keydown" && helpers.getKeyCodeName(e) === "" && !e.altKey){
               return false;
             // preventDefault if we can (helps trap arrow and backspace calls on FF)
             } else if(e.type==="keydown" && helpers.getKeyCodeName(e) !== ""){

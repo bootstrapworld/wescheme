@@ -621,7 +621,7 @@
         // get control character names on keydown, otherwise use ASCII equivalent for key
         // remove all non-printable chars on keypress
         var keyChar = e.type==="keydown"? helpers.getKeyCodeName(e)
-                : String.fromCharCode(e.which).replace(/[^\x20-\x7E]+/g, '');
+                : String.fromCharCode(e.which).replace(/[^\x00-\xFE]+/g, '');
           caller(config.lookup('onKey'), [w, keyChar], k);
 	    }
 	    wrappedHandlers.push(_js.on_key(wrappedKey));
