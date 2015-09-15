@@ -39,10 +39,18 @@
                          (make-directory* (path-only pipe-output-to)))
                        (open-output-file pipe-output-to #:exists 'replace))
                      (current-output-port)))
+
+  (define resolved-cmd-standard
+    (if (file-exists? cmd) cmd
+      (find-executable-path cmd)))
+
+  (define resolved-cmd-windows
+    (and (equal? (system-type) 'windows) 
+         (and (string? cmd)
+              (find-executable-path (string-append cmd ".exe")))))
+
   (define resolved-cmd
-    (if (file-exists? cmd)
-        cmd
-        (find-executable-path cmd)))
+    (or resolved-cmd-standard resolved-cmd-windows))
 
   (unless resolved-cmd
     (error 'build (format "I could not find ~s in your PATH" cmd)))
@@ -52,6 +60,11 @@
 
   (subprocess-wait a-subprocess)
 
+
+  (unless (equal? (subprocess-status a-subprocess) 0)
+      (error 'build (format "I could not launch ~s" cmd)))
+   
+  
   (when pipe-input-from
     (close-input-port stdin))
   (when pipe-output-to
@@ -60,7 +73,8 @@
 
 (define (build src dest)
   (make-directory* (path-only (string-append "war/" dest)))
-  (call-system (build-path closure-dir "bin" "calcdeps.py")
+  (call-system "python"
+               (build-path closure-dir "bin" "calcdeps.py")
                "-i" (string-append "war-src/js/" src)
                "-p" (path->string closure-dir)
                "-p" "war-src/js"
@@ -68,7 +82,7 @@
                #:pipe-output-to (string-append "war/js/" dest)))
 
 (define (generate-js-runtime!)
-  (call-system "./generate-js-runtime.sh"))
+  (call-system "bash" "./generate-js-runtime.sh"))
 
 (define (ensure-codemirror-installed!)
   (unless (directory-exists? codemirror-dir)
@@ -146,7 +160,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (printf "Writing dependency file for Google Closure library\n")
 (parameterize ([current-directory "war-src"])
-  (call-system (build-path closure-dir "bin" "calcdeps.py")
+  (call-system "python"
+               (build-path closure-dir "bin" "calcdeps.py")
                "--dep" "closure"
                "--path" "js"
                "--output_mode" "deps"
