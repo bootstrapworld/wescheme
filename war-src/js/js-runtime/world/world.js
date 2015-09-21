@@ -1493,7 +1493,7 @@ if (typeof(world) === 'undefined') {
     colorDb.put("DIM GRAY", types.color(105, 105, 105, 255));
     colorDb.put("DIMGRAY", types.color(105, 105, 105, 255));
     colorDb.put("BLACK", types.color(0, 0, 0, 255));
-
+    colorDb.put("TRANSPARENT", types.color(0, 0, 0, 0));
 
     var nameToColor = function(s) {
         return colorDb.get('' + s);
