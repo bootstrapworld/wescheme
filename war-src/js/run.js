@@ -63,6 +63,10 @@ goog.require('plt.compiler.compile');
     }
 
     Runner.prototype.addToInteractions = function (interactionVal) {
+      // make sure there are no other topLevelEvaluationNodes in the interactionsDiv
+      while(this.interactionsDiv[0].firstChild){
+        this.interactionsDiv[0].removeChild(this.interactionsDiv[0].firstChild);
+      }
       if (isDomNode(interactionVal)) {
         interactionVal.style.display="inline-block";
         this.interactionsDiv.append(interactionVal);
@@ -182,6 +186,9 @@ goog.require('plt.compiler.compile');
             if(supportsFullScreen()) {
                 jQuery("<input type='button' value='Run Fullscreen'>")
                     .css("margin-top", "20px")
+                    .css("display", "block")
+                    .css("margin-left", "auto")
+                    .css("margin-right", "auto")
                     .click(toggleFullscreen)
                     .appendTo(b);
             }
