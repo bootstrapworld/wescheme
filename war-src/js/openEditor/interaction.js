@@ -457,8 +457,6 @@ WeSchemeInteractions = (function () {
                 evaluator.makeToplevelNode = function() {
                     var handleClose = function(event, ui) {
                         that.evaluator.requestBreak();
-                        // remove the topLevelEvaluatorNode before destroying the dialog
-                        dialog[0].removeChild(dialog[0].firstChild);
                         dialog.dialog("destroy");
                     };
 
@@ -534,6 +532,8 @@ WeSchemeInteractions = (function () {
 
                     var innerArea = jQuery("<div class='evaluatorToplevelNode'></div>");
                     innerArea.css("background-color", "white");
+                    // make sure there are no other topLevelEvaluationNodes
+                    while(dialog[0].firstChild) dialog[0].removeChild(dialog[0].firstChild);
                     dialog.append(innerArea);
                     dialog.dialog("open");
                     return innerArea.get(0);

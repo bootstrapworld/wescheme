@@ -77,8 +77,8 @@
     <script src="/js/submitpost-min.js" type="text/javascript"></script>
 
     <!-- mzscheme-vm evaluator -->
-    <script src="/js/mzscheme-vm/support-min.js" type="text/javascript"></script>
-    <script src="/js/mzscheme-vm/evaluator-min.js" type="text/javascript"></script>
+    <script src="/js/mzscheme-vm/support.js" type="text/javascript"></script>
+    <script src="/js/mzscheme-vm/evaluator.js" type="text/javascript"></script>
 
 
     <!-- Local compiler files -->
