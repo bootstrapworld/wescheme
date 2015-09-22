@@ -1040,7 +1040,7 @@ WeSchemeInteractions = (function () {
         var dom = document.createElement('div');
         if (types.isSchemeError(err) && types.isExnBreak(err.val)) {
             dom['className'] = 'moby-break-error';
-            msg = "Program stopped by user (user break)";
+            msg = "The program has stopped.";
         } 
         else {
             dom['className'] = 'moby-error';
@@ -1087,9 +1087,10 @@ WeSchemeInteractions = (function () {
 
         //do stuff with feedback here
 
-        
-        dom.appendChild(stacktraceDiv);
-    
+        // don't give a stack trace if the user halts the program
+        if(!(types.isSchemeError(err) && types.isExnBreak(err.val))){
+          dom.appendChild(stacktraceDiv);
+        }
         return dom;
     };
 
