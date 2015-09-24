@@ -756,12 +756,13 @@ primitive.setCALL(INTERNAL_CALL);
 // we the following function to add the mark.
 var addNoLocationContinuationMark = function(aState, n) {
     var i;
-    var aHash = types.makeLowLevelEqHash();
     var nonPositions = [types.NoLocation];
     for (i = 0; i < n; i++) { nonPositions.push(types.NoLocation); }
-    // it's a new symbol, so we'll need a new hash key no matter what
-    aHash.put(types.symbol('moby-application-position-key'),
-              types.list(nonPositions));
+//    var aHash = types.makeLowLevelEqHash();
+//    aHash.put(types.symbol('moby-application-position-key'),
+//              types.list(nonPositions));
+    aHash = {};
+    aHash["moby-application-position-key"] = types.list(nonPositions);
     aState.pushControl(types.contMarkRecordControl(aHash));
 };
 
@@ -1119,7 +1120,7 @@ WithContMarkVal.prototype.invoke = function(state) {
 //      var aHash = types.makeLowLevelEqHash();
 //      aHash.put(this.key, evaluatedVal);
       var aHash = {};
-      aHash[this.key] = evaluatedVal;
+      aHash[this.key.val] = evaluatedVal;
       state.pushControl(types.contMarkRecordControl(aHash));
     }
     state.pushControl(this.body);
