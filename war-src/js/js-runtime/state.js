@@ -81,13 +81,13 @@ State.prototype.clearForEval = function(attrs) {
     // FIXME: what should happen to globals here?
     if (attrs && attrs.preserveBreak) {
     } else {
-	this.breakRequested = false;
-	this.breakRequestedListeners = [];
+      this.breakRequested = false;
+      this.breakRequestedListeners = [];
     }
 
 
     if (attrs && attrs.clearGlobals) {
-	this.globals = {};
+      this.globals = {};
     } else {
     }
 };
@@ -318,14 +318,17 @@ State.prototype.setToplevelNodeHook = function(hook) {
 var captureCurrentContinuationMarks = function(state) {
     var dict = types.makeLowLevelEqHash();
     for (var i = 0; i < state.cstack.length; i++) {
-	if ( types.isContMarkRecordControl(state.cstack[i]) ) {
-	    var aDict = state.cstack[i].dict;
-	    var keys = aDict.keys();
-	    for (var j = 0; j < keys.length; j++) {
-		dict.put(keys[j], (dict.get(keys[j]) || []) );
-		dict.get(keys[j]).push(aDict.get(keys[j]) );
-	    }
-	}
+      if ( types.isContMarkRecordControl(state.cstack[i]) ) {
+          var aDict = state.cstack[i].dict;
+    /*	    var keys = aDict.keys();
+          for (var j = 0; j < keys.length; j++) {
+            dict.put(keys[j], (dict.get(keys[j]) || []) );
+            dict.get(keys[j]).push(aDict.get(keys[j]) );
+          }
+     */
+          // copy the JS hashtable into a lowLevelEqHash
+          for(var key in aDict) { dict.put(key, aDict[key] || []); }
+      }
     }
     return types.continuationMarkSet(dict);
 };

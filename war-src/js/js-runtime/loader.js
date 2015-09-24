@@ -99,7 +99,7 @@ var loadCode = function(aState, nextCode) {
 var loadCodes = function(state, codes) {
     var result = [];
     for (var i = 0; i < codes.length; i++) {
-	result.push(loadCode(state, codes[i]));
+      result.push(loadCode(state, codes[i]));
     }
     return result;
 };

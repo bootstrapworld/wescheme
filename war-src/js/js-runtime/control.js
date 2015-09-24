@@ -759,6 +759,7 @@ var addNoLocationContinuationMark = function(aState, n) {
     var aHash = types.makeLowLevelEqHash();
     var nonPositions = [types.NoLocation];
     for (i = 0; i < n; i++) { nonPositions.push(types.NoLocation); }
+    // it's a new symbol, so we'll need a new hash key no matter what
     aHash.put(types.symbol('moby-application-position-key'),
               types.list(nonPositions));
     aState.pushControl(types.contMarkRecordControl(aHash));
@@ -1109,14 +1110,17 @@ var WithContMarkVal = function(key, body) {
 WithContMarkVal.prototype.invoke = function(state) {
     var evaluatedVal = state.v;
     // Check to see if there's an existing ContMarkRecordControl
+    // if it is, replace the value with the one on the stack
     if (state.cstack.length !== 0 && 
-	( types.isContMarkRecordControl(state.cstack[state.cstack.length - 1]) )) {
-	state.pushControl(state.cstack.pop().update
-			  (this.key, evaluatedVal));
+        ( types.isContMarkRecordControl(state.cstack[state.cstack.length - 1]) )) {
+      state.pushControl(state.cstack.pop().update(this.key, evaluatedVal));
+    // if it's not, add a new ContMarkRecordControl
     } else {
-	var aHash = types.makeLowLevelEqHash();
-	aHash.put(this.key, evaluatedVal);
-	state.pushControl(types.contMarkRecordControl(aHash));
+//      var aHash = types.makeLowLevelEqHash();
+//      aHash.put(this.key, evaluatedVal);
+      var aHash = {};
+      aHash[this.key] = evaluatedVal;
+      state.pushControl(types.contMarkRecordControl(aHash));
     }
     state.pushControl(this.body);
 };

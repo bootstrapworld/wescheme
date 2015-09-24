@@ -1861,7 +1861,7 @@ VariableReference.prototype.set = function(v) {
 // Continuation Marks
 
 var ContMarkRecordControl = function(dict) {
-    this.dict = dict || makeLowLevelEqHash();
+    this.dict = dict || {};
 };
 
 ContMarkRecordControl.prototype.invoke = function(state) {
@@ -1869,6 +1869,7 @@ ContMarkRecordControl.prototype.invoke = function(state) {
 };
 
 ContMarkRecordControl.prototype.update = function(key, val) {
+ /*
     var newDict = makeLowLevelEqHash();
     // FIXME: what's the javascript idiom for hash key copy?
     // Maybe we should use a rbtree instead?
@@ -1878,6 +1879,9 @@ ContMarkRecordControl.prototype.update = function(key, val) {
     }
     newDict.put(key, val);
     return new ContMarkRecordControl(newDict);
+  */
+  this.dict[key.val] = val;
+  return this;
 };
 
 
@@ -1901,8 +1905,8 @@ ContinuationMarkSet.prototype.toDisplayedString = function(cache) {
 };
 
 ContinuationMarkSet.prototype.ref = function(key) {
-    if ( this.dict.containsKey(key) ) {
-	    return this.dict.get(key);
+    if ( this.dict.hasOwnProperty(key) ) {
+	    return this.dict[key];
     }
     return [];
 };
