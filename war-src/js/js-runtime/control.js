@@ -670,7 +670,9 @@ CallControl.prototype.invoke = function(state) {
 
 var callProcedure = function(aState, procValue, n, operandValues) {
     procValue = selectProcedureByArity(aState, n, procValue, operandValues);
-    if (primitive.isPrimitive(procValue)) {
+    procValue.callProcedure(aState, procValue, n, operandValues);
+/*
+  if (primitive.isPrimitive(procValue)) {
 	callPrimitiveProcedure(aState, procValue, n, operandValues);
     } else if (procValue instanceof types.ClosureValue) {
 	callClosureProcedure(aState, procValue, n, operandValues);
@@ -680,6 +682,7 @@ var callProcedure = function(aState, procValue, n, operandValues) {
 	throw types.internalError("Something went wrong with checking procedures!",
 				  state.captureCurrentContinuationMarks(aState));
     }
+ */
 };
 
 
@@ -970,11 +973,14 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     // arguments n matches the acceptable number of arguments from the
     // procValue.
     if (procValue instanceof types.ContinuationClosureValue) {
+  procValue.callProcedure = callContinuationProcedure;
 	// The continuation can accept any number of arguments
 	return procValue;
     } else {
 	if ((n === procValue.numParams) ||
 	    (n > procValue.numParams && procValue.isRest)) {
+      procValue.callProcedure = primitive.isPrimitive(procValue)?
+        callPrimitiveProcedure : callClosureProcedure;
 	    return procValue;
 	} else {
 	    var positionStack = 
