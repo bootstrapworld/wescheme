@@ -858,7 +858,8 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	return argColoredParts;
     }
 
-    if ( !types.isFunction(procValue) ) {
+    var procedureType = types.getProcedureType(procValue);
+    if ( !procedureType ) {
 	    var argStr = getArgStr('; arguments were:');
         var positionStack = state.captureCurrentContinuationMarks(aState).ref(types.symbol('moby-application-position-key'));
        
@@ -885,7 +886,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
 
     }
 
-    if (procValue instanceof types.CaseLambdaValue) {
+    if (procedureType  === "CaseLambdaValue") {
     	for (var j = 0; j < procValue.closures.length; j++) {
     	    if (n === procValue.closures[j].numParams ||
     		(n > procValue.closures[j].numParams && 
@@ -919,7 +920,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
                                new types.GradientPart(argColoredParts)]),	
     		[]));
     } 
-    else if (procValue instanceof primitive.CasePrimitive) {
+    else if (procedureType === "CasePrimitive") {
     	for (var j = 0; j < procValue.cases.length; j++) {
     	    if (n === procValue.cases[j].numParams ||
     		(n > procValue.cases[j].numParams && 
@@ -959,7 +960,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     // Closure, or Primitive.  We check to see that the number of
     // arguments n matches the acceptable number of arguments from the
     // procValue.
-    if (procValue instanceof types.ContinuationClosureValue) {
+    if (procedureType === "ContinuationClosureValue") {
   procValue.callProcedure = callContinuationProcedure;
 	// The continuation can accept any number of arguments
 	return procValue;

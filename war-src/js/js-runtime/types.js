@@ -2200,6 +2200,15 @@ types.isFunction = function(x) {
 		x instanceof CaseLambdaValue ||
 		x instanceof ContinuationClosureValue);
 };
+types.getProcedureType = function(x){
+ return (x instanceof PrimProc)? "PrimProc" :
+       (x instanceof CasePrimitive)? "CasePrimitive" :
+       (x instanceof ClosureValue)? "ClosureValue" :
+       (x instanceof CaseLambdaValue)? "CaseLambdaValue" :
+       (x instanceof ContinuationClosureValue)? "ContinuationClosureValue" :
+       /* else */ false;
+};
+ 
 types.isJsObject = function(x) { return x instanceof JsObject; };
 
 types.UnionFind = UnionFind;
