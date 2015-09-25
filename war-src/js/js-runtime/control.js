@@ -132,7 +132,7 @@ ModControl.prototype.invoke = function(state) {
     var cmds = [];
     var i;
     for(i = 0; i < this.body.length; i++) {
-	cmds.push(this.body[i]);
+      cmds.push(this.body[i]);
     }
     state.pushManyControls(cmds);
 };
@@ -141,22 +141,22 @@ ModControl.prototype.invoke = function(state) {
 //////////////////////////////////////////////////////////////////////
 
 var processPrefix = function(aState, prefix) {
-    var numLifts = prefix.numLifts;
-    var newPrefix = new types.PrefixValue();
-    for (var i = 0; i < prefix.toplevels.length + numLifts; i++) {
-	var top = prefix.toplevels[i];
-	if (top === false) {
-	    newPrefix.addSlot();
-	} else if (top['$'] === 'module-variable') {
-	    installModuleVariable(aState, newPrefix, top);
-	} else if (top['$'] === 'global-bucket') {
-	    installGlobalBucket(aState, newPrefix, top);
-	} else {
-	    throw types.internalError("unable to install toplevel element " + top,
-				      state.captureCurrentContinuationMarks(aState)); 
-	}
+  var numLifts = prefix.numLifts;
+  var newPrefix = new types.PrefixValue();
+  for (var i = 0; i < prefix.toplevels.length + numLifts; i++) {
+    var top = prefix.toplevels[i];
+    if (top === false) {
+        newPrefix.addSlot();
+    } else if (top['$'] === 'module-variable') {
+        installModuleVariable(aState, newPrefix, top);
+    } else if (top['$'] === 'global-bucket') {
+        installGlobalBucket(aState, newPrefix, top);
+    } else {
+        throw types.internalError("unable to install toplevel element " + top,
+                state.captureCurrentContinuationMarks(aState)); 
     }
-    aState.vstack.push(newPrefix);
+  }
+  aState.vstack.push(newPrefix);
 };
 
 
@@ -185,10 +185,9 @@ var installModuleVariable = function(aState, newPrefix, top) {
 var installGlobalBucket = function(aState, newPrefix, top) {
     var name = top.value+'';
     if (! aState.globals[name]) {
-	aState.globals[name] =
-	    new types.GlobalBucket(name, types.UNDEFINED);
+      aState.globals[name] = new types.GlobalBucket(name, types.UNDEFINED);
     } else {
-	// Otherwise, do nothing but reuse the global bucket.
+      // Otherwise, do nothing but reuse the global bucket.
     }
     newPrefix.addSlot(aState.globals[name]);
 };
@@ -249,9 +248,9 @@ var BranchRestControl = function(thenPart, elsePart) {
 BranchRestControl.prototype.invoke = function(state) {
     debug("BRANCH");
     if (state.v !== false && state.v !== undefined) {
-	state.pushControl(this.thenPart);
+      state.pushControl(this.thenPart);
     } else {
-	state.pushControl(this.elsePart);
+      state.pushControl(this.elsePart);
     }
 };
 
@@ -270,40 +269,39 @@ RequireControl.prototype.invoke = function(state) {
 	    // Already invoked.
 	    restart(types.VOID);
 	} else {
-            // Otherwise, try to load and invoke it.
+      // Otherwise, try to load and invoke it.
 
-            // If has already been loaded, just invoke.
-            var isLoaded = function(name) {
-                return typeof(window.COLLECTIONS) !== 'undefined' && window.COLLECTIONS[name]
-            };
-            var doTheInvoke = function() {
-		var moduleRecord = window.COLLECTIONS[that.name];
-		invokeModuleAndRestart(state, moduleRecord, restart);
-            };
-            var raiseTheError = function() { 
-                restart(types.schemeError(
-		    types.incompleteExn(types.exn,
-                                        "unable to load " + that.name +
-			                ": it isn't in the set of known collections",
-                                       [])));
-            };
+      // If has already been loaded, just invoke.
+      var isLoaded = function(name) {
+          return typeof(window.COLLECTIONS) !== 'undefined' && window.COLLECTIONS[name]
+      };
+      var doTheInvoke = function() {
+        var moduleRecord = window.COLLECTIONS[that.name];
+        invokeModuleAndRestart(state, moduleRecord, restart);
+      };
+      var raiseTheError = function() {
+        restart(types.schemeError(types.incompleteExn(types.exn,
+                                                      "unable to load " + that.name +
+                                                      ": it isn't in the set of known collections",
+                                                      [])));
+      };
 
 	    if (isLoaded(that.name)){
-                doTheInvoke();
+        doTheInvoke();
 	    } else {
-                // But if it hasn't been loaded, we must do that first, and then
-                // invoke.
-                // dynamic module loader:
-                state.hooks.dynamicModuleLoader(
-                    that.name,
-                    function() {
-                        if (isLoaded(that.name)) {
-                            doTheInvoke();
-                        } else {
-                            raiseTheError();
-                        }
-                    },
-                    raiseTheError);
+        // But if it hasn't been loaded, we must do that first, and then
+        // invoke.
+        // dynamic module loader:
+        state.hooks.dynamicModuleLoader(
+            that.name,
+            function() {
+                if (isLoaded(that.name)) {
+                    doTheInvoke();
+                } else {
+                    raiseTheError();
+                }
+            },
+            raiseTheError);
 	    }
 	}
     };
@@ -317,28 +315,26 @@ RequireControl.prototype.invoke = function(state) {
 var invokeModuleAndRestart = function(state, moduleRecord, restart) {
     var modulePrefix;
     var onSuccess = function() {
-	var providedValues = {};
-	for (var i = 0; i < moduleRecord.provides.length; i++) {
-	    var providedName = moduleRecord.provides[i];
-	    var globalBucket = state.globals[providedName]
-	    if (! globalBucket) {
-		restart(types.schemeError(
-		    types.exn("module " + moduleRecord.name +
-			      " is missing an expected definition for " +
-			      providedName)));
-		return;
-	    } else {
-		providedValues[providedName] = globalBucket.value;
-	    }
-	}
-	state.invokedModules[moduleRecord.name] = 
-	    { record: moduleRecord,
-	      providedValues: providedValues };
-	restart(types.VOID);
+      var providedValues = {};
+      for (var i = 0; i < moduleRecord.provides.length; i++) {
+          var providedName = moduleRecord.provides[i];
+          var globalBucket = state.globals[providedName]
+          if (! globalBucket) {
+            restart(types.schemeError(
+                types.exn("module " + moduleRecord.name +
+                    " is missing an expected definition for " +
+                    providedName)));
+            return;
+          } else {
+            providedValues[providedName] = globalBucket.value;
+          }
+      }
+      state.invokedModules[moduleRecord.name] = 
+          { record: moduleRecord,
+            providedValues: providedValues };
+      restart(types.VOID);
     };
-    var onFail = function(exn) {
-	restart(exn);
-    };
+    var onFail = function(exn) { restart(exn); };
     state.clearForEval({preserveBreak: true, clearGlobals: true});
     interpret.load(moduleRecord.bytecode, state);
     modulePrefix = state.vstack[state.vstack.length-1];
@@ -360,9 +356,7 @@ var SeqControl = function(forms) {
 SeqControl.prototype.invoke = function(state) {
     var forms = this.forms;
     var cmds = [];
-    for (var i = 0; i < forms.length; i++) {
-	cmds.push(forms[i]);
-    }
+    for (var i = 0; i < forms.length; i++) { cmds.push(forms[i]); }
     state.pushManyControls(cmds);    
 };
 
@@ -377,13 +371,13 @@ var Beg0Control = function(seq) {
 
 Beg0Control.prototype.invoke = function(state) {
     if (this.seq.length === 1) {
-	state.pushControl(this.seq[0]);
+      state.pushControl(this.seq[0]);
     } else {
-	var rest = [];
-	for (var i = 1; i < this.seq.length; i++) {
-	    rest.push(this.seq[i]);
-	}
-	state.pushManyControls([this.seq[0], new Beg0RestControl(rest)]);
+      var rest = [];
+      for (var i = 1; i < this.seq.length; i++) {
+          rest.push(this.seq[i]);
+      }
+      state.pushManyControls([this.seq[0], new Beg0RestControl(rest)]);
     }
 };
 
@@ -429,9 +423,7 @@ var LocalrefControl = function(pos, isUnbox) {
 
 LocalrefControl.prototype.invoke = function(state) {
     var val = state.peekn(this.pos);
-    if (this.isUnbox) {
-	val = val.unbox();
-    }
+    if (this.isUnbox) { val = val.unbox(); }
     state.v = val;
 };
 
@@ -445,12 +437,12 @@ var PrimvalControl = function(name) {
 };
 
 PrimvalControl.prototype.invoke = function(aState) {
-    var prim = primitive.getPrimitive(this.name, undefined);
-    if (! prim) {
-	throw types.internalError("Primitive " + this.name + " not implemented!",
-				  state.captureCurrentContinuationMarks(aState));
-    }
-    aState.v = prim;
+  var prim = primitive.getPrimitive(this.name, undefined);
+  if (! prim) {
+    throw types.internalError("Primitive " + this.name + " not implemented!",
+                              state.captureCurrentContinuationMarks(aState));
+  }
+  aState.v = prim;
 };
 
 
@@ -489,11 +481,11 @@ LamControl.prototype.invoke = function(state) {
 var makeClosureValsFromMap = function(state, closureMap, closureTypes) {
     var closureVals = [];
     for (var i = 0; i < closureMap.length; i++) {
-	var val, type;
-	val = state.peekn(closureMap[i]);
-	type = closureTypes[i];
-	// FIXME: look at the type; will be significant?
-	closureVals.push(val);
+      var val, type;
+      val = state.peekn(closureMap[i]);
+      type = closureTypes[i];
+      // FIXME: look at the type; will be significant?
+      closureVals.push(val);
     }
     return closureVals;
 };
@@ -532,12 +524,12 @@ LetrecReinstallClosureControls.prototype.invoke = function(state) {
     // their closures need to be refreshed.
     var n = this.procs.length;
     for (var i = 0; i < n; i++) {
-	var procRecord = this.procs[i];
-	var closureVal = state.peekn(n - 1 - i);
-	closureVal.closureVals = makeClosureValsFromMap(state, 
-							procRecord.closureMap,
-							procRecord.closureTypes);
-    }  
+      var procRecord = this.procs[i];
+      var closureVal = state.peekn(n - 1 - i);
+      closureVal.closureVals = makeClosureValsFromMap(state, 
+                  procRecord.closureMap,
+                  procRecord.closureTypes);
+    }
 };
 
 
@@ -576,35 +568,35 @@ DefValuesInstallControl.prototype.invoke = function(aState) {
     var idLength = this.ids.length;
 
     if (bodyValue instanceof types.ValuesWrapper) {
-	if (this.ids.length !== bodyValue.elts.length) {
-	    helpers.raise(
-        //   types.incompleteExn(types.exnFailContract,
-        //    new types.Message([new types.ColoredPart("define-values", locationList.first()), 
-        //                     ": expected ", 
-                     //          [new types.MultiPart(idLength+'', 
-        //it is impossible to find the locationList, due to how values is returning information.
+      if (this.ids.length !== bodyValue.elts.length) {
+          helpers.raise(
+            //   types.incompleteExn(types.exnFailContract,
+            //    new types.Message([new types.ColoredPart("define-values", locationList.first()), 
+            //                     ": expected ", 
+                         //          [new types.MultiPart(idLength+'', 
+            //it is impossible to find the locationList, due to how values is returning information.
 
-		types.exnFailContractArity("define-values: expected " + this.ids.length 
-					   + " values, but received " + bodyValue.elts.length,
-					   state.captureCurrentContinuationMarks(aState)));
-	}
-	for (var i = 0; i < this.ids.length; i++) {
-	    aState.setPrefix(this.ids[i].depth,
-			    this.ids[i].pos,
-			    bodyValue.elts[i]);
-	}
+        types.exnFailContractArity("define-values: expected " + this.ids.length 
+                 + " values, but received " + bodyValue.elts.length,
+                 state.captureCurrentContinuationMarks(aState)));
+      }
+      for (var i = 0; i < this.ids.length; i++) {
+          aState.setPrefix(this.ids[i].depth,
+              this.ids[i].pos,
+              bodyValue.elts[i]);
+      }
     } else {
-	if (this.ids.length !== 1) {
-	    helpers.raise(
-		types.exnFailContractArity("define-values: expected " + this.ids.length 
-					   + " values, but only received one: " + bodyValue,
-					   state.captureCurrentContinuationMarks(aState)));
-	} else {
-	    aState.setPrefix(this.ids[0].depth,
-			    this.ids[0].pos,
-			    bodyValue);
-	}
-    } 
+      if (this.ids.length !== 1) {
+          helpers.raise(
+        types.exnFailContractArity("define-values: expected " + this.ids.length 
+                 + " values, but only received one: " + bodyValue,
+                 state.captureCurrentContinuationMarks(aState)));
+      } else {
+          aState.setPrefix(this.ids[0].depth,
+              this.ids[0].pos,
+              bodyValue);
+      }
+    }
 };
 
 
@@ -625,21 +617,21 @@ ApplicationControl.prototype.invoke = function(state) {
     var cmds = [];    
     // We allocate as many values as there are operands.
     if (rands.length !== 0) {
-	cmds.push(new PushnControl(rands.length));
+      cmds.push(new PushnControl(rands.length));
     }
     cmds.push(rator);    
     if (rands.length !== 0) {
-	cmds.push(new SetControl(rands.length-1));
+      cmds.push(new SetControl(rands.length-1));
     }
 
     for (var i = 0; i < rands.length; i++) {
-	if (i !== rands.length - 1) {
-	    cmds.push(rands[i]);
-	    cmds.push(new SetControl(i));
-	} else {
-	    cmds.push(rands[rands.length-1]);
-	    cmds.push(new SwapControl(rands.length-1));
-	}
+      if (i !== rands.length - 1) {
+          cmds.push(rands[i]);
+          cmds.push(new SetControl(i));
+      } else {
+          cmds.push(rands[rands.length-1]);
+          cmds.push(new SwapControl(rands.length-1));
+      }
     }
     cmds.push(new CallControl(rands.length));
     // CallControl will be responsible for popping off the 
@@ -683,8 +675,8 @@ var callProcedure = function(aState, procValue, n, operandValues) {
 var callPrimitiveProcedure = function(state, procValue, n, operandValues) {
     // Tail call optimization:
     if (state.cstack.length !== 0 && 
-	state.cstack[state.cstack.length - 1] instanceof PopnControl) {
-	state.cstack.pop().invoke(state);
+      state.cstack[state.cstack.length - 1] instanceof PopnControl) {
+      state.cstack.pop().invoke(state);
     }
     var args = preparePrimitiveArguments(state, 
 					 procValue, 
@@ -697,20 +689,19 @@ var callPrimitiveProcedure = function(state, procValue, n, operandValues) {
 
 var processPrimitiveResult = function(state, result, procValue) {
     if (result instanceof INTERNAL_CALL) {
-	state.cstack.push(new InternalCallRestartControl
-			  (result.k, procValue));
+      state.cstack.push(new InternalCallRestartControl(result.k, procValue));
 
-        addNoLocationContinuationMark(state, result.operands.length);
-	callProcedure(state,
-		      result.operator, 
-		      result.operands.length, 
-		      result.operands);
+      addNoLocationContinuationMark(state, result.operands.length);
+      callProcedure(state,
+              result.operator, 
+              result.operands.length, 
+              result.operands);
     } else if (result instanceof INTERNAL_PAUSE) {
-	throw new PauseException(result.onPause);
+      throw new PauseException(result.onPause);
     } else {
-	if (! procValue.assignsToValueRegister) {
-	    state.v = result;
-	}
+      if (! procValue.assignsToValueRegister) {
+          state.v = result;
+      }
     }
 };
 
