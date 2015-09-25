@@ -266,7 +266,7 @@ var makeOnRestart = function(aState, onSuccessK, onFailK) {
 var step = function(aState) {
     var nextCode = aState.popControl();
     debugF(function() { return sys.inspect(nextCode) });
-    if (typeof(nextCode) === 'object' && nextCode['invoke']) {
+    if (nextCode['invoke']) {
       nextCode.invoke(aState);
     } else {
       // we should never get here.
