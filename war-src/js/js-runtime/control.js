@@ -660,10 +660,7 @@ var CallControl = function(n) {
 
 CallControl.prototype.invoke = function(state) {
     debug("CALL " + this.n);
-    var operandValues = [];
-    for (var i = 0; i < this.n; i++) {
-	operandValues.push(state.popValue());
-    }
+    var operandValues = state.popn(this.n);
     callProcedure(state, state.v, this.n, operandValues);
 };
 

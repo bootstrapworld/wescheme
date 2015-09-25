@@ -219,13 +219,15 @@ State.prototype.pushn = function(n) {
 
 // Pop n values from the stack.
 State.prototype.popn = function(n) {
-    debugF(function(){ return "POPN " + n } );
-    for (var i = 0; i < n; i++) {
-	if (this.vstack.length === 0) {
- 	    throw types.internalError("vstack empty", captureCurrentContinuationMarks(this));
-	}
-	this.vstack.pop();
+  debugF(function(){ return "POPN " + n } );
+  var returnedValues = [];
+  for (var i = 0; i < n; i++) {
+    if (this.vstack.length === 0) {
+        throw types.internalError("vstack empty", captureCurrentContinuationMarks(this));
     }
+    returnedValues.push(this.vstack.pop());
+  }
+ return returnedValues;
 };
 
 
