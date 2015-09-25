@@ -905,6 +905,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	    if (n === procValue.closures[j].numParams ||
     		(n > procValue.closures[j].numParams && 
     		 procValue.closures[j].isRest)) {
+        procValue.closures[j] = callClosureProcedure;
     		return procValue.closures[j];
     	    }
     	}
@@ -938,6 +939,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	    if (n === procValue.cases[j].numParams ||
     		(n > procValue.cases[j].numParams && 
     		 procValue.cases[j].isRest)) {
+        procValue.cases[j].callProcedure = callPrimitiveProcedure;
     		return procValue.cases[j];
     	    }
     	}
