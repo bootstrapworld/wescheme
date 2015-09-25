@@ -171,16 +171,13 @@ var installModuleVariable = function(aState, newPrefix, top) {
 
     var aPrim = primitive.getPrimitive(primName, resolvedModuleName);
     if (typeof(aPrim) !== 'undefined') {
-	aState.globals[primName] = 
-	    new types.GlobalBucket(primName, aPrim);
-	newPrefix.addSlot(aState.globals[primName]);
+      aState.globals[primName] = new types.GlobalBucket(primName, aPrim);
+      newPrefix.addSlot(aState.globals[primName]);
     } else {
-	aState.globals[primName] = 
-	    new types.GlobalBucket(
-		primName, 
-		new types.ModuleVariableRecord(
-		    resolvedModuleName, primName));
-	newPrefix.addSlot(aState.globals[primName]);
+      aState.globals[primName] = new types.GlobalBucket(primName,
+                                                        new types.ModuleVariableRecord(
+                                                          resolvedModuleName, primName));
+      newPrefix.addSlot(aState.globals[primName]);
     }
 };
 
