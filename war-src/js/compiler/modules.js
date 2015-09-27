@@ -194,6 +194,7 @@ plt.compiler = plt.compiler || {};
                                             ,"color-alpha"
                                             
                                             ,"empty-scene"
+                                            ,"empty-image"
                                             ,"scene+line"
                                             ,"put-image"
                                             ,"place-image"

@@ -4606,7 +4606,14 @@ PRIMITIVES['color-alpha'] =
 			return types.colorAlpha(col);
 		 });
 
-
+PRIMITIVES['empty-image'] =
+    new PrimProc('empty-image',
+		 0,
+		 false, false,
+		 function(aState) {
+			return world.Kernel.sceneImage(0, 0, [], true);
+		 });
+ 
 PRIMITIVES['empty-scene'] = new CasePrimitive('empty-scene',
   [new PrimProc('empty-scene',
 		 2,
