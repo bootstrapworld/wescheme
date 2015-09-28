@@ -6344,8 +6344,8 @@ PRIMITIVES['animate'] =
                        new ToDraw(f)];
        var unwrappedConfigs =
            helpers.map(function(x) {
-                         return isWorldConfigOption(x)? function(config) { return x.configure(config); } : x; },
-                       handlers);
+             return isWorldConfigOption(x)? function(config) { return x.configure(config); } : x; },
+             handlers);
 		     return PAUSE(function(restarter, caller) {
            var bigBangController;
            var onBreak = function() { bigBangController.breaker(); }
