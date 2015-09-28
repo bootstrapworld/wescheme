@@ -6331,8 +6331,35 @@ PRIMITIVES['js-big-bang'] =
 		     })
 		 });
 
-
-
+PRIMITIVES['animate'] =
+ new PrimProc('animate',
+		 1,
+		 true, false,
+		 function(aState, f) {
+       // on-tick is just add1, to-draw is f
+       var handlers = [new OnTickBang(PRIMITIVES['add1'],
+                                     new PrimProc('', 1, false, false,
+                                                  function(aState, w) { return types.effectDoNothing(); }),
+                                     DEFAULT_TICK_DELAY),
+                       new ToDraw(f)];
+       var unwrappedConfigs =
+           helpers.map(function(x) {
+                         return isWorldConfigOption(x)? function(config) { return x.configure(config); } : x; },
+                       handlers);
+		     return PAUSE(function(restarter, caller) {
+           var bigBangController;
+           var onBreak = function() { bigBangController.breaker(); }
+           aState.addBreakRequestedListener(onBreak);
+           bigBangController = jsworld.MobyJsworld.bigBang(100,
+                     aState.getToplevelNodeHook()(),
+                     unwrappedConfigs,
+                     caller, 
+                     function(v) {
+                       aState.removeBreakRequestedListener(onBreak);
+                       restarter(v);
+                     });
+             })
+		 });
 
 
 //////////////////////////////////////////////////////////////////////

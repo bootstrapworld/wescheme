@@ -184,6 +184,7 @@ plt.compiler = plt.compiler || {};
                                            worldHandlersModule.bindings.concat(worldEffectsModule.bindings,
                                            ["key=?"
                                             ,"play-sound"
+                                            ,"animate"
                                             ,"big-bang"
                                             // colors
                                             ,"make-color"
