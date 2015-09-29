@@ -4606,14 +4606,6 @@ PRIMITIVES['color-alpha'] =
 			return types.colorAlpha(col);
 		 });
 
-PRIMITIVES['empty-image'] =
-    new PrimProc('empty-image',
-		 0,
-		 false, false,
-		 function(aState) {
-			return world.Kernel.sceneImage(0, 0, [], true);
-		 });
- 
 PRIMITIVES['empty-scene'] = new CasePrimitive('empty-scene',
   [new PrimProc('empty-scene',
 		 2,
@@ -6848,6 +6840,7 @@ PRIMITIVES['false'] = false;
 PRIMITIVES['true'] = true;
 PRIMITIVES['pi'] = jsnums.pi;
 PRIMITIVES['null'] = types.EMPTY;
+PRIMITIVES['empty-image'] = world.Kernel.sceneImage(0, 0, [], true);
 
 //PRIMITIVES['effect:do-nothing'] = types.EffectDoNothing;
 
