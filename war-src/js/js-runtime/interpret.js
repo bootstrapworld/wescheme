@@ -143,7 +143,7 @@ var makeClosureValsFromMap = function(state, closureMap, closureTypes) {
 
 
 // We bounce every so often to allow UI events to process.
-var MAX_STEPS_BEFORE_BOUNCE = 10000;
+var MAX_STEPS_BEFORE_BOUNCE = 50000;
 
 
 // run: state (scheme-value -> void) (exn -> void) -> void
