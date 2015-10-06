@@ -19,7 +19,7 @@
 <body>
 <h1>Privacy</h1>
 
-<div id="text" style="width:45%; float: left; font-size: 14px;">
+<div id="text" style="width: 40%; float: left; font-size: 14px;">
 
 <p>This Privacy Policy governs the manner in which Bootstrap's IDE ("WeScheme") collects,
 uses, maintains and discloses information collected from users (each,
@@ -77,7 +77,7 @@ Users as a group use the services and resources provided on our Site.
 </ul>
 </div>
 
-<div id="text" style="width:45%; float: left; font-size: 14px;">
+<div id="text" style="width: 40%; float: left; font-size: 14px;">
 
 <h2>How we protect your information</h2>
 <p>We adopt appropriate data collection, storage and processing
@@ -121,7 +121,7 @@ of this site, or your dealings with this site, please
 <a href="mailto:contact@bootstrapworld.org">contact us</a>.</p>
 
 <p>This document was last updated on September 30, 2015. Based on a 
-policy document from <a href=“http://www.PrivacyPolicies.com">PrivacyPolicies.com</a></p>
+policy document from <a href="http://www.PrivacyPolicies.com">PrivacyPolicies.com</a></p>
 
 
 
