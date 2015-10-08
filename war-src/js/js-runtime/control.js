@@ -560,7 +560,7 @@ DefValuesInstallControl.prototype.invoke = function(aState) {
     debug("DEF_VALUES");
 
     //the following two are empty, because aState does not have the information
-    var positionStack = state.captureCurrentContinuationMarks(aState).ref(types.symbol('moby-application-position-key'));   
+    var positionStack = state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
     var locationList = positionStack[positionStack.length - 1];
 
     var bodyValue = aState.v;
@@ -861,7 +861,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     var procedureType = types.getProcedureType(procValue);
     if ( !procedureType ) {
 	    var argStr = getArgStr('; arguments were:');
-        var positionStack = state.captureCurrentContinuationMarks(aState).ref(types.symbol('moby-application-position-key'));
+        var positionStack = state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
        
         var locationList = positionStack[positionStack.length - 1];
         var locs = locationList;
@@ -901,8 +901,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	}
 
         var positionStack = 
-            state.captureCurrentContinuationMarks(aState).ref(
-                types.symbol('moby-application-position-key'));
+            state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
             
            
             var locationList = positionStack[positionStack.length - 1];
@@ -934,8 +933,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	    acceptableParameterArity.push(procValue.cases[i].numParams + '');
     	}
         var positionStack = 
-            state.captureCurrentContinuationMarks(aState).ref(
-                types.symbol('moby-application-position-key'));
+            state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
             
            
             var locationList = positionStack[positionStack.length - 1];
@@ -972,8 +970,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
 	    return procValue;
 	} else {
 	    var positionStack = 
-		state.captureCurrentContinuationMarks(aState).ref(
-		    types.symbol('moby-application-position-key'));
+		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
 	    
 	   
 	    var locationList = positionStack[positionStack.length - 1];

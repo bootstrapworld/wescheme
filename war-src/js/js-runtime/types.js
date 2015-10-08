@@ -1905,8 +1905,8 @@ ContinuationMarkSet.prototype.toDisplayedString = function(cache) {
 };
 
 ContinuationMarkSet.prototype.ref = function(key) {
-    if ( this.dict.hasOwnProperty(key) ) {
-	    return this.dict[key];
+    if ( this.dict.containsKey(key) ) {
+	    return this.dict.get(key);
     }
     return [];
 };

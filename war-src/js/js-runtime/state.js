@@ -329,7 +329,10 @@ var captureCurrentContinuationMarks = function(state) {
           }
      */
           // copy the JS hashtable into a lowLevelEqHash
-          for(var key in aDict) { dict.put(key, aDict[key] || []); }
+          for(var key in aDict) {
+            dict.put(key, [aDict[key]] || []);
+            dict.get(key).push(aDict[key]);
+          }
       }
     }
     return types.continuationMarkSet(dict);
