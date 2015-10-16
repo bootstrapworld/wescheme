@@ -696,8 +696,7 @@ PRIMITIVES['verify-boolean-branch-value'] =
 			 if (x !== true && x !== false) {
 		
        			var positionStack = 
-        			state.captureCurrentContinuationMarks(aState).ref(
-            			types.symbol('moby-application-position-key'));  
+        			state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
        
        			var locationList = positionStack[positionStack.length - 1];
 			     raise(types.incompleteExn(
@@ -1464,8 +1463,7 @@ PRIMITIVES['/'] =
        			     var i, positionStack, locationList, func, exnMessage;
                              try {
        			         positionStack = 
-        			     state.captureCurrentContinuationMarks(aState).ref(
-            			         types.symbol('moby-application-position-key'));
+        			     state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
        			         locationList = positionStack[positionStack.length - 1];
        			         func = locationList.first();
                                  locationList = locationList.rest();
@@ -2557,8 +2555,7 @@ PRIMITIVES['list-ref'] =
 		 	check(aState, num, isNatural, 'list-ref', 'non-negative exact integer', 2, arguments);
 
 		 	var positionStack = 
-        		state.captureCurrentContinuationMarks(aState).ref(
-            		types.symbol('moby-application-position-key'));
+        		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
         
        
        		  var locationList = positionStack[positionStack.length - 1];
@@ -3112,8 +3109,7 @@ PRIMITIVES['hash-ref'] =
 			  if ( !obj.hash.containsKey(key) ) {
 			  	//var msg = 'hash-ref: no value found for key: ' + types.toWrittenString(key);
 			  	var positionStack = 
-					state.captureCurrentContinuationMarks(aState).ref(
-					    types.symbol('moby-application-position-key'));
+					state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
 			    var locationList = positionStack[positionStack.length - 1];
 
 			  	raise( types.incompleteExn(types.exnFailContract, 
@@ -3277,8 +3273,7 @@ PRIMITIVES['string-ref'] =
 					   '[0, ' + (str.length-1) + '] for string: ' +
 					   types.toWrittenString(str));
 				var positionStack = 
-					state.captureCurrentContinuationMarks(aState).ref(
-					    types.symbol('moby-application-position-key'));
+					state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
 			    var locationList = positionStack[positionStack.length - 1];
 
 			  	raise( types.incompleteExn(types.exnFailContract, 
@@ -3456,8 +3451,7 @@ PRIMITIVES['substring'] =
 			  check(aState, theStart, isNatural, 'substring', 'non-negative exact integer', 2, arguments);
 			  
 			  var positionStack = 
-        		state.captureCurrentContinuationMarks(aState).ref(
-            		types.symbol('moby-application-position-key'));
+        		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
         
        
        		  var locationList = positionStack[positionStack.length - 1];
@@ -3491,8 +3485,7 @@ PRIMITIVES['substring'] =
 			  check(aState, theEnd, isNatural, 'substring', 'non-negative exact integer', 3, arguments);
 
 			  var positionStack = 
-        		state.captureCurrentContinuationMarks(aState).ref(
-            		types.symbol('moby-application-position-key'));
+        		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
         
        		  var locationList = positionStack[positionStack.length - 1];
 

@@ -173,8 +173,7 @@ var helpers = {};
 
 
 		var positionStack = 
-        		state.captureCurrentContinuationMarks(aState).ref(
-            		types.symbol('moby-application-position-key'));
+        		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
         
        		var locationList = positionStack[positionStack.length - 1];
 
@@ -266,8 +265,7 @@ var helpers = {};
 		if(aState instanceof state.State){
 			//if it's defined and a State, can inspect position stack
 			var positionStack = 
-			state.captureCurrentContinuationMarks(aState).ref(
-	    		types.symbol('moby-application-position-key'));
+			state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
 
 			//if the positionStack at the correct position is defined, we can throw a colored error
 			if (positionStack[positionStack.length - 1] !== undefined) {

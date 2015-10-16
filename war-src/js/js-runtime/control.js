@@ -747,7 +747,7 @@ var addNoLocationContinuationMark = function(aState, n) {
     var nonPositions = [types.NoLocation];
     for (i = 0; i < n; i++) { nonPositions.push(types.NoLocation); }
 //    var aHash = types.makeLowLevelEqHash();
-//    aHash.put(types.symbol('moby-application-position-key'),
+//    aHash.put('moby-application-position-key',
 //              types.list(nonPositions));
     aHash = {};
     aHash["moby-application-position-key"] = types.list(nonPositions);
