@@ -77,8 +77,8 @@
     <script src="/js/submitpost-min.js" type="text/javascript"></script>
 
     <!-- mzscheme-vm evaluator -->
-    <script src="/js/mzscheme-vm/support.js" type="text/javascript"></script>
-    <script src="/js/mzscheme-vm/evaluator.js" type="text/javascript"></script>
+    <script src="/js/mzscheme-vm/support-min.js" type="text/javascript"></script>
+    <script src="/js/mzscheme-vm/evaluator-min.js" type="text/javascript"></script>
 
 
     <!-- Local compiler files -->
@@ -338,7 +338,13 @@
 	    <li><a tabIndex="1" role="button"  id="run"><span>Run</span></a></li>
 	    <li><a tabIndex="1" role="button"  id="stop"><span>Stop</span></a></li>
 	    <% if (userSession != null) { %>
-	    <li><a tabIndex="1" role="button"  id="save"><span>Save</span></a></li>
+	    <li><a tabIndex="1" role="button"  id="save"><span>
+        <% if (request.getParameter("publicId") != null){ %>
+              Remix
+        <% } else { %>
+              Save
+        <% } %>
+      </span></a></li>
 	    <li><a tabIndex="1" role="button"  id="share"><span>Share</span></a></li>
       <li><a tabIndex="1" role="button"  id="images"><span>Images</span></a></li>
 	    <% } %>
