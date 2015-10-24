@@ -425,6 +425,9 @@
   </body>
 
 
+<!-- DOMvas library (for rendering DOM to img)
+<script src="/js/domvas.js" "type="text/javascript">
+-->
 
 
   <script type="text/javascript">

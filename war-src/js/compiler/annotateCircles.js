@@ -281,6 +281,56 @@ function BubbleEditor(cm, parser){
     }).forEach(function(m){m.replacedWith.style.background='pink'; m.replacedWith.damaged = true; m.clear();});
     alert('found damage');
   };
+
+  that.changeView = function(v){
+    // make a copy of all the DOM trees, then convert that copy to absolute positioning
+    var markers   = circlesEditor.getAllMarks().filter(function(m){return m._circles;}),
+        nodes     = markers.map(function(m){ return m.replacedWith; }),
+        clones    = nodes.map(  function(n){return makeAbsolutelyPositionedClone(n);}),
+        parent    = document.getElementById('circlesEditor'),
+        flattened = [];
+
+    function makeAbsolutelyPositionedClone(node){
+      var rect = node.getBoundingClientRect();
+      var parentRect = document.getElementById('circlesEditor').getBoundingClientRect();
+      var clone = node.cloneNode(false);
+      if(node.classList.contains("lParen")){ clone.style.opacity = "0"; }
+      if(node.classList.contains("rParen")){ clone.style.opacity = "0"; }
+      clone.style.transition = "all 2s"; clone.style.position = "absolute";
+      clone.style.top  = (rect.top  - parentRect.top  + 2) + "px";
+      clone.style.left = (rect.left - parentRect.left + 2) + "px";
+      clone.original = node;
+      for(var i=0; i<node.children.length; i++) clone.appendChild(makeAbsolutelyPositionedClone(node.children[i]));
+      if(node.firstChild && node.firstChild.nodeType === 3) clone.appendChild(node.firstChild.cloneNode());
+      return clone;
+    }
+    
+    function flatten(tree){
+      if(tree.children.length === 0){
+        parent.appendChild(tree); flattened.push(tree);
+      } else {
+        while(tree.firstChild) flatten(tree.firstChild);
+        if(tree.parentNode) tree.parentNode.removeChild(tree);
+      }
+    }
+    
+    function updateClonePosition(clone){
+      var orig = clone.original;
+      var rect = orig.getBoundingClientRect();
+      var parentRect = document.getElementById('circlesEditor').getBoundingClientRect();
+      clone.style.top = (rect.top-parentRect.top+2)+"px";
+      clone.style.left = (rect.left-parentRect.left+2)+"px";
+      for(var i=0;i<clone.children.length; i++) updateClonePosition(clone.children[i]);
+    }
+    
+    clones.forEach(flatten);
+    nodes.forEach(function(n){n.style.opacity="0";});
+    document.getElementById('circlesEditor').className=v;
+    setTimeout(function(){flattened.forEach(updateClonePosition);},500);
+    setTimeout(function(){nodes.forEach(function(n){n.style.opacity="1";});}, 2000);
+    setTimeout(function(){flattened.forEach(function(n){n.parentNode.removeChild(n);});}, 3000);
+  };
+                  
                   
   that.processChange = function(cm, change){
     console.log(change);
@@ -426,4 +476,5 @@ function BubbleEditor(cm, parser){
    
     that.refresh();
     return that;
+                  
 }

@@ -1,0 +1,65 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Block Testing Playground</title>
+
+<style>
+  td {min-width: 10px; max-width: 300px; overflow: hidden;}
+</style>
+<script src="../jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
+<script type="text/javascript" src="../mzscheme-vm/support.js"></script>
+<script type="text/javascript" src="compiler-calc.js"></script>
+<script type="text/javascript" src="repl2.js"></script>
+<script type="text/javascript" src="../../../war-src/js/compiler/annotateCircles.js"></script>
+<script type="text/javascript" src="../codemirror2/lib/codemirror.js"></script>
+<script type="text/javascript" src="../codemirror2-contrib/scheme2/scheme2-min.js"></script>
+<script type="text/javascript" src="../codemirror2/addon/edit/closebrackets-min.js"></script>
+<link rel="stylesheet" type="text/css" href="../codemirror2/lib/codemirror.css" id="style" />
+<link rel="stylesheet" type="text/css" href="../codemirror2-contrib/scheme2/schemecolors.css"></link>
+<link rel="stylesheet" type="text/css" href="../../css/pretty-printing.css"></link>
+
+<script>
+  window.textEditor = window.circlesEditor = window.bubbleEditor = null;
+  function setup(){
+    textEditor    = CodeMirror.fromTextArea(document.getElementById('text'),
+                                            {mode: "scheme2"
+                                            , lineNumbers: true
+                                            , lineWrapping: true
+                                            , autoCloseBrackets: true });
+    circlesEditor = CodeMirror.fromTextArea(document.getElementById('circles'),
+                                            {mode: "scheme2"
+                                            , lineNumbers: true
+                                            , lineWrapping: true });
+    function parser(code){
+      return plt.compiler.parse(plt.compiler.lex(code));
+    }
+
+    circlesEditor.swapDoc(textEditor.getDoc().linkedDoc());
+    bubbleEditor = new BubbleEditor(circlesEditor, parser);
+    textEditor.getInputField().tabIndex=-1;
+    circlesDOM = circlesEditor.getWrapperElement();
+    circlesDOM.tabIndex=-1;
+    circlesDOM.id  = "circles";
+    document.getElementById('circlesEditor').appendChild(circlesDOM);
+    circlesEditor.on("beforeChange", bubbleEditor.findDamage);
+    circlesEditor.on("change", bubbleEditor.processChange);
+  }
+
+</script>
+
+</head>
+<body onload="setup()">
+  <table style="width: 100%; position: absolute;">
+    <tr>
+      <td style="width: 50%;" id="circlesEditor" class="circles">
+        <textarea cols="80" rows="5" id="circles"></textarea>
+      </td>
+      <td style="width: 50%;">
+        <textarea cols="80" rows="5" id="text">(+ (* 2 (/ 3 4)))</textarea>
+      </td>
+    </tr>
+  </table>
+  <div style="position: absolute; top: 400px;">
+  <input type="radio" name="view" onclick="bubbleEditor.changeView('circles')" value="circles" checked>Blocks
+  <input type="radio" name="view" onclick="bubbleEditor.changeView('code')"    value="code" >Text
+    </div>
+</body>
+</html>
