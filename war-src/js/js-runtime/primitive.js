@@ -5208,11 +5208,11 @@ new PrimProc('isosceles-triangle',
 			 check(aState, c, isColor, "isosceles-triangle", "color", 4, arguments);
 			 if (colorDb.get(c)) { c = colorDb.get(c); }
        // cast to fixnums
-       side = jsnums.toFixnum(side); angleC = jsnums.toFixnum(angleToProperRange(angleC));
-       var angleAB = (180-angleC)/2;
-       var base = 2*side*Math.sin((angleC*Math.PI/180)/2);
+       var isNegative = angleC < 0? -1 : 1,
+       angleAB    = (180-Math.abs(angleC))/2,
+       base       = 2*side*Math.sin((Math.abs(angleC)*Math.PI/180)/2);
        return world.Kernel.triangleImage(jsnums.toFixnum(base),
-                                         jsnums.toFixnum(360-angleAB),// add 180 to make the triangle point up
+                                         jsnums.toFixnum(360-angleAB) * isNegative,
                                          jsnums.toFixnum(side),
                                          s.toString(),
                                          c);
