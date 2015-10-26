@@ -341,7 +341,7 @@ var captureCurrentContinuationMarks = function(state) {
 
 
 
-var STACK_KEY = types.symbol("moby-stack-record-continuation-mark-key");
+var STACK_KEY = "moby-stack-record-continuation-mark-key";
 
 var getStackTraceFromContinuationMarks = function(contMarkSet) {
     var results = [];
