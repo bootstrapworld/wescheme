@@ -386,24 +386,7 @@ span.top-aligned-inline-block {
 }
 
 
-*:fullscreen{
-  width: 100% !important;
-  height: 100% !important;
-  position: fixed;
-  top:      0px;
-  left:     0px;
-}
-
-
-*:-webkit-full-screen{
-  width: 100% !important;
-  height: 100% !important;
-  position: fixed;
-  top:      0px;
-  left:     0px;
-}
-
-*:ms-fullscreen{
+*:fullscreen, *:-webkit-full-screen, *:ms-fullscreen{
   min-width: 100%;
   min-height: 100%;
   width: 100% !important;

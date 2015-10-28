@@ -168,7 +168,7 @@ var initializeEditor;
                   e.preventDefault();
                   return false;
                 });
-                jQuery(document.body).keydown(plt.wescheme.topKeymap);
+//                jQuery(document.body).keydown(plt.wescheme.topKeymap);
                 // Call the after continuation at the end.
                 after();
             };
