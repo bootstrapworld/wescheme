@@ -147,7 +147,6 @@ var initializeEditor;
                                       submitPost("/logout");
                                   }
                               });
-            jQuery("#bespinMode").click(function() { defnSourceContainer.setMode("bespin"); });
             jQuery("#definitions").click(function() { defnInFocus = true;});
             var afterLoad1 = function() {
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }
@@ -168,7 +167,7 @@ var initializeEditor;
                   e.preventDefault();
                   return false;
                 });
-//                jQuery(document.body).keydown(plt.wescheme.topKeymap);
+                jQuery(document.body).keydown(plt.wescheme.topKeymap);
                 // Call the after continuation at the end.
                 after();
             };
