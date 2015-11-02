@@ -494,7 +494,6 @@ WeSchemeInteractions = (function () {
                                              
                         // If there's a unique canvas, highlight that one.
                         // Otherwise, just highlight the whole toplevel node.
-                                             console.log(innerArea.find("canvas"));
                         elem = (innerArea.find("canvas").length === 1)? innerArea.find("canvas").get(0)
                                              : innerArea.get(0);
                                        
