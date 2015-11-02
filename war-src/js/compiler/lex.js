@@ -555,7 +555,7 @@ plt.compiler = plt.compiler || {};
           return datum;
         } else {
           // match every valid (or *almost-valid*) sequence of characters, or the empty string
-          var poundChunk = new RegExp("^(hasheq|hash|fl|fx|\\d+|[tfeibdox]|\\<\\<|[\\\\\\\"\\%\\:\\&\\|\\;\\!\\`\\,\\']|)", 'i'),
+          var poundChunk = new RegExp("^(hasheq|hash|fl|fx|\\d+|true|false|[tfeibdox]|\\<\\<|[\\\\\\\"\\%\\:\\&\\|\\;\\!\\`\\,\\']|)", 'i'),
               chunk = poundChunk.exec(str.slice(i))[0],
               // match the next character
               nextChar = str.charAt(i+chunk.length);
@@ -622,11 +622,13 @@ plt.compiler = plt.compiler || {};
                 datum = readSymbolOrNumber(str, i-1);
                 i+= datum.location.span-1; break;
             // BOOLEANS
+            case 'true':
+            case 'false':
             case 't':  // true
             case 'f':  // false
-                if(!matchUntilDelim.exec(nextChar)){ // if there's no other chars aside from space or delims...
-                  datum = new literal(p==='t');      // create a Boolean literal
-                  i++; column++;                     // move i/col ahead by the char
+                if(!matchUntilDelim.exec(nextChar)){             // if there's no other chars aside from space or delims...
+                  datum = new literal(p==='t' || chunk==='true'); // create a Boolean literal
+                  i+=chunk.length; column+=chunk.length;         // move i/col ahead by the char
                   break;
                 }
             default:
