@@ -470,6 +470,9 @@ WeSchemeInteractions = (function () {
                         resizable: false,
                         closeOnEscape: true
                     });
+                                             
+                    // set the CSS of the dialog to absolute - fixes keypress bug when in fullscreen
+                    dialog.get(0).parentNode.style.position = "absolute";
 
                     var supportsFullScreen = function() {
                         var elem = document.createElement("div");
@@ -480,6 +483,7 @@ WeSchemeInteractions = (function () {
                     };
 
                     var toggleFullScreen = function(evt) {
+                                             
                         var elem;
                         // if this is in response to a double-click, trap the event so it
                         // doesn't bubble through to big-bang
@@ -490,6 +494,7 @@ WeSchemeInteractions = (function () {
                                              
                         // If there's a unique canvas, highlight that one.
                         // Otherwise, just highlight the whole toplevel node.
+                                             console.log(innerArea.find("canvas"));
                         elem = (innerArea.find("canvas").length === 1)? innerArea.find("canvas").get(0)
                                              : innerArea.get(0);
                                        
@@ -511,10 +516,13 @@ WeSchemeInteractions = (function () {
                         // If there's no fullscreen element, we know that there WILL be one, so disable closeOnEsc
                         var closeOnEscape = fullscreenElement;
                         dialog.dialog( "option", "closeOnEscape", closeOnEscape );
-                                             
-                        // get fullscreen access
-                        if(!fullscreenElement) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
-                        else document.exitFullscreen();
+
+                       // get fullscreen access
+                       if(!fullscreenElement){
+                         elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+                       } else {
+                         document.exitFullscreen();
+                       }
                     };
 
                     // if fullscreen is supported, add the 'maximize' icon and listen for double-clicks
