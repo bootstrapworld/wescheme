@@ -483,7 +483,6 @@ WeSchemeInteractions = (function () {
                     };
 
                     var toggleFullScreen = function(evt) {
-                                             
                         var elem;
                         // if this is in response to a double-click, trap the event so it
                         // doesn't bubble through to big-bang
