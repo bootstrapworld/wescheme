@@ -2528,6 +2528,23 @@ PRIMITIVES['list'] =
 		 function(aState, v) { return types.list(v); });
 
 
+PRIMITIVES['range'] =
+    new PrimProc('range',
+		 3,
+		 false, false,
+		 function(aState, start, end, step) {
+        check(aState, start, isNumber, 'range', 'number', 1, arguments);
+        check(aState, end,   isNumber, 'range', 'number', 2, arguments);
+        check(aState, step,  isNumber, 'range', 'number', 3, arguments);
+                 
+        var values = [];
+        for(var i = jsnums.toFixnum(start); i < jsnums.toFixnum(end); i += jsnums.toFixnum(step)){
+          values.push(i);
+        }
+        return types.list(values);
+    });
+
+
 PRIMITIVES['list*'] =
     new PrimProc('list*',
 		 1,

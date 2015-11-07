@@ -395,6 +395,7 @@ plt.compiler = plt.compiler || {};
                                          ,["length", 1]
                                          ,["list", 0, true]
                                          ,["list*", 1, true]
+                                         ,["range", 3]
                                          ,["list-ref", 2]
                                          ,["remove", 2]
                                          ,["member", 2]
