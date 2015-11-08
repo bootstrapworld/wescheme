@@ -61,8 +61,17 @@ goog.require('plt.compiler.compile');
     function isDomNode(x) {
         return (x.nodeType != undefined);
     }
+    // Returns if x is a node that should be printed
+    // Printable Nodes are CANVAS elements, OR non-empty SPANs
+    function isPrintableNode(x){
+      return x.nodeName === "CANVAS" || x.childNodes.length > 0;
+    }
 
     Runner.prototype.addToInteractions = function (interactionVal) {
+      if(!isPrintableNode(interactionVal)){ return;}      // make sure there are no other topLevelEvaluationNodes in the interactionsDiv
+      while(this.interactionsDiv[0].firstChild){
+        this.interactionsDiv[0].removeChild(this.interactionsDiv[0].firstChild);
+      }
       if (isDomNode(interactionVal)) {
         interactionVal.style.display="inline-block";
         this.interactionsDiv.append(interactionVal);
