@@ -5524,8 +5524,8 @@ new PrimProc('scale/xy',
 			 3,
 			 false, false,
 			 function(aState, xFactor, yFactor, img) {
-			 check(aState, xFactor, isNonNegativeReal, "scale/xy", "finite real number", 1, arguments);
-			 check(aState, yFactor, isNonNegativeReal, "scale/xy", "finite real number", 2, arguments);
+			 check(aState, xFactor, isNonNegativeReal, "scale/xy", "non-negative number", 1, arguments);
+			 check(aState, yFactor, isNonNegativeReal, "scale/xy", "non-negative number", 2, arguments);
 			 check(aState, img, isImage, "scale/xy", "image", 3, arguments);
 			 return world.Kernel.scaleImage(jsnums.toFixnum(xFactor),
 							jsnums.toFixnum(yFactor),
@@ -5538,7 +5538,7 @@ new PrimProc('scale',
 			 2,
 			 false, false,
 			 function(aState, factor, img) {
-			 check(aState, factor, isNonNegativeReal, "scale", "finite real number", 1, arguments);
+			 check(aState, factor, isNonNegativeReal, "scale", "non-negative number", 1, arguments);
 			 check(aState, img, isImage, "scale", "image", 2, arguments);
 			 return world.Kernel.scaleImage(jsnums.toFixnum(factor),
 											jsnums.toFixnum(factor),
