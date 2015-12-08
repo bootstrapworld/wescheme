@@ -661,6 +661,9 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.run = function(after) {
       var that = this;
+      // TODO: revisit this abstraction (see textcontainer.js)
+      var editor = this.defn.impl.editor;
+ 
       // if the isRunning flag is true, bail
       if(that.isRunning===true) return false;
       // otherwise, set it to true
@@ -674,7 +677,8 @@ var WeSchemeEditor;
                                   that.isRunning = false;
                                   plt.wescheme.WeSchemeIntentBus.notify("after-run", that);
                                   if (after) { after(); }
-                                });
+                                },
+                                editor);
     };
 
     WeSchemeEditor.prototype.getDefinitionsText = function() {

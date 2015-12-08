@@ -182,11 +182,9 @@ var Evaluator = (function() {
 
 
 
-    // executeProgram: string string (-> void) (exn -> void) -> void
-    Evaluator.prototype.executeProgram = function(programName, code,
-						  onDone,
-						  onDoneError) {
-	var that = this;
+    // executeProgram: string string (-> void) (exn -> void) CodeMirror -> void
+    Evaluator.prototype.executeProgram = function(programName, code, onDone, onDoneError, editor) {
+        var that = this;
         this.compileProgram(programName, code,
                             function(responseText) {
                                 var result = JSON.parse(responseText);
@@ -196,7 +194,8 @@ var Evaluator = (function() {
                             function(responseErrorText) {
 		                that._onCompilationFailure(JSON.parse(responseErrorText || '""'),
 					                   onDoneError);
-                            })
+                            },
+                            editor);
     };
 
 
