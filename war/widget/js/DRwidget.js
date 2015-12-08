@@ -735,6 +735,7 @@ var initializeWidget = (function () {
             pos = editor.getCursor(true);		// get the current cursor location
             pos.ch = 0;							// force the character to 0
             var node= document.getElementById('design-recipe-form');
+            node.style.visibility = "visible";
             connect(node, "click",
                     function(event){
                         event.target.focus();
@@ -781,6 +782,7 @@ var initializeWidget = (function () {
  
        var hideWidget = function (widget){
             document.getElementById('design-recipe-form').style.left = '-1000px';
+            document.getElementById('design-recipe-form').style.visibility = 'hidden';
             editor.removeLineClass(hlLine, "wrap", "activeline");
             editor.focus();
             clearForm();

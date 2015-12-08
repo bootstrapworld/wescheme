@@ -118,11 +118,12 @@ var WeSchemeTextContainer;
 					matchBrackets: (options.matchBrackets !== undefined ? options.matchBrackets : true),
 					value: options.content || "",
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
+          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
+          inputStyle: "contenteditable"
 				});
  
         this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
-
+       this.editor.getInputField().setAttribute("role", "input");
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
         // (using bold/italic to emphasize parts), and then pastes it into WeScheme

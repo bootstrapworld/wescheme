@@ -116,7 +116,7 @@ WeSchemeInteractions = (function () {
     WeSchemeInteractions.prototype.clearLine = function() {
         var clearDiv = document.createElement("div");
         clearDiv.style.clear = 'left';
-        clearDiv.setAttribute("aria-hidden", true); // ACCESSIBILITY: don't read the clear DIV
+        clearDiv.setAttribute("aria-hidden", true); // ARIA: don't read the clear DIV
         this.addToInteractions(clearDiv);
     };
 
@@ -129,7 +129,7 @@ WeSchemeInteractions = (function () {
     Prompt = function(interactions, parentDiv, K) {
         var that = this;
         this.interactions = interactions;
-        this.div = jQuery("<div style='clear: left;'><span class='top-aligned-inline-block'>&gt;&nbsp;</span><span class='top-aligned-inline-block' style='position: absolute; left: 20px; right: 5px;'/></div>");
+        this.div = jQuery("<div style='clear: left;'><span class='top-aligned-inline-block' aria-hidden='true'>&gt;&nbsp;</span><span class='top-aligned-inline-block' style='position: absolute; left: 20px; right: 5px;'/></div>");
         parentDiv.append(this.div);
 
         var innerDivElt = this.div.find("span").get(1);
@@ -180,7 +180,6 @@ WeSchemeInteractions = (function () {
         var promptSpan = document.createElement('span');
         promptSpan.className = 'top-aligned-inline-block';
         promptSpan.appendChild(document.createTextNode(">"));
-        promptSpan.setAttribute("aria-hidden", true); // ACCESSIBILITY: don't read the ">"
 
 
         var textareaSpan = document.createElement("span");
@@ -191,8 +190,12 @@ WeSchemeInteractions = (function () {
         parentDiv.appendChild(document.createTextNode(" "));
         parentDiv.appendChild(textareaSpan);
         that.interactions.addToInteractions(parentDiv);
+                        
+        // ARIA: don't read the group, the caret or the contents
+        parentDiv.setAttribute(   "aria-hidden", "true");
+        promptSpan.setAttribute(  "aria-hidden", "true");
+        textareaSpan.setAttribute("aria-hidden", "true");
 
-//        that.interactions.clearLine();
         // // FIXME: figure out how to get the line height
         // dynamically, because I have no idea how to do
         // this correctly at the moment.
@@ -436,12 +439,17 @@ WeSchemeInteractions = (function () {
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
                     // Accessibility: canvas elements serve as our image types
-                    thing.setAttribute("role", "img")
+                    var ariaText = document.createTextNode(thing.ariaText);
+                    thing.setAttribute("role", "image");
+                    thing.appendChild(ariaText);
+                                    
                 }
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
                 rewrapOutput(thing);
+                // ARIA: create alternate text for canvas element
                 thing.setAttribute("role", "alert");
+                thing.setAttribute("arial-atomic", "true");
             },
             transformDom : function(dom) {
                 var result = that._transformDom(dom);

@@ -233,6 +233,7 @@ if (typeof(world) === 'undefined') {
         if (window && typeof window.G_vmlCanvasManager !== 'undefined') {
             canvas = window.G_vmlCanvasManager.initElement(canvas);
         }
+ 
         return canvas;
     };
 
@@ -257,6 +258,8 @@ if (typeof(world) === 'undefined') {
             var ctx = canvas.getContext("2d");
             that.render(ctx, 0, 0);
         };
+        // ARIA: use "image" as default text.
+        canvas.ariaText = this.ariaText || "image";
         return canvas;
     };
 
@@ -314,6 +317,7 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
+        this.ariaText = " scene ";
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -416,6 +420,7 @@ if (typeof(world) === 'undefined') {
             this.img.src = src;
         }
         this.installHackToSupportAnimatedGifs(afterInit);
+        this.ariaText = " image file from "+src;
     };
     FileImage.prototype = heir(BaseImage.prototype);
 
@@ -510,6 +515,7 @@ if (typeof(world) === 'undefined') {
                 self.video.poster = "http://www.wescheme.org/images/broken.png";
             });
         }
+        this.ariaText = " video file from "+src;
     };
     FileVideo.prototype = heir(BaseImage.prototype);
 
@@ -665,6 +671,8 @@ if (typeof(world) === 'undefined') {
         this.y2 = Math.floor(y2);
         this.img1 = img1;
         this.img2 = img2;
+        this.ariaText = " overlay: image is "+img1.ariaText+" positioned horizontally by "+placeX
+           + " and vertically by "+placeY+" on top of "+img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -729,6 +737,7 @@ if (typeof(world) === 'undefined') {
         this.angle      = angle;
         this.translateX = translateX;
         this.translateY  = translateY;
+        this.ariaText = img.ariaText + ", rotated "+angle+" degrees ";
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
@@ -775,6 +784,7 @@ if (typeof(world) === 'undefined') {
         this.height   = Math.floor(img.getHeight() * yFactor);
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
+        this.ariaText = img.ariaText + ", scaled horizontally by "+xFactor+" and vertically by "+yFactor;
     };
 
     ScaleImage.prototype = heir(BaseImage.prototype);
@@ -810,6 +820,7 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
+        this.ariaText = img.ariaText + ", cropped from "+x+", "+y+" to "+(x+width)+", "+(y+height);
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
@@ -843,6 +854,7 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = img.getWidth();
         this.height     = img.getHeight();
+        this.ariaText = img.ariaText + ", framed ";
     };
 
     FrameImage.prototype = heir(BaseImage.prototype);
@@ -874,6 +886,7 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
+        this.ariaText = img.ariaText + ", flipped " + direction+"ly ";
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
@@ -935,6 +948,7 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
+        this.ariaText = " a "+style+", " + color + " rectangle of width "+width+" and height "+height;
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
 
@@ -962,7 +976,7 @@ if (typeof(world) === 'undefined') {
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-
+        this.ariaText = " a "+style+", " + color + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
 
@@ -1034,6 +1048,8 @@ if (typeof(world) === 'undefined') {
             vertices[i].x += xOffset; vertices[i].y += yOffset;
         }
         this.vertices   = vertices;
+ 
+        this.ariaText = " a "+style+", " + color + ", "+count+" sided polygon with each side of length "+length;
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
@@ -1088,6 +1104,8 @@ if (typeof(world) === 'undefined') {
         this.width       = parent.offsetWidth;
         this.height      = parent.offsetHeight;
         document.body.removeChild(container);       // clean up after ourselves
+ 
+        this.ariaText = " the string "+str+", drawn "+size+" pixels tall ";
     };
     TextImage.prototype = heir(BaseImage.prototype);
 
@@ -1148,7 +1166,7 @@ if (typeof(world) === 'undefined') {
         this.radius     = Math.max(this.inner, this.outer);
         this.width      = this.radius*2;
         this.height     = this.radius*2;
-        var vertices   = [];
+        var vertices    = [];
  
         var oneDegreeAsRadian = Math.PI / 180;
         for(var pt = 0; pt < (this.points * 2) + 1; pt++ ) {
@@ -1158,8 +1176,9 @@ if (typeof(world) === 'undefined') {
                          y:this.radius + ( Math.cos( rads ) * radius )} );
         }
         this.vertices = vertices;
+        this.ariaText = style + ", " + points +
+            "pointeded star with inner radius "+inner+" and outer radius "+outer;
     };
-
     StarImage.prototype = heir(BaseImage.prototype);
 
      /////////////////////////////////////////////////////////////////////
@@ -1168,30 +1187,33 @@ if (typeof(world) === 'undefined') {
      // and sideB being angleA
      // See http://docs.racket-lang.org/teachpack/2htdpimage.html#(def._((lib._2htdp/image..rkt)._triangle))
      var TriangleImage = function(sideC, angleA, sideB, style, color) {
-       BaseImage.call(this);
-          var thirdX = sideB * Math.cos(angleA * Math.PI/180);
-          var thirdY = Math.floor(sideB * Math.sin(angleA * Math.PI/180));
+        BaseImage.call(this);
+        var thirdX = sideB * Math.cos(angleA * Math.PI/180);
+        var thirdY = Math.floor(sideB * Math.sin(angleA * Math.PI/180));
 
-          var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
+        var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
-          this.width = Math.max(sideC, thirdX) + offsetX;
-          this.height = Math.abs(thirdY);
-          
-          var vertices = [];
-          // if angle < 180 start at the top of the canvas, otherwise start at the bottom
-          if(thirdY > 0){
-            vertices.push({x: offsetX + 0, y: 0});
-            vertices.push({x: offsetX + sideC, y: 0});
-            vertices.push({x: offsetX + thirdX, y: thirdY});
-          } else {
-            vertices.push({x: offsetX + 0, y: -thirdY});
-            vertices.push({x: offsetX + sideC, y: -thirdY});
-            vertices.push({x: offsetX + thirdX, y: 0});
-          }
-          this.vertices = vertices;
-          
-          this.style = style;
-          this.color = color;
+        this.width = Math.max(sideC, thirdX) + offsetX;
+        this.height = Math.abs(thirdY);
+        
+        var vertices = [];
+        // if angle < 180 start at the top of the canvas, otherwise start at the bottom
+        if(thirdY > 0){
+          vertices.push({x: offsetX + 0, y: 0});
+          vertices.push({x: offsetX + sideC, y: 0});
+          vertices.push({x: offsetX + thirdX, y: thirdY});
+        } else {
+          vertices.push({x: offsetX + 0, y: -thirdY});
+          vertices.push({x: offsetX + sideC, y: -thirdY});
+          vertices.push({x: offsetX + thirdX, y: 0});
+        }
+        this.vertices = vertices;
+        
+        this.style = style;
+        this.color = color;
+
+        this.ariaText = " a "+style+", " + color + " triangle whose base is of length "+sideC+", with an angle of "
+         + angleA + " degrees between it and a side of length "+sideB;
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
 
@@ -1203,7 +1225,8 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style = style;
         this.color = color;
-    };
+
+        this.ariaText = " a "+style+", " + color + " ellipse of width "+width+" and height "+height;    };
 
     EllipseImage.prototype = heir(BaseImage.prototype);
 
@@ -1266,6 +1289,8 @@ if (typeof(world) === 'undefined') {
         this.width  = Math.abs(x);
         this.height = Math.abs(y);
         this.vertices = vertices;
+
+        this.ariaText = " a " + color + " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);
