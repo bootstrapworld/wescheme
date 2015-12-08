@@ -43,6 +43,14 @@ Installing WeScheme for local development
 
    $ git clone git://github.com/bootstrapworld/wescheme2012
 
+Don't forget: we're using git submodules, so also make sure to:
+
+   $ git submodule init
+   $ git submodule update
+
+to grab the external dependendies as well.  As of this writing, the
+external dependency is CodeMirror.
+
 
 2. You might also need to change wescheme.properties if you are
 doing any development on the android packager or compilation server.
