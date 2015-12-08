@@ -779,7 +779,7 @@ plt.compiler = plt.compiler || {};
     var url = window.location.protocol+"//"+window.location.host
               + (getWeSchemeModule(moduleName)?  "/loadProject?publicId="+(getWeSchemeModule(moduleName))
                                               : "/js/mzscheme-vm/collects/"+moduleName+".js");
- 
+ console.log(url);
     // if the module is already loaded, we can just process without loading
     if(window.COLLECTIONS && window.COLLECTIONS[moduleName]){
       processModule(moduleName);
