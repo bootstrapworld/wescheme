@@ -1,6 +1,7 @@
 goog.provide('plt.compiler.throwError');
 
 goog.provide('plt.compiler.Program');
+goog.provide('plt.compiler.comment');
 goog.provide('plt.compiler.couple');
 goog.provide('plt.compiler.defFunc');
 goog.provide('plt.compiler.defVar');
@@ -155,6 +156,16 @@ plt.compiler = plt.compiler || {};
     // every Program has a location, but it's initialized to null
     this.location = null;
   };
+
+  // Comments
+  function comment(txt) {
+    Program.call(this);
+    this.txt = txt;
+    this.toString = function(){
+      return ";" + this.txt;
+    };
+  };
+  comment.prototype = heir(Program.prototype);
 
   // Function definition
   function defFunc(name, args, body, stx) {
@@ -969,6 +980,7 @@ plt.compiler = plt.compiler || {};
  plt.compiler.throwError    = throwError;
  
  plt.compiler.Program       = Program;
+ plt.compiler.comment       = comment;
  plt.compiler.couple        = couple;
  plt.compiler.defFunc       = defFunc;
  plt.compiler.defVar        = defVar;

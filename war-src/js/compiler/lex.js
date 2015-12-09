@@ -2,6 +2,7 @@ goog.provide('plt.compiler.lex');
 goog.provide('plt.compiler.sexpToString');
 
 goog.require("plt.compiler.literal");
+goog.require("plt.compiler.comment");
 goog.require("plt.compiler.symbolExpr");
 goog.require("plt.compiler.unsupportedExpr");
 goog.require("plt.compiler.throwError");
@@ -51,6 +52,7 @@ plt.compiler = plt.compiler || {};
     'use strict';
 
     // import frequently-used bindings
+    var comment         = plt.compiler.comment;
     var literal         = plt.compiler.literal;
     var symbolExpr      = plt.compiler.symbolExpr;
     var unsupportedExpr = plt.compiler.unsupportedExpr;
@@ -119,9 +121,6 @@ plt.compiler = plt.compiler || {};
         ||   x === '{' || x === '}';
     }
 
-    // this is returned when a comment is read
-    function Comment(txt) {this.txt = txt;}
-
     // determines if the character is valid as a part of a symbol
     function isValidSymbolCharP(x) {
       return !isDelim(x) && !isWhiteSpace(x)
@@ -187,7 +186,7 @@ plt.compiler = plt.compiler || {};
       i = chewWhiteSpace(str, 0);
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        if(!(sexp instanceof Comment)) { sexps.push(sexp); }
+        sexps.push(sexp);
         i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
       sexps.location = new Location(startCol, startRow, 0, i, source);
@@ -210,7 +209,7 @@ plt.compiler = plt.compiler || {};
       delims = [];
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        if(!(sexp instanceof Comment)) { sexps.push(sexp); }
+        sexps.push(sexp);
         i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
       return sexps;
@@ -221,7 +220,7 @@ plt.compiler = plt.compiler || {};
     function readSExp(str, source) {
       delims = [];
       var sexp = readSExpByIndex(str, 0);
-      return sexp instanceof Comment ? null : sexp;
+      return sexp;
     }
 
     // readSExpByIndex : String Number -> SExp
@@ -280,10 +279,8 @@ plt.compiler = plt.compiler || {};
           dot2Idx = dot1Idx? list.length : false; // if we've seen dot1, save this idx to dot2Idx
           dot1Idx = dot1Idx || list.length;       // if we haven't seen dot1, save this idx to dot1Idx
         }
-        if(!(sexp instanceof Comment)){            // if it's not a comment, add it to the list
-          sexp.parent = list;                     // set this list as it's parent
-          list.push(sexp);                        // and add the sexp to the list
-        }
+        sexp.parent = list;                     // set this list as it's parent
+        list.push(sexp);                        // and add the sexp to the list
         return i;
       }
                             
@@ -736,9 +733,9 @@ plt.compiler = plt.compiler || {};
                    ,new Location(startCol, startRow, iStart, i-iStart));
       }
       i++; column++; // hop over '|#'
-      var comment = new Comment(txt);
-      comment.location = new Location(startCol, startRow, iStart, i-iStart);
-      return comment;
+      var cmmt = new comment(txt);
+      cmmt.location = new Location(startCol, startRow, iStart, i-iStart);
+      return cmmt;
     }
 
     // readSExpComment : String Number -> Atom
@@ -762,7 +759,7 @@ plt.compiler = plt.compiler || {};
                    ,"Error-GenericReadError");
       }
       // if we're here, then we read a proper s-expr
-      var atom = new Comment("("+nextSExp.toString()+")");
+      var atom = new comment("("+nextSExp.toString()+")");
       i = nextSExp.location.endChar;
       atom.location = new Location(startCol, startRow, iStart, i-iStart);
       return atom;
@@ -783,7 +780,7 @@ plt.compiler = plt.compiler || {};
         throwError(new types.Message(["read: Unexpected EOF when reading a line comment"]),
                    new Location(startCol, startRow, iStart, i-iStart));
       }
-      var atom = new Comment(txt);
+      var atom = new comment(txt);
       atom.location = new Location(startCol, startRow, iStart, i+1-iStart);
       // at the end of the line, reset line/col values
       line++; column = 0;
