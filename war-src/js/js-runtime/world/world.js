@@ -979,7 +979,7 @@ if (typeof(world) === 'undefined') {
                                    +Math.pow(lab1.b-lab2.b,2))}});
       var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
       var match = distances[0].name;
-      var style = isNaN(aStyle)? aStyle.toString() : " translucent ";
+      var style = isNaN(aStyle)? (aStyle === "solid"? " solid" : "n outline") : " translucent ";
       return style + " " + match.toLowerCase();
     }
 
@@ -992,7 +992,7 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
-        this.ariaText = " a " + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
+        this.ariaText = " a" + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
           : " rectangle of width "+width+" and height "+height);
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
@@ -1021,7 +1021,7 @@ if (typeof(world) === 'undefined') {
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-        this.ariaText = " a "+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
+        this.ariaText = " a"+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
 
@@ -1094,7 +1094,7 @@ if (typeof(world) === 'undefined') {
         }
         this.vertices   = vertices;
  
-        this.ariaText = " a "+colorToSpokenString(color,style) + ", "+count
+        this.ariaText = " a"+colorToSpokenString(color,style) + ", "+count
                         +" sided polygon with each side of length "+length;
     };
  
@@ -1222,7 +1222,7 @@ if (typeof(world) === 'undefined') {
                          y:this.radius + ( Math.cos( rads ) * radius )} );
         }
         this.vertices = vertices;
-        this.ariaText = colorToSpokenString(color,style) + ", " + points +
+        this.ariaText = " a" + colorToSpokenString(color,style) + ", " + points +
             "pointeded star with inner radius "+inner+" and outer radius "+outer;
     };
     StarImage.prototype = heir(BaseImage.prototype);
@@ -1258,7 +1258,7 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
 
-        this.ariaText = " a "+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
+        this.ariaText = " a"+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
           +", with an angle of " + (angleA%180) + " degrees between it and a side of length "+sideB;
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
@@ -1272,7 +1272,7 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
 
-        this.ariaText = " a "+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
+        this.ariaText = " a"+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
               : " ellipse of width "+width+" and height "+height);
     };
 
@@ -1337,7 +1337,7 @@ if (typeof(world) === 'undefined') {
         this.height = Math.abs(y);
         this.vertices = vertices;
 
-        this.ariaText = " a " + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
+        this.ariaText = " a" + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);

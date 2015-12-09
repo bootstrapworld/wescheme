@@ -121,8 +121,8 @@ var WeSchemeTextContainer;
           cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
           inputStyle: "contenteditable"
 				});
- 
-        this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
+       this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
+       this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
        this.editor.getInputField().setAttribute("role", "input");
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code

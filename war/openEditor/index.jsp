@@ -312,7 +312,9 @@
 
   <!-- Header at the top of the page -->
 	<div id="header">
-    <h1><a tabIndex="1" href="/" title="WeScheme Homepage" style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
+    <h1><a tabIndex="1"  href="/" title="WeScheme Homepage"
+           role="button" aria-label="Back to WeScheme Homepage"
+           style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
 	  <h2>
       <a tabIndex="1" role="button" aria-label="Show Documentation" id="docs" href="#">Documentation</a>
 	    <% if (userSession != null) { %>
@@ -345,8 +347,8 @@
 
 	<div id="fileInfo">
 	  <label id="filenamelabel" for="filename">Project name:</label>
-	  <input tabIndex="1" role="textbox" id="filename" type="text" style="width: 20%"/>
-    <a tabIndex="1" role="button" aria-label="Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+	  <input tabIndex="1" role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
+    <a tabIndex="1" role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
     <a tabIndex="1" role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
     <a tabIndex="1" role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
     <div id="statusbar" role="marquee" aria-relevant="text"></div>
@@ -446,6 +448,7 @@
                                                                    onSuccess();
                                                                }}});
    <% } %>
+
   </script>
 
 
