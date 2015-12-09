@@ -484,7 +484,7 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var self = this;
         this.src = src;
-        this.ariaText = " video file from "++decodeURIComponent(src).slice(16);
+        this.ariaText = " video file from "+decodeURIComponent(src).slice(16);
         if (rawVideo) {
             this.video                  = rawVideo;
             this.width                  = self.video.videoWidth;
