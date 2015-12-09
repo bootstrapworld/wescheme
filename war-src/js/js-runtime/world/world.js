@@ -317,7 +317,10 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
-        this.ariaText = " scene that is "+width+" wide and "+height+"tall ";
+        this.ariaText = " scene that is "+width+" by "+height+". children are: ";
+        this.ariaText += children.map(function(c,i){
+          return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
+        }).join(". ");
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -1256,7 +1259,7 @@ if (typeof(world) === 'undefined') {
         this.color = color;
 
         this.ariaText = " a "+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
-          +", with an angle of " + angleA + " degrees between it and a side of length "+sideB;
+          +", with an angle of " + (angleA%180) + " degrees between it and a side of length "+sideB;
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
 
@@ -1296,8 +1299,7 @@ if (typeof(world) === 'undefined') {
         if (this.style.toString().toLowerCase() === "outline") {
             ctx.strokeStyle = colorString(this.color);
             ctx.stroke();
-        }
-        else {
+        } else {
             ctx.fillStyle = colorString(this.color, this.style);
             ctx.fill();
         }
