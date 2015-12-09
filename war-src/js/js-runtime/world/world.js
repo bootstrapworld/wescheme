@@ -317,7 +317,7 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
-        this.ariaText = " scene ";
+        this.ariaText = " scene that is "+width+" wide and "+height+"tall ";
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -372,7 +372,6 @@ if (typeof(world) === 'undefined') {
             this.children.length !== other.children.length) {
             return false;
         }
-
         for (var i = 0; i < this.children.length; i++) {
             var rec1 = this.children[i];
             var rec2 = other.children[i];
@@ -393,6 +392,8 @@ if (typeof(world) === 'undefined') {
         var self = this;
         this.src = src;
         this.isLoaded = false;
+        this.ariaText = " image file from "+decodeURIComponent(src).slice(16);
+
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
         this.animationHackImg = undefined;
@@ -420,7 +421,6 @@ if (typeof(world) === 'undefined') {
             this.img.src = src;
         }
         this.installHackToSupportAnimatedGifs(afterInit);
-        this.ariaText = " image file from "+src;
     };
     FileImage.prototype = heir(BaseImage.prototype);
 
@@ -484,7 +484,8 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var self = this;
         this.src = src;
-        if (rawVideo) { 
+        this.ariaText = " video file from "++decodeURIComponent(src).slice(16);
+        if (rawVideo) {
             this.video                  = rawVideo;
             this.width                  = self.video.videoWidth;
             this.height                 = self.video.videoHeight;
@@ -515,7 +516,6 @@ if (typeof(world) === 'undefined') {
                 self.video.poster = "http://www.wescheme.org/images/broken.png";
             });
         }
-        this.ariaText = " video file from "+src;
     };
     FileVideo.prototype = heir(BaseImage.prototype);
 
@@ -671,8 +671,28 @@ if (typeof(world) === 'undefined') {
         this.y2 = Math.floor(y2);
         this.img1 = img1;
         this.img2 = img2;
-        this.ariaText = " overlay: image is "+img1.ariaText+" positioned horizontally by "+placeX
-           + " and vertically by "+placeY+" on top of "+img2.ariaText;
+        var positionText;
+        if((["middle","center"].indexOf(placeX)>-1) && (["middle","center"].indexOf(placeY)>-1)){
+          positionText = " centered above ";
+        } else if(placeX==="left"){
+          positionText = " left-aligned ";
+        } else if(placeX==="right"){
+          positionText = " right-aligned ";
+        } else if(placeX==="beside"){
+          positionText = " beside ";
+        } else if(!isNaN(placeX)){
+          positionText = " shifted left by "+placeX;
+        }
+        if(placeY==="top"){
+          positionText += " top-aligned ";
+        } else if(placeY==="bottom"){
+          positionText += " bottom-aligned ";
+        } else if(placeY==="above"){
+          positionText += " above ";
+        } else if(!isNaN(placeY)){
+          positionText += " , shifted up by "+placeY;
+        }
+        this.ariaText = " an overlay: first image is " + img1.ariaText + " " + positionText + img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -737,7 +757,7 @@ if (typeof(world) === 'undefined') {
         this.angle      = angle;
         this.translateX = translateX;
         this.translateY  = translateY;
-        this.ariaText = img.ariaText + ", rotated "+angle+" degrees ";
+        this.ariaText = "Rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
@@ -784,7 +804,8 @@ if (typeof(world) === 'undefined') {
         this.height   = Math.floor(img.getHeight() * yFactor);
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
-        this.ariaText = img.ariaText + ", scaled horizontally by "+xFactor+" and vertically by "+yFactor;
+        this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
+          : "horizontally by "+xFactor+" and vertically by "+yFactor)+". "+img.ariaText;
     };
 
     ScaleImage.prototype = heir(BaseImage.prototype);
@@ -820,7 +841,7 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
-        this.ariaText = img.ariaText + ", cropped from "+x+", "+y+" to "+(x+width)+", "+(y+height);
+        this.ariaText = "Cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
@@ -854,7 +875,7 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = img.getWidth();
         this.height     = img.getHeight();
-        this.ariaText = img.ariaText + ", framed ";
+        this.ariaText = " Framed image: "+img.ariaText;
     };
 
     FrameImage.prototype = heir(BaseImage.prototype);
@@ -886,7 +907,7 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
-        this.ariaText = img.ariaText + ", flipped " + direction+"ly ";
+        this.ariaText =  direction+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
@@ -938,6 +959,26 @@ if (typeof(world) === 'undefined') {
                       types.colorBlue(aColor) + ", " +
                       styleAlpha*colorAlpha + ")";
     };
+ 
+    //////////////////////////////////////////////////////////////////////
+    // colorToSpokenString : hexColor Style -> String
+    // Describes the color using the nearest HTML color name
+    // Style can be "solid" (1.0), "outline" (1.0), a number (0-1.0) or null (1.0)
+    function colorToSpokenString(aColor, aStyle){
+      if(aStyle===0) return " transparent ";
+      var lab1 = RGBtoLAB(types.colorRed(aColor),
+                          types.colorGreen(aColor),
+                          types.colorBlue(aColor));
+      var distances = world.Kernel.colorLabs.map(function(lab2){
+              return {l: lab2.l, a: lab2.a, b:lab2.b, name: lab2.name,
+                      d: Math.sqrt(Math.pow(lab1.l-lab2.l,2)
+                                   +Math.pow(lab1.a-lab2.a,2)
+                                   +Math.pow(lab1.b-lab2.b,2))}});
+      var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
+      var match = distances[0].name;
+      var style = isNaN(aStyle)? aStyle.toString() : " translucent ";
+      return style + " " + match.toLowerCase();
+    }
 
     //////////////////////////////////////////////////////////////////////
     // RectangleImage: Number Number Mode Color -> Image
@@ -948,7 +989,8 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
-        this.ariaText = " a "+style+", " + color + " rectangle of width "+width+" and height "+height;
+        this.ariaText = " a " + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
+          : " rectangle of width "+width+" and height "+height);
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
 
@@ -976,7 +1018,7 @@ if (typeof(world) === 'undefined') {
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-        this.ariaText = " a "+style+", " + color + " rhombus of size "+side+" and angle "+angle;
+        this.ariaText = " a "+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
 
@@ -1049,7 +1091,8 @@ if (typeof(world) === 'undefined') {
         }
         this.vertices   = vertices;
  
-        this.ariaText = " a "+style+", " + color + ", "+count+" sided polygon with each side of length "+length;
+        this.ariaText = " a "+colorToSpokenString(color,style) + ", "+count
+                        +" sided polygon with each side of length "+length;
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
@@ -1105,7 +1148,7 @@ if (typeof(world) === 'undefined') {
         this.height      = parent.offsetHeight;
         document.body.removeChild(container);       // clean up after ourselves
  
-        this.ariaText = " the string "+str+", drawn "+size+" pixels tall ";
+        this.ariaText = " the string "+str+", colored "+colorToSpokenString(color,'solid')+" of size "+ size;
     };
     TextImage.prototype = heir(BaseImage.prototype);
 
@@ -1176,7 +1219,7 @@ if (typeof(world) === 'undefined') {
                          y:this.radius + ( Math.cos( rads ) * radius )} );
         }
         this.vertices = vertices;
-        this.ariaText = style + ", " + points +
+        this.ariaText = colorToSpokenString(color,style) + ", " + points +
             "pointeded star with inner radius "+inner+" and outer radius "+outer;
     };
     StarImage.prototype = heir(BaseImage.prototype);
@@ -1212,8 +1255,8 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
 
-        this.ariaText = " a "+style+", " + color + " triangle whose base is of length "+sideC+", with an angle of "
-         + angleA + " degrees between it and a side of length "+sideB;
+        this.ariaText = " a "+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
+          +", with an angle of " + angleA + " degrees between it and a side of length "+sideB;
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
 
@@ -1226,7 +1269,9 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
 
-        this.ariaText = " a "+style+", " + color + " ellipse of width "+width+" and height "+height;    };
+        this.ariaText = " a "+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
+              : " ellipse of width "+width+" and height "+height);
+    };
 
     EllipseImage.prototype = heir(BaseImage.prototype);
 
@@ -1290,7 +1335,7 @@ if (typeof(world) === 'undefined') {
         this.height = Math.abs(y);
         this.vertices = vertices;
 
-        this.ariaText = " a " + color + " line of width "+x+" and height "+y;
+        this.ariaText = " a " + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);
@@ -1523,6 +1568,46 @@ if (typeof(world) === 'undefined') {
     var nameToColor = function(s) {
         return colorDb.get('' + s);
     };
+ 
+    // based on answer provided at
+    // http://stackoverflow.com/questions/15408522/rgb-to-xyz-and-lab-colours-conversion
+    function RGBtoLAB(r, g, b){
+      function RGBtoXYZ(r, g, b){
+         function process(v){
+           v = parseFloat(v/255);
+           return (v>0.04045? Math.pow( (v+0.055)/1.055, 2.4) : v/12.92) * 100;
+         }
+        var var_R = process(r), var_G = process(g), var_B = process(b);
+        //Observer. = 2°, Illuminant = D65
+        var X = var_R * 0.4124 + var_G * 0.3576 + var_B * 0.1805;
+        var Y = var_R * 0.2126 + var_G * 0.7152 + var_B * 0.0722;
+        var Z = var_R * 0.0193 + var_G * 0.1192 + var_B * 0.9505;
+        return [X, Y, Z];
+      }
+      
+      function XYZtoLAB(x, y, z){
+        var var_X = x / 95.047;           //ref_X =  95.047   Observer= 2°, Illuminant= D65
+        var var_Y = y / 100.000;          //ref_Y = 100.000
+        var var_Z = z / 108.883;          //ref_Z = 108.883
+        function process(v){ return v>0.008856? Math.pow(v, 1/3) : (7.787*v) + (16/116); }
+        var_X = process(var_X); var_Y = process(var_Y); var_Z = process(var_Z);
+        var CIE_L = ( 116 * var_Y ) - 16;
+        var CIE_a = 500 * ( var_X - var_Y );
+        var CIE_b = 200 * ( var_Y - var_Z );
+        return [CIE_L, CIE_a, CIE_b];
+      }
+      var xyz = RGBtoXYZ(r,g,b), lab = XYZtoLAB(xyz[0],xyz[1],xyz[2]);
+      return {l: lab[0], a: lab[1], b:lab[2]};
+    }
+    var colorLabs = [], colorRgbs = colorDb.colors;
+    for (var p in colorRgbs) {
+      if (colorRgbs.hasOwnProperty(p)) {
+        var lab = RGBtoLAB(types.colorRed(colorRgbs[p]),
+                           types.colorGreen(colorRgbs[p]),
+                           types.colorBlue(colorRgbs[p]));
+        colorLabs.push({name:p, l:lab.l, a:lab.a, b:lab.b});
+      }
+    }
 
     ///////////////////////////////////////////////////////////////
     // Exports
@@ -1536,7 +1621,8 @@ if (typeof(world) === 'undefined') {
     };
     world.Kernel.nameToColor = nameToColor;
     world.Kernel.colorDb = colorDb;
-
+    world.Kernel.colorLabs = colorLabs;
+ 
     world.Kernel.sceneImage = function(width, height, children, withBorder, color) {
         return new SceneImage(width, height, children, withBorder, color);
     };
