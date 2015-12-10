@@ -743,10 +743,10 @@ plt.compiler = plt.compiler || {};
     function readSExpComment(str, i) {
       var startCol = column++, startRow = line, iStart = i, nextSExp;
       // keep reading s-exprs while...
-      while((i = chewWhiteSpace(str, i)) &&           // there's whitespace to chew
+      while((i = chewWhiteSpace(str, i)) &&             // there's whitespace to chew
             (i+1<str.length) &&                         // we're not out of string
-            (nextSExp = readSExpByIndex(str, i)) &&   // there's an s-expr to be read
-            (nextSExp instanceof Comment)){            // and it's not a comment
+            (nextSExp = readSExpByIndex(str, i)) &&     // there's an s-expr to be read
+            (nextSExp instanceof comment)){             // and it's not a comment
         i = nextSExp.location.endChar;
       }
                                                         
