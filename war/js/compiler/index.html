@@ -15,8 +15,6 @@
 <script type="text/javascript" src="analyzer.js"></script>
 <script type="text/javascript" src="parser.js"></script>
 <script type="text/javascript" src="lex.js"></script>
-<script type="text/javascript" src="toPyretString.js"></script>
-<script type="text/javascript" src="toPyretAST.js"></script>
 -->
 <script>
 var rows    = [];
@@ -76,8 +74,6 @@ function sameResults(x, y){
       // log error if a property is not defined
       if ( ! x.hasOwnProperty(p) ){ console.log('local lacks a '+p); return false; }
       if ( ! y.hasOwnProperty(p) ){ console.log('server lacks a '+p); return false; }
-      // if they are 'pos' objects (used in Pyret), don't bother comparing (yet)
-      if (p==="pos") continue;
       // ignore the hashcode property
       if(p==="_eqHashCode") continue;
       // toplevel properties are equal if the sets of names are equal
@@ -163,17 +159,16 @@ function loadSuite(json){
     var chunks = rows[i].split(/expr\:|, local\: |, server\: |, firstdifference\: |, reason\: |, desugar\: |, bytecode\: |, pyret\: |, pyretast\: /);
     var expr = chunks[1].replace(/^\s+/,""), local = chunks[2], server = chunks[3],
                difference = chunks[4], reason = chunks[5], desugar = chunks[6],
-               bytecode = chunks[7], pyretSrc = chunks[8], pyretAST = chunks[9],
+               bytecode = chunks[7],
         opt = document.createElement('option');
     expr = expr.replace(/^\'\'/,"'");
     tests.push({expr: expr, local: local, server: server, reason: reason, desugar: desugar
-               , bytecode: bytecode, pyretSrc: pyretSrc, pyretAST: pyretAST});
+               , bytecode: bytecode});
     opt.value=opt.innerHTML = Number(i)+1;
     which.appendChild(opt);
   }
   console.log(document.getElementById('runTests'));
   document.getElementById('runTests').disabled=false;
-  document.getElementById('pyretUI').style.display="inline-block";
   document.getElementById('runTests').value="Run test:";
   document.getElementById('runTests').onclick=function(){runTests(true);};
   document.getElementById('memoryTest').disabled=false;
@@ -182,7 +177,7 @@ function loadSuite(json){
 }
 
 function runTests(verbose){
-  function test(expr, expected, desugarRef, bytecodeRef, pyretSrcRef, pyretJSONRef){
+  function test(expr, expected, desugarRef, bytecodeRef){
       // show the result
       var row   = document.createElement('tr'),
           num   = document.createElement('td'),
@@ -190,9 +185,7 @@ function runTests(verbose){
           lex   = document.createElement('td'),
           parse = document.createElement('td'),
           desugar=document.createElement('td'),
-          bytecode=document.createElement('td'),
-          pyretSrc = document.createElement('td');
-          pyretAST = document.createElement('td');
+          bytecode=document.createElement('td');
       num.innerHTML  = (i+1)+')'; // make test nums 1-aligned, instead of 0-aligned
       test.innerHTML = expr;      // show which expr we're testing
       row.appendChild(num);
@@ -296,51 +289,6 @@ function runTests(verbose){
 
       // EVERYTHING PASSED! WHOOPIE!
       bytecode.style.background = 'lightgreen';
-                        
-      // do we move on to testing the Pyret Translation?
-      if(!document.getElementById('pyretTest').checked) return true;
-      // we're testing Pyret translation, so let's add the columns for Src and AST
-                        
-      // TRANSLATE TO PYRET SRC
-      row.appendChild(pyretSrc);
-      pyretSrc.innerHTML = 'pyretSrc';
-      try{
-        var recieved = plt.compiler.toPyretString(AST, pinfo2).join("\n");
-      } catch (translationError) {
-        console.log(translationError);
-        pyretSrc.style.background = 'red';
-        return setTestFailureLink(row, pyretSrcRef, recieved);
-      }
-      // if we don't have a JSONRef for this test, call it a questinonable pass move on
-      if(pyretSrcRef === undefined) { pyretSrc.style.background = 'rgb(194, 288, 194)'; return true; }
-      // if there's no translation, it's a pass by default
-      if(pyretSrcRef === "NOTRANSLATE") { pyretSrc.style.background = 'lightblue'; return true; }
-      var expected = pyretSrcRef;
-      if(sameResults(recieved, expected)) { pyretSrc.style.background = 'lightgreen'; }
-      else { return setTestFailureLink(row, expected, recieved);}
-
-      // for now, we're only checking the source translation
-      return true;
-                        
-      // TRANSLATE TO PYRET AST
-      row.appendChild(pyretAST);
-      pyretAST.innerHTML = 'pyret';
-      try{
-        var recieved = plt.compiler.toPyretAST(AST, pinfo2);
-      } catch (translationError) {
-        console.log(translationError);
-        pyretAST.style.background = 'red';
-        return setTestFailureLink(row, pyretJSONRef, recieved);
-      }
-      // if we don't have a JSONRef for this test, call it a questinonable pass move on
-      if(pyretJSONRef === undefined) { pyretAST.style.background = 'rgb(194, 288, 194)'; return true; }
-                        console.log('about to parse jsonref: "'+pyretJSONRef+'"');
-      var expected = JSON.parse(pyretJSONRef);
-      // compare objects (compare fn ignores location information)
-                        console.log('parsed jsonref');
-      if(sameResults(recieved, expected)) { pyretAST.style.background = 'lightgreen'; }
-      else { return setTestFailureLink(row, pyretJSONRef, JSON.stringify(recieved));}
-              
       return true;
  
     }
@@ -354,8 +302,7 @@ function runTests(verbose){
       // run the test
       if(verbose) console.log('///// TEST '+ (i+1) +' ////////////////');
       if(verbose) console.log('testing :'+tests[i].expr);
-      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode,
-                        tests[i].pyretSrc, tests[i].pyretAST);
+      var result = test(tests[i].expr, tests[i].server, tests[i].desugar, tests[i].bytecode);
       if(result) passed++;
       testsRun++;
       document.getElementById('status').innerHTML = passed+'/'+(testsRun)+' passed. <b>Click on failures to see a Diff of the output</b>.';
@@ -380,7 +327,6 @@ function runMemoryTest(){
 <select id="whichTests" style="display: none;">
   <option value="all">all</option>
 </select>
-<span style="font-size: 12px; display: none;" id="pyretUI"><input type="checkbox" id="pyretTest"/>Test Pyret</span>
 <input type="button" disabled="true" value="Memory Stress-Test" id="memoryTest" onclick="runMemoryTest()"/>
 <br/>
 <input type="button" id="makeTeachpack" value="Download source as teachpack file" onclick="compileREPL(true)"/>
