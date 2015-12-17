@@ -516,20 +516,20 @@ plt.compiler = plt.compiler || {};
    } else if (depth === 1) {
      return this.val.desugar(pinfo);
    } else if (depth > 1) {
-     if (this.val instanceof Array) {
-       return desugarQuasiQuotedList(element, pinfo, depth-1);
-     } else {
-       var uSym = new quotedExpr(new symbolExpr('unquote')),
-           listSym = new symbolExpr('list'),
-           listArgs = [uSym, this.val.desugar(pinfo, depth-1)[0]],
-           listCall = new callExpr(listSym, listArgs);
-       uSym.location = this.location;
-       uSym.parent = listArgs;
-       listSym.location = this.location;
-       listSym.parent = listCall;
-       listCall.location = this.location;
-       return [listCall, pinfo];
-     }
+     var rhs = (this.val instanceof Array)
+         ? desugarQuasiQuotedList(this.val, pinfo, depth-1)[0]
+         : this.val.desugar(pinfo, depth-1)[0]
+
+     var uSym = new quotedExpr(new symbolExpr('unquote')),
+         listSym = new symbolExpr('list'),
+         listArgs = [uSym, rhs],
+         listCall = new callExpr(listSym, listArgs);
+     uSym.location = this.location;
+     uSym.parent = listArgs;
+     listSym.location = this.location;
+     listSym.parent = listCall;
+     listCall.location = this.location;
+     return [listCall, pinfo];
    } else {
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , this.location);
@@ -543,20 +543,20 @@ plt.compiler = plt.compiler || {};
    } else if (depth === 1) {
      return this.val.desugar(pinfo);
    } else if (depth > 1) {
-     if (this.val instanceof Array) {
-       return desugarQuasiQuotedList(element, pinfo, depth-1);
-     } else {
-       var usSym = new quotedExpr(new symbolExpr('unquote-splicing')),
-           listSym = new symbolExpr('list'),
-           listArgs = [usSym, this.val.desugar(pinfo, depth-1)[0]],
-           listCall = new callExpr(listSym, listArgs);
-       usSym.location = this.location;
-       usSym.parent = listArgs;
-       listSym.location = this.location;
-       listSym.parent = listCall;
-       listCall.location = this.location;
-       return [listCall, pinfo];
-     }
+     var rhs = (this.val instanceof Array)
+         ? desugarQuasiQuotedList(this.val, pinfo, depth-1)[0]
+         : this.val.desugar(pinfo, depth-1)[0]
+
+     var usSym = new quotedExpr(new symbolExpr('unquote-splicing')),
+         listSym = new symbolExpr('list'),
+         listArgs = [usSym, rhs],
+         listCall = new callExpr(listSym, listArgs);
+     usSym.location = this.location;
+     usSym.parent = listArgs;
+     listSym.location = this.location;
+     listSym.parent = listCall;
+     listCall.location = this.location;
+     return [listCall, pinfo];
    } else {
      throwError( new types.Message(["ASSERTION FAILURE: depth should have been undefined, or a natural number"])
                , this.location);
