@@ -994,9 +994,11 @@ plt.compiler = plt.compiler || {};
                     isLiteral(sexp) ? sexp :
                     isSymbolEqualTo("quote", sexp) ? new quotedExpr(sexp) :
                     isSymbolEqualTo("empty", sexp) ? new callExpr(new symbolExpr("list"), []) :
-      throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
+                    new callExpr(null, []);
+/*      throwError(new types.Message([new types.ColoredPart("( )", sexp.location)
                                     , ": expected a function, but nothing's there"])
                  , sexp.location);
+*/
    singleton.location = sexp.location;
    return singleton;
   }
