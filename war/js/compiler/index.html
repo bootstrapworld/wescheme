@@ -250,6 +250,10 @@ function runTests(verbose){
             pinfo     = desugared[1],
             pinfo2    = plt.compiler.analyze(program);
       } catch (recieved) {
+        if(recieved instanceof Error){
+          console.log(recieved);
+          return setTestFailureLink(row, expected, recieved);
+        }
         recieved = JSON.parse(recieved);
         if(recieved.betterThanServer){ desugar.style.background = 'lightblue'; return true; }
         if(expected === "LOCAL IS BETTER"){ desugar.style.background = 'lightblue'; return true; }
