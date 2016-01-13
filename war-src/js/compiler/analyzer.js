@@ -2,7 +2,6 @@ goog.provide('plt.compiler.desugar');
 goog.provide('plt.compiler.analyze');
 
 goog.require("plt.compiler.literal");
-goog.require("plt.compiler.comment");
 goog.require("plt.compiler.symbolExpr");
 goog.require("plt.compiler.Program");
 goog.require("plt.compiler.couple");
@@ -50,7 +49,6 @@ plt.compiler = plt.compiler || {};
  'use strict';
  
  // import frequently-used bindings
- var comment          = plt.compiler.comment;
  var literal          = plt.compiler.literal;
  var symbolExpr       = plt.compiler.symbolExpr;
  var Program          = plt.compiler.Program;
@@ -142,7 +140,6 @@ plt.compiler = plt.compiler || {};
  function desugarProgram(programs, pinfo, isTopLevelExpr){
       var acc = [ [], (pinfo || new plt.compiler.pinfo())];
       // remove comments
-      programs = programs.filter(function(p){ return !(p instanceof comment); });
       var res = programs.reduce((function(acc, p){
             var desugaredAndPinfo = p.desugar(acc[1]);
             // if it's an expression, insert a print-values call so it shows up in the repl

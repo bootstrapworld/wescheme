@@ -1,6 +1,5 @@
 goog.provide('plt.compiler.parse');
 
-goog.require("plt.compiler.comment");
 goog.require("plt.compiler.literal");
 goog.require("plt.compiler.symbolExpr");
 goog.require("plt.compiler.Program");
@@ -55,7 +54,6 @@ plt.compiler = plt.compiler || {};
  'use strict';
  
  // import frequently-used bindings
- var comment          = plt.compiler.comment;
  var literal          = plt.compiler.literal;
  var symbolExpr       = plt.compiler.symbolExpr;
  var Program          = plt.compiler.Program;
@@ -92,7 +90,6 @@ plt.compiler = plt.compiler || {};
  function isSymbol(x) { return x instanceof symbolExpr; }
  function isLiteral(x){ return x instanceof literal; }
  function isUnsupported(x){ return x instanceof unsupportedExpr;}
- function isComment(x){ return x instanceof comment;}
  
  function isCons(x)  { return x instanceof Array && x.length>=1;}
  function rest(ls)   { return ls.slice(1); }
@@ -110,8 +107,7 @@ plt.compiler = plt.compiler || {};
    // parse* : sexp list -> Program list
   function parseStar(sexps) {
    function parseSExp(sexp) {
-    return isComment(sexp) ? sexp :
-           isDefinition(sexp) ? parseDefinition(sexp) :
+    return isDefinition(sexp) ? parseDefinition(sexp) :
            isExpr(sexp) ? parseExpr(sexp) :
            isRequire(sexp) ? parseRequire(sexp) :
            isProvide(sexp) ? parseProvide(sexp) :
@@ -987,8 +983,7 @@ plt.compiler = plt.compiler || {};
   }
   
   function parseExprSingleton(sexp) {
-    var singleton = isComment(sexp) ? sexp :
-                    isUnsupported(sexp) ? sexp :
+    var singleton = isUnsupported(sexp) ? sexp :
                     isVector(sexp)  ? parseVector(sexp) :
                     isSymbol(sexp) ? sexp :
                     isLiteral(sexp) ? sexp :

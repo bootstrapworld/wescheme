@@ -1,8 +1,8 @@
 goog.provide('plt.compiler.lex');
 goog.provide('plt.compiler.sexpToString');
 
-goog.require("plt.compiler.literal");
 goog.require("plt.compiler.comment");
+goog.require("plt.compiler.literal");
 goog.require("plt.compiler.symbolExpr");
 goog.require("plt.compiler.unsupportedExpr");
 goog.require("plt.compiler.throwError");
@@ -186,7 +186,7 @@ plt.compiler = plt.compiler || {};
       i = chewWhiteSpace(str, 0);
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        sexps.push(sexp);
+        if(!(sexp instanceof comment)) { sexps.push(sexp); }
         i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
       sexps.location = new Location(startCol, startRow, 0, i, source);
@@ -209,7 +209,7 @@ plt.compiler = plt.compiler || {};
       delims = [];
       while(i < str.length) {
         sexp = readSExpByIndex(str, i);
-        sexps.push(sexp);
+        if(!(sexp instanceof comment)) { sexps.push(sexp); }
         i = chewWhiteSpace(str, sexp.location.startChar+sexp.location.span);
       }
       return sexps;
@@ -220,7 +220,7 @@ plt.compiler = plt.compiler || {};
     function readSExp(str, source) {
       delims = [];
       var sexp = readSExpByIndex(str, 0);
-      return sexp;
+      return sexp instanceof Comment ? null : sexp;
     }
 
     // readSExpByIndex : String Number -> SExp
@@ -279,8 +279,10 @@ plt.compiler = plt.compiler || {};
           dot2Idx = dot1Idx? list.length : false; // if we've seen dot1, save this idx to dot2Idx
           dot1Idx = dot1Idx || list.length;       // if we haven't seen dot1, save this idx to dot1Idx
         }
-        sexp.parent = list;                     // set this list as it's parent
-        list.push(sexp);                        // and add the sexp to the list
+        if(!(sexp instanceof comment)){            // if it's not a comment, add it to the list
+          sexp.parent = list;                     // set this list as it's parent
+          list.push(sexp);                        // and add the sexp to the list
+        }
         return i;
       }
                             
@@ -746,7 +748,7 @@ plt.compiler = plt.compiler || {};
       while((i = chewWhiteSpace(str, i)) &&             // there's whitespace to chew
             (i+1<str.length) &&                         // we're not out of string
             (nextSExp = readSExpByIndex(str, i)) &&     // there's an s-expr to be read
-            (nextSExp instanceof comment)){             // and it's not a comment
+            (nextSExp instanceof Comment)){             // and it's not a comment
         i = nextSExp.location.endChar;
       }
                                                         
