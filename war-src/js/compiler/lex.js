@@ -220,7 +220,7 @@ plt.compiler = plt.compiler || {};
     function readSExp(str, source) {
       delims = [];
       var sexp = readSExpByIndex(str, 0);
-      return sexp instanceof Comment ? null : sexp;
+      return sexp instanceof comment ? null : sexp;
     }
 
     // readSExpByIndex : String Number -> SExp
@@ -748,7 +748,7 @@ plt.compiler = plt.compiler || {};
       while((i = chewWhiteSpace(str, i)) &&             // there's whitespace to chew
             (i+1<str.length) &&                         // we're not out of string
             (nextSExp = readSExpByIndex(str, i)) &&     // there's an s-expr to be read
-            (nextSExp instanceof Comment)){             // and it's not a comment
+            (nextSExp instanceof comment)){             // and it's not a comment
         i = nextSExp.location.endChar;
       }
                                                         
