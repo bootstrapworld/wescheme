@@ -286,7 +286,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 }
 
 
-/* 23px: statusbar */
+/* 25px: statusbar */
 #statusbar {
     clear:          both;
     width:          100%;
@@ -296,7 +296,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     color:          white;
     background:     #444;
     position:       relative;
-    top:            -23px;
+    top:            -25px;
     left:           -10px;
     transition:     .5s;
     opacity:        0;
