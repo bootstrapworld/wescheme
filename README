@@ -1,4 +1,4 @@
-WeScheMe is an online programming environment based on DrRacket and
+WeScheme is an online programming environment based on DrRacket and
 Scheme. Like DrRacket, it provides an interactive evaluator and an
 interface for editing and running programs. In contrast to DrRacket,
 WeScheme evaluates on the browser with JavaScript. Its main audience
@@ -151,7 +151,7 @@ To use the suite:
 8. Run with the green arrows in the Selenium IDE
 
 
-Note that the tests as currently written are have not yet been coded
+Note that the tests as currently written have not yet been coded
 to respect some of the delays introduced by asynchronous JavaScript, so
 many of the tests will fail unless the speed of the testing framework is
 set to slightly slower than the "Fast" speed.
