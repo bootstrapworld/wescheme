@@ -825,7 +825,7 @@ plt.compiler = plt.compiler || {};
       symbol.location = new Location(column-1, startRow, iStart, i - iStart);
 
       // read the next non-comment sexp
-      while(!nextSExp || (nextSExp instanceof Comment)){
+      while(!nextSExp || (nextSExp instanceof comment)){
         i = chewWhiteSpace(str, i);
         try{nextSExp = readSExpByIndex(str, i);}
         catch(e){
