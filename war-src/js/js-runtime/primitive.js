@@ -6353,7 +6353,7 @@ PRIMITIVES['animate'] =
            var bigBangController;
            var onBreak = function() { bigBangController.breaker(); }
            aState.addBreakRequestedListener(onBreak);
-           bigBangController = jsworld.MobyJsworld.bigBang(100,
+           bigBangController = jsworld.MobyJsworld.bigBang(1,
                      aState.getToplevelNodeHook()(),
                      unwrappedConfigs,
                      caller, 
