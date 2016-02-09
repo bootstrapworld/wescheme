@@ -1470,24 +1470,51 @@ var toDomNode = function(x, cache) {
     return returnVal;
 };
 
+// from http://stackoverflow.com/questions/17267329/converting-unicode-character-to-string-format
+function unicodeToChar(text) {
+   return text.replace(/\\u[\dABCDEFabcdef][\dABCDEFabcdef][\dABCDEFabcdef][\dABCDEFabcdef]/g, 
+          function (match) {
+               return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
+          });
+}
+
 
 var textToDomNode = function(text) {
-    var chunks = text.split("\n");
+    var rawChunks = text.split("\n");
+    var displayedChunks = rawChunks.map(unicodeToChar);
     var i;
     var wrapper = document.createElement("span");
+    var displayedString = document.createElement("span");
+    var rawString = document.createElement("span");
+    rawString.style.paddingLeft = displayedString.style.paddingLeft = "0px";
     var newlineDiv;
+    if (rawChunks.length > 0) {
+        displayedString.appendChild(document.createTextNode(displayedChunks[0]));
+        rawString.appendChild(document.createTextNode(rawChunks[0]));
+    }
+    for (i = 1; i < rawChunks.length; i++) {
+        newlineDiv = document.createElement("br");
+        newlineDiv.style.clear = 'left';
+        displayedString.appendChild(newlineDiv);
+        displayedString.appendChild(document.createTextNode(displayedChunks[i]));
+        rawString.appendChild(document.createTextNode(rawChunks[i]));
+    }
     wrapper.className = (text==="true" || text==="false")? "wescheme-boolean" : "wescheme-string";
     wrapper.style.fontFamily = 'monospace';
     wrapper.style.whiteSpace = "pre";
-    if (chunks.length > 0) {
-        wrapper.appendChild(document.createTextNode(chunks[0]));
-    }
-    for (i = 1; i < chunks.length; i++) {
-        newlineDiv = document.createElement("br");
-        newlineDiv.style.clear = 'left';
-        wrapper.appendChild(newlineDiv);
-        wrapper.appendChild(document.createTextNode(chunks[i]));
-    }
+    wrapper.appendChild(rawString);
+    // if the text isn't pure ASCII, make a toggleable node 
+    if(text !== unicodeToChar(text)) {
+	    wrapper.appendChild(displayedString);
+	    var showingDisplayedString = true;
+	    rawString.style.display = 'none';
+	    wrapper.onclick = function(e) {
+			showingDisplayedString = !showingDisplayedString;
+			rawString.style.display = (!showingDisplayedString ? 'inline' : 'none')
+			displayedString.style.display = (showingDisplayedString ? 'inline' : 'none');
+	    };
+	    wrapper.style['cursor'] = 'pointer';
+	}
     return wrapper;
 };
 
