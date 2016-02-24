@@ -208,7 +208,7 @@ var WeSchemeTextContainer;
 	};
  
 	//name for the current highlight's css
-  var currentHighlightNumber = 0;
+  	var currentHighlightNumber = 0;
 	CodeMirrorImplementation.prototype.highlight = function(id, offset, line, column, span, color) {
 		offset--; //off-by-one otherwise
 		var stylesheet = document.styleSheets[0], //this is default.css
@@ -216,24 +216,23 @@ var WeSchemeTextContainer;
 
 		currentHighlightNumber++;
             
-    if (stylesheet.insertRule) {
-      stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
-    } else { // IE8 compatibility
-      stylesheet.addRule("." + name, "background-color: " + color + "", 0);
-    }
+	    if (stylesheet.insertRule) {
+	      stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
+	    } else { // IE8 compatibility
+	      stylesheet.addRule("." + name, "background-color: " + color + "", 0);
+	    }
 
 		var start = this.editor.posFromIndex(parseInt(offset)),
-        end = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
-        highlightedArea = this.editor.markText(start, end, {className: name});
+        	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
+        	highlightedArea = this.editor.markText(start, end, {className: name});
 
  		this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);
 
  		//return highlightedArea;
  		return {clear: function() { return highlightedArea.clear(); },
-            find: function() { return highlightedArea.find();  },
-            styleName: name
- 				}
+            	find: function() { return highlightedArea.find();  },
+            	styleName: name}
 	};
 	
 	CodeMirrorImplementation.prototype.moveCursor = function(offset) {
@@ -253,8 +252,8 @@ var WeSchemeTextContainer;
 
 	CodeMirrorImplementation.prototype.scrollIntoView = function(offset, margin) {
 		var moveTo = this.editor.posFromIndex(offset);
-    moveTo.ch--; //off-by-one otherwise
-    this.editor.scrollIntoView(moveTo, margin);
+    	moveTo.ch--; //off-by-one otherwise
+    	this.editor.scrollIntoView(moveTo, margin);
 	};
 
 	CodeMirrorImplementation.prototype.setSelection = function(id, offset, line, column, span) {
@@ -263,7 +262,7 @@ var WeSchemeTextContainer;
 		var end = this.editor.posFromIndex(parseInt(offset)+parseInt(span));
 		this.editor.setSelection(start, end);
 	};
-  // clear all textMarkers, and reset the highlightedAreas array
+  	// clear all textMarkers, and reset the highlightedAreas array
 	CodeMirrorImplementation.prototype.unhighlightAll = function () {
     this.highlightedAreas.forEach(function(ha){ ha.clear(); });
 		this.highlightedAreas = [];

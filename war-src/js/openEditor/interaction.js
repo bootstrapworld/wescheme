@@ -1148,8 +1148,7 @@ WeSchemeInteractions = (function () {
     
     var makeHighlighterLinkFunction = function(that, elt) {
         return function() { 
-            //that.highlighter(elt.id, elt.offset, elt.line, elt.column, elt.span, "rgb(254, 196, 79)");
-            that.setSelection(elt.id, elt.offset, elt.line, elt.column, elt.span);
+            that.highlighter(elt.id, elt.offset, elt.line, elt.column, elt.span, "rgb(255, 200, 200)");
         };
     };
 
