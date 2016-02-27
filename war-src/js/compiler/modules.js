@@ -398,6 +398,7 @@ plt.compiler = plt.compiler || {};
                                          ,["range", 3]
                                          ,["list-ref", 2]
                                          ,["remove", 2]
+                                         ,["remove-all", 2]
                                          ,["member", 2]
                                          ,["member?", 2]
                                          ,["memq", 2]

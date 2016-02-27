@@ -2889,6 +2889,26 @@ PRIMITIVES['remove'] =
 		 	return originalLst;
 		 });
 
+PRIMITIVES['remove-all'] =
+new PrimProc('remove-all',
+	 2,
+	 false, false,
+	 function(aState, item, lst) {
+	 	checkList(aState, lst, 'remove-all', 2, arguments);
+	 	var originalLst = lst;
+	 	var result = types.EMPTY;
+	 	console.log('lst: ', lst);
+	 	while ( !lst.isEmpty() ) {
+	 		console.log('first: ', lst.first());
+	 		console.log('result:', result);
+	 		if (!isEqual(item, lst.first())){
+	 			result = types.cons(lst.first(), result);
+	 		}
+	 		lst = lst.rest();
+	 	}
+	 	return result.reverse();
+	 });
+
 
 PRIMITIVES['filter'] =
     new PrimProc('filter',
