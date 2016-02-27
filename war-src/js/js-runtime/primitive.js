@@ -2897,10 +2897,7 @@ new PrimProc('remove-all',
 	 	checkList(aState, lst, 'remove-all', 2, arguments);
 	 	var originalLst = lst;
 	 	var result = types.EMPTY;
-	 	console.log('lst: ', lst);
 	 	while ( !lst.isEmpty() ) {
-	 		console.log('first: ', lst.first());
-	 		console.log('result:', result);
 	 		if (!isEqual(item, lst.first())){
 	 			result = types.cons(lst.first(), result);
 	 		}
