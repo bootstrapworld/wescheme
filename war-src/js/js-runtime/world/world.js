@@ -341,7 +341,7 @@ if (typeof(world) === 'undefined') {
         var childImage, childX, childY;
         // create a clipping region around the boundaries of the Scene
         ctx.save();
-        ctx.fillStyle = this.color? colorString(this.color) : "rgba(0,0,0,0)";
+        ctx.fillStyle = this.color? colorString(this.color) : "white";
         ctx.fillRect(x, y, this.width, this.height);
         ctx.restore();
         // save the context, reset the path, and clip to the path around the scene edge
