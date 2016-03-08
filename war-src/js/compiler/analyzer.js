@@ -793,28 +793,36 @@ plt.compiler = plt.compiler || {};
       jQuery.ajax({
            url:    url,
            success: function(result) {
-                      // if it's not a native module, manually assign it to window.COLLECTIONS
-                      if(getWeSchemeModule(moduleName)){
-                        var program = (0,eval)('(' + result + ')');
-                        // Create the COLLECTIONS array, if it doesn't exist
-                        if(window.COLLECTIONS === undefined){ window.COLLECTIONS = []; }
-                        // extract the sourcecode
-                        var lexemes     = plt.compiler.lex(program.source.src, moduleName),
-                            AST         = plt.compiler.parse(lexemes),
-                            desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
-                            pinfo       = plt.compiler.analyze(desugared),
-                            objectCode  = plt.compiler.compile(desugared, pinfo);
-                        window.COLLECTIONS[moduleName] = {
-                                    'name': moduleName,
-                                    'bytecode' : (0,eval)('(' + objectCode.bytecode + ')'),
-                                    'provides' : objectCode.provides
-                                };
-                      // otherwise, simply evaluate the raw JS
-                      } else {
-                        eval(result);
-                      }
-                  if(result){ processModule(moduleName); }
-                  else { throwModuleError(moduleName); }
+                  try {
+                    // if it's not a native module, manually assign it to window.COLLECTIONS
+                    if(getWeSchemeModule(moduleName)){
+                      var program = (0,eval)('(' + result + ')');
+                      // Create the COLLECTIONS array, if it doesn't exist
+                      if(window.COLLECTIONS === undefined){ window.COLLECTIONS = []; }
+                      // extract the sourcecode
+                      var lexemes     = plt.compiler.lex(program.source.src, moduleName),
+                          AST         = plt.compiler.parse(lexemes),
+                          desugared   = plt.compiler.desugar(AST)[0],  // includes [AST, pinfo]
+                          pinfo       = plt.compiler.analyze(desugared),
+                          objectCode  = plt.compiler.compile(desugared, pinfo);
+                      window.COLLECTIONS[moduleName] = {
+                                  'name': moduleName,
+                                  'bytecode' : (0,eval)('(' + objectCode.bytecode + ')'),
+                                  'provides' : objectCode.provides
+                              };
+                    // otherwise, simply evaluate the raw JS
+                    } else {
+                      eval(result);
+                    }
+                    if(result){ processModule(moduleName); }
+                    else { throwModuleError(moduleName); }
+                  } catch (e) {
+                    console.log(e);
+                    var msg = new types.Message(["A network error occured when trying to load "
+                                   , new types.ColoredPart(that.spec.toString(), that.spec.location)
+                                   , ". Please check your connection and try again."
+                    throwError(msg, that.spec.location, "Error-NetworkError");
+                  }
                 },
            error: function (error) { throwModuleError(moduleName); },
            async: false
