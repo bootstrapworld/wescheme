@@ -817,7 +817,7 @@ plt.compiler = plt.compiler || {};
                     if(result){ processModule(moduleName); }
                     else { throwModuleError(moduleName); }
                   } catch (e) {
-                    if(e.indexOf("moby-failure")) throw e; // throw moby errors
+                    if(e.indexOf("moby-failure") > -1) throw e; // throw moby errors
                     var msg = new types.Message(["A network error occured when trying to load "
                                    , new types.ColoredPart(that.spec.toString(), that.spec.location)
                                    , ". Please check your connection and try again."]);
