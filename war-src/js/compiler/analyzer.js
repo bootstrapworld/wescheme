@@ -817,10 +817,10 @@ plt.compiler = plt.compiler || {};
                     if(result){ processModule(moduleName); }
                     else { throwModuleError(moduleName); }
                   } catch (e) {
-                    console.log(e);
+                    if(e.indexOf("moby-failure")) throw e; // throw moby errors
                     var msg = new types.Message(["A network error occured when trying to load "
                                    , new types.ColoredPart(that.spec.toString(), that.spec.location)
-                                   , ". Please check your connection and try again."
+                                   , ". Please check your connection and try again."]);
                     throwError(msg, that.spec.location, "Error-NetworkError");
                   }
                 },
