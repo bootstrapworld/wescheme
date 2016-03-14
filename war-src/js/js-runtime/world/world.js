@@ -280,7 +280,7 @@ if (typeof(world) === 'undefined') {
       if(   (this.vertices && other.vertices)
          && (this.style    === other.style)
          && (types.isEqual(this.color, other.color, aUnionFind))
-         && (verticesEqual(this.vertices, other.vertices)){
+         && (verticesEqual(this.vertices, other.vertices))) {
             return true;
       }
 
