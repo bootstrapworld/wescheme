@@ -278,7 +278,6 @@ if (typeof(world) === 'undefined') {
       if(this.width    !== other.width    ||
          this.height   !== other.height){ return false; }
 
-console.log(this, other);        
       // FAST PATH: if they're both vertex-based images, compare
       // their styles, vertices and colors.
       // * Also checks for rotations of otherwise-identical vertices
