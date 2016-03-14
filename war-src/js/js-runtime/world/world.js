@@ -138,11 +138,12 @@ if (typeof(world) === 'undefined') {
     // given two arrays of {x,y} structs, determine their equivalence
     var verticesEqual = function(v1, v2){
         if(v1.length !== v2.length){ return false; }
-        for(var i=0; i< v1.length; i++){
-            if(v1[i].x !== v2[i].x || v1[i].y !== v2[i].y){ return false; }
-        }
-        return true;
+        var v1_str = v1.map(function(o){return "x:"+o.x+",y:"+o.y}).join(","),
+            v2_str = v2.map(function(o){return "x:"+o.x+",y:"+o.y}).join(",");
+        // v1 == rot(v2) if append(v1,v1) contains v2
+        return chain = (v1_str+","+v1_str).indexOf(v2_str) > -1;
     };
+
     // given two arrays of xs and ys, zip them into a vertex array
     var zipVertices = function(xs, ys){
         if(xs.length !== ys.length){throw new Error('failure in zipVertices');}
@@ -277,14 +278,15 @@ if (typeof(world) === 'undefined') {
       if(this.width    !== other.width    ||
          this.height   !== other.height){ return false; }
 
-        
+console.log(this, other);        
       // FAST PATH: if they're both vertex-based images, compare
-      // their styles, vertices and colors
-      // NOTE: doesn't detect rotated vertex lists!!
+      // their styles, vertices and colors.
+      // * Also checks for rotations of otherwise-identical vertices
       if(   (this.vertices && other.vertices)
          && (this.style    === other.style)
          && (types.isEqual(this.color, other.color, aUnionFind))
          && (verticesEqual(this.vertices, other.vertices))) {
+            console.log('Using fast path for image equality check');
             return true;
       }
 
@@ -321,9 +323,9 @@ if (typeof(world) === 'undefined') {
                 if(h1 !== h2) return false;
             }
         }
+      // Slow-path can fail with CORS or image-loading problems
       } catch(e){
         console.log('Couldn\'t compare images:', e);
-        // if we violate CORS, just bail
         return false;
       }
       // if, after all this, we're still good...then they're equal!
@@ -758,9 +760,9 @@ if (typeof(world) === 'undefined') {
     //////////////////////////////////////////////////////////////////////
     // rotate: angle image -> image
     // Rotates image by angle degrees in a counter-clockwise direction.
-    // TODO: special case for ellipse?
     var RotateImage = function(angle, img) {
         BaseImage.call(this);
+        // optimization for trying to rotate a circle
         if((img instanceof EllipseImage) && (img.width == img.height)){
             angle = 0;
         }
