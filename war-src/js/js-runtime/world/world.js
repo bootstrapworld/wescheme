@@ -296,19 +296,23 @@ if (typeof(world) === 'undefined') {
         // create temporary canvases
         var slice1 = document.createElement('canvas').getContext('2d'),
             slice2 = document.createElement('canvas').getContext('2d');
-        var size = 10000; // compare images using 10,000x10,000px tiles
-        slice1.canvas.width = slice1.canvas.height = size;
-        slice2.canvas.width = slice2.canvas.height = size;
-        for (var y=0; y < c1.height; y+=size){
-            for (var x=0; x < c1.width; x+=size){
-                console.log('processing chunk from ('+x+','+y+') to ('+(x+size)+','+(y+size)+')');
-                slice1.clearRect(0, 0, size, size);
-                slice1.drawImage(c1, x, y, size, size, 0, 0, size, size);
-                slice2.clearRect(0, 0, size, size);
-                slice2.drawImage(c2, x, y, size, size, 0, 0, size, size);
+        var tileW = Math.min(10000, c1.width); // compare images using max 10,000x10,000px tiles
+        var tileH = Math.min(10000, c1.height);// compare images using max 10,000x10,000px tiles
+        for (var y=0; y < c1.height; y += tileH){
+            for (var x=0; x < c1.width; x += tileW){
+                tileW = Math.min(tileW, c1.width - x); // see if we can shrink the tiles
+                tileH = Math.min(tileH, c1.height- y);
+                slice1.canvas.width  = slice2.canvas.width  = tileW;
+                slice1.canvas.height = slice2.canvas.height = tileH;
+                console.log('processing chunk from ('+x+','+y+') to ('+(x+tileW)+','+(y+tileH)+')');
+                slice1.clearRect(0, 0, tileW, tileH);
+                slice1.drawImage(c1, x, y, tileW, tileH, 0, 0, tileW, tileH);
+                slice2.clearRect(0, 0, tileW, tileH);
+                slice2.drawImage(c2, x, y, tileW, tileH, 0, 0, tileW, tileH);
                 var d1 = slice1.canvas.toDataURL(), 
                     d2 = slice2.canvas.toDataURL(),
                     h1 = world.md5(d1),  h2 = world.md5(d2);
+                    console.log(d1, d2, h1, h2);
                 if(h1 !== h2) return false;
             }
         }
