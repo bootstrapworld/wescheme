@@ -2,7 +2,6 @@
 if (typeof(world) === 'undefined') {
     world = {};
 }
-
 // Depends on kernel.js, world-config.js, effect-struct.js
 (function() {
     'use strict';
@@ -220,7 +219,7 @@ if (typeof(world) === 'undefined') {
 
     // makeCanvas: number number -> canvas
     // Constructs a canvas object of a particular width and height.
-    world.Kernel.makeCanvas = function(width, height) {
+    world.Kernel.makeCanvas = makeCanvas = function(width, height) {
         var canvas = document.createElement("canvas");
         canvas.width  = width;
         canvas.height = height;
@@ -270,31 +269,51 @@ if (typeof(world) === 'undefined') {
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
     // more efficient ways of comparing one another
     BaseImage.prototype.isEqual = function(other, aUnionFind) {
+        console.log('comparing ', this, other);
       if(this.width    !== other.width    ||
          this.height   !== other.height){ return false; }
-      // if they're both vertex-based images, all we need to compare are
-      // their styles, vertices and color
-      if(this.vertices && other.vertices){
-          return (this.style    === other.style &&
-                  verticesEqual(this.vertices, other.vertices) &&
-                  types.isEqual(this.color, other.color, aUnionFind));
+
+        
+      // FAST PATH: if they're both vertex-based images, compare
+      // their styles, vertices and colors
+      // NOTE: doesn't detect rotated vertex lists!!
+      if(   (this.vertices && other.vertices)
+         && (this.style    === other.style)
+         && (types.isEqual(this.color, other.color, aUnionFind))
+         && (verticesEqual(this.vertices, other.vertices)){
+            return true;
       }
-      // if it's something more sophisticated, render both images to canvases
-      // First check canvas dimensions, then go pixel-by-pixel
-      var node1 = this.toDomNode(), node2 = other.toDomNode();
-      if(node1.width !== node2.width || node1.height !== node2.height){ return false;}
+
+      // SLOW PATH: render both images to canvases
+      // First check canvas dimensions, then hash both images and compare
+      console.log('Using slow path for image equality check');
+      var c1 = this.toDomNode(), c2 = other.toDomNode();
+      c1.style.visibility = c2.style.visibility = "hidden";
+      if(c1.width !== c2.width || c1.height !== c2.height){ return false;}
       try{
-          var c1 = makeCanvas(node1.width, node1.height);
-          var c2 = makeCanvas(node2.width, node2.height);
-          var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d'),
-            data1 = ctx1.getImageData(0, 0, c1.width, c1.height),
-            data2 = ctx2.getImageData(0, 0, c2.width, c2.height);
-        var pixels1 = data1.data,
-            pixels2 = data2.data;
-        for(var i = 0; i < pixels1.length; i++){
-            if(pixels1[i] !== pixels2[i]){ return false; }
+        var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d');
+        this.render(ctx1, 0, 0); other.render(ctx2, 0, 0);
+        // create temporary canvases
+        var slice1 = document.createElement('canvas').getContext('2d'),
+            slice2 = document.createElement('canvas').getContext('2d');
+        var size = 10000; // compare images using 10,000x10,000px tiles
+        slice1.canvas.width = slice1.canvas.height = size;
+        slice2.canvas.width = slice2.canvas.height = size;
+        for (var y=0; y < c1.height; y+=size){
+            for (var x=0; x < c1.width; x+=size){
+                console.log('processing chunk from ('+x+','+y+') to ('+(x+size)+','+(y+size)+')');
+                slice1.clearRect(0, 0, size, size);
+                slice1.drawImage(c1, x, y, size, size, 0, 0, size, size);
+                slice2.clearRect(0, 0, size, size);
+                slice2.drawImage(c2, x, y, size, size, 0, 0, size, size);
+                var d1 = slice1.canvas.toDataURL(), 
+                    d2 = slice2.canvas.toDataURL(),
+                    h1 = world.md5(d1),  h2 = world.md5(d2);
+                if(h1 !== h2) return false;
+            }
         }
       } catch(e){
+        console.log('Couldn\'t compare images:', e);
         // if we violate CORS, just bail
         return false;
       }
@@ -652,6 +671,13 @@ if (typeof(world) === 'undefined') {
             y1 = Math.max(placeY, 0) - placeY;
             y2 = Math.max(placeY, 0);
         }
+
+        // truncate possible float values to two decimal places
+        x1 = Math.round(x1 * 100) / 100;
+        y1 = Math.round(y1 * 100) / 100;
+        x2 = Math.round(x2 * 100) / 100;
+        y2 = Math.round(y2 * 100) / 100;
+
         // calculate the vertices of this image by translating the verticies of the sub-images
         var i, v1 = img1.getVertices(), v2 = img2.getVertices(), xs = [], ys = [];
         for(i=0; i<v1.length; i++){
@@ -668,10 +694,10 @@ if (typeof(world) === 'undefined') {
         this.height = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
  
         // store the offsets for rendering
-        this.x1 = Math.floor(x1);
-        this.y1 = Math.floor(y1);
-        this.x2 = Math.floor(x2);
-        this.y2 = Math.floor(y2);
+        this.x1 = x1;
+        this.y1 = y1;
+        this.x2 = x2;
+        this.y2 = y2;
         this.img1 = img1;
         this.img2 = img2;
         var positionText;
@@ -695,7 +721,7 @@ if (typeof(world) === 'undefined') {
         } else if(!isNaN(placeY)){
           positionText += " , shifted up by "+placeY;
         }
-        this.ariaText = " an overlay: first image is " + img1.ariaText + " " + positionText + img2.ariaText;
+        this.ariaText = " an overlay: first image is" + img1.ariaText + positionText + img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -742,8 +768,8 @@ if (typeof(world) === 'undefined') {
             ys[i] = Math.round(vertices[i].x*sin + vertices[i].y*cos);
         }
         // figure out what translation is necessary to shift the vertices back to 0,0
-        var translateX = Math.floor(-Math.min.apply( Math, xs ));
-        var translateY = Math.floor(-Math.min.apply( Math, ys ));
+        var translateX = Math.round(-Math.min.apply( Math, xs ));
+        var translateY = Math.round(-Math.min.apply( Math, ys ));
         for(var i=0; i<vertices.length; i++){
             xs[i] += translateX;
             ys[i] += translateY;
@@ -755,11 +781,11 @@ if (typeof(world) === 'undefined') {
         var rotatedHeight = Math.max.apply( Math, ys ) - Math.min.apply( Math, ys );
 
         this.img        = img;
-        this.width      = Math.floor(rotatedWidth);
-        this.height     = Math.floor(rotatedHeight);
+        this.width      = Math.round(rotatedWidth);
+        this.height     = Math.round(rotatedHeight);
         this.angle      = angle;
         this.translateX = translateX;
-        this.translateY  = translateY;
+        this.translateY = translateY;
         this.ariaText = "Rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
@@ -777,6 +803,7 @@ if (typeof(world) === 'undefined') {
     };
 
     RotateImage.prototype.isEqual = function(other, aUnionFind) {
+        console.log('checking if a rotated image equals another');
         if (!(other instanceof RotateImage)) {
           return BaseImage.prototype.isEqual.call(this, other, aUnionFind);
         }
@@ -803,8 +830,8 @@ if (typeof(world) === 'undefined') {
         this._vertices = zipVertices(xs,ys);
  
         this.img      = img;
-        this.width    = Math.floor(img.getWidth() * xFactor);
-        this.height   = Math.floor(img.getHeight() * yFactor);
+        this.width    = Math.round(img.getWidth() * xFactor);
+        this.height   = Math.round(img.getHeight() * yFactor);
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
         this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
@@ -1065,8 +1092,8 @@ if (typeof(world) === 'undefined') {
     // rotate a 3/4 quarter turn plus half the angle length to keep bottom base level
     var PolygonImage = function(length, count, step, style, color) {
         BaseImage.call(this);
-        this.outerRadius = Math.floor(length/(2*Math.sin(Math.PI/count)));
-        this.innerRadius = Math.floor(length/(2*Math.tan(Math.PI/count)));
+        this.outerRadius = Math.round(length/(2*Math.sin(Math.PI/count)));
+        this.innerRadius = Math.round(length/(2*Math.tan(Math.PI/count)));
         var adjust = (3*Math.PI/2)+Math.PI/count;
         
         // rotate around outer circle, storing x and y coordinates
@@ -1235,7 +1262,7 @@ if (typeof(world) === 'undefined') {
      var TriangleImage = function(sideC, angleA, sideB, style, color) {
         BaseImage.call(this);
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
-        var thirdY = Math.floor(sideB * Math.sin(angleA * Math.PI/180));
+        var thirdY = Math.round(sideB * Math.sin(angleA * Math.PI/180));
 
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 

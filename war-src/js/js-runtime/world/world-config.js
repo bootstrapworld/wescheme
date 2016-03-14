@@ -1,5 +1,7 @@
 
-var world = {};
+if (typeof(world) === 'undefined') {
+    world = {};
+}
 
 (function() {
 
