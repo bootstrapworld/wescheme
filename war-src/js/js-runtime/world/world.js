@@ -226,6 +226,11 @@ if (typeof(world) === 'undefined') {
 
         canvas.style.width  = canvas.width  + "px";
         canvas.style.height = canvas.height + "px";
+
+        var ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = ctx.imageSmoothingEnabled
+                                 || ctx.mozImageSmoothingEnabled
+                                 || ctx.webkitImageSmoothingEnabled;
         
         // KLUDGE: IE compatibility uses /js/excanvas.js, and dynamic
         // elements must be marked this way.
@@ -269,7 +274,6 @@ if (typeof(world) === 'undefined') {
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
     // more efficient ways of comparing one another
     BaseImage.prototype.isEqual = function(other, aUnionFind) {
-        console.log('comparing ', this, other);
       if(this.width    !== other.width    ||
          this.height   !== other.height){ return false; }
 
@@ -292,15 +296,17 @@ if (typeof(world) === 'undefined') {
       if(c1.width !== c2.width || c1.height !== c2.height){ return false;}
       try{
         var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d');
+        ctx1.imageSmoothingEnabled = false; // turn off antialiasing for more accurate comparisons
+        ctx2.imageSmoothingEnabled = false;
         this.render(ctx1, 0, 0); other.render(ctx2, 0, 0);
         // create temporary canvases
         var slice1 = document.createElement('canvas').getContext('2d'),
             slice2 = document.createElement('canvas').getContext('2d');
-        var tileW = Math.min(10000, c1.width); // compare images using max 10,000x10,000px tiles
-        var tileH = Math.min(10000, c1.height);// compare images using max 10,000x10,000px tiles
+        var tileW = Math.min(10000, c1.width); // use only the largest tiles we need for these images
+        var tileH = Math.min(10000, c1.height);
         for (var y=0; y < c1.height; y += tileH){
             for (var x=0; x < c1.width; x += tileW){
-                tileW = Math.min(tileW, c1.width - x); // see if we can shrink the tiles
+                tileW = Math.min(tileW, c1.width - x); // can we use smaller tiles for what's left?
                 tileH = Math.min(tileH, c1.height- y);
                 slice1.canvas.width  = slice2.canvas.width  = tileW;
                 slice1.canvas.height = slice2.canvas.height = tileH;
@@ -312,7 +318,6 @@ if (typeof(world) === 'undefined') {
                 var d1 = slice1.canvas.toDataURL(), 
                     d2 = slice2.canvas.toDataURL(),
                     h1 = world.md5(d1),  h2 = world.md5(d2);
-                    console.log(d1, d2, h1, h2);
                 if(h1 !== h2) return false;
             }
         }
