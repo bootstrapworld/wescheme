@@ -5531,9 +5531,9 @@ new PrimProc('rotate',
 			 function(aState, angle, img) {
 			 check(aState, angle, isAngle, "rotate", "angle", 1, arguments);
 			 check(aState, img, isImage, "rotate", "image", 2, arguments);
-       angle = jsnums.toFixnum(angleToProperRange(angle));
+       angle = angleToProperRange(jsnums.toFixnum(angle));
        // negate the angle, to make it a counterclockwise rotation
-       return world.Kernel.rotateImage(jsnums.toFixnum(jsnums.multiply(-1, angle)), img);
+       return world.Kernel.rotateImage(-1 * angle, img);
 			 });
 
 PRIMITIVES['scale/xy'] =
