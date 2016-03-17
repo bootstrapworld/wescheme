@@ -172,15 +172,17 @@ if (typeof(world) === 'undefined') {
         return aCopy;
     };
 
+    // return Integer-only height for the getter methods
     BaseImage.prototype.getHeight = function(){
-        return this.height;
+        return Math.round(this.height);
     };
     BaseImage.prototype.getWidth = function(){
-        return this.width;
+        return Math.round(this.width);
     };
     BaseImage.prototype.getBaseline = function(){
-        return this.height;
+        return Math.round(this.height);
     };
+    
     // return the vertex array if it exists, otherwise make one using height and width
     BaseImage.prototype.getVertices = function(){
         if(this.vertices){ return this.vertices; }
@@ -358,8 +360,8 @@ if (typeof(world) === 'undefined') {
         return new SceneImage(this.width, 
                               this.height,
                               this.children.concat([[anImage, 
-                                                     x - anImage.getWidth()/2,
-                                                     y - anImage.getHeight()/2]]),
+                                                     x - anImage.width/2,
+                                                     y - anImage.height/2]]),
                               this.withBorder,
                               this.color);
     };
@@ -496,11 +498,11 @@ if (typeof(world) === 'undefined') {
     };
 
     FileImage.prototype.getWidth = function() {
-        return this.img.width;
+        return Math.round(this.img.width);
     };
 
     FileImage.prototype.getHeight = function() {
-        return this.img.height;
+        return Math.round(this.img.height);
     };
 
     FileImage.prototype.isEqual = function(other, aUnionFind) {
@@ -645,14 +647,14 @@ if (typeof(world) === 'undefined') {
             x1 = 0;
             x2 = 0;
         } else if (placeX === "right") {
-            x1 = Math.max(img1.getWidth(), img2.getWidth()) - img1.getWidth();
-            x2 = Math.max(img1.getWidth(), img2.getWidth()) - img2.getWidth();
+            x1 = Math.max(img1.width, img2.width) - img1.width;
+            x2 = Math.max(img1.width, img2.width) - img2.width;
         } else if (placeX === "beside") {
             x1 = 0;
-            x2 = img1.getWidth();
+            x2 = img1.width;
         } else if (placeX === "middle" || placeX === "center") {
-            x1 = Math.max(img1.getWidth(), img2.getWidth())/2 - img1.getWidth()/2;
-            x2 = Math.max(img1.getWidth(), img2.getWidth())/2 - img2.getWidth()/2;
+            x1 = Math.max(img1.width, img2.width)/2 - img1.width/2;
+            x2 = Math.max(img1.width, img2.width)/2 - img2.width/2;
         } else {
             x1 = Math.max(placeX, 0) - placeX;
             x2 = Math.max(placeX, 0);
@@ -662,17 +664,17 @@ if (typeof(world) === 'undefined') {
             y1 = 0;
             y2 = 0;
         } else if (placeY === "bottom") {
-            y1 = Math.max(img1.getHeight(), img2.getHeight()) - img1.getHeight();
-            y2 = Math.max(img1.getHeight(), img2.getHeight()) - img2.getHeight();
+            y1 = Math.max(img1.height, img2.height) - img1.height;
+            y2 = Math.max(img1.height, img2.height) - img2.height;
         } else if (placeY === "above") {
             y1 = 0;
-            y2 = img1.getHeight();
+            y2 = img1.height;
         } else if (placeY === "baseline") {
             y1 = Math.max(img1.getBaseline(), img2.getBaseline()) - img1.getBaseline();
             y2 = Math.max(img1.getBaseline(), img2.getBaseline()) - img2.getBaseline();
         } else if (placeY === "middle" || placeY === "center") {
-            y1 = Math.max(img1.getHeight(), img2.getHeight())/2 - img1.getHeight()/2;
-            y2 = Math.max(img1.getHeight(), img2.getHeight())/2 - img2.getHeight()/2;
+            y1 = Math.max(img1.height, img2.height)/2 - img1.height/2;
+            y2 = Math.max(img1.height, img2.height)/2 - img2.height/2;
         } else {
             y1 = Math.max(placeY, 0) - placeY;
             y2 = Math.max(placeY, 0);
@@ -767,15 +769,16 @@ if (typeof(world) === 'undefined') {
         }
         var sin   = Math.sin(angle * Math.PI / 180);
         var cos   = Math.cos(angle * Math.PI / 180);
-        var width = img.getWidth();
-        var height= img.getHeight();
- 
+        var width = img.width;
+        var height= img.height;
+
         // rotate each point as if it were rotated about (0,0)
         var vertices = img.getVertices(), xs = [], ys = [];
         for(var i=0; i<vertices.length; i++){
             xs[i] = Math.round(vertices[i].x*cos - vertices[i].y*sin);
             ys[i] = Math.round(vertices[i].x*sin + vertices[i].y*cos);
         }
+
         // figure out what translation is necessary to shift the vertices back to 0,0
         var translateX = Math.round(-Math.min.apply( Math, xs ));
         var translateY = Math.round(-Math.min.apply( Math, ys ));
@@ -792,7 +795,7 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = Math.round(rotatedWidth);
         this.height     = Math.round(rotatedHeight);
-        this.angle      = angle;
+        this.angle      = Math.round(angle);
         this.translateX = translateX;
         this.translateY = translateY;
         this.ariaText = "Rotated image, "+angle+" degrees: "+img.ariaText;
@@ -838,8 +841,8 @@ if (typeof(world) === 'undefined') {
         this._vertices = zipVertices(xs,ys);
  
         this.img      = img;
-        this.width    = Math.round(img.getWidth() * xFactor);
-        this.height   = Math.round(img.getHeight() * yFactor);
+        this.width    = Math.round(img.width * xFactor);
+        this.height   = Math.round(img.height * yFactor);
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
         this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
@@ -909,8 +912,8 @@ if (typeof(world) === 'undefined') {
     var FrameImage = function(img) {
         BaseImage.call(this);
         this.img        = img;
-        this.width      = img.getWidth();
-        this.height     = img.getHeight();
+        this.width      = img.width;
+        this.height     = img.height;
         this.ariaText = " Framed image: "+img.ariaText;
     };
 
@@ -939,8 +942,8 @@ if (typeof(world) === 'undefined') {
     var FlipImage = function(img, direction) {
         BaseImage.call(this);
         this.img        = img;
-        this.width      = img.getWidth();
-        this.height     = img.getHeight();
+        this.width      = img.width;
+        this.height     = img.height;
         this.direction  = direction;
         this.ariaText =  direction+"ly flipped image: " + img.ariaText;
     };
@@ -962,14 +965,6 @@ if (typeof(world) === 'undefined') {
             this.img.render(ctx, x, y);
         }
         ctx.restore();
-    };
-
-    FlipImage.prototype.getWidth = function() {
-        return this.width;
-    };
-
-    FlipImage.prototype.getHeight = function() {
-        return this.height;
     };
 
     FlipImage.prototype.isEqual = function(other, aUnionFind) {
@@ -1028,14 +1023,6 @@ if (typeof(world) === 'undefined') {
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
 
-    RectangleImage.prototype.getWidth = function() {
-        return this.width;
-    };
-
-    RectangleImage.prototype.getHeight = function() {
-        return this.height;
-    };
- 
     //////////////////////////////////////////////////////////////////////
     // RhombusImage: Number Number Mode Color -> Image
     var RhombusImage = function(side, angle, style, color) {
@@ -1055,14 +1042,6 @@ if (typeof(world) === 'undefined') {
         this.ariaText = " a"+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
-
-    RhombusImage.prototype.getWidth = function() {
-        return this.width;
-    };
-
-    RhombusImage.prototype.getHeight = function() {
-        return this.height;
-    };
 
     //////////////////////////////////////////////////////////////////////
     // PosnImage: Vertices Mode Color -> Image
@@ -1266,12 +1245,12 @@ if (typeof(world) === 'undefined') {
      var TriangleImage = function(sideC, angleA, sideB, style, color) {
         BaseImage.call(this);
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
-        var thirdY = Math.round(sideB * Math.sin(angleA * Math.PI/180));
+        var thirdY = sideB * Math.sin(angleA * Math.PI/180);
 
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
         this.width = Math.max(sideC, thirdX) + offsetX;
-        this.height = Math.abs(thirdY);
+        this.height = Math.abs(Math.round(thirdY * 100) / 100);
         
         var vertices = [];
         // if angle < 180 start at the top of the canvas, otherwise start at the bottom
