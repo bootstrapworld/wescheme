@@ -182,7 +182,7 @@ if (typeof(world) === 'undefined') {
     BaseImage.prototype.getBaseline = function(){
         return Math.round(this.height);
     };
-    
+
     // return the vertex array if it exists, otherwise make one using height and width
     BaseImage.prototype.getVertices = function(){
         if(this.vertices){ return this.vertices; }
@@ -680,21 +680,15 @@ if (typeof(world) === 'undefined') {
             y2 = Math.max(placeY, 0);
         }
 
-        // truncate possible float values to two decimal places
-        x1 = Math.round(x1 * 100) / 100;
-        y1 = Math.round(y1 * 100) / 100;
-        x2 = Math.round(x2 * 100) / 100;
-        y2 = Math.round(y2 * 100) / 100;
-
         // calculate the vertices of this image by translating the verticies of the sub-images
         var i, v1 = img1.getVertices(), v2 = img2.getVertices(), xs = [], ys = [];
         for(i=0; i<v1.length; i++){
-            xs.push(Math.round(v1[i].x + x1));
-            ys.push(Math.round(v1[i].y + y1));
+            xs.push(v1[i].x + x1);
+            ys.push(v1[i].y + y1);
         }
         for(i=0; i<v2.length; i++){
-            xs.push(Math.round(v2[i].x + x2));
-            ys.push(Math.round(v2[i].y + y2));
+            xs.push(v2[i].x + x2);
+            ys.push(v2[i].y + y2);
         }
         // store the vertices as something private, so this.getVertices() will still return undefined
         this._vertices = zipVertices(xs, ys);
@@ -775,13 +769,13 @@ if (typeof(world) === 'undefined') {
         // rotate each point as if it were rotated about (0,0)
         var vertices = img.getVertices(), xs = [], ys = [];
         for(var i=0; i<vertices.length; i++){
-            xs[i] = Math.round(vertices[i].x*cos - vertices[i].y*sin);
-            ys[i] = Math.round(vertices[i].x*sin + vertices[i].y*cos);
+            xs[i] = vertices[i].x*cos - vertices[i].y*sin;
+            ys[i] = vertices[i].x*sin + vertices[i].y*cos;
         }
 
         // figure out what translation is necessary to shift the vertices back to 0,0
-        var translateX = Math.round(-Math.min.apply( Math, xs ));
-        var translateY = Math.round(-Math.min.apply( Math, ys ));
+        var translateX = -Math.min.apply( Math, xs );
+        var translateY = -Math.min.apply( Math, ys );
         for(var i=0; i<vertices.length; i++){
             xs[i] += translateX;
             ys[i] += translateY;
@@ -791,10 +785,9 @@ if (typeof(world) === 'undefined') {
         this._vertices = zipVertices(xs,ys);
         var rotatedWidth  = Math.max.apply( Math, xs ) - Math.min.apply( Math, xs );
         var rotatedHeight = Math.max.apply( Math, ys ) - Math.min.apply( Math, ys );
-
         this.img        = img;
-        this.width      = Math.round(rotatedWidth);
-        this.height     = Math.round(rotatedHeight);
+        this.width      = rotatedWidth;
+        this.height     = rotatedHeight;
         this.angle      = Math.round(angle);
         this.translateX = translateX;
         this.translateY = translateY;
@@ -834,15 +827,15 @@ if (typeof(world) === 'undefined') {
         var vertices = img.getVertices();
         var xs = [], ys = [];
         for(var i=0; i<vertices.length; i++){
-            xs[i] = Math.round(vertices[i].x*xFactor);
-            ys[i] = Math.round(vertices[i].y*yFactor);
+            xs[i] = vertices[i].x*xFactor;
+            ys[i] = vertices[i].y*yFactor;
         }
         // store the vertices as something private, so this.getVertices() will still return undefined
         this._vertices = zipVertices(xs,ys);
  
         this.img      = img;
-        this.width    = Math.round(img.width * xFactor);
-        this.height   = Math.round(img.height * yFactor);
+        this.width    = img.width * xFactor;
+        this.height   = img.height * yFactor;
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
         this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
@@ -1250,7 +1243,7 @@ if (typeof(world) === 'undefined') {
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
         this.width = Math.max(sideC, thirdX) + offsetX;
-        this.height = Math.abs(Math.round(thirdY * 100) / 100);
+        this.height = Math.abs(thirdY);
         
         var vertices = [];
         // if angle < 180 start at the top of the canvas, otherwise start at the bottom
