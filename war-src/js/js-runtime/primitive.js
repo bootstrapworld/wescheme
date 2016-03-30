@@ -2003,7 +2003,8 @@ PRIMITIVES['string->number'] =
 		 false, false,
 		 function(aState, str) {
 		 	check(aState, str, isString, 'string->number', 'string', 1);
-			return jsnums.toExact(jsnums.fromString(str));
+		 	var num = jsnums.fromString(str);		// will be false if it's invalid
+			return num? jsnums.toExact(num) : num; 	// make it a number or just return false
 		 });
 
 
