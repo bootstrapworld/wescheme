@@ -201,7 +201,6 @@ if (typeof(world) === 'undefined') {
         if(!this.vertices){
             throw new Error('BaseImage.render is not implemented for this type!');
         }
-        ctx.disableSmoothing();
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(x+this.vertices[0].x, y+this.vertices[0].y);
@@ -232,11 +231,9 @@ if (typeof(world) === 'undefined') {
         canvas.style.height = canvas.height + "px";
 
         var ctx = canvas.getContext('2d');
-        ctx.disableSmoothing = function() {
-            ctx.imageSmoothingEnabled = 
-            ctx.mozImageSmoothingEnabled =
-            ctx.webkitImageSmoothingEnabled = false;
-        }
+        ctx.imageSmoothingEnabled = ctx.imageSmoothingEnabled
+                                 || ctx.mozImageSmoothingEnabled
+                                 || ctx.webkitImageSmoothingEnabled;
         
         // KLUDGE: IE compatibility uses /js/excanvas.js, and dynamic
         // elements must be marked this way.
@@ -1013,9 +1010,7 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style  = style;
         this.color  = color;
-        // use a 0.5px offset so the vertices fall on the pixels, not between them
-        this.vertices = [{x:0.5,       y:height-0.5},{x:0.5,       y:0.5},
-                         {x:width-0.5, y:0         },{x:width-0.5, y:height-0.5}];
+        this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
         this.ariaText = " a" + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
           : " rectangle of width "+width+" and height "+height);
     };
@@ -1027,8 +1022,8 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         // sin(angle/2-in-radians) * side = half of base
         // cos(angle/2-in-radians) * side = half of height
-        this.width  = (Math.sin(angle/2 * Math.PI / 180) * side * 2);
-        this.height = (Math.abs(Math.cos(angle/2 * Math.PI / 180)) * side * 2);
+        this.width  = Math.sin(angle/2 * Math.PI / 180) * side * 2;
+        this.height = Math.abs(Math.cos(angle/2 * Math.PI / 180)) * side * 2;
         this.side   = side;
         this.angle  = angle;
         this.style  = style;
@@ -1247,22 +1242,22 @@ if (typeof(world) === 'undefined') {
 
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
-        this.width  = Math.max(sideC, thirdX) + offsetX;
+        this.width = Math.max(sideC, thirdX) + offsetX;
         this.height = Math.abs(thirdY);
         
         var vertices = [];
         // if angle < 180 start at the top of the canvas, otherwise start at the bottom
-        // use a 0.5px offset so the vertices fall on the pixels, not between them
         if(thirdY > 0){
-          vertices.push({x: offsetX + 0, y: 0.5});
-          vertices.push({x: offsetX + sideC, y: 0.5});
+          vertices.push({x: offsetX + 0, y: 0});
+          vertices.push({x: offsetX + sideC, y: 0});
           vertices.push({x: offsetX + thirdX, y: thirdY});
         } else {
-          vertices.push({x: offsetX + 0, y: Math.round(-thirdY)-0.5});
-          vertices.push({x: offsetX + sideC, y: Math.round(-thirdY)-0.5});
+          vertices.push({x: offsetX + 0, y: -thirdY});
+          vertices.push({x: offsetX + sideC, y: -thirdY});
           vertices.push({x: offsetX + thirdX, y: 0});
         }
         this.vertices = vertices;
+        
         this.style = style;
         this.color = color;
 
