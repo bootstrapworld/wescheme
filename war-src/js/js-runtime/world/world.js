@@ -147,11 +147,12 @@ if (typeof(world) === 'undefined') {
     // given two arrays of xs and ys, zip them into a vertex array
     var zipVertices = function(xs, ys){
         if(xs.length !== ys.length){throw new Error('failure in zipVertices');}
-        var vertices = [];
-        for(var i=0; i<xs.length;i++){
-            vertices.push({x: xs[i], y: ys[i]});
-        }
-        return vertices;
+        return xs.map(function(x, i){ return {x: x, y: ys[i]} });
+    };
+    // given an array of (x, y) pairs, unzip them into separate arrays
+    var unzipVertices = function(vertices){
+        return {xs: vertices.map(function(v) { return v.x }),
+                ys: vertices.map(function(v) { return v.y })};
     };
  
     // Base class for all images.
@@ -203,10 +204,29 @@ if (typeof(world) === 'undefined') {
         }
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(x+this.vertices[0].x, y+this.vertices[0].y);
-        for(var i=1; i < this.vertices.length; i++){
-            ctx.lineTo(x+this.vertices[i].x, y+this.vertices[i].y);
+
+        // pixel-perfect vertices fail on Chrome, and certain versions of FF,
+        // so we only enable the offset if we're not doing the test
+        if(ctx.isEqualityTest){
+            vertices = this.vertices;
+        } else {
+            // find the midpoint of the xs and ys from vertices
+            var points = unzipVertices(this.vertices),
+                xs = points.xs, ys = points.ys;
+            var midX = (Math.max.apply(Math, xs) - Math.min.apply(Math, xs)) / 2;
+            var midY = (Math.max.apply(Math, ys) - Math.min.apply(Math, ys)) / 2;
+
+            // compute 0.5px offsets to ensure that we draw on the pixel
+            // and not the pixel boundary
+            vertices = this.vertices.map(function(v){
+                return {x: v.x + (v.x <= midX ? 0.5 : -0.5),
+                        y: v.y + (v.y <= midY ? 0.5 : -0.5)};
+            });
         }
+
+        // draw a path from vertex to vertex, tightening by the offset
+        ctx.moveTo( x + this.vertices[0].x, y + this.vertices[0].y);
+        this.vertices.forEach(function(v, i){ ctx.lineTo( x + v.x, y + v.y); });
         ctx.closePath();
        
         if (this.style.toString().toLowerCase() === "outline") {
@@ -230,11 +250,6 @@ if (typeof(world) === 'undefined') {
         canvas.style.width  = canvas.width  + "px";
         canvas.style.height = canvas.height + "px";
 
-        var ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = ctx.imageSmoothingEnabled
-                                 || ctx.mozImageSmoothingEnabled
-                                 || ctx.webkitImageSmoothingEnabled;
-        
         // KLUDGE: IE compatibility uses /js/excanvas.js, and dynamic
         // elements must be marked this way.
         if (window && typeof window.G_vmlCanvasManager !== 'undefined') {
@@ -299,8 +314,8 @@ if (typeof(world) === 'undefined') {
       if(c1.width !== c2.width || c1.height !== c2.height){ return false;}
       try{
         var ctx1 = c1.getContext('2d'), ctx2 = c2.getContext('2d');
-        ctx1.imageSmoothingEnabled = false; // turn off antialiasing for more accurate comparisons
-        ctx2.imageSmoothingEnabled = false;
+        ctx1.isEqualityTest = true;
+        ctx2.isEqualityTest = true;
         this.render(ctx1, 0, 0); other.render(ctx2, 0, 0);
         // create temporary canvases
         var slice1 = document.createElement('canvas').getContext('2d'),
@@ -1285,14 +1300,17 @@ if (typeof(world) === 'undefined') {
         ctx.save();
         ctx.beginPath();
 
+        // shrink the dimensions and shift the offset to account for the 1px border width
+        var width = this.width - 1, height = this.height - 1;
+        aX += 0.5; aY += 0.5;
         // Most of this code is taken from:
         // http://webreflection.blogspot.com/2009/01/ellipse-and-circle-for-canvas-2d.html
-        var hB = (this.width / 2) * 0.5522848,
-        vB = (this.height / 2) * 0.5522848,
-        eX = aX + this.width,
-        eY = aY + this.height,
-        mX = aX + this.width / 2,
-        mY = aY + this.height / 2;
+        var hB = (width  / 2) * 0.5522848,
+            vB = (height / 2) * 0.5522848,
+            eX = aX + width ,
+            eY = aY + height,
+            mX = aX + width / 2,
+            mY = aY + height / 2;
         ctx.moveTo(aX, mY);
         ctx.bezierCurveTo(aX, mY - vB, mX - hB, aY, mX, aY);
         ctx.bezierCurveTo(mX + hB, aY, eX, mY - vB, eX, mY);
