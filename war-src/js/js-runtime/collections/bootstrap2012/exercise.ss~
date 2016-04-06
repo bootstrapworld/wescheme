@@ -1,0 +1,5 @@
+(require bootstrap2012/bootstrap-common)
+
+(check-expect (sq 3) 9)
+(check-expect (sine 3) #i0.052335956242943835)
+(check-expect (cosine 3) #i0.9986295347545738)
