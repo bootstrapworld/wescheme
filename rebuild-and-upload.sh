@@ -14,4 +14,4 @@ rm war/js/mzscheme-vm/*-min.js
 ant compile
 
 # Now upload
-./lib/appengine-java-sdk-1.8.8/bin/appcfg.sh --use_java7 update war
+./lib/appengine-java-sdk-1.9.34/bin/appcfg.sh --use_java7 update war
