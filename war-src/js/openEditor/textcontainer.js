@@ -77,7 +77,7 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.setCursorToEnd = function() {
 		this.impl.setCursorToEnd();
 	};
-  WeSchemeTextContainer.prototype.getCSS = function(pos){
+  	WeSchemeTextContainer.prototype.getCSS = function(pos){
 		return this.impl.getCSS(pos);
 	}
 	//////////////////////////////////////////////////////////////////////
@@ -118,12 +118,12 @@ var WeSchemeTextContainer;
 					matchBrackets: (options.matchBrackets !== undefined ? options.matchBrackets : true),
 					value: options.content || "",
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
-          inputStyle: "contenteditable"
+          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
+          			// inputStyle: "contenteditable" disabled for now due to contentEditable bug on Chrome
 				});
-       this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
-       this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
-       this.editor.getInputField().setAttribute("role", "input");
+       	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
+       	this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
+       	this.editor.getInputField().setAttribute("role", "input");
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
         // (using bold/italic to emphasize parts), and then pastes it into WeScheme
@@ -173,7 +173,7 @@ var WeSchemeTextContainer;
             cloneDOM = clone.getWrapperElement();
         cloneDOM.id  = "printedCM";
       }
-	    onSuccess.call(that, that);
+	  onSuccess.call(that, that);
 	};
 
 	CodeMirrorImplementation.prototype.getSourceB = function() {
@@ -284,12 +284,8 @@ var WeSchemeTextContainer;
 	};
 
 	CodeMirrorImplementation.prototype.focus = function() {
-    // The try/catch blocks are meant to work around
-    // an issue in IE8 and CodeMirror 3.1.  It may be obsolete
-    // as soon as the issue is resolved:
-    // https://github.com/marijnh/CodeMirror/issues/1200
-    try { this.editor.focus();   } catch (e) {}
-    try { this.editor.refresh(); } catch (e) {}
+    	this.editor.focus();
+    	this.editor.refresh();
 	};
 	
 	CodeMirrorImplementation.prototype.refresh = function() {

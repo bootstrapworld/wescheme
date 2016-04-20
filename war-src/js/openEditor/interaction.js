@@ -449,7 +449,7 @@ WeSchemeInteractions = (function () {
                 rewrapOutput(thing);
                 // ARIA: create alternate text for canvas element
                 thing.setAttribute("role", "alert");
-                thing.setAttribute("arial-atomic", "true");
+                thing.setAttribute("aria-atomic", "true");
             },
             transformDom : function(dom) {
                 var result = that._transformDom(dom);
