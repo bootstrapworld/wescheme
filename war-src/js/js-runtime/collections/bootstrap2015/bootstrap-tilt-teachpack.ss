@@ -11,6 +11,7 @@
 (define *target-increment* 20)
 (define *danger-increment* -50)
 (define LOSS-SCORE 0)
+(define GAMEOVER_IMG (bitmap/url "http://www.wescheme.org/images/teachpacks2012/gameover.png"))
 
 ;; Globals available to the students:
 (define *score* (box 0))
@@ -25,6 +26,9 @@
 ; how tolerant are we of tilt events? (only used in tilt teachpack)
 (define TOLERANCE 20)
 (define -TOLERANCE (- TOLERANCE))
+
+;; People hold devices at a beta tilt of around 40 degrees.
+(define RESTING-TOP-DOWN-ORIENTATION 40)
 
 ;fit-image-to: number number image -> image
 ;ensures the image is of size first number by second number, may crop the given image
@@ -129,8 +133,11 @@
       (set-box! *player-y* (posn-y (being-posn (world-player w))))
 
       (set-box! *score* (world-score w))
-      (overlay/align "middle" "top" (text/font score-string 18 (unbox TITLE-COLOR) #f 'default 'italic 'bold '#t) 
-                     (foldl draw-being (unbox BACKGROUND) all-beings)))))
+      (if (<= (world-score w) 0)
+          GAMEOVER_IMG
+          (place-image (text/font score-string 18 (unbox TITLE-COLOR) #f 'default 'italic 'bold '#t)
+                       (quotient (image-width (unbox BACKGROUND)) 2) 20 
+                       (foldl draw-being (unbox BACKGROUND) all-beings))))))
 
 ; wrap-update : (Number->Number or Number Number -> Posn) (list String) -> (Being -> Being)
 ; wrap the update function to ensure that it takes and returns a Being
@@ -139,7 +146,7 @@
     [(= (procedure-arity f) 1)
      (lambda (b) (make-being (make-posn (f (being-x b)) (being-y b)) (being-costume b)))]
     [(= (procedure-arity f) 2)
-     (lambdaambdaambda (b) (let ((new-posn (f (being-x b) (being-y b))))
+     (lambda (b) (let ((new-posn (f (being-x b) (being-y b))))
               (if (posn? new-posn) (make-being new-posn (being-costume b))
                   (begin (error "update-danger or update-target has been changed to accept an x- and y-coordinate, but is not returning a Posn.\n")
                          new-posn))))]))
