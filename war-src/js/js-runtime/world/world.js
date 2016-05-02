@@ -674,7 +674,7 @@ if (typeof(world) === 'undefined') {
             x1 = Math.max(placeX, 0) - placeX;
             x2 = Math.max(placeX, 0);
         }
-        
+
         if (placeY === "top") {
             y1 = 0;
             y2 = 0;
@@ -695,6 +695,9 @@ if (typeof(world) === 'undefined') {
             y2 = Math.max(placeY, 0);
         }
 
+        console.log("x1", x1, "x2", x2)
+        console.log("y1", y1, "y2", y2)
+        
         // calculate the vertices of this image by translating the verticies of the sub-images
         var i, v1 = img1.getVertices(), v2 = img2.getVertices(), xs = [], ys = [];
         for(i=0; i<v1.length; i++){
