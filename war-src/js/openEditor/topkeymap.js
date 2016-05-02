@@ -10,6 +10,8 @@ var BACKSPACE_KEYCODE = 8;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
 var ZOOMOUT_KEYCODE = 189;
+var DIM_KEYCODE = 113;
+var BRIGHTEN_KEYCODE = 114;
 
 
 // Global state: checks to see whether or not we're in the middle of a
@@ -60,6 +62,12 @@ plt.wescheme.topKeymap = function(e) {
           // IE-specific hack.
           e.keyCode = 0;
       }
+      return false;
+    }
+
+    if (e.keyCode === DIM_KEYCODE ||
+        e.keyCode === BRIGHTEN_KEYCODE) {
+      e.codemirrorIgnore = true;
       return false;
     }
   

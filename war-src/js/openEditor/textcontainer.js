@@ -118,8 +118,8 @@ var WeSchemeTextContainer;
 					matchBrackets: (options.matchBrackets !== undefined ? options.matchBrackets : true),
 					value: options.content || "",
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
-          			// inputStyle: "contenteditable" disabled for now due to contentEditable bug on Chrome
+          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
+      			 	inputStyle: "contenteditable" 
 				});
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});

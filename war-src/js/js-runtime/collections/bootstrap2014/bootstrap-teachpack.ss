@@ -125,8 +125,11 @@
       (set-box! *player-y* (posn-y (being-posn (world-player w))))
 
       (set-box! *score* (world-score w))
-      (overlay/align "middle" "top" (text/font score-string 18 (unbox TITLE-COLOR) #f 'default 'italic 'bold '#t) 
-                     (foldl draw-being (unbox BACKGROUND) all-beings)))))
+      (if (<= (world-score w) 0)
+          (bitmap/url "http://www.wescheme.org/images/teachpacks2012/gameover.png")
+          (place-image (text/font score-string 18 (unbox TITLE-COLOR) #f 'default 'italic 'bold '#t)
+                       (quotient (image-width (unbox BACKGROUND)) 2) 20 
+                       (foldl draw-being (unbox BACKGROUND) all-beings))))))
 
 ; wrap-update : (Number->Number or Number Number -> Posn) (list String) -> (Being -> Being)
 ; wrap the update function to ensure that it takes and returns a Being
