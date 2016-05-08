@@ -27,6 +27,9 @@
     <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery-ui-1.8.24.min.js" type="text/javascript"></script>
 
+    <!-- Google JavaScript API -->
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+
    <!-- The standard Google Loader script; use your own key. -->
     <script src="http://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
     <script type="text/javascript">
@@ -62,11 +65,6 @@
     <link rel="stylesheet" type="text/css" href="/js/codemirror2/lib/codemirror.css"></link>
     <link rel="stylesheet" type="text/css" href="/js/codemirror2-contrib/scheme2/schemecolors.css"></link>
 
-<!-- No longer need to load this, since we're relying on custom keyboards in android and iOS'
-    <script src="/js/ios-keyboard/iOSkeyboard.js" type="text/javascript"></script>
-    <link rel="stylesheet" type="text/css" href="/css/ios-keyboard/touch.css"></link>
--->
-
     <link rel="stylesheet" type="text/css" href="/css/definitions.css"></link>
 
     <!-- Design recipe widget stuff -->
@@ -86,9 +84,6 @@
 
     <script src="/js/openEditor/openEditor-calc-min.js" type="text/javascript"></script>
 
-<!--    <script src="https://apis.google.com/js/client:plusone.js"></script>
--->
-    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 
     <%
        org.wescheme.user.Session userSession =
