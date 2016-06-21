@@ -385,8 +385,8 @@ if (typeof(world) === 'undefined') {
     SceneImage.prototype.render = function(ctx, x, y) {
         var i;
         var childImage, childX, childY;
+         ctx.save();
         // create a clipping region around the boundaries of the Scene
-        console.log();
         ctx.fillStyle = this.color? colorString(this.color) : "transparent";
         ctx.fillRect(x, y, this.width, this.height);
         ctx.restore();
