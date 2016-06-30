@@ -396,13 +396,13 @@ if (typeof(world) === 'undefined') {
         ctx.rect(x, y, this.width, this.height);
         ctx.clip();
         // Ask every object to render itself inside the region
-        for(i = 0; i < this.children.length; i++) {
+        this.children.forEach(function(child) { 
             // then, render the child images
-            childImage = this.children[i][0];
-            childX = this.children[i][1];
-            childY = this.children[i][2];
+            childImage = child[0];
+            childX = child[1];
+            childY = child[2];
             childImage.render(ctx, childX + x, childY + y);
-        }
+        });
         // unclip
         ctx.restore();
 
@@ -695,20 +695,18 @@ if (typeof(world) === 'undefined') {
             y2 = Math.max(placeY, 0);
         }
 
-        // calculate the vertices of this image by translating the verticies of the sub-images
+        // calculate the vertices of this image by translating the vertices of the sub-images
         var i, v1 = img1.getVertices(), v2 = img2.getVertices(), xs = [], ys = [];
-        for(i=0; i<v1.length; i++){
-            xs.push(v1[i].x + x1);
-            ys.push(v1[i].y + y1);
-        }
-        for(i=0; i<v2.length; i++){
-            xs.push(v2[i].x + x2);
-            ys.push(v2[i].y + y2);
-        }
+        v1 = v1.map(function(v){ return {x: v.x + x1, y: v.y + y1}; });
+        v2 = v2.map(function(v){ return {x: v.x + x2, y: v.y + y2}; });
+        
         // store the vertices as something private, so this.getVertices() will still return undefined
-        this._vertices = zipVertices(xs, ys);
-        this.width  = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
-        this.height = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+        this._vertices = v1.concat(v2);
+
+        // compute width and height
+        var unzipped = unzipVertices(this._vertices);
+        this.width  = Math.max.apply(Math, unzipped.xs) - Math.min.apply(Math, unzipped.xs);
+        this.height = Math.max.apply(Math, unzipped.ys) - Math.min.apply(Math, unzipped.ys);
  
         // store the offsets for rendering
         this.x1 = x1;
@@ -783,18 +781,16 @@ if (typeof(world) === 'undefined') {
 
         // rotate each point as if it were rotated about (0,0)
         var vertices = img.getVertices(), xs = [], ys = [];
-        for(var i=0; i<vertices.length; i++){
-            xs[i] = vertices[i].x*cos - vertices[i].y*sin;
-            ys[i] = vertices[i].x*sin + vertices[i].y*cos;
-        }
+        vertices.forEach(function(v) {
+            xs.push( v.x*cos - v.y*sin );
+            ys.push( v.x*sin + v.y*cos );
+        });
 
         // figure out what translation is necessary to shift the vertices back to 0,0
         var translateX = -Math.min.apply( Math, xs );
         var translateY = -Math.min.apply( Math, ys );
-        for(var i=0; i<vertices.length; i++){
-            xs[i] += translateX;
-            ys[i] += translateY;
-       }
+        xs = xs.map(function(x){ return x + translateX; });
+        ys = ys.map(function(y){ return y + translateY; });
  
         // store the vertices as something private, so this.getVertices() will still return undefined
         this._vertices = zipVertices(xs,ys);
@@ -839,14 +835,11 @@ if (typeof(world) === 'undefined') {
     // Scale an image
     var ScaleImage = function(xFactor, yFactor, img) {
         BaseImage.call(this);
-        var vertices = img.getVertices();
-        var xs = [], ys = [];
-        for(var i=0; i<vertices.length; i++){
-            xs[i] = vertices[i].x*xFactor;
-            ys[i] = vertices[i].y*yFactor;
-        }
-        // store the vertices as something private, so this.getVertices() will still return undefined
-        this._vertices = zipVertices(xs,ys);
+
+        // grab the img vertices, scale them, and save the result to this_vertices
+        this._vertices = img.getVertices().map(function(v) {
+            return {x: v.x * xFactor, y: v.y * yFactor };
+        });
  
         this.img      = img;
         this.width    = img.width * xFactor;
@@ -953,7 +946,7 @@ if (typeof(world) === 'undefined') {
         this.width      = img.width;
         this.height     = img.height;
         this.direction  = direction;
-        this.ariaText =  direction+"ly flipped image: " + img.ariaText;
+        this.ariaText   =  direction+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
@@ -991,10 +984,10 @@ if (typeof(world) === 'undefined') {
     var colorString = function(aColor, aStyle) {
       var styleAlpha = isNaN(aStyle)? 1.0 : aStyle/255,
           colorAlpha = types.colorAlpha(aColor)/255;
-      return "rgba(" + types.colorRed(aColor) + "," +
-                      types.colorGreen(aColor) + ", " +
-                      types.colorBlue(aColor) + ", " +
-                      styleAlpha*colorAlpha + ")";
+      return "rgba(" +  types.colorRed(aColor)   + ", " +
+                        types.colorGreen(aColor) + ", " +
+                        types.colorBlue(aColor)  + ", " +
+                        styleAlpha * colorAlpha  + ")";
     };
  
     //////////////////////////////////////////////////////////////////////
@@ -1057,20 +1050,20 @@ if (typeof(world) === 'undefined') {
     var PosnImage = function(vertices, style, color) {
         BaseImage.call(this);
         var xs = vertices.map(function(v){return types.posnX(v);}),
-            ys = vertices.map(function(v){return types.posnY(v);}),
-            vertices = zipVertices(xs, ys);
+            ys = vertices.map(function(v){return types.posnY(v);});
 
         this.width      = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
         this.height     = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
         this.style      = style;
         this.color      = color;
+
         // shift the vertices by the calculated offsets, now that we know the width
-        var xOffset = Math.min.apply(Math, xs);
-        var yOffset = Math.min.apply(Math, ys);
-        for(var i=0; i<vertices.length; i++){
-            vertices[i].x -= xOffset; vertices[i].y -= yOffset;
-        }
-        this.vertices   = vertices;
+        var translateX = -Math.min.apply(Math, xs);
+        var translateY = -Math.min.apply(Math, ys);
+        xs = xs.map(function(x){ return x + translateX; });
+        ys = xs.map(function(y){ return y + translateY; });
+
+        this.vertices   = zipVertices(xs, ys);
     };
     PosnImage.prototype = heir(BaseImage.prototype);
 
@@ -1094,8 +1087,7 @@ if (typeof(world) === 'undefined') {
             xs.push(Math.round(this.outerRadius*Math.cos(radians-adjust)));
             ys.push(Math.round(this.outerRadius*Math.sin(radians-adjust)));
         }
-        var vertices = zipVertices(xs, ys);
-
+        
         this.width      = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
         this.height     = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
         this.length     = length;
@@ -1105,13 +1097,13 @@ if (typeof(world) === 'undefined') {
         this.color      = color;
  
         // shift the vertices by the calculated offsets, now that we know the width
-        var xOffset = Math.round(this.width/2);
-        var yOffset = ((this.count % 2)? this.outerRadius : this.innerRadius);
-        for(i=0; i<vertices.length; i++){
-            vertices[i].x += xOffset; vertices[i].y += yOffset;
-        }
-        this.vertices   = vertices;
+        var translateX = Math.round(this.width/2);
+        var translateY = ((this.count % 2)? this.outerRadius : this.innerRadius);
+        xs = xs.map(function(x){ return x + translateX; });
+        ys = ys.map(function(y){ return y + translateY; });
  
+        // save the vertices and the ariaText
+        this.vertices = zipVertices(xs, ys);
         this.ariaText = " a"+colorToSpokenString(color,style) + ", "+count
                         +" sided polygon with each side of length "+length;
     };
@@ -1236,8 +1228,8 @@ if (typeof(world) === 'undefined') {
         // figure out what translation is necessary to shift the vertices back to 0,0
         var translateX = -Math.min.apply( Math, xs );
         var translateY = -Math.min.apply( Math, ys );
-        xs = xs.map(function(x){ return x + translateX});
-        ys = ys.map(function(y){ return y + translateY});
+        xs = xs.map(function(x){ return x + translateX; });
+        ys = ys.map(function(y){ return y + translateY; });
 
         // calculate width and height of the bounding box
         this.width  = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
