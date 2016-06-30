@@ -1222,18 +1222,29 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.radius     = Math.max(this.inner, this.outer);
-        this.width      = this.radius*2;
-        this.height     = this.radius*2;
-        var vertices    = [];
+        //this.width      = this.radius*2;
+        //this.height     = this.radius*2;
+        var xs = [], ys = [];
  
         var oneDegreeAsRadian = Math.PI / 180;
         for(var pt = 0; pt < (this.points * 2) + 1; pt++ ) {
           var rads = ( ( 360 / (2 * this.points) ) * pt ) * oneDegreeAsRadian - 0.5;
           var radius = ( pt % 2 === 1 ) ? this.outer : this.inner;
-          vertices.push({x:this.radius + ( Math.sin( rads ) * radius ),
-                         y:this.radius + ( Math.cos( rads ) * radius )} );
+          xs.push(this.radius + ( Math.sin( rads ) * radius ));
+          ys.push(this.radius + ( Math.cos( rads ) * radius ));
         }
-        this.vertices = vertices;
+        // figure out what translation is necessary to shift the vertices back to 0,0
+        var translateX = -Math.min.apply( Math, xs );
+        var translateY = -Math.min.apply( Math, ys );
+        xs = xs.map(function(x){ return x + translateX});
+        ys = ys.map(function(y){ return y + translateY});
+
+        // calculate width and height of the bounding box
+        this.width  = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
+        this.height = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+
+        // store the vertices and ariaText for rendering
+        this.vertices = zipVertices(xs, ys);
         this.ariaText = " a" + colorToSpokenString(color,style) + ", " + points +
             "pointeded star with inner radius "+inner+" and outer radius "+outer;
     };
