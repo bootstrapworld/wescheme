@@ -144,11 +144,6 @@ if (typeof(world) === 'undefined') {
         return chain = (v1_str+","+v1_str).indexOf(v2_str) > -1;
     };
 
-    // given two arrays of xs and ys, zip them into a vertex array
-    var zipVertices = function(xs, ys){
-        if(xs.length !== ys.length){throw new Error('failure in zipVertices');}
-        return xs.map(function(x, i){ return {x: x, y: ys[i]} });
-    };
     // given an array of (x, y) pairs, unzip them into separate arrays
     var unzipVertices = function(vertices){
         return {xs: vertices.map(function(v) { return v.x }),
@@ -722,10 +717,6 @@ if (typeof(world) === 'undefined') {
         // store the vertices as something private, so this.getVertices() will still return undefined
         this._vertices = v1.concat(v2);
 
-        // compute width and height
-        this.width  = findWidth(this._vertices);
-        this.height = findHeight(this._vertices);
- 
         // store the offsets for rendering
         this.x1 = x1;
         this.y1 = y1;
@@ -754,6 +745,8 @@ if (typeof(world) === 'undefined') {
         } else if(!isNaN(placeY)){
           positionText += " , shifted up by "+placeY;
         }
+        this.width  = findWidth(this._vertices);
+        this.height = findHeight(this._vertices);
         this.ariaText = " an overlay: first image is" + img1.ariaText + positionText + img2.ariaText;
     };
 
@@ -811,7 +804,7 @@ if (typeof(world) === 'undefined') {
         this.angle      = Math.round(angle);
         this.translateX = -Math.min.apply( Math, vs.xs );
         this.translateY = -Math.min.apply( Math, vs.ys );
-        this.ariaText = "Rotated image, "+angle+" degrees: "+img.ariaText;
+        this.ariaText   = "Rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
@@ -955,7 +948,7 @@ if (typeof(world) === 'undefined') {
         this.width      = img.width;
         this.height     = img.height;
         this.direction  = direction;
-        this.ariaText   =  direction+"ly flipped image: " + img.ariaText;
+        this.ariaText   = direction+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
@@ -967,13 +960,12 @@ if (typeof(world) === 'undefined') {
         if(this.direction === "horizontal"){
             ctx.scale(-1, 1);
             ctx.translate(-(this.width+2*x), 0);
-            this.img.render(ctx, x, y);
         }
         if (this.direction === "vertical"){
             ctx.scale(1, -1);
             ctx.translate(0, -(this.height+2*y));
-            this.img.render(ctx, x, y);
         }
+        this.img.render(ctx, x, y);
         ctx.restore();
     };
 
@@ -1091,12 +1083,8 @@ if (typeof(world) === 'undefined') {
         
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
-        this.length     = length;
-        this.count      = count;
         this.style      = style;
         this.color      = color;
- 
-        // save the vertices and the ariaText
         this.vertices = translateVertices(vertices);
         this.ariaText = " a"+colorToSpokenString(color,style) + ", "+count
                         +" sided polygon with each side of length "+length;
@@ -1202,27 +1190,22 @@ if (typeof(world) === 'undefined') {
     // http://developer.apple.com/safari/articles/makinggraphicswithcanvas.html
     var StarImage = function(points, outer, inner, style, color) {
         BaseImage.call(this);
-        this.points     = points;
-        this.outer      = outer;
-        this.inner      = inner;
-        this.style      = style;
-        this.color      = color;
-        this.radius     = Math.max(this.inner, this.outer);
+        var radius     = Math.max(inner, outer);
         var vertices    = [];
  
         var oneDegreeAsRadian = Math.PI / 180;
-        for(var pt = 0; pt < (this.points * 2) + 1; pt++ ) {
-          var rads = ( ( 360 / (2 * this.points) ) * pt ) * oneDegreeAsRadian - 0.5;
-          var radius = ( pt % 2 === 1 ) ? this.outer : this.inner;
-          vertices.push({ x: this.radius + ( Math.sin( rads ) * radius ),
-                          y: this.radius + ( Math.cos( rads ) * radius )});
+        for(var pt = 0; pt < (points * 2) + 1; pt++ ) {
+          var rads = ( ( 360 / (2 * points) ) * pt ) * oneDegreeAsRadian - 0.5;
+          var radius = ( pt % 2 === 1 ) ? outer : inner;
+          vertices.push({ x: radius + ( Math.sin( rads ) * radius ),
+                          y: radius + ( Math.cos( rads ) * radius )});
         }
         
         // calculate width and height of the bounding box
         this.width  = findWidth(vertices);
         this.height = findHeight(vertices);
-
-        // store the vertices and ariaText for rendering
+        this.style  = style;
+        this.color  = color;
         this.vertices = translateVertices(vertices);
         this.ariaText = " a" + colorToSpokenString(color,style) + ", " + points +
             "pointeded star with inner radius "+inner+" and outer radius "+outer;
@@ -1238,12 +1221,8 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
         var thirdY = sideB * Math.sin(angleA * Math.PI/180);
-
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
 
-        this.width = Math.max(sideC, thirdX) + offsetX;
-        this.height = Math.abs(thirdY);
-        
         var vertices = [];
         // if angle < 180 start at the top of the canvas, otherwise start at the bottom
         if(thirdY > 0){
@@ -1255,11 +1234,12 @@ if (typeof(world) === 'undefined') {
           vertices.push({x: offsetX + sideC,    y: -thirdY});
           vertices.push({x: offsetX + thirdX,   y: 0});
         }
-        this.vertices = vertices;
         
+        this.width = Math.max(sideC, thirdX) + offsetX;
+        this.height = Math.abs(thirdY);
         this.style = style;
         this.color = color;
-
+        this.vertices = vertices;
         this.ariaText = " a"+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
           +", with an angle of " + (angleA%180) + " degrees between it and a side of length "+sideB;
     };
@@ -1273,7 +1253,6 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style = style;
         this.color = color;
-
         this.ariaText = " a"+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
               : " ellipse of width "+width+" and height "+height);
     };
@@ -1334,13 +1313,12 @@ if (typeof(world) === 'undefined') {
             if (y >= 0) { vertices = [{x: -x, y:  0}, {x: 0, y: y}]; }
             else        { vertices = [{x: -x, y: -y}, {x: 0, y: 0}]; }
         }
-        // preserve the invariant that all vertex-based images have a style
-        this.style  = "outline";
-        this.color  = color;
+        
         this.width  = Math.abs(x);
         this.height = Math.abs(y);
+        this.style  = "outline"; // all vertex-based images must have a style
+        this.color  = color;
         this.vertices = vertices;
-
         this.ariaText = " a" + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
     };
 
