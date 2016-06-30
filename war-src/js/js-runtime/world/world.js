@@ -154,7 +154,27 @@ if (typeof(world) === 'undefined') {
         return {xs: vertices.map(function(v) { return v.x }),
                 ys: vertices.map(function(v) { return v.y })};
     };
+    // given an array of vertices, find the width of the shape
+    var findWidth = function(vertices){
+        var xs = unzipVertices(vertices).xs;
+        return Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
+    }
+    // given an array of vertices, find the height of the shape
+    var findHeight = function(vertices){
+        var ys = unzipVertices(vertices).ys;
+        return Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+    }
  
+    // given a list of vertices and a translationX/Y, shift them
+    var translateVertices = function(vertices) {
+        var vs = unzipVertices(vertices);
+        var translateX = -Math.min.apply( Math, vs.xs );
+        var translateY = -Math.min.apply( Math, vs.ys );
+        return vertices.map(function(v) {
+            return {x: v.x + translateX, y: v.y + translateY };
+        })
+    }
+
     // Base class for all images.
     var BaseImage = function() {};
     world.Kernel.BaseImage = BaseImage;
@@ -165,14 +185,15 @@ if (typeof(world) === 'undefined') {
                 thing !== undefined &&
                 thing instanceof BaseImage);
     };
- 
+ /*
+    // almost certainly dead code
     BaseImage.prototype.updatePinhole = function(x, y) {
         var aCopy = clone(this);
         aCopy.pinholeX = x;
         aCopy.pinholeY = y;
         return aCopy;
     };
-
+*/
     // return Integer-only height for the getter methods
     BaseImage.prototype.getHeight = function(){
         return Math.round(this.height);
@@ -211,10 +232,8 @@ if (typeof(world) === 'undefined') {
             vertices = this.vertices;
         } else {
             // find the midpoint of the xs and ys from vertices
-            var points = unzipVertices(this.vertices),
-                xs = points.xs, ys = points.ys;
-            var midX = (Math.max.apply(Math, xs) - Math.min.apply(Math, xs)) / 2;
-            var midY = (Math.max.apply(Math, ys) - Math.min.apply(Math, ys)) / 2;
+            var midX = findWidth(this.vertices) / 2;
+            var midY = findHeight(this.vertices) / 2;
 
             // compute 0.5px offsets to ensure that we draw on the pixel
             // and not the pixel boundary
@@ -704,9 +723,8 @@ if (typeof(world) === 'undefined') {
         this._vertices = v1.concat(v2);
 
         // compute width and height
-        var unzipped = unzipVertices(this._vertices);
-        this.width  = Math.max.apply(Math, unzipped.xs) - Math.min.apply(Math, unzipped.xs);
-        this.height = Math.max.apply(Math, unzipped.ys) - Math.min.apply(Math, unzipped.ys);
+        this.width  = findWidth(this._vertices);
+        this.height = findHeight(this._vertices);
  
         // store the offsets for rendering
         this.x1 = x1;
@@ -776,32 +794,23 @@ if (typeof(world) === 'undefined') {
         }
         var sin   = Math.sin(angle * Math.PI / 180);
         var cos   = Math.cos(angle * Math.PI / 180);
-        var width = img.width;
-        var height= img.height;
-
+        
         // rotate each point as if it were rotated about (0,0)
-        var vertices = img.getVertices(), xs = [], ys = [];
-        vertices.forEach(function(v) {
-            xs.push( v.x*cos - v.y*sin );
-            ys.push( v.x*sin + v.y*cos );
+        var vertices = img.getVertices().map(function(v) {
+            return {x: v.x*cos - v.y*sin, y: v.x*sin + v.y*cos };
         });
 
-        // figure out what translation is necessary to shift the vertices back to 0,0
-        var translateX = -Math.min.apply( Math, xs );
-        var translateY = -Math.min.apply( Math, ys );
-        xs = xs.map(function(x){ return x + translateX; });
-        ys = ys.map(function(y){ return y + translateY; });
- 
+        // extract the xs and ys separately
+        var vs = unzipVertices(vertices);
+        
         // store the vertices as something private, so this.getVertices() will still return undefined
-        this._vertices = zipVertices(xs,ys);
-        var rotatedWidth  = Math.max.apply( Math, xs ) - Math.min.apply( Math, xs );
-        var rotatedHeight = Math.max.apply( Math, ys ) - Math.min.apply( Math, ys );
+        this._vertices  = translateVertices(vertices);
         this.img        = img;
-        this.width      = rotatedWidth;
-        this.height     = rotatedHeight;
+        this.width      = findWidth(vertices);
+        this.height     = findHeight(vertices);
         this.angle      = Math.round(angle);
-        this.translateX = translateX;
-        this.translateY = translateY;
+        this.translateX = -Math.min.apply( Math, vs.xs );
+        this.translateY = -Math.min.apply( Math, vs.ys );
         this.ariaText = "Rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
@@ -812,7 +821,7 @@ if (typeof(world) === 'undefined') {
     // translate the canvas using the calculated values, then draw at the rotated (x,y) offset.
     RotateImage.prototype.render = function(ctx, x, y) {
         ctx.save();
-        ctx.translate(x+this.translateX, y + this.translateY);
+        ctx.translate(x + this.translateX, y + this.translateY);
         ctx.rotate(this.angle * Math.PI / 180);
         this.img.render(ctx, 0, 0);
         ctx.restore();
@@ -1032,8 +1041,6 @@ if (typeof(world) === 'undefined') {
         // cos(angle/2-in-radians) * side = half of height
         this.width  = Math.sin(angle/2 * Math.PI / 180) * side * 2;
         this.height = Math.abs(Math.cos(angle/2 * Math.PI / 180)) * side * 2;
-        this.side   = side;
-        this.angle  = angle;
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:this.width/2, y:0},
@@ -1049,21 +1056,15 @@ if (typeof(world) === 'undefined') {
     //
     var PosnImage = function(vertices, style, color) {
         BaseImage.call(this);
-        var xs = vertices.map(function(v){return types.posnX(v);}),
-            ys = vertices.map(function(v){return types.posnY(v);});
+        var vertices = vertices.map(function(v){
+            return { x: types.posnX(v), y: types.posnY(v) }
+        });
 
-        this.width      = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
-        this.height     = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+        this.width      = findWidth(vertices);
+        this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
-
-        // shift the vertices by the calculated offsets, now that we know the width
-        var translateX = -Math.min.apply(Math, xs);
-        var translateY = -Math.min.apply(Math, ys);
-        xs = xs.map(function(x){ return x + translateX; });
-        ys = xs.map(function(y){ return y + translateY; });
-
-        this.vertices   = zipVertices(xs, ys);
+        this.vertices   = translateVertices(vertices);
     };
     PosnImage.prototype = heir(BaseImage.prototype);
 
@@ -1081,29 +1082,22 @@ if (typeof(world) === 'undefined') {
         var adjust = (3*Math.PI/2)+Math.PI/count;
         
         // rotate around outer circle, storing x and y coordinates
-        var radians = 0, xs = [], ys = [];
+        var radians = 0, vertices = [];
         for(var i = 0; i < count; i++) {
             radians = radians + (step*2*Math.PI/count);
-            xs.push(Math.round(this.outerRadius*Math.cos(radians-adjust)));
-            ys.push(Math.round(this.outerRadius*Math.sin(radians-adjust)));
+            vertices.push({ x: Math.round(this.outerRadius*Math.cos(radians-adjust)),
+                            y: Math.round(this.outerRadius*Math.sin(radians-adjust))});
         }
         
-        this.width      = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
-        this.height     = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+        this.width      = findWidth(vertices);
+        this.height     = findHeight(vertices);
         this.length     = length;
         this.count      = count;
-        this.step       = step;
         this.style      = style;
         this.color      = color;
  
-        // shift the vertices by the calculated offsets, now that we know the width
-        var translateX = Math.round(this.width/2);
-        var translateY = ((this.count % 2)? this.outerRadius : this.innerRadius);
-        xs = xs.map(function(x){ return x + translateX; });
-        ys = ys.map(function(y){ return y + translateY; });
- 
         // save the vertices and the ariaText
-        this.vertices = zipVertices(xs, ys);
+        this.vertices = translateVertices(vertices);
         this.ariaText = " a"+colorToSpokenString(color,style) + ", "+count
                         +" sided polygon with each side of length "+length;
     };
@@ -1214,29 +1208,22 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.radius     = Math.max(this.inner, this.outer);
-        //this.width      = this.radius*2;
-        //this.height     = this.radius*2;
-        var xs = [], ys = [];
+        var vertices    = [];
  
         var oneDegreeAsRadian = Math.PI / 180;
         for(var pt = 0; pt < (this.points * 2) + 1; pt++ ) {
           var rads = ( ( 360 / (2 * this.points) ) * pt ) * oneDegreeAsRadian - 0.5;
           var radius = ( pt % 2 === 1 ) ? this.outer : this.inner;
-          xs.push(this.radius + ( Math.sin( rads ) * radius ));
-          ys.push(this.radius + ( Math.cos( rads ) * radius ));
+          vertices.push({ x: this.radius + ( Math.sin( rads ) * radius ),
+                          y: this.radius + ( Math.cos( rads ) * radius )});
         }
-        // figure out what translation is necessary to shift the vertices back to 0,0
-        var translateX = -Math.min.apply( Math, xs );
-        var translateY = -Math.min.apply( Math, ys );
-        xs = xs.map(function(x){ return x + translateX; });
-        ys = ys.map(function(y){ return y + translateY; });
-
+        
         // calculate width and height of the bounding box
-        this.width  = Math.max.apply(Math, xs) - Math.min.apply(Math, xs);
-        this.height = Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
+        this.width  = findWidth(vertices);
+        this.height = findHeight(vertices);
 
         // store the vertices and ariaText for rendering
-        this.vertices = zipVertices(xs, ys);
+        this.vertices = translateVertices(vertices);
         this.ariaText = " a" + colorToSpokenString(color,style) + ", " + points +
             "pointeded star with inner radius "+inner+" and outer radius "+outer;
     };
@@ -1260,13 +1247,13 @@ if (typeof(world) === 'undefined') {
         var vertices = [];
         // if angle < 180 start at the top of the canvas, otherwise start at the bottom
         if(thirdY > 0){
-          vertices.push({x: offsetX + 0, y: 0});
-          vertices.push({x: offsetX + sideC, y: 0});
-          vertices.push({x: offsetX + thirdX, y: thirdY});
+          vertices.push({x: offsetX + 0,        y: 0});
+          vertices.push({x: offsetX + sideC,    y: 0});
+          vertices.push({x: offsetX + thirdX,   y: thirdY});
         } else {
-          vertices.push({x: offsetX + 0, y: -thirdY});
-          vertices.push({x: offsetX + sideC, y: -thirdY});
-          vertices.push({x: offsetX + thirdX, y: 0});
+          vertices.push({x: offsetX + 0,        y: -thirdY});
+          vertices.push({x: offsetX + sideC,    y: -thirdY});
+          vertices.push({x: offsetX + thirdX,   y: 0});
         }
         this.vertices = vertices;
         
