@@ -1118,13 +1118,7 @@ if (typeof(world) === 'undefined') {
  
     PolygonImage.prototype = heir(BaseImage.prototype);
 
-    var maybeQuote = function(s) {
-        if (/ /.test(s)) {
-            return "\"" + s + "\"";
-        }
-        return s;
-    };
-
+    
     //////////////////////////////////////////////////////////////////////
     // TextImage: String Number Color String String String String any/c Boolean -> Image
     var TextImage = function(str, size, color, face, family, style, weight, underline, outline) {
