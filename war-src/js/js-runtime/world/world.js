@@ -397,7 +397,6 @@ if (typeof(world) === 'undefined') {
 
     // render: 2d-context primitive-number primitive-number -> void
     SceneImage.prototype.render = function(ctx, x, y) {
-        var i;
         var childImage, childX, childY;
          ctx.save();
         // create a clipping region around the boundaries of the Scene
@@ -844,7 +843,7 @@ if (typeof(world) === 'undefined') {
         });
  
         this.img      = img;
-        this.width    = img.width * xFactor;
+        this.width    = img.width  * xFactor;
         this.height   = img.height * yFactor;
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
@@ -884,7 +883,7 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
-        this.ariaText = "Cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
+        this.ariaText   = "Cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
@@ -1085,9 +1084,9 @@ if (typeof(world) === 'undefined') {
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
-        this.vertices = translateVertices(vertices);
-        this.ariaText = " a"+colorToSpokenString(color,style) + ", "+count
-                        +" sided polygon with each side of length "+length;
+        this.vertices   = translateVertices(vertices);
+        this.ariaText   = " a"+colorToSpokenString(color,style) + ", " + count
+                            +" sided polygon with each side of length " + length;
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
@@ -1118,8 +1117,8 @@ if (typeof(world) === 'undefined') {
  
         // build a DOM node with the same styling as the canvas, then measure it
         var container = document.createElement("div"),
-            parent = document.createElement("span"),
-            image = document.createElement("img");    // hack to get at CSS measuring properties
+            parent    = document.createElement("span"),
+            image     = document.createElement("img");// hack to get at CSS measuring properties
         parent.style.font = this.font;                // use the same font settings as the context
         image.width = 42; image.height = 1;           // we use a dataURL to reduce dependency on external image files
         image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWM4MbPgPwAGzwLR05RbqwAAAABJRU5ErkJggg==";
