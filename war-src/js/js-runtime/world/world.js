@@ -141,7 +141,7 @@ if (typeof(world) === 'undefined') {
         var v1_str = v1.map(function(o){return "x:"+o.x+",y:"+o.y}).join(","),
             v2_str = v2.map(function(o){return "x:"+o.x+",y:"+o.y}).join(",");
         // v1 == rot(v2) if append(v1,v1) contains v2
-        return chain = (v1_str+","+v1_str).indexOf(v2_str) > -1;
+        return (v1_str+","+v1_str).indexOf(v2_str) > -1;
     };
 
     // given an array of (x, y) pairs, unzip them into separate arrays
