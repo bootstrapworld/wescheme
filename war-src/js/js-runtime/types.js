@@ -1501,7 +1501,7 @@ var textToDomNode = function(text) {
     }
     wrapper.className = (text==="true" || text==="false")? "wescheme-boolean" : "wescheme-string";
     wrapper.style.fontFamily = 'monospace';
-    wrapper.style.whiteSpace = "pre";
+    wrapper.style.whiteSpace = "pre-wrap";
     wrapper.appendChild(rawString);
     // if the text isn't pure ASCII, make a toggleable node 
     if(text !== unicodeToChar(text)) {
