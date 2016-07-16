@@ -54,6 +54,7 @@ public class LoadProjectServlet extends HttpServlet {
                     resp.sendError(403);
                 }					
             } else if (req.getParameter("publicId") != null) {
+                resp.addHeader("Access-Control-Allow-Origin", "*");
                 Program prog = getProgramByPublicId(pm, req.getParameter("publicId"));
                 if (isOwner(userSession, prog) || prog.getIsSourcePublic()) {
                     resp.setCharacterEncoding("UTF-8");
