@@ -1,4 +1,7 @@
 #!/bin/sh
+echo "BEFORE DEPLOYING, make sure the version number in appengine-web.xml is correct. Press CTRL+C to cancel, or Enter to continue: "
+read input
+
 set -e
 set -x
 
