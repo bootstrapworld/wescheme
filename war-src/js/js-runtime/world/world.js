@@ -440,7 +440,7 @@ if (typeof(world) === 'undefined') {
             if (rec1[1] !== rec2[1] ||
                 rec1[2] !== rec2[2] ||
                 !types.isEqual(rec1[0], rec2[0], aUnionFind)) {
-                return false;
+                BaseImage.prototype.isEqual.call(this, other, aUnionFind);
             }
         }
         return true;
@@ -1204,7 +1204,7 @@ if (typeof(world) === 'undefined') {
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
-        this.vertices   = translateVertices(vertices);
+        this.vertices   =   translateVertices(vertices);
         this.ariaText   = " a" + colorToSpokenString(color,style) + ", " + points +
                           "pointed star with inner radius "+inner+" and outer radius "+outer;
     };
