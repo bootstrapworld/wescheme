@@ -17,7 +17,7 @@ canvas.replOutput * {padding-left: 0px; clear: none;}
 /************************************************
 Define coloring for basic WeScheme types, and re-use them for our CM instances 
 */
-.wescheme-string,     .cm-scheme-string    {color: green;}
+.wescheme-string,     .cm-scheme-string    {color: green; font-weight: 900;} /* max-bold for strings */
 .wescheme-number,     .cm-scheme-number    {color: blue;}
 .wescheme-boolean,    .cm-scheme-boolean   {color: darkred;}
 .wescheme-character,  .cm-scheme-character {color: orange;}
