@@ -27,31 +27,8 @@ var initializeEditor;
 
 
 (function() {
-    var setupDocumentationFrame = function() {
-	var thediv = document.getElementById("documentation");
-	thediv.style.display = 'none';
-	var button = document.getElementById("docs");
-	button.onclick = function() { 
-            if (! iframe.src) { iframe.src = "/doc/wescheme.html" };
-	    jQuery(thediv).dialog("open");
-	};
-	/*
-	  var hideButton = document.getElementById("docButton");
-	  hideButton.onclick = function() {
-	  thediv.style.display = 'none';
-	  }*/
-	var iframe = document.getElementById("docFrame");  
-	
-	var resetButton = document.getElementById("resetButton");
-	resetButton.onclick = function() {
-	    iframe.src = "/doc/wescheme.html";
-	};
-    };
-
-
 
     initializeEditor = function(attrs) {
-	setupDocumentationFrame();
 	plt.wescheme.browserCheck();
 	maybeHideHeaderAndFooter(attrs.hideHeader, 
                                  attrs.hideToolbar,
