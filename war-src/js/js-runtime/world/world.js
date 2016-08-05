@@ -306,7 +306,8 @@ if (typeof(world) === 'undefined') {
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
     // more efficient ways of comparing one another
     BaseImage.prototype.isEqual = function(other, aUnionFind) {
-      if(this.getWidth()  !== other.getWidth()    ||
+      if(!(other instanceof BaseImage) ||
+         this.getWidth()  !== other.getWidth()    ||
          this.getHeight() !== other.getHeight()){ return false; }
 
       // FAST PATH: if they're both vertex-based images, compare
