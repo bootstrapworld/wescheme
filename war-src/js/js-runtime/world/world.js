@@ -221,9 +221,15 @@ if (typeof(world) === 'undefined') {
         ctx.save();
         ctx.beginPath();
 
+        // we care about the stroke because drawing to a canvas is *different* for
+        // fill v. stroke! If it's fill, we can draw on the pixel boundaries and
+        // stroke within them. If it's stroke, we need to draw _inside_ those 
+        // boudanries, adjusting by a half-pixel towards the center.
+        var isStroke = this.style.toString().toLowerCase() === "outline";
+
         // pixel-perfect vertices fail on Chrome, and certain versions of FF,
         // so we only enable the offset if we're not doing the test
-        if(ctx.isEqualityTest){
+        if(ctx.isEqualityTest || !isStroke){
             vertices = this.vertices;
         } else {
             // find the midpoint of the xs and ys from vertices
@@ -239,11 +245,11 @@ if (typeof(world) === 'undefined') {
         }
 
         // draw a path from vertex to vertex
-        ctx.moveTo( x + this.vertices[0].x, y + this.vertices[0].y);
-        this.vertices.forEach(function(v, i){ ctx.lineTo( x + v.x, y + v.y); });
+        ctx.moveTo( x + vertices[0].x, y + vertices[0].y);
+        vertices.forEach(function(v, i){ ctx.lineTo( x + v.x, y + v.y); });
         ctx.closePath();
        
-        if (this.style.toString().toLowerCase() === "outline") {
+        if (isStroke) {
             ctx.strokeStyle = colorString(this.color);
             ctx.stroke();
         } else {
