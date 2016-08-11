@@ -322,6 +322,7 @@ div.moby-error {
   /*  min-width: 22px; */
     margin: 0px 5px;
     cursor: pointer;
+    white-space: pre;
 }
 
 

@@ -240,8 +240,8 @@ plt.compiler = plt.compiler || {};
                    ,"Error-GenericReadError");
       }
       var sexp = rightListDelims.test(p) ?
-                   throwError(new types.Message(["read: expected a ", otherDelim(p), " to open "
-                                                , new types.ColoredPart(p, new Location(column, startRow, iStart, 1))])
+                   throwError(new types.Message(["read: expected an open '", otherDelim(p), "' to open "
+                                                , new types.ColoredPart(" "+p+" ", new Location(column, startRow, iStart, 1))])
                               ,new Location(column, startRow, iStart, 1)) :
                  leftListDelims.test(p) ? readList(str, i) :
                  p === '"'                  ? readString(str, i) :
@@ -360,9 +360,9 @@ plt.compiler = plt.compiler || {};
       }
       // if we reached the end of an otherwise-successful list but there's no closing delim...
       if(i >= str.length) {
-         var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
-                                      " to close ",
-                                      new types.ColoredPart(openingDelim.toString(),
+         var msg = new types.Message(["read: expected a closing '", otherDelim(openingDelim),
+                                      "' to close ",
+                                      new types.ColoredPart(" "+openingDelim.toString()+" ",
                                                             new Location(startCol, startRow, iStart, 1))
                                       ]);
          // throw an error
@@ -370,12 +370,12 @@ plt.compiler = plt.compiler || {};
       }
       // if we reached the end of an otherwise-successful list and it's the wrong closing delim...
       if(!matchingDelims(openingDelim, str.charAt(i))) {
-         var msg = new types.Message(["read: expected a ", otherDelim(openingDelim),
-                                      " to close ",
-                                      new types.ColoredPart(openingDelim.toString(),
+         var msg = new types.Message(["read: expected a closing '", otherDelim(openingDelim),
+                                      "' to close ",
+                                      new types.ColoredPart(" "+openingDelim.toString()+" ",
                                                             new Location(startCol, startRow, iStart, 1)),
                                       " but found a ",
-                                      new types.ColoredPart(str.charAt(i).toString(),
+                                      new types.ColoredPart(" "+str.charAt(i).toString()+" ",
                                                             new Location(column, line, i, 1))
                                       ]);
          throwError(msg, new Location(column, line, i, 1));
