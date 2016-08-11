@@ -492,51 +492,59 @@
  
   // on-redraw defines an image-producing handler, and a dummy CSS handler
   else if (config.lookup('onRedraw')) {
+  	console.log(1);
 	    var reusableCanvas = undefined;
 	    var reusableCanvasNode = undefined;	    
 	    wrappedRedraw = function(w, k) {
+	    	console.log(2);
         var nextFrame = function(t) {
+        	console.log(3);
           lastThreeFrameDraws = [t/1000].concat(lastThreeFrameDraws); // save the # ms
           lastThreeFrameDraws = lastThreeFrameDraws.slice(0,3); // only keep the last 3 saves
           if(lastThreeFrameDraws.length===3)
             console.log(Math.round(3 / (lastThreeFrameDraws[0] - lastThreeFrameDraws[2]))+"fps");
           try {
+          	console.log(4)
             // By the time we get here, the current world may have changed
             // already, so we need to reacquire the value of the
             // current world.
             w = _js.getCurrentWorld();
 		        caller(config.lookup('onRedraw'), [w],
 			       function(aScene) {
-               // Performance hack: if we're using onRedraw, we know
-               // we've got a scene, so we optimize away the repeated
-               // construction of a canvas object.
-               if ( world.Kernel.isImage(aScene) ) {
-                   var width = aScene.getWidth();
-                   var height = aScene.getHeight();
+			       	if ( world.Kernel.isImage(aScene) ) {
+		               // Performance hack: if we're using onRedraw, we know
+		               // we've got a scene, so we optimize away the repeated
+		               // construction of a canvas object.
+		               if ( world.Kernel.isImage(aScene) ) {
+		                   var width = aScene.getWidth();
+		                   var height = aScene.getHeight();
 
-                   if (! reusableCanvas) {
-                 reusableCanvas = world.Kernel.makeCanvas(width, height);
-                 // Note: the canvas object may itself manage objects,
-                 // as in the case of an excanvas.  In that case, we must make
-                 // sure jsworld doesn't try to disrupt its contents!
-                 reusableCanvas.jsworldOpaque = true;
-                 reusableCanvasNode = _js.node_to_tree(reusableCanvas);
-                   }
+		                   if (! reusableCanvas) {
+		                 reusableCanvas = world.Kernel.makeCanvas(width, height);
+		                 // Note: the canvas object may itself manage objects,
+		                 // as in the case of an excanvas.  In that case, we must make
+		                 // sure jsworld doesn't try to disrupt its contents!
+		                 reusableCanvas.jsworldOpaque = true;
+		                 reusableCanvasNode = _js.node_to_tree(reusableCanvas);
+		                   }
 
-                   setTimeout(
-                 function() {
-                     reusableCanvas.width = width;
-                     reusableCanvas.height = height;			
-                     var ctx = reusableCanvas.getContext("2d");
-                     aScene.render(ctx, 0, 0);
-                 },
-                 0);
+		                   setTimeout(
+		                 function() {
+		                     reusableCanvas.width = width;
+		                     reusableCanvas.height = height;			
+		                     var ctx = reusableCanvas.getContext("2d");
+		                     aScene.render(ctx, 0, 0);
+		                 },
+		                 0);
 
-                   k([toplevelNode, reusableCanvasNode]);
-               } else {
-                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
-               }
-			       });
+		                   k([toplevelNode, reusableCanvasNode]);
+		               } else {
+		                   k([toplevelNode, _js.node_to_tree(types.toDomNode(aScene))]);
+		               }
+		           } else {
+					handleError("to-draw handler: is expected to return a scene or image");
+		           }
+			     });
           } catch (e) {
 		        handleError(e);
           }
