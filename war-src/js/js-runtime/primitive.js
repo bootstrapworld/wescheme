@@ -5312,33 +5312,35 @@ PRIMITIVES['line'] =
 				c = colorDb.get(c);
 			}
 			var line = world.Kernel.lineImage(jsnums.toFixnum(x),
-                                        jsnums.toFixnum(y),
-                                        c);
-		        return line;
+                                        	  jsnums.toFixnum(y),
+                                       	 	  c);
+		    return line;
 		 });
 
 
 PRIMITIVES['add-line'] =
-        new PrimProc('add-line',
-		     6,
-		     false, false,
-		     function(aState, img, x1, y1, x2, y2, c) {
-			 check(aState, img, isImage,	"add-line", "image",             1, arguments);
-			 check(aState, x1,	isReal,		"add-line", "finite real number", 2, arguments);
-			 check(aState, y1,	isReal,		"add-line", "finite real number", 3, arguments);
-			 check(aState, x2,	isReal,		"add-line", "finite real number", 4, arguments);
-			 check(aState, y2,	isReal,		"add-line", "finite real number", 5, arguments);
-			 check(aState, c,	  isColor,	"add-line", "color",             6, arguments);
-			 if (colorDb.get(c)) {
-			     c = colorDb.get(c);
-			 }
-			 var line = world.Kernel.lineImage(jsnums.toFixnum(x2-x1),
-                                         jsnums.toFixnum(y2-y1),
-                                         c),
-           leftMost = Math.min(x1,x2),
-           topMost = Math.min(y1,y2);
-			 return world.Kernel.overlayImage(line, img, -leftMost, -topMost);
-			 });
+    new PrimProc('add-line',
+	     6,
+	     false, false,
+	     function(aState, img, x1, y1, x2, y2, c) {
+			check(aState, img, 	isImage,	"add-line", "image",              1, arguments);
+			check(aState, x1,	isReal,		"add-line", "finite real number", 2, arguments);
+			check(aState, y1,	isReal,		"add-line", "finite real number", 3, arguments);
+			check(aState, x2,	isReal,		"add-line", "finite real number", 4, arguments);
+			check(aState, y2,	isReal,		"add-line", "finite real number", 5, arguments);
+			check(aState, c,	isColor,	"add-line", "color",              6, arguments);
+			if (colorDb.get(c)) {
+				c = colorDb.get(c);
+			}
+		 	x1 = jsnums.toFixnum(x1);
+		 	x2 = jsnums.toFixnum(x2);
+		 	y1 = jsnums.toFixnum(y1);
+		 	y2 = jsnums.toFixnum(y2);
+			var lineImg  = world.Kernel.lineImage(x2-x1, y2-y1, c),
+           		leftMost = Math.min(x1, x2),
+           		topMost  = Math.min(y1, y2);
+		 	return world.Kernel.overlayImage(lineImg, img, -leftMost, -topMost);
+		 });
 
 
 PRIMITIVES['overlay'] =
@@ -5370,9 +5372,9 @@ PRIMITIVES['overlay/xy'] =
 		     check(aState, deltaY, isReal, "overlay/xy", "finite real number", 3, arguments);
 		     check(aState, img2, isImage, "overlay/xy", "image", 4, arguments);
 		     return world.Kernel.overlayImage(img1,
-                                          img2,
-                                          jsnums.toFixnum(deltaX),
-                                          jsnums.toFixnum(deltaY));
+                                          	  img2,
+                                          	  jsnums.toFixnum(deltaX),
+                                         	  jsnums.toFixnum(deltaY));
 		 });
 
 

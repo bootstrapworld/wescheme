@@ -1021,8 +1021,8 @@ if (typeof(world) === 'undefined') {
     // RectangleImage: Number Number Mode Color -> Image
     var RectangleImage = function(width, height, style, color) {
         BaseImage.call(this);
-        this.width  = width;
-        this.height = height;
+        this.width  = Math.max(1, width);   // to match DrRacket's behavior, we
+        this.height = Math.max(1, height);  // ensure a minimum 1-px dimension
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
@@ -1222,7 +1222,7 @@ if (typeof(world) === 'undefined') {
      // Draws a triangle with the base = sideC, and the angle between sideC
      // and sideB being angleA
      // See http://docs.racket-lang.org/teachpack/2htdpimage.html#(def._((lib._2htdp/image..rkt)._triangle))
-     var TriangleImage = function(sideC, angleA, sideB, style, color) {
+    var TriangleImage = function(sideC, angleA, sideB, style, color) {
         BaseImage.call(this);
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
         var thirdY = sideB * Math.sin(angleA * Math.PI/180);
@@ -1319,8 +1319,8 @@ if (typeof(world) === 'undefined') {
             else        { vertices = [{x: -x, y: -y}, {x: 0, y: 0}]; }
         }
         
-        this.width  = Math.abs(x);
-        this.height = Math.abs(y);
+        this.width  = Math.max(1, Math.abs(x));
+        this.height = Math.max(1, Math.abs(y));
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
