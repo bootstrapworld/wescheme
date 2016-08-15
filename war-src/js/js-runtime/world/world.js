@@ -232,7 +232,6 @@ if (typeof(world) === 'undefined') {
         if(ctx.isEqualityTest || isSolid){
             vertices = this.vertices;
         } else {
-            console.log('adjusting for subpixel');
             // find the midpoint of the xs and ys from vertices
             var midX = findWidth(this.vertices)  / 2;
             var midY = findHeight(this.vertices) / 2;
@@ -247,10 +246,7 @@ if (typeof(world) === 'undefined') {
         
         // draw a path from vertex to vertex
         ctx.moveTo( x+vertices[0].x, y+vertices[0].y );
-        vertices.forEach(function(v, i){ 
-            console.log('drawing to ',x+v.x,y+v.y);
-            ctx.lineTo( x + v.x, y + v.y); 
-        });
+        vertices.forEach(function(v, i){ ctx.lineTo( x + v.x, y + v.y); });
         ctx.closePath();
        
         if (isSolid) {
