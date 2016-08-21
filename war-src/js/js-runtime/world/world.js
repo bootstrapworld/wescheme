@@ -405,7 +405,7 @@ if (typeof(world) === 'undefined') {
     // render: 2d-context primitive-number primitive-number -> void
     SceneImage.prototype.render = function(ctx, x, y) {
         var childImage, childX, childY;
-         ctx.save();
+        ctx.save();
         // create a clipping region around the boundaries of the Scene
         ctx.fillStyle = this.color? colorString(this.color) : "transparent";
         ctx.fillRect(x, y, this.width, this.height);
@@ -433,24 +433,17 @@ if (typeof(world) === 'undefined') {
     };
 
     SceneImage.prototype.isEqual = function(other, aUnionFind) {
-        if (!(other instanceof SceneImage)) {
-          return BaseImage.prototype.isEqual.call(this, other, aUnionFind);
-        }
-        if (this.width    !== other.width ||
-            this.height   !== other.height ||
-            this.children.length !== other.children.length) {
-            return false;
-        }
-        for (var i = 0; i < this.children.length; i++) {
-            var rec1 = this.children[i];
-            var rec2 = other.children[i];
-            if (rec1[1] !== rec2[1] ||
-                rec1[2] !== rec2[2] ||
-                !types.isEqual(rec1[0], rec2[0], aUnionFind)) {
-                BaseImage.prototype.isEqual.call(this, other, aUnionFind);
-            }
-        }
-        return true;
+        return (other instanceof SceneImage     &&
+                this.width    == other.width    &&
+                this.height   == other.height   &&
+                this.children.length == other.children.length && 
+                this.children.every(function(child1, i) {
+                    var child2 = other.children[i];
+                    return (child1[1] == child2[1] &&
+                            child1[2] == child2[2] &&
+                            types.isEqual(child1[0], child2[0], aUnionFind));
+                }))
+            || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
 
@@ -770,12 +763,12 @@ if (typeof(world) === 'undefined') {
     // try the fast-path (structural equality), fail to the slow path
     OverlayImage.prototype.isEqual = function(other, aUnionFind) {
         return ((other instanceof OverlayImage) &&
-                this.width     === other.width &&
+                this.width     === other.width  &&
                 this.height    === other.height &&
-                this.x1        === other.x1 &&
-                this.y1        === other.y1 &&
-                this.x2        === other.x2 &&
-                this.y2        === other.y2 &&
+                this.x1        === other.x1     &&
+                this.y1        === other.y1     &&
+                this.x2        === other.x2     &&
+                this.y2        === other.y2     &&
                 types.isEqual(this.img1, other.img1, aUnionFind) &&
                 types.isEqual(this.img2, other.img2, aUnionFind) )
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
@@ -828,10 +821,10 @@ if (typeof(world) === 'undefined') {
 
     // try the fast-path (structural equality), fail to the slow path
     RotateImage.prototype.isEqual = function(other, aUnionFind) {
-        return ((other instanceof RotateImage) &&
-                this.width     === other.width &&
-                this.height    === other.height &&
-                this.angle     === other.angle &&
+        return ((other instanceof RotateImage)      &&
+                this.width     === other.width      &&
+                this.height    === other.height     &&
+                this.angle     === other.angle      &&
                 this.translateX=== other.translateX &&
                 this.translateY=== other.translateY &&
                 types.isEqual(this.img, other.img, aUnionFind) )
@@ -871,11 +864,11 @@ if (typeof(world) === 'undefined') {
     };
 
     ScaleImage.prototype.isEqual = function(other, aUnionFind) {
-        return ((other instanceof ScaleImage) &&
-                this.width     === other.width &&
-                this.height    === other.height &&
-                this.xFactor   === other.xFactor &&
-                this.yFactor   === other.yFactor &&
+        return ((other instanceof ScaleImage)       &&
+                this.width     === other.width      &&
+                this.height    === other.height     &&
+                this.xFactor   === other.xFactor    &&
+                this.yFactor   === other.yFactor    &&
                 types.isEqual(this.img, other.img, aUnionFind) )
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
@@ -906,11 +899,11 @@ if (typeof(world) === 'undefined') {
     };
 
     CropImage.prototype.isEqual = function(other, aUnionFind) {
-        return ((other instanceof CropImage) &&
-                this.width     === other.width &&
+        return ((other instanceof CropImage)    &&
+                this.width     === other.width  &&
                 this.height    === other.height &&
-                this.x         === other.x &&
-                this.y         === other.y &&
+                this.x         === other.x      &&
+                this.y         === other.y      &&
                 types.isEqual(this.img, other.img, aUnionFind) )
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
@@ -976,12 +969,12 @@ if (typeof(world) === 'undefined') {
     };
 
     FlipImage.prototype.isEqual = function(other, aUnionFind) {
-        return ((other instanceof FlipImage) &&
-                this.width     === other.width &&
-                this.height    === other.height &&
-                this.direction === other.direction &&
+        return ((other instanceof FlipImage)        &&
+                this.width     === other.width      &&
+                this.height    === other.height     &&
+                this.direction === other.direction  &&
                 types.isEqual(this.img, other.img, aUnionFind) )
-        || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
+            || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
 
@@ -1175,17 +1168,17 @@ if (typeof(world) === 'undefined') {
     TextImage.prototype.getBaseline = function() { return this.alphaBaseline; };
 
     TextImage.prototype.isEqual = function(other, aUnionFind) {
-        return ((other instanceof TextImage) &&
-                this.str      === other.str &&
-                this.size     === other.size &&
-                this.face     === other.face &&
-                this.family   === other.family &&
-                this.style    === other.style &&
-                this.weight   === other.weight &&
-                this.underline === other.underline &&
-                types.isEqual(this.color, other.color, aUnionFind) &&
-                this.font === other.font )
-        || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
+        return ((other instanceof TextImage)        &&
+                this.str        === other.str       &&
+                this.size       === other.size      &&
+                this.face       === other.face      &&
+                this.family     === other.family    &&
+                this.style      === other.style     &&
+                this.weight     === other.weight    &&
+                this.underline  === other.underline &&
+                this.font       === other.font      &&
+                types.isEqual(this.color, other.color, aUnionFind) )
+            || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
 
     };
 
@@ -1297,12 +1290,12 @@ if (typeof(world) === 'undefined') {
     };
 
     EllipseImage.prototype.isEqual = function(other, aUnionFind) {
-         return ((other instanceof EllipseImage) &&
-                this.width    === other.width &&
-                this.height   === other.height &&
-                this.style    === other.style &&
+        return ((other instanceof EllipseImage)     &&
+                this.width    === other.width       &&
+                this.height   === other.height      &&
+                this.style    === other.style       &&
                 types.isEqual(this.color, other.color, aUnionFind))
-        || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
+            || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
 
