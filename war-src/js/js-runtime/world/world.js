@@ -579,12 +579,12 @@ if (typeof(world) === 'undefined') {
     };
     FileVideo.prototype = heir(BaseImage.prototype);
 
-    var videos = {};
+    var videoCache = {};
     FileVideo.makeInstance = function(path, rawVideo) {
         if (! (path in FileVideo)) {
-            videos[path] = new FileVideo(path, rawVideo);
+            videoCache[path] = new FileVideo(path, rawVideo);
         } 
-        return videos[path];
+        return videoCache[path];
     };
 
     FileVideo.prototype.render = function(ctx, x, y) {
@@ -627,7 +627,7 @@ if (typeof(world) === 'undefined') {
     };
     var audioCache = {};
     FileAudio.makeInstance = function(path, loop, rawAudio) {
-/*        if (! (path in audioCache)) {
+        if (! (path in audioCache)) {
             audioCache[path] = new FileAudio(path, loop, rawAudio, afterInit);
             return audioCache[path];
         } else {
@@ -635,7 +635,6 @@ if (typeof(world) === 'undefined') {
             afterInit(audioCache[path]);
             return audioCache[path];
         }
- */
         return new FileAudio(path, loop, rawAudio);
     };
  
