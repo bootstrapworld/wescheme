@@ -140,8 +140,8 @@ if (typeof(world) === 'undefined') {
         if(v1.length !== v2.length){ return false; }
         var v1_str = v1.map(function(o){return "x:"+o.x+",y:"+o.y}).join(","),
             v2_str = v2.map(function(o){return "x:"+o.x+",y:"+o.y}).join(",");
-        // v1 == rot(v2) if append(v1,v1) contains v2
-        return (v1_str+","+v1_str).indexOf(v2_str) > -1;
+        // v1 == rot(v2) if append(v1,v1) includes v2
+        return (v1_str+","+v1_str).includes(v2_str);
     };
 
     // given an array of (x, y) pairs, unzip them into separate arrays
@@ -159,7 +159,7 @@ if (typeof(world) === 'undefined') {
         var ys = unzipVertices(vertices).ys;
         return Math.max.apply(Math, ys) - Math.min.apply(Math, ys);
     }
- 
+
     // given a list of vertices and a translationX/Y, shift them
     var translateVertices = function(vertices) {
         var vs = unzipVertices(vertices);
@@ -227,6 +227,7 @@ if (typeof(world) === 'undefined') {
         // boundaries, adjusting by a half-pixel towards the center.
         var isSolid = this.style.toString().toLowerCase() !== "outline";
 
+        var vertices;
         // pixel-perfect vertices fail on Chrome, and certain versions of FF,
         // so we disable the offset for equality tests and solid images
         if(ctx.isEqualityTest || isSolid){
@@ -246,7 +247,7 @@ if (typeof(world) === 'undefined') {
         
         // draw a path from vertex to vertex
         ctx.moveTo( x+vertices[0].x, y+vertices[0].y );
-        vertices.forEach(function(v, i){ ctx.lineTo( x + v.x, y + v.y); });
+        vertices.forEach(function(v){ ctx.lineTo( x + v.x, y + v.y); });
         ctx.closePath();
        
         if (isSolid) {
@@ -266,22 +267,9 @@ if (typeof(world) === 'undefined') {
         var canvas = document.createElement("canvas");
         canvas.width  = width;
         canvas.height = height;
-
         canvas.style.width  = canvas.width  + "px";
-        canvas.style.height = canvas.height + "px";
-
-        // KLUDGE: IE compatibility uses /js/excanvas.js, and dynamic
-        // elements must be marked this way.
-        if (window && typeof window.G_vmlCanvasManager !== 'undefined') {
-            canvas = window.G_vmlCanvasManager.initElement(canvas);
-        }
- 
+        canvas.style.height = canvas.height + "px"; 
         return canvas;
-    };
-
-    var withIeHack = function(canvas, f) {
-        var result = f(canvas);
-        return result;
     };
 
     BaseImage.prototype.toDomNode = function(cache) {
@@ -289,15 +277,15 @@ if (typeof(world) === 'undefined') {
         var width = that.getWidth();
         var height = that.getHeight();
         var canvas = world.Kernel.makeCanvas(width, height);
+        var ctx;
 
         // KLUDGE: on IE, the canvas rendering functions depend on a
         // context where the canvas is attached to the DOM tree.
-
         // We initialize an afterAttach hook; the client's responsible
         // for calling this after the dom node is attached to the
         // document.
         canvas.afterAttach = function() {
-            var ctx = canvas.getContext("2d");
+            ctx = canvas.getContext("2d");
             that.render(ctx, 0, 0);
         };
         // ARIA: use "image" as default text.
@@ -354,7 +342,7 @@ if (typeof(world) === 'undefined') {
                 slice1.drawImage(c1, x, y, tileW, tileH, 0, 0, tileW, tileH);
                 slice2.clearRect(0, 0, tileW, tileH);
                 slice2.drawImage(c2, x, y, tileW, tileH, 0, 0, tileW, tileH);
-                var d1 = slice1.canvas.toDataURL(), 
+                var d1 = slice1.canvas.toDataURL(),
                     d2 = slice2.canvas.toDataURL(),
                     h1 = world.md5(d1),  h2 = world.md5(d2);
                 if(h1 !== h2) return false;
@@ -396,8 +384,8 @@ if (typeof(world) === 'undefined') {
         return new SceneImage(this.width, 
                               this.height,
                               this.children.concat([[anImage, 
-                                                     x - anImage.width/2,
-                                                     y - anImage.height/2]]),
+                                                     x - anImage.getWidth()/2,
+                                                     y - anImage.getHeight()/2]]),
                               this.withBorder,
                               this.color);
     };
@@ -405,8 +393,8 @@ if (typeof(world) === 'undefined') {
     // render: 2d-context primitive-number primitive-number -> void
     SceneImage.prototype.render = function(ctx, x, y) {
         var childImage, childX, childY;
-        ctx.save();
         // create a clipping region around the boundaries of the Scene
+        ctx.save();
         ctx.fillStyle = this.color? colorString(this.color) : "transparent";
         ctx.fillRect(x, y, this.width, this.height);
         ctx.restore();
@@ -455,7 +443,6 @@ if (typeof(world) === 'undefined') {
         this.src = src;
         this.isLoaded = false;
         this.ariaText = " image file from "+decodeURIComponent(src).slice(16);
-
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
         this.animationHackImg = undefined;
@@ -943,8 +930,8 @@ if (typeof(world) === 'undefined') {
     var FlipImage = function(img, direction) {
         BaseImage.call(this);
         this.img        = img;
-        this.width      = img.width;
-        this.height     = img.height;
+        this.width      = img.getWidth();
+        this.height     = img.getHeight();
         this.direction  = direction;
         this.ariaText   = direction+"ly flipped image: " + img.ariaText;
     };
@@ -1260,16 +1247,20 @@ if (typeof(world) === 'undefined') {
         ctx.save();
         ctx.beginPath();
 
-        // shrink the dimensions and shift the offset to account for the 1px border width
-        var width = this.width - 1, height = this.height - 1;
-        aX += 0.5; aY += 0.5;
+        // if it's a solid ellipse...
+        var isSolid = this.style.toString().toLowerCase() !== "outline";
+        var adjust = isSolid? 0 : 0.5;
+        // ...account for the 1px border width
+        var width = this.width - adjust, height = this.height - adjust;
+        aX += adjust; aY += adjust;
+
         // Most of this code is taken from:
         // http://webreflection.blogspot.com/2009/01/ellipse-and-circle-for-canvas-2d.html
         var hB = (width  / 2) * 0.5522848,
             vB = (height / 2) * 0.5522848,
             eX = aX + width ,
             eY = aY + height,
-            mX = aX + width / 2,
+            mX = aX + width  / 2,
             mY = aY + height / 2;
         ctx.moveTo(aX, mY);
         ctx.bezierCurveTo(aX, mY - vB, mX - hB, aY, mX, aY);
