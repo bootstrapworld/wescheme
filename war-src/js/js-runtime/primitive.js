@@ -6385,6 +6385,7 @@ PRIMITIVES['animate'] =
 		 false, false,
 		 function(aState, f) {
         check(aState, f, isFunction, "animate", "function name", 1);
+        check(aState, f, procArityContains(1), "animate", "1-argument function", 1);
        // on-tick is just add1, to-draw is f
        var handlers = [new OnTickBang(PRIMITIVES['add1'],
                                      new PrimProc('', 1, false, false,
