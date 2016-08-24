@@ -1251,7 +1251,7 @@ if (typeof(world) === 'undefined') {
         var isSolid = this.style.toString().toLowerCase() !== "outline";
         var adjust = isSolid? 0 : 0.5;
         // ...account for the 1px border width
-        var width = this.width - adjust, height = this.height - adjust;
+        var width = this.width - 2*adjust, height = this.height - 2*adjust;
         aX += adjust; aY += adjust;
 
         // Most of this code is taken from:
