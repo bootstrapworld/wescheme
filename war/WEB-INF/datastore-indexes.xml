@@ -30,6 +30,9 @@
         <property name="time_" direction="desc"/>
     </datastore-index>
 
+    <datastore-index kind="Schedule" ancestor="true" source="manual">
+        <property name="schedules_INTEGER_IDX" direction="asc"/>
+    </datastore-index>
 
 
 </datastore-indexes>
