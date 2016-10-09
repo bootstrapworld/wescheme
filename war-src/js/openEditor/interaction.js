@@ -338,7 +338,8 @@ WeSchemeInteractions = (function () {
 
     // Initializes the evaluator to use round-robin compilation, given a list of
     // servers.
-    var compilation_servers = plt.wescheme.WeSchemeProperties.compilation_servers.split(/\s+/);
+    // TODO: compilation_servers shouldn't exist anymore
+    var compilation_servers = [];
 
 
     // Configures the evaluator to use round-robin compilation between
