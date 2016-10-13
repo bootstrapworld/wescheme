@@ -4692,8 +4692,9 @@ PRIMITIVES['put-image'] =
       check(aState, y, isReal, "put-image", "real", 3, arguments);
       check(aState, background, function(x) { return isScene(x) || isImage(x) },
             "put-image", "image", 4, arguments);
+      x = jsnums.toFixnum(x); y = jsnums.toFixnum(y);
       if (isScene(background)) {
-          return background.add(picture, jsnums.toFixnum(x), background.getHeight() - jsnums.toFixnum(y));
+          return background.add(picture, x, background.getHeight() - y);
       } else {
           var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                  background.getHeight(),
@@ -4701,7 +4702,7 @@ PRIMITIVES['put-image'] =
                                                  false,
                                                  null);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
-          newScene = newScene.add(picture, jsnums.toFixnum(x), background.getHeight() - jsnums.toFixnum(y));
+          newScene = newScene.add(picture, x, background.getHeight() - y);
           return newScene;
       }
     });
@@ -4717,8 +4718,9 @@ PRIMITIVES['place-image'] =
 			check(aState, y, isReal, "place-image", "real", 3, arguments);
 			check(aState, background, function(x) { return isScene(x) || isImage(x) },
 			      "place-image", "image", 4, arguments);
+			x = jsnums.toFixnum(x); y = jsnums.toFixnum(y);
 			if (isScene(background)) {
-			    return background.add(picture, jsnums.toFixnum(x), jsnums.toFixnum(y));
+			    return background.add(picture, x, y);
 			} else {
 			    var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                  background.getHeight(),
@@ -4726,7 +4728,7 @@ PRIMITIVES['place-image'] =
                                                  false,
                                                  null);
           newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
-          newScene = newScene.add(picture, jsnums.toFixnum(x), jsnums.toFixnum(y));
+          newScene = newScene.add(picture, x, y);
 			    return newScene;
 			}
 		 });
@@ -4745,14 +4747,14 @@ PRIMITIVES['place-image/align'] =
 			 check(aState, background, function(x) { return isScene(x) || isImage(x) },
 			       "place-image/align", "image",	6, arguments);
 
-      // calculate x and y based on placeX and placeY
+      		 // calculate x and y based on placeX and placeY
+      		 x = jsnums.toFixnum(x); y = jsnums.toFixnum(y);
 			 if		 (placeX == "left"  )  x = x + img.getWidth()/2;
 			 else if (placeX == "right" ) x = x - img.getWidth()/2;
 			 if		 (placeY == "top"   )  y = y + img.getHeight()/2;
 			 else if (placeY == "bottom") y = y - img.getHeight()/2;
-
 			 if (isScene(background)) {
-			     return  background.add(img, jsnums.toFixnum(x), jsnums.toFixnum(y));
+			     return  background.add(img, x, y);
 			 } else {
 			     var newScene = world.Kernel.sceneImage(background.getWidth(),
                                                   background.getHeight(),
@@ -4760,7 +4762,7 @@ PRIMITIVES['place-image/align'] =
                                                   false,
                                                   null);
 			     newScene = newScene.add(background, background.getWidth()/2, background.getHeight()/2);
-			     newScene = newScene.add(img, jsnums.toFixnum(x), jsnums.toFixnum(y));
+			     newScene = newScene.add(img, x, y);
 			     return  newScene;
 			 }
 		     });
