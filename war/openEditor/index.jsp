@@ -208,39 +208,29 @@
 	                    autorunDefinitions: autorunDefinitions,
                             noColorError: noColorError });
       });
-    </script>
-	<script>
-        jQuery(function()
-        {
-        		var viewportWidth = jQuery(window).width();
-				var viewportHeight = jQuery(window).height();
-                var something = jQuery("#documentation").dialog({autoOpen: false,
-                								title: "Documentation",
-                								position: "right",
-                								minWidth: viewportWidth / 4,
-                								minHeight: viewportHeight / 2,
-                								width: viewportWidth / 3,
-                								height: viewportHeight * .9,
-                								beforeclose: function() {
-                									jQuery(this).dialog('option', 'position', [jQuery(this).parent().offset().left, jQuery(this).parent().offset().top]);
-                								}
-                									 });
-              //something.dialog('close');
+
+      jQuery(function() {
+        var viewportWidth = jQuery(window).width();
+        var viewportHeight = jQuery(window).height();
+        var something = jQuery("#documentation").dialog({
+          autoOpen: false,
+          title: "Documentation",
+          position: "right",
+          minWidth: viewportWidth / 4,
+          minHeight: viewportHeight / 2,
+          width: viewportWidth / 3,
+          height: viewportHeight * .9,
+          beforeclose: function() {
+            jQuery(this).dialog('option', 'position', [jQuery(this).parent().offset().left, jQuery(this).parent().offset().top]);
+            }
         });
-	</script>
-
-
+      });
+    </script>
   </head>
 
 
   <body tabIndex="-1">
-
-
-    <div id="editor" tabIndex="-1">
-
-
-
-
+    <div id="editor" tabIndex="-1" aria-activedescendant="top" role="combobox">
       <div class="top" id="top">
 
 	<!-- The dialog div here will be used by jquery -->
@@ -307,11 +297,14 @@
 
   <!-- Header at the top of the page -->
 	<div id="header">
-    <h1><a tabIndex="1"  href="/" title="WeScheme Homepage"
+    <h1><a role="button" href="/" title="WeScheme Homepage"
            role="button" aria-label="Back to WeScheme Homepage"
            style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
 	  <h2>
-      <a tabIndex="1" role="button" aria-label="Show Documentation" id="docs" href="#">Documentation</a>
+      <a  tabIndex="1" role="button" 
+          aria-label="Show Documentation" 
+          id="docs" target="_docs" 
+          href="doc/wescheme.html">Documentation</a>
 	    <% if (userSession != null) { %>
             <a tabIndex="1" role="button"  id="account" href="/console" target="console">Programs</a>
             <a tabIndex="1" role="button"  id="logout" href="#">Logout</a>
@@ -319,10 +312,8 @@
       </h2>
 	</div>
 
-
-  <div id="result"></div>
 	<div id="toolbar">
-	  <ul role="presentation">
+	  <ul role="toolbar" aria-label="Toolbar">
 	    <li><a tabIndex="1" role="button" aria-label="Run" id="run"><span>Run</span></a></li>
 	    <li><a tabIndex="1" role="button" aria-label="Stop"  id="stop"><span>Stop</span></a></li>
 	    <% if (userSession != null) { %>
@@ -336,7 +327,7 @@
 	    <li><a tabIndex="1" role="button" aria-label="Share" id="share"><span>Share</span></a></li>
       <li><a tabIndex="1" role="button" aria-label="Images" id="images"><span>Images</span></a></li>
 	    <% } %>
-        <li><a tabIndex="1" role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
+      <li><a tabIndex="1" role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
 	  </ul>
 	</div>
 
@@ -361,13 +352,15 @@
 
 <div id="middle" class="middle" role="main">
 	<div id="splitpane" class="goog-splitpane">
-    <div id="definitions" class="goog-splitpane-first-container" role="region" aria-label="definitions">
-        <textarea id="defn" tabIndex="1"></textarea>
+    <div id="definitions" class="goog-splitpane-first-container" aria-label="definitions" tabindex="-1">
+        <textarea id="defn"></textarea>
 	  </div>
 
-	  <div id="interactions" class="goog-splitpane-second-container" role="region" aria-label="interactions">
-	    <div id="inter" role="log" aria-live="assertive" aria-relevant="additions"  tabIndex="1">
-	      <div style="width: 100%; height:100%"><span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span></div>
+	  <div id="interactions" class="goog-splitpane-second-container">
+	    <div id="inter" role="application" aria-label="interactions" aria-live="assertive" aria-relevant="additions" tabindex="-1">
+	      <div style="width: 100%; height:100%">
+          <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
+        </div>
 	    </div>
 	  </div>
 
@@ -391,11 +384,11 @@
       target="hidden_iframe" 
       id="GoogleForm"
       style="display:none;">
-<textarea name="entry.1936827156" id="expr"/>default_code</textarea>
-<textarea name="entry.1976503423" id="local">default_localError</textarea>
-<textarea name="entry.224419714" id="server">default_serverError</textarea>
-<textarea name="entry.234335861" id="diffString"></textarea>
-<input type="button" value="Submit" class="submit"/>
+  <textarea name="entry.1936827156" id="expr"/>default_code</textarea>
+  <textarea name="entry.1976503423" id="local">default_localError</textarea>
+  <textarea name="entry.224419714" id="server">default_serverError</textarea>
+  <textarea name="entry.234335861" id="diffString"></textarea>
+  <input type="button" value="Submit" class="submit"/>
 </form>
 
   </body>
