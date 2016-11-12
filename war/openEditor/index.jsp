@@ -311,7 +311,10 @@
            role="button" aria-label="Back to WeScheme Homepage"
            style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
 	  <h2>
-      <a tabIndex="1" role="button" aria-label="Show Documentation" id="docs" href="#">Documentation</a>
+      <a  tabIndex="1" role="button" 
+          aria-label="Show Documentation" 
+          id="docs" target="_docs" 
+          href="doc/wescheme.html">Documentation</a>
 	    <% if (userSession != null) { %>
             <a tabIndex="1" role="button"  id="account" href="/console" target="console">Programs</a>
             <a tabIndex="1" role="button"  id="logout" href="#">Logout</a>
