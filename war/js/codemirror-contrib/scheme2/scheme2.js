@@ -335,7 +335,7 @@
 	//////////////////////////////////////////////////////////////////////
 
 
-	var DEFINE_LIKE_KEYWORDS = ["local"];
+	var DEFINE_LIKE_KEYWORDS = ["local", "EXAMPLE"];
 
 	var isDefineLikeContext = function(context) {
 		var j = findContextElement(context, 0);
