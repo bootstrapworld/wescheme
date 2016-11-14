@@ -992,8 +992,8 @@ if (typeof(world) === 'undefined') {
                                    +Math.pow(lab1.b-lab2.b,2))}});
       var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
       var match = distances[0].name;
-      var style = isNaN(aStyle)? (aStyle === "solid"? " solid" : "n outline") : " translucent ";
-      return style + " " + match.toLowerCase();
+      var style = isNaN(aStyle)? (aStyle === "solid"? " solid " : " outline ") : " translucent ";
+      return style + match.toLowerCase();
     }
 
     //////////////////////////////////////////////////////////////////////
