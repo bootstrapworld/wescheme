@@ -6,6 +6,7 @@ goog.require('plt.wescheme.BrowserDetect');
 
 
 var F5_KEYCODE = 116
+var F6_KEYCODE = 117
 var BACKSPACE_KEYCODE = 8;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
@@ -17,6 +18,17 @@ var BRIGHTEN_KEYCODE = 114;
 // Global state: checks to see whether or not we're in the middle of a
 // save or not.
 var inMiddleOfSave = false;
+
+function cancelEvent(e) {
+  e.cancelBubble = true;
+  if (e.stopPropagation) { e.stopPropagation(); }
+  e.returnValue = false;
+  if (e.preventDefault) { e.preventDefault(); }
+  if (! e.preventDefault) {
+      // IE-specific hack.
+      e.keyCode = 0;
+  }
+}
 
 
 //The following is a global keyhandler that's intended to be attached
@@ -41,27 +53,19 @@ plt.wescheme.topKeymap = function(e) {
                           inMiddleOfSave = false; 
                       });        
           }
-          e.cancelBubble = true;
-          if (e.stopPropagation) { e.stopPropagation(); }
-          e.returnValue = false;
-          if (e.preventDefault) { e.preventDefault(); }
-          if (! e.preventDefault) {
-              // IE-specific hack.
-              e.keyCode = 0;
-          }
+          cancelEvent(e);
           return false;
     }
 
     if (e.keyCode === F5_KEYCODE) {
       myEditor.run();
-      e.cancelBubble = true;
-      if (e.stopPropagation) { e.stopPropagation(); }
-      e.returnValue = false;
-      if (e.preventDefault) { e.preventDefault(); }
-      if (! e.preventDefault) {
-          // IE-specific hack.
-          e.keyCode = 0;
-      }
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F6_KEYCODE) {
+      myEditor.cycleFocus(e.shiftKey);
+      cancelEvent(e);
       return false;
     }
 
@@ -92,10 +96,7 @@ plt.wescheme.topKeymap = function(e) {
     // document body, and prevent us from going back in history.
     if (e.target === document.body) {
       if (e.keyCode === BACKSPACE_KEYCODE) {
-          e.cancelBubble = true;
-          if (e.stopPropagation) { e.stopPropagation(); }
-          e.returnValue = false;
-          if (e.preventDefault) { e.preventDefault(); }
+          cancelEvent(e);
           return false;
       }
       return true;
