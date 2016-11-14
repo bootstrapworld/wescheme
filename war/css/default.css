@@ -15,6 +15,14 @@ html, body, h1, h2, #header, #fileInfo, #toolbar *, #defn, #footer, #inter, inpu
     border: 0px;
 }
 
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
+}
 
 body {
     width:   100%;
@@ -100,25 +108,26 @@ body {
 
 /* 65px: LOGO AND TITLE */
 #header{
-    width:          100%;
+    width:           100%;
     min-height:      40px;
     background:     url(/css/images/icon-trans.png) 4px 4px black;
     background-size: 40px 40px;
     background-repeat:no-repeat;
-    clear:          both;
+    clear:           both;
     padding-bottom:  4px;
-    color:          white;
+    color:           white;
+    font-size:       28px;
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
-    padding-top:      5px;
+    padding-top:     5px;
 }
 
 #header * {display: inline-block; vertical-align: baseline;}
 
-h1{ font-size:	28px;	padding-left: 65px;}
-h2{	font-size: 20px; font-weight: lighter; padding-left: 4px;}
+a.h1{ font-weight: bold; padding-left: 65px;}
+a.h2{ font-size: 20px; font-weight: lighter; padding-left: 4px;}
 
-h2 a, h2 a:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
-h2 > a:hover{text-decoration: underline;}
+a.h2, a.h2:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
+a.h2:hover{text-decoration: underline;}
 
 /* 30px: FILENAME & URL */
 #fileInfo{
