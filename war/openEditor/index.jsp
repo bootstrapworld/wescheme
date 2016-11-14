@@ -3,7 +3,7 @@
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no">
 
-    <title>WeScheme</title>
+    <title>WeScheme Editor</title>
     <!-- Tags for on mobile -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
@@ -229,8 +229,8 @@
   </head>
 
 
-  <body tabIndex="-1">
-    <div id="editor" tabIndex="-1" aria-activedescendant="top" role="combobox">
+  <body>
+    <div id="editor">
       <div class="top" id="top">
 
 	<!-- The dialog div here will be used by jquery -->
@@ -296,68 +296,64 @@
 
 
   <!-- Header at the top of the page -->
-	<div id="header">
-    <h1><a role="button" href="/" title="WeScheme Homepage"
-           role="button" aria-label="Back to WeScheme Homepage"
-           style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
-	  <h2>
-      <a  tabIndex="1" role="button" 
-          aria-label="Show Documentation" 
-          id="docs" target="_docs" 
-          href="doc/wescheme.html">Documentation</a>
-	    <% if (userSession != null) { %>
-            <a tabIndex="1" role="button"  id="account" href="/console" target="console">Programs</a>
-            <a tabIndex="1" role="button"  id="logout" href="#">Logout</a>
-	    <% } %>
-      </h2>
-	</div>
+  <div role="toolbar" region="Toolbar" aria-label="Toolbar">
+  	<div id="header">
+      <h1><a role="button" href="/" title="WeScheme Homepage"
+             role="button" aria-label="Back to WeScheme Homepage"
+             style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
+  	  <h2>
+        <a  role="button" 
+            aria-label="Show Documentation" 
+            id="docs" target="_docs" 
+            href="doc/wescheme.html">Documentation</a>
+  	    <% if (userSession != null) { %>
+              <a role="button"  id="account" href="/console" target="console">Programs</a>
+              <a role="button"  id="logout" href="#">Logout</a>
+  	    <% } %>
+        </h2>
+  	</div>
 
-	<div id="toolbar">
-	  <ul role="toolbar" aria-label="Toolbar">
-	    <li><a tabIndex="1" role="button" aria-label="Run" id="run"><span>Run</span></a></li>
-	    <li><a tabIndex="1" role="button" aria-label="Stop"  id="stop"><span>Stop</span></a></li>
-	    <% if (userSession != null) { %>
-	    <li><a tabIndex="1" role="button"  aria-label="Save" id="save"><span>
-        <% if (request.getParameter("publicId") != null){ %>
-              Remix
-        <% } else { %>
-              Save
-        <% } %>
-      </span></a></li>
-	    <li><a tabIndex="1" role="button" aria-label="Share" id="share"><span>Share</span></a></li>
-      <li><a tabIndex="1" role="button" aria-label="Images" id="images"><span>Images</span></a></li>
-	    <% } %>
-      <li><a tabIndex="1" role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
-	  </ul>
-	</div>
+  	<div id="toolbar">
+  	  <ul>
+  	    <li><a role="button" aria-label="Run"  id="run" ><span>Run</span></a></li>
+  	    <li><a role="button" aria-label="Stop" id="stop"><span>Stop</span></a></li>
+  	    <% if (userSession != null) { %>
+  	    <li><a role="button"  aria-label="Save" id="save"><span>
+          <% if (request.getParameter("publicId") != null){ %>
+                Remix
+          <% } else { %>
+                Save
+          <% } %>
+        </span></a></li>
+  	    <li><a role="button" aria-label="Share" id="share"><span>Share</span></a></li>
+        <li><a role="button" aria-label="Images" id="images"><span>Images</span></a></li>
+  	    <% } %>
+        <li><a role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
+  	  </ul>
+  	</div>
 
-	<div id="fileInfo">
-	  <label id="filenamelabel" for="filename">Project name:</label>
-	  <input tabIndex="1" role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
-    <a tabIndex="1" role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-    <a tabIndex="1" role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-    <a tabIndex="1" role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
-    <div id="statusbar" role="marquee" aria-relevant="text"></div>
-	</div>
-
-  <div id="documentation" class="documentation">
-	  <!-- <input id="docButton" type="button" value="Click me to hide documentation"/> -->
-	  <input tabIndex="1" role="button"  id="resetButton" type="image" src="/images/home.png"/>
-          <iframe id="docFrame" style="width:97%; height:95%"></iframe>
-  </div>
-
-</div> <!-- End top -->
+  	<div id="fileInfo">
+   	  <label id="filenamelabel" for="filename">Project name:</label>
+  	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
+      <a role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+      <a role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+      <a role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+      <div id="statusbar" role="marquee" aria-relevant="text"></div>
+  	</div>
+  </div> 
+</div>
+<!--  End top -->
 
 
 
-<div id="middle" class="middle" role="main">
+<div id="middle" class="middle">
 	<div id="splitpane" class="goog-splitpane">
-    <div id="definitions" class="goog-splitpane-first-container" aria-label="definitions" tabindex="-1">
+    <div id="definitions" class="goog-splitpane-first-container" role="region" aria-label="Definitions">
         <textarea id="defn"></textarea>
 	  </div>
 
 	  <div id="interactions" class="goog-splitpane-second-container">
-	    <div id="inter" role="application" aria-label="interactions" aria-live="assertive" aria-relevant="additions" tabindex="-1">
+	    <div id="inter" role="application" role="region" aria-label="Interactions" aria-live="assertive" aria-relevant="additions">
 	      <div style="width: 100%; height:100%">
           <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
         </div>
