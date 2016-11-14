@@ -51,6 +51,7 @@ img{background: none; 	vertical-align: middle; width: 40%; max-width: 450px;}
 	padding:	0px;
 	left:           0px;
 }
+#footer ul, #footer ul li {display: inline;}
 
 #links {
        margin-top: 1.5em;
@@ -58,7 +59,7 @@ img{background: none; 	vertical-align: middle; width: 40%; max-width: 450px;}
 }
 
 
-div#footer a{
+#footer a{
 	display:	inline-block; 
 	width:		24%;
 	margin:		0px;
@@ -68,24 +69,29 @@ div#footer a{
 	text-decoration: none;
 }
 
-div#footer a:hover{
+#footer a:hover{
 	background: #546DAF;
 	text-decoration: none;
 }
 
-input{
-	margin:		5px 0px;
+a.button{
+	text-align:	center;
 	vertical-align: middle;
 	border:		solid 1px black;
 	background: lightsteelblue;
 	font-size:	1em;
-  font-family:    Lato, Century Gothic, Arial, Helvetica, sans-serif;
+  	font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
 	width:		120px;
+	height:		22px;
+	cursor:		pointer;
+	display: 	inline-block;
+	position: 	relative;
 }
-input:hover{
+a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
+a.button:hover{
 	background: gray;
 }
-
+a.button:hover>span.tooltip{ opacity: 1; };
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
   input{font-size: 14px; width: 100px;}
 }
