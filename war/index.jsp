@@ -66,23 +66,28 @@ $(document).ready(function() {
 <body>
 <h1>WeScheme</h1>
 <% if (s == null) { %>
-    <input id="startCoding" value="Start Coding" type="button">
+    <a class="button" id="startCoding" aria-describedby="startCodingDescription">Start Coding 
+        <span class="tooltip" id="startCodingDescription">...without being able to save</span>
+    </a>
 <% } else { %>
-    <input id="myPrograms" value="My Programs" type="button">
+    <a class="button" id="myPrograms" aria-describedby="myProgramsDescription">My Programs
+        <span class="tooltip" id="myProgramsDescription"></span>
+    </a>
 <% } %>
 
-<img src="css/images/BigLogo.png" alt="WeScheme Logo">
-	
+<img src="css/images/BigLogo.png" alt="">
 
 <% if( s == null ) { %>
-    <input id="loginButton" value="Log In" type="button">
+    <a class="button" id="loginButton" aria-describedby="loginDescription">Log In
+        <span class="tooltip" id="loginDescription">...to access your programs</span>
+    </a>
 <%  } else { %>
-    <input id="logoutButton" value="Log Out" type="button">
+    <a class="button" id="logoutButton">Log Out</a>
 <% } %>	
 	
 
 <div id="links">
-     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
+    <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
 </div>
 
 

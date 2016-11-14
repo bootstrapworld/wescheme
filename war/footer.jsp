@@ -1,6 +1,8 @@
-<div id="footer">
-<a href="/about/">About</a>
-<a href="/contact/">Contact</a>
-<a href="/privacy/">Privacy</a>
-<a href="/copyright/">Copyright</a>
-</div>
+<footer id="footer">
+	<ul>
+		<li><a href="/about/">About</a></li>
+		<li><a href="/contact/">Contact</a></li>
+		<li><a href="/privacy/">Privacy</a></li>
+		<li><a href="/copyright/">Copyright</a></li>
+	</ul>
+</footer>
