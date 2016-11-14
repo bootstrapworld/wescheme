@@ -233,160 +233,160 @@
     <div id="editor">
       <div class="top" id="top">
 
-	<!-- The dialog div here will be used by jquery -->
-	<div id="dialog" style="display:none;"></div>
+      <!-- The dialog div here will be used by jquery -->
+      <div id="dialog" style="display:none;"></div>
 
 
-  <!-- The Design Recipe Widget -->
-  <div id="design-recipe-form" style="position: absolute; left: -1000px; z-index: 10; visibility: hidden;">
-	  <div class="section" id="design-recipe-contract">
-            <div id="design-recipe-contract_wrapper">
-              <span class="spacer" style="width: 15px;">;</span>
-              <textarea id="design-recipe-name"></textarea>
-              <span>:</span>
-              <textarea id="design-recipe-domain"></textarea>
-              <span>-></span>
-              <textarea id="design-recipe-range"></textarea>
+      <!-- The Design Recipe Widget -->
+      <div id="design-recipe-form" style="position: absolute; left: -1000px; z-index: 10; visibility: hidden;">
+        <div class="section" id="design-recipe-contract">
+                <div id="design-recipe-contract_wrapper">
+                  <span class="spacer" style="width: 15px;">;</span>
+                  <textarea id="design-recipe-name"></textarea>
+                  <span>:</span>
+                  <textarea id="design-recipe-domain"></textarea>
+                  <span>-></span>
+                  <textarea id="design-recipe-range"></textarea>
+                </div>
+                <span class="error" id="design-recipe-contract_error"></span>
+        </div>
+        <div class="section" id="design-recipe-examples">
+          <div id="design-recipe-example1_wrapper">
+            <span class="spacer">(EXAMPLE </span>
+            <div class="indent-wrapper">
+              <textarea id="design-recipe-example1_header"></textarea>
+              <textarea id="design-recipe-example1_body"></textarea>
+              <span class="spacer">)</span>
             </div>
-            <span class="error" id="design-recipe-contract_error"></span>
-	  </div>
-    <div class="section" id="design-recipe-examples">
-      <div id="design-recipe-example1_wrapper">
-        <span class="spacer">(EXAMPLE </span>
-        <div class="indent-wrapper">
-          <textarea id="design-recipe-example1_header"></textarea>
-          <textarea id="design-recipe-example1_body"></textarea>
-          <span class="spacer">)</span>
+          </div>
+          <span class="error" id="design-recipe-example1_error"></span>
+          <hr/>
+          <div id="design-recipe-example2_wrapper">
+            <span class="spacer">(EXAMPLE </span>
+            <div class="indent-wrapper">
+               <textarea id="design-recipe-example2_header"></textarea>
+             <textarea id="design-recipe-example2_body"></textarea>
+             <span class="spacer">)</span>
+            </div>
+          </div>
+          <span class="error" id="design-recipe-example2_error"></span>
+        </div>
+        <div class="section" id="design-recipe-definition">
+          <div id="design-recipe-definition_wrapper">
+            <span class="spacer">(define </span>
+            <div class="indent-wrapper">
+              <textarea id="design-recipe-definition_header"></textarea>
+              <textarea id="design-recipe-definition_body"></textarea>
+              <span class="spacer">)</span>
+            </div>
+          </div>
+          <span class="error" id="design-recipe-definition_error"></span>
+        </div>
+
+        <div class="toolbar">
+                <input type="button"
+                       id="design-recipe-insertCode"
+                       class="button"
+                       value="Insert"
+                       style="float: right; color: black;"/>
+          <input type="button" id="design-recipe-cancel" class="button" value="Cancel" style="float: left;" />
         </div>
       </div>
-      <span class="error" id="design-recipe-example1_error"></span>
-      <hr/>
-      <div id="design-recipe-example2_wrapper">
-        <span class="spacer">(EXAMPLE </span>
-        <div class="indent-wrapper">
-           <textarea id="design-recipe-example2_header"></textarea>
-         <textarea id="design-recipe-example2_body"></textarea>
-         <span class="spacer">)</span>
-        </div>
+
+
+
+      <!-- Header at the top of the page -->
+      <div role="toolbar" region="Toolbar" aria-label="Toolbar">
+      	<div id="header">
+          <h1><a role="button" href="/" title="WeScheme Homepage"
+                 role="button" aria-label="Back to WeScheme Homepage"
+                 style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
+      	  <h2>
+            <a  role="button" 
+                aria-label="Show Documentation" 
+                id="docs" target="_docs" 
+                href="doc/wescheme.html">Documentation</a>
+      	    <% if (userSession != null) { %>
+                  <a role="button"  id="account" href="/console" target="console">Programs</a>
+                  <a role="button"  id="logout" href="#">Logout</a>
+      	    <% } %>
+            </h2>
+      	</div>
+
+      	<div id="toolbar">
+      	  <ul>
+      	    <li><a role="button" aria-label="Run"  id="run" ><span>Run</span></a></li>
+      	    <li><a role="button" aria-label="Stop" id="stop"><span>Stop</span></a></li>
+      	    <% if (userSession != null) { %>
+      	    <li><a role="button"  aria-label="Save" id="save"><span>
+              <% if (request.getParameter("publicId") != null){ %>
+                    Remix
+              <% } else { %>
+                    Save
+              <% } %>
+            </span></a></li>
+      	    <li><a role="button" aria-label="Share" id="share"><span>Share</span></a></li>
+            <li><a role="button" aria-label="Images" id="images"><span>Images</span></a></li>
+      	    <% } %>
+            <li><a role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
+      	  </ul>
+      	</div>
+
+      	<div id="fileInfo">
+       	  <label id="filenamelabel" for="filename">Project name:</label>
+      	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
+          <a role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
+          <a role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+          <a role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+          <div id="statusbar" role="marquee" aria-relevant="text"></div>
+      	</div>
+      </div> 
+
       </div>
-      <span class="error" id="design-recipe-example2_error"></span>
-    </div>
-    <div class="section" id="design-recipe-definition">
-      <div id="design-recipe-definition_wrapper">
-        <span class="spacer">(define </span>
-        <div class="indent-wrapper">
-          <textarea id="design-recipe-definition_header"></textarea>
-          <textarea id="design-recipe-definition_body"></textarea>
-          <span class="spacer">)</span>
-        </div>
+      <!--  End top -->
+
+
+
+      <div id="middle" class="middle">
+      	<div id="splitpane" class="goog-splitpane">
+          <div id="definitions" class="goog-splitpane-first-container" role="region" aria-label="Definitions">
+              <textarea id="defn"></textarea>
+      	  </div>
+
+      	  <div id="interactions" class="goog-splitpane-second-container">
+      	    <div id="inter" role="application" role="region" aria-label="Interactions" aria-live="assertive" aria-relevant="additions">
+      	      <div style="width: 100%; height:100%">
+                <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
+              </div>
+      	    </div>
+      	  </div>
+
+      	  <div class="goog-splitpane-handle" aria-role="separator" aria-orientation="vertical" aria-label="divider"></div>
+      	</div>
       </div>
-      <span class="error" id="design-recipe-definition_error"></span>
-    </div>
+      <!-- End middle -->
 
-	  <div class="toolbar">
-            <input type="button"
-                   id="design-recipe-insertCode"
-                   class="button"
-                   value="Insert"
-                   style="float: right; color: black;"/>
-	    <input type="button" id="design-recipe-cancel" class="button" value="Cancel" style="float: left;" />
-	  </div>
-  </div>
-
-
-
-  <!-- Header at the top of the page -->
-  <div role="toolbar" region="Toolbar" aria-label="Toolbar">
-  	<div id="header">
-      <h1><a role="button" href="/" title="WeScheme Homepage"
-             role="button" aria-label="Back to WeScheme Homepage"
-             style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
-  	  <h2>
-        <a  role="button" 
-            aria-label="Show Documentation" 
-            id="docs" target="_docs" 
-            href="doc/wescheme.html">Documentation</a>
-  	    <% if (userSession != null) { %>
-              <a role="button"  id="account" href="/console" target="console">Programs</a>
-              <a role="button"  id="logout" href="#">Logout</a>
-  	    <% } %>
-        </h2>
-  	</div>
-
-  	<div id="toolbar">
-  	  <ul>
-  	    <li><a role="button" aria-label="Run"  id="run" ><span>Run</span></a></li>
-  	    <li><a role="button" aria-label="Stop" id="stop"><span>Stop</span></a></li>
-  	    <% if (userSession != null) { %>
-  	    <li><a role="button"  aria-label="Save" id="save"><span>
-          <% if (request.getParameter("publicId") != null){ %>
-                Remix
-          <% } else { %>
-                Save
-          <% } %>
-        </span></a></li>
-  	    <li><a role="button" aria-label="Share" id="share"><span>Share</span></a></li>
-        <li><a role="button" aria-label="Images" id="images"><span>Images</span></a></li>
-  	    <% } %>
-        <li><a role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
-  	  </ul>
-  	</div>
-
-  	<div id="fileInfo">
-   	  <label id="filenamelabel" for="filename">Project name:</label>
-  	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
-      <a role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-      <a role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-      <a role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
-      <div id="statusbar" role="marquee" aria-relevant="text"></div>
-  	</div>
-  </div> 
-</div>
-<!--  End top -->
-
-
-
-<div id="middle" class="middle">
-	<div id="splitpane" class="goog-splitpane">
-    <div id="definitions" class="goog-splitpane-first-container" role="region" aria-label="Definitions">
-        <textarea id="defn"></textarea>
-	  </div>
-
-	  <div id="interactions" class="goog-splitpane-second-container">
-	    <div id="inter" role="application" role="region" aria-label="Interactions" aria-live="assertive" aria-relevant="additions">
-	      <div style="width: 100%; height:100%">
-          <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
-        </div>
-	    </div>
-	  </div>
-
-	  <div class="goog-splitpane-handle" aria-role="separator" aria-orientation="vertical" aria-label="divider"></div>
-	</div>
-</div> <!-- End middle -->
-
-
-
-  <div id="bottom" class="bottom">
-</div> <!-- end bottom -->
+      <div id="bottom" class="bottom">
+      </div>
+      <!-- end bottom -->
 
     </div> <!-- end editor -->
 
-  <!-- invisible form for error logging from the local processor -->
-<iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
-<form method="post"
-      action="https://docs.google.com/a/bootstrapworld.org/forms/d/1qd7swEkFgVBsudpAFsEJnrjDDCQOMPTICQ2NgraVrOw/formResponse"
-      name="theForm" 
-      id="errorLogForm" 
-      target="hidden_iframe" 
-      id="GoogleForm"
-      style="display:none;">
-  <textarea name="entry.1936827156" id="expr"/>default_code</textarea>
-  <textarea name="entry.1976503423" id="local">default_localError</textarea>
-  <textarea name="entry.224419714" id="server">default_serverError</textarea>
-  <textarea name="entry.234335861" id="diffString"></textarea>
-  <input type="button" value="Submit" class="submit"/>
-</form>
-
+    <!-- invisible form for error logging from the local processor -->
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+    <form method="post"
+          action="https://docs.google.com/a/bootstrapworld.org/forms/d/1qd7swEkFgVBsudpAFsEJnrjDDCQOMPTICQ2NgraVrOw/formResponse"
+          name="theForm" 
+          id="errorLogForm" 
+          target="hidden_iframe" 
+          id="GoogleForm"
+          style="display:none;">
+      <textarea name="entry.1936827156" id="expr"/>default_code</textarea>
+      <textarea name="entry.1976503423" id="local">default_localError</textarea>
+      <textarea name="entry.224419714" id="server">default_serverError</textarea>
+      <textarea name="entry.234335861" id="diffString"></textarea>
+      <input type="button" value="Submit" class="submit"/>
+    </form>
   </body>
 
 
