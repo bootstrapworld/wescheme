@@ -86,6 +86,8 @@ a.button{
 	cursor:		pointer;
 	display: 	inline-block;
 	position: 	relative;
+	text-decoration: none;
+	color:		black;
 }
 a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
 a.button:hover{
