@@ -1224,8 +1224,15 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
         this.vertices = vertices;
-        this.ariaText = " a"+colorToSpokenString(color,style) + " triangle whose base is of length "+sideC
-          +", with an angle of " + (angleA%180) + " degrees between it and a side of length "+sideB;
+        this.ariaText = " a"+colorToSpokenString(color,style);
+        if(angleA === 270) {
+            this.ariaText += " right triangle whose base is of length "+sideC+" and height of "+sideB;
+        } else if(angleA === 300 && sideC === sideB) {
+            this.ariaText += " equilateral triangle with sides of length "+sideC;
+        } else {
+            this.ariaText += " triangle whose base is of length "+sideC + ", with an angle of "
+             + (angleA%180) + " degrees between it and a side of length "+sideB;
+        }
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
 
