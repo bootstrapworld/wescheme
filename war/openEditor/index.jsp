@@ -170,10 +170,10 @@
 
           <% if (request.getParameter("pid") != null) { %>
 	      pid = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("pid"), "utf-8") %>');
-	  <% } else if (request.getParameter("publicId") != null){ %>
-   	      publicId = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("publicId"), "utf-8") %>');
-	  <% } else { %>
-	  <% } %>
+      	  <% } else if (request.getParameter("publicId") != null){ %>
+         	      publicId = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("publicId"), "utf-8") %>');
+      	  <% } else { %>
+      	  <% } %>
 
 
           <%
@@ -228,14 +228,12 @@
     </script>
   </head>
 
-
   <body>
     <div id="editor">
       <div class="top" id="top">
 
       <!-- The dialog div here will be used by jquery -->
       <div id="dialog" style="display:none;"></div>
-
 
       <!-- The Design Recipe Widget -->
       <div id="design-recipe-form" style="position: absolute; left: -1000px; z-index: 10; visibility: hidden;">
@@ -293,27 +291,24 @@
         </div>
       </div>
 
-
-
       <!-- Header at the top of the page -->
-      <div role="toolbar" region="Toolbar" aria-label="Toolbar">
+      <div id="ToolParent" role="toolbar" role="region" tabindex="-1">
       	<div id="header">
-          <h1><a role="button" href="/" title="WeScheme Homepage"
-                 role="button" aria-label="Back to WeScheme Homepage"
-                 style="text-decoration: none; color: white;">WeScheme</a> :: </h1>
-      	  <h2>
-            <a  role="button" 
-                aria-label="Show Documentation" 
-                id="docs" target="_docs" 
-                href="doc/wescheme.html">Documentation</a>
-      	    <% if (userSession != null) { %>
-                  <a role="button"  id="account" href="/console" target="console">Programs</a>
-                  <a role="button"  id="logout" href="#">Logout</a>
-      	    <% } %>
-            </h2>
+          <h2 class="screenreader-only">Navigation</h2>
+          <a  class="h1" href="/" title="WeScheme Homepage"
+              role="button" aria-label="Back to WeScheme Homepage"
+              style="text-decoration: none; color: white;">WeScheme</a> ::
+          <a  class="h2" href="doc/wescheme.html"
+              role="button" aria-label="Show Documentation" 
+              id="docs" target="_docs">Documentation</a>
+    	    <% if (userSession != null) { %>
+                <a class="h2" role="button"  id="account" href="/console" target="console">Programs</a>
+                <a class="h2" role="button"  id="logout" href="#">Logout</a>
+    	    <% } %>
       	</div>
 
       	<div id="toolbar">
+          <h2 class="screenreader-only">Toolbar</h2>
       	  <ul>
       	    <li><a role="button" aria-label="Run"  id="run" ><span>Run</span></a></li>
       	    <li><a role="button" aria-label="Stop" id="stop"><span>Stop</span></a></li>
@@ -333,6 +328,7 @@
       	</div>
 
       	<div id="fileInfo">
+          <h2 class="screenreader-only">Project Buttons</h2>
        	  <label id="filenamelabel" for="filename">Project name:</label>
       	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
           <a role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
@@ -345,16 +341,20 @@
       </div>
       <!--  End top -->
 
-
-
       <div id="middle" class="middle">
       	<div id="splitpane" class="goog-splitpane">
-          <div id="definitions" class="goog-splitpane-first-container" role="region" aria-label="Definitions">
-              <textarea id="defn"></textarea>
+          <div  id="definitions" tabindex="-1" 
+                class="goog-splitpane-first-container" 
+                role="region" aria-label="Definitions">
+            <h2 class="screenreader-only">Definitions</h2>
+            <textarea id="defn"></textarea>
       	  </div>
 
       	  <div id="interactions" class="goog-splitpane-second-container">
-      	    <div id="inter" role="application" role="region" aria-label="Interactions" aria-live="assertive" aria-relevant="additions">
+      	    <div  id="inter" 
+                  role="application" 
+                  role="region" aria-label="Interactions">
+              <h2 class="screenreader-only">Interactions</h2>
       	      <div style="width: 100%; height:100%">
                 <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
               </div>
@@ -381,11 +381,11 @@
           target="hidden_iframe" 
           id="GoogleForm"
           style="display:none;">
-      <textarea name="entry.1936827156" id="expr"/>default_code</textarea>
-      <textarea name="entry.1976503423" id="local">default_localError</textarea>
-      <textarea name="entry.224419714" id="server">default_serverError</textarea>
-      <textarea name="entry.234335861" id="diffString"></textarea>
-      <input type="button" value="Submit" class="submit"/>
+          <textarea name="entry.1936827156" id="expr"/>default_code</textarea>
+          <textarea name="entry.1976503423" id="local">default_localError</textarea>
+          <textarea name="entry.224419714" id="server">default_serverError</textarea>
+          <textarea name="entry.234335861" id="diffString"></textarea>
+          <input type="button" value="Submit" class="submit"/>
     </form>
   </body>
 
@@ -432,7 +432,6 @@
                                                                    onSuccess();
                                                                }}});
    <% } %>
-
   </script>
 
 
