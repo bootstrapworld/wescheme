@@ -310,20 +310,20 @@
       	<div id="toolbar">
           <h2 class="screenreader-only">Toolbar</h2>
       	  <ul>
-      	    <li><a role="button" aria-label="Run"  id="run" ><span>Run</span></a></li>
-      	    <li><a role="button" aria-label="Stop" id="stop"><span>Stop</span></a></li>
+      	    <li><a role="button" href="#" aria-label="Run"  id="run"><span>Run</span></a></li>
+      	    <li><a role="button" href="#" aria-label="Stop" id="stop"><span>Stop</span></a></li>
       	    <% if (userSession != null) { %>
-      	    <li><a role="button"  aria-label="Save" id="save"><span>
+      	    <li><a role="button" href="#" aria-label="Save" id="save"><span>
               <% if (request.getParameter("publicId") != null){ %>
                     Remix
               <% } else { %>
                     Save
               <% } %>
             </span></a></li>
-      	    <li><a role="button" aria-label="Share" id="share"><span>Share</span></a></li>
-            <li><a role="button" aria-label="Images" id="images"><span>Images</span></a></li>
+      	    <li><a role="button" href="#" aria-label="Share" id="share"><span>Share</span></a></li>
+            <li><a role="button" href="#" aria-label="Images" id="images"><span>Images</span></a></li>
       	    <% } %>
-            <li><a role="button"  aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
+            <li><a role="button" href="#" aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
       	  </ul>
       	</div>
 
@@ -331,9 +331,10 @@
           <h2 class="screenreader-only">Project Buttons</h2>
        	  <label id="filenamelabel" for="filename">Project name:</label>
       	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
-          <a role="button" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor"><img src="/images/small-info.png"></a>
-          <a role="button" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-          <a role="button" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+          <a role="button" href="#" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor">
+            <img src="/images/small-info.png"></a>
+          <a role="button" href="#" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+          <a role="button" href="#" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
           <div id="statusbar" role="marquee" aria-relevant="text"></div>
       	</div>
       </div> 

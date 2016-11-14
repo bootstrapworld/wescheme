@@ -57,22 +57,21 @@ var WeSchemeEditor;
 
 	this.userName = attrs.userName; // string
 	this.actions = new plt.wescheme.AjaxActions();
-
-        this.onResize = undefined;
-
+    this.onResize = undefined;
+    
 	// defn is assumed to be Containers.
 	// The only container we've got so far are TextContainers.
 	this.defn = attrs.defn;  // TextAreaContainer
 	this.isOwner = false;
 
 
-        this.suppressWarningBeforeUnloadE = receiverE();
-        // suppressWarningBeforeUnloadB: Behavior boolean
-        // Used to suppress the save warning.  Use
-        // suppressWarningBeforeUnloadE.sendEvent() to trigger.
-        this.suppressWarningBeforeUnloadB = startsWith(
-						       this.suppressWarningBeforeUnloadE,
-						       false);
+    this.suppressWarningBeforeUnloadE = receiverE();
+    // suppressWarningBeforeUnloadB: Behavior boolean
+    // Used to suppress the save warning.  Use
+    // suppressWarningBeforeUnloadE.sendEvent() to trigger.
+    this.suppressWarningBeforeUnloadB = startsWith(
+					       this.suppressWarningBeforeUnloadE,
+					       false);
 
 
 
@@ -223,7 +222,9 @@ var WeSchemeEditor;
 						      afterInit(that);
 						  }
 					      });
-
+		this.focusCarousel = [	document.getElementById('ToolParent'), 
+								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
+								that.interactions.prompt.div[0]];
     };
 
     // Inserting the value of a boolean behavior into the enabled
@@ -658,6 +659,23 @@ var WeSchemeEditor;
       else { authenticatePicker(); }
     }
     
+    WeSchemeEditor.prototype.cycleFocus = function(goBackwards) {
+	    var nextFocusIndex, that = this, maxIndex = that.focusCarousel.length;
+	    // find the currently focused ancestor
+	    var currentFocusedElt = that.focusCarousel.find(function(node){
+	    	return node.contains(document.activeElement);
+	    });
+	    // find the index of that element (-1 if nothing is selected)
+	    var currentFocusIndex = that.focusCarousel.indexOf(currentFocusedElt);
+      	nextFocusIndex = currentFocusIndex + (goBackwards? -1 : 1);
+    	// see http://javascript.about.com/od/problemsolving/a/modulobug.htm
+  	 	nextFocusIndex = ((nextFocusIndex % maxIndex) + maxIndex) % maxIndex;  
+	    var focusElt = that.focusCarousel[nextFocusIndex];
+    	document.activeElement.blur();
+    	document.getElementById('editor').setAttribute('aria-activedescendant', focusElt.id);
+    	focusElt.click();
+    	focusElt.focus();
+    };
 
     WeSchemeEditor.prototype.run = function(after) {
       var that = this;
@@ -686,12 +704,12 @@ var WeSchemeEditor;
     };
 
     WeSchemeEditor.prototype.requestBreak = function() {
-	this.interactions.requestBreak();
+		this.interactions.requestBreak();
     };
 
     WeSchemeEditor.prototype._setIsOwner = function(v) {
-	this.isOwner = v;
-	this.isOwnerE.sendEvent(v);
+		this.isOwner = v;
+		this.isOwnerE.sendEvent(v);
     };
 
     WeSchemeEditor.prototype.toString = function() { return "WeSchemeEditor()"; };
