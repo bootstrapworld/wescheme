@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta name="viewport" content="width=device-width, user-scalable=no">
+    <meta name="viewport" content="width=device-width, user-scalable=no" />
 
     <title>WeScheme Editor</title>
     <!-- Tags for on mobile -->
@@ -16,8 +16,8 @@
     <!-- Google analytics support -->
     <jsp:include page="/google-analytics.jsp"/>
 
-    <link rel="stylesheet" type="text/css" href="/css/default.css" id="style" />
-    <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" id="style" />
+    <link rel="stylesheet" type="text/css" href="/css/default.css" />
+    <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" />
 
     <!-- dynamic script loading -->
     <script src="/js/loadScript-min.js" type="text/javascript"></script>
@@ -28,7 +28,7 @@
     <script src="/js/jquery/jquery-ui-1.8.24.min.js" type="text/javascript"></script>
 
     <!-- Google JavaScript API -->
-    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad" type="text/javascript"></script>
 
    <!-- The standard Google Loader script; use your own key. -->
     <script src="http://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
@@ -61,7 +61,7 @@
     <script src="/js/codemirror2/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror2-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
 
-    <link rel="stylesheet" type="text/css" href="/css/codemirror.css" id="style" />
+    <link rel="stylesheet" type="text/css" href="/css/codemirror.css" />
     <link rel="stylesheet" type="text/css" href="/js/codemirror2/lib/codemirror.css"></link>
     <link rel="stylesheet" type="text/css" href="/js/codemirror2-contrib/scheme2/schemecolors.css"></link>
 
@@ -292,49 +292,54 @@
       </div>
 
       <!-- Header at the top of the page -->
-      <div id="ToolParent" role="toolbar" role="region" tabindex="-1">
+      <div id="ToolParent" role="region" aria-label="Tools" tabindex="-1">
       	<div id="header">
           <h2 class="screenreader-only">Navigation</h2>
-          <a  class="h1" href="/" title="WeScheme Homepage"
-              role="button" aria-label="Back to WeScheme Homepage"
-              style="text-decoration: none; color: white;">WeScheme</a> ::
-          <a  class="h2" href="doc/wescheme.html"
-              role="button" aria-label="Show Documentation" 
-              id="docs" target="_docs">Documentation</a>
-    	    <% if (userSession != null) { %>
-                <a class="h2" role="button"  id="account" href="/console" target="console">Programs</a>
-                <a class="h2" role="button"  id="logout" href="#">Logout</a>
-    	    <% } %>
+          <ul style="margin: 0px; padding: 0px;">
+            <li><a  class="h1" href="/" title="WeScheme Homepage"
+                role="button" aria-label="Back to WeScheme Homepage"
+                style="text-decoration: none; color: white;">WeScheme :: </a></li>
+            <li><a  class="h2" href="doc/wescheme.html"
+                role="button" aria-label="Show Documentation" 
+                id="docs" target="_docs">Documentation</a></li>
+      	    <% if (userSession != null) { %>
+                  <li><a  class="h2" role="button"  id="account" 
+                      href="/console" target="console"
+                      aria-label="Go to program list">Programs</a></li>
+                  <li><a  class="h2" role="button"  id="logout" href="javascript: void(0)"
+                      aria-label="Log out of WeScheme and other Google services">Logout</a></li>
+      	    <% } %>
+            </ul>
       	</div>
 
       	<div id="toolbar">
-          <h2 class="screenreader-only">Toolbar</h2>
+          <h2 class="screenreader-only">Program Controls</h2>
       	  <ul>
-      	    <li><a role="button" href="#" aria-label="Run"  id="run"><span>Run</span></a></li>
-      	    <li><a role="button" href="#" aria-label="Stop" id="stop"><span>Stop</span></a></li>
+      	    <li><a role="button" href="javascript: void(0)" aria-label="Run, F7"  id="run"><span>Run</span></a></li>
+      	    <li><a role="button" href="javascript: void(0)" aria-label="Stop, F8" id="stop"><span>Stop</span></a></li>
       	    <% if (userSession != null) { %>
-      	    <li><a role="button" href="#" aria-label="Save" id="save"><span>
+      	    <li><a role="button" href="javascript: void(0)" aria-label="Save" id="save"><span>
               <% if (request.getParameter("publicId") != null){ %>
                     Remix
               <% } else { %>
                     Save
               <% } %>
             </span></a></li>
-      	    <li><a role="button" href="#" aria-label="Share" id="share"><span>Share</span></a></li>
-            <li><a role="button" href="#" aria-label="Images" id="images"><span>Images</span></a></li>
+      	    <li><a role="button" href="javascript: void(0)" aria-label="Share, F9" id="share"><span>Share</span></a></li>
+            <li><a role="button" href="javascript: void(0)" aria-label="Images" id="images"><span>Images</span></a></li>
       	    <% } %>
-            <li><a role="button" href="#" aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
+            <li><a role="button" href="javascript: void(0)" aria-label="Open a Design Recipe Form" id="recipe"><span>Recipe</span></a></li>
       	  </ul>
       	</div>
 
       	<div id="fileInfo">
-          <h2 class="screenreader-only">Project Buttons</h2>
+          <h2 class="screenreader-only">Project Controls</h2>
        	  <label id="filenamelabel" for="filename">Project name:</label>
       	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
-          <a role="button" href="#" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor">
+          <a role="button" href="javascript: void(0)" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor">
             <img src="/images/small-info.png"></a>
-          <a role="button" href="#" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
-          <a role="button" href="#" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+          <a role="button" href="javascript: void(0)" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
+          <a role="button" href="javascript: void(0)" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
           <div id="statusbar" role="marquee" aria-relevant="text"></div>
       	</div>
       </div> 
@@ -354,7 +359,7 @@
       	  <div id="interactions" class="goog-splitpane-second-container">
       	    <div  id="inter" 
                   role="application" 
-                  role="region" aria-label="Interactions">
+                  aria-label="Interactions">
               <h2 class="screenreader-only">Interactions</h2>
       	      <div style="width: 100%; height:100%">
                 <span>&gt;&nbsp<input id="inputBox" style="width: 75%;height:100%" type="text"/></span>
