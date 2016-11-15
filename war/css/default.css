@@ -9,10 +9,10 @@ html {
     overflow: hidden;
 }
 
-html, body, h1, h2, #header, #fileInfo, #toolbar *, #defn, #footer, #inter, input{
-    padding:		0px;
+html, body, h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #footer, #inter, input{
+    padding:	0px;
     margin:		0px;
-    border: 0px;
+    border:     0px;
 }
 
 .screenreader-only {
@@ -106,7 +106,7 @@ body {
 
 
 /* 65px: LOGO AND TITLE */
-#header{
+#Navigation{
     width:           100%;
     min-height:      40px;
     background:     url(/css/images/icon-trans.png) 4px 4px black;
@@ -120,7 +120,7 @@ body {
     padding-top:     5px;
 }
 
-#header * {display: inline-block; vertical-align: baseline;}
+#Navigation * {display: inline-block; vertical-align: baseline;}
 
 a.h1{ font-weight: bold; padding-left: 65px;}
 a.h2{ font-size: 20px; font-weight: lighter; padding-left: 4px;}
@@ -129,7 +129,7 @@ a.h2, a.h2:visited {color: lightgray; margin-right: 15px; text-decoration: none;
 a.h2:hover{text-decoration: underline;}
 
 /* 30px: FILENAME & URL */
-#fileInfo{
+#FileControls{
     width:        100%;
     height:       22px;	/* leave room for the border */
     clear:        both;
@@ -142,14 +142,14 @@ a.h2:hover{text-decoration: underline;}
     font-family:   Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
-#fileInfo *{
+#FileControls *{
     width:     auto;
     float:			left;
     margin:			0px 10px;
 }
 
 /* 20px: TOOLBAR, BUTTONS, ETC */
-#toolbar{
+#ProgramControls{
     width:          100%;
 /*    height:         25px;	/* leave room for the border */
     background:     #B6D990;
@@ -157,13 +157,13 @@ a.h2:hover{text-decoration: underline;}
     font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
-#toolbar ul{
+#ProgramControls ul{
     clear:			both;
     list-style-type: none;
 
 }
 
-#toolbar li{
+#ProgramControls li{
     float:        left;
     text-align:		center;
     width:        16%;
@@ -173,7 +173,7 @@ a.h2:hover{text-decoration: underline;}
     font-size:     14px;
 }
 
-#toolbar .button {
+#ProgramControls .button {
   display: block;
   width: 100%;
   min-height: 20px;
@@ -188,7 +188,7 @@ a#share  span:before{content: url(share.png);  margin-right: 3px;}
 a#recipe span:before{content: url(recipe.png); margin-right: 3px;}
 a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
-#toolbar li a, #toolbar li a:visited{
+#ProgramControls li a, #ProgramControls li a:visited{
     display:		block;
     color:			black;
     width:			100%;
@@ -197,7 +197,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     padding:    3px 0px;
 }
 
-#toolbar li a:hover{
+#ProgramControls li a:hover{
     background:rgb(117, 50, 138);
     color: white;
     cursor: pointer;
@@ -408,7 +408,7 @@ span.top-aligned-inline-block {
 
 
 /* clearix elements */
-#toolbar ul:after{
+#ProgramControls ul:after{
   visibility: hidden;
   display: block;
   font-size: 0;
@@ -420,9 +420,9 @@ span.top-aligned-inline-block {
 #printedCM{visibility: hidden; height: 0px;}
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
-	#toolbar li {min-width: 50px;}
-  #toolbar li a{
-    border-left:  solid 1px gray;
+    #ProgramControls li {min-width: 50px;}
+    #ProgramControls li a{
+        border-left:  solid 1px gray;
 		padding-top: 10px;   
 		padding-bottom: 10px;
 		/* Hide the text by making is as small as possible, and match the BG color */ 
@@ -430,15 +430,15 @@ span.top-aligned-inline-block {
 		color: black;
 		}
 
-  #fileInfo *{ margin: 0px 5px; }
-  #header h1{display: none;}
-  #header h2{font-size: 16px; margin-left: 65px; margin-top: 8px;}
+  #FileControls *{ margin: 0px 5px; }
+  #a.h1{display: none;}
+  #a.h2{font-size: 16px; margin-left: 65px; margin-top: 8px;}
 }
 
-/* When printing, hide everything except the fileInfo and definitions areas */
+/* When printing, hide everything except the FileControls and definitions areas */
 @media print{
-  #header, #toolbar, #footer, #splitpane{display: none;}
+  #Navigation, #ProgramControls, #footer, #splitpane{display: none;}
   #printedCM{visibility: visible; display: block; height: auto;}
-  #fileInfo{border-style: solid; border-color: black; border-width: 3px 0px;}
-  #fileInfo img{display: none;}
+  #FileControls{border-style: solid; border-color: black; border-width: 3px 0px;}
+  #FileControls img{display: none;}
 }
