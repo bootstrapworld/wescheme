@@ -4,9 +4,11 @@ goog.require('plt.wescheme.BrowserDetect');
 
 //FIXME: depends on global variable myEditor at toplevel.
 
-
-var F5_KEYCODE = 116
+// F1,F3,F5 and F10 are all commonly-reserved browser keys, so we can't use them
 var F6_KEYCODE = 117
+var F7_KEYCODE = 118
+var F8_KEYCODE = 119
+var F9_KEYCODE = 120
 var BACKSPACE_KEYCODE = 8;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
@@ -57,14 +59,26 @@ plt.wescheme.topKeymap = function(e) {
           return false;
     }
 
-    if (e.keyCode === F5_KEYCODE) {
+    if (e.keyCode === F6_KEYCODE) {
+      myEditor.cycleFocus(e.shiftKey);
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F7_KEYCODE) {
       myEditor.run();
       cancelEvent(e);
       return false;
     }
 
-    if (e.keyCode === F6_KEYCODE) {
-      myEditor.cycleFocus(e.shiftKey);
+    if (e.keyCode === F8_KEYCODE) {
+      myEditor.requestBreak();
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F9_KEYCODE) {
+      myEditor.share();
       cancelEvent(e);
       return false;
     }

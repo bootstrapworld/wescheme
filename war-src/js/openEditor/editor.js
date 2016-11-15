@@ -222,7 +222,7 @@ var WeSchemeEditor;
 						      afterInit(that);
 						  }
 					      });
-		this.focusCarousel = [	document.getElementById('ToolParent'), 
+		this.focusCarousel = [	document.getElementById('Tools'), 
 								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
 								that.interactions.prompt.div[0]];
     };
