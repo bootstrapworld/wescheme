@@ -93,7 +93,7 @@ a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px
 a.button:hover{
 	background: gray;
 }
-a.button:hover>span.tooltip{ opacity: 1; };
+a.button:hover>span.tooltip{ opacity: 0.5; };
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
   input{font-size: 14px; width: 100px;}
 }

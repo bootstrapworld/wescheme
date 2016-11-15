@@ -13,7 +13,7 @@ UserService us = UserServiceFactory.getUserService();
 
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <title>WeScheme</title>
 
@@ -65,27 +65,30 @@ UserService us = UserServiceFactory.getUserService();
 </head>
 
 <body>
-<h1>WeScheme</h1>
+<header><h1>WeScheme</h1></header>
+<main>
 <% if (s == null) { %>
-    <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="#">Start Coding 
+    <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding 
         <span class="tooltip" id="startCodingDescription">...without being able to save</span>
     </a>
 <% } else { %>
-    <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="#">My Programs
-        <span class="tooltip" id="myProgramsDescription"></span>
+    <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs
+        <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
     </a>
 <% } %>
 
 <img src="css/images/BigLogo.png" alt="">
 
 <% if( s == null ) { %>
-    <a class="button" id="loginButton" aria-describedby="loginDescription" href="#">Log In
+    <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">Log In
         <span class="tooltip" id="loginDescription">...to access your programs</span>
     </a>
 <%  } else { %>
-    <a class="button" id="logoutButton" href="#">Log Out</a>
+    <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
+         <span class="tooltip" id="loginDescription">...of all Google services</span>
+    </a>
 <% } %>	
-	
+</main>
 
 <div id="links">
     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
