@@ -88,7 +88,8 @@ var initializeWidget = (function () {
                                              isError,
                                              errorElement,
                                              isViolatingDependencies,
-                                             tabIndent) {
+                                             tabIndent,
+                                             hideWidget) {
         var that = this;
         
         isViolatingDependencies = isViolatingDependencies || function() { return false; };
@@ -151,9 +152,10 @@ var initializeWidget = (function () {
             // jQuery(errorElement).empty();
         };
         
-	var km = {};
-	km["Tab"] = (tabIndent? "indentAuto" : false);
-	km["Shift-Tab"] = false;
+    	var km = {};
+    	km["Tab"] = (tabIndent? "indentAuto" : false);
+    	km["Shift-Tab"] = false;
+        km["Esc"] = hideWidget;
 
         this.codeMirrorElement = 
             CodeMirror.fromTextArea(textElement,
@@ -512,17 +514,26 @@ var initializeWidget = (function () {
             contract_name = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-name"),
                 isNameError,
-                contractErrorElt);
+                contractErrorElt,
+                false,
+                false,
+                hideWidget);
 
             contract_domain = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-domain"),
                 isDomainError,
-                contractErrorElt);
+                contractErrorElt,
+                false,
+                false,
+                hideWidget);
             
             contract_range = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-range"),
                 isRangeError,
-                contractErrorElt);
+                contractErrorElt,
+                false,
+                false,
+                hideWidget);
 
             var bc1 = new BlockingConstraint('#design-recipe-examples',
                                              [contract_name, contract_domain, contract_range],
@@ -533,25 +544,33 @@ var initializeWidget = (function () {
                 document.getElementById("design-recipe-example1_header"),
                 isExampleHeaderError,
                 document.getElementById("design-recipe-example1_error"),
-                isContractDependencyError);
+                isContractDependencyError,
+                false,
+                hideWidget);
             
             example1_body = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-example1_body"),
                 isExampleBodyError,
                 document.getElementById("design-recipe-example1_error"),
-                isContractDependencyError);
+                isContractDependencyError,
+                false,
+                hideWidget);
 
             example2_header = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-example2_header"),
                 isExampleHeaderError,
                 document.getElementById("design-recipe-example2_error"),
-                isContractDependencyError);
+                isContractDependencyError,
+                false,
+                hideWidget);
             
             example2_body = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-example2_body"),
                 isExampleBodyError,
                 document.getElementById("design-recipe-example2_error"),
-                isContractDependencyError);
+                isContractDependencyError,
+                false,
+                hideWidget);
             
             var bc2 = new BlockingConstraint('#design-recipe-definition',
                                              [example1_header, example1_body, 
@@ -565,7 +584,9 @@ var initializeWidget = (function () {
                 isDefinitionHeaderError,
                 document.getElementById("design-recipe-definition_error"),
                 function() { return isContractDependencyError() || 
-                             isExampleDependencyError(); });
+                             isExampleDependencyError(); },
+                false,
+                hideWidget);
 
             definition_body = new ValidatedTextInputElement(
                 document.getElementById("design-recipe-definition_body"),
@@ -573,7 +594,9 @@ var initializeWidget = (function () {
                 document.getElementById("design-recipe-definition_error"),
                 function() { return isContractDependencyError() || 
                              isExampleDependencyError(); },
-                             true);
+                             true,
+                false,
+                hideWidget);
 
             
             var bc3 = new BlockingConstraint('#design-recipe-insertCode',
@@ -589,10 +612,7 @@ var initializeWidget = (function () {
                                              });
 
             example1_error = document.getElementById("design-recipe-example1_error");
-            example2_error = document.getElementById("design-recipe-example2_error");
-
-
-            
+            example2_error = document.getElementById("design-recipe-example2_error");            
         };
 
 
