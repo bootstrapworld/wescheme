@@ -18,6 +18,7 @@ var WeSchemeStatusBar;
 plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
     function WeSchemeStatusBar(statusbar) {
     this.statusbar = statusbar;
+    this.announcements = document.getElementById("announcementlist");
 
     this.delay_till_fade = 5000; // five seconds until we fade the text.
     this.fadeCallbackId = undefined;
@@ -89,6 +90,9 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
 
     WeSchemeStatusBar.prototype.notify = function(msg, waitForNextMessage) {
       var that = this;
+      var li = document.createElement("li");
+      li.appendChild(document.createTextNode(msg));
+      that.announcements.appendChild(li);
       var fadeOutFn = function() {
         that.statusbar.fadeOut("fast", function () { that.statusbar.text(""); });
       };
@@ -104,9 +108,6 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
       this.statusbar.fadeIn("fast");
       
       if(!waitForNextMessage){
-        // FIXME: make transparent after a while.
-        // FIXME: use flapjax to guarantee that a message shows up for some period of time.
-        // FIXME: allow the user to see all the statusbar messages sent to us.
         this.fadeCallbackId = setTimeout(fadeOutFn, this.delay_till_fade);
       }
     };

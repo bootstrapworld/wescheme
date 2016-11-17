@@ -224,7 +224,8 @@ var WeSchemeEditor;
 					      });
 		this.focusCarousel = [	document.getElementById('Tools'), 
 								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
-								that.interactions.prompt.div[0]];
+								that.interactions.prompt.div[0],
+								document.getElementById('announcements')];
     };
 
     // Inserting the value of a boolean behavior into the enabled
