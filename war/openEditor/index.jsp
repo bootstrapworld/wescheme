@@ -292,8 +292,8 @@
       </div>
 
       <!-- Header at the top of the page -->
-      <div id="ToolParent" role="region" aria-label="Tools" tabindex="-1">
-      	<div id="header">
+      <div id="Tools" role="region" aria-label="Tools" tabindex="-1">
+      	<div id="Navigation">
           <h2 class="screenreader-only">Navigation</h2>
           <ul style="margin: 0px; padding: 0px;">
             <li><a  class="h1" href="/" title="WeScheme Homepage"
@@ -312,7 +312,7 @@
             </ul>
       	</div>
 
-      	<div id="toolbar">
+      	<div id="ProgramControls">
           <h2 class="screenreader-only">Program Controls</h2>
       	  <ul>
       	    <li><a role="button" href="javascript: void(0)" aria-label="Run, F7"  id="run"><span>Run</span></a></li>
@@ -332,8 +332,8 @@
       	  </ul>
       	</div>
 
-      	<div id="fileInfo">
-          <h2 class="screenreader-only">Project Controls</h2>
+      	<div id="FileControls">
+          <h2 class="screenreader-only">File Controls</h2>
        	  <label id="filenamelabel" for="filename">Project name:</label>
       	  <input role="textbox" id="filename" type="text" aria-describedby="filenamelabel" style="width: 20%"/>
           <a role="button" href="javascript: void(0)" aria-label="Open Program Notes" id="updateNotes" class="clickableAnchor">
@@ -373,6 +373,14 @@
       <!-- End middle -->
 
       <div id="bottom" class="bottom">
+        <!-- all spoken events should be logged here -->
+        <div id="announcements" role="region" aria-label="Announcements" tabindex="-1" 
+             class="screenreader-only" >
+          <h2>Announcements</h2>
+          <ul id="announcementlist" aria-live="assertive" aria-relevant="additions"
+              style="list-style: none;">
+          </ul>
+        </div>
       </div>
       <!-- end bottom -->
 

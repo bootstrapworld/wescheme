@@ -34,6 +34,7 @@ WeSchemeInteractions = (function () {
         this.previousInteractionsDiv = document.createElement("div");
         this.previousInteractionsTextContainers = {};
         this.interactionsDiv.append(this.previousInteractionsDiv);
+        this.previousOutputDescriptions = [];
         
         this.withColoredErrorMessages = true;
 
@@ -125,6 +126,35 @@ WeSchemeInteractions = (function () {
         this.prompt.setText(t);
     };
 
+    // announce a msg by adding it to the log, then (optionally) forget it by deleting
+    WeSchemeInteractions.prototype.say = function(msg, forget) {
+        if(msg==='') return;
+        var announcements = document.getElementById("announcementlist");
+        var li = document.createElement("LI");
+        li.appendChild(document.createTextNode(msg));
+        announcements.appendChild(li);
+        if(forget) { 
+            setTimeout(function(){
+                announcements.removeChild(li);
+            }, 1000);
+        }
+    }
+    WeSchemeInteractions.prototype.sayAndForget = function(msg) {
+        this.say(msg, true);
+    }
+
+    // speak the nth interaction and result (0=10)
+    WeSchemeInteractions.prototype.speakHistory = function(n) {
+        if(n===0) { n = 10; }// use 0 as 10
+        var historySize = this.prompt.historyArray.length-1; // the last elt is always ""
+        var outputSize = this.previousOutputDescriptions.length;
+        if(n > historySize) { return false; } // don't speak a history that doesn't exist!
+        var history  = this.prompt.historyArray[historySize - n] 
+        history += " evaluates to " + this.previousOutputDescriptions[outputSize-n];
+        this.sayAndForget(history);
+        return true;
+    }
+
     //////////////////////////////////////////////////////////////////////
     Prompt = function(interactions, parentDiv, K) {
         var that = this;
@@ -158,6 +188,36 @@ WeSchemeInteractions = (function () {
                   },
                   "Alt-P":function (ed) {
                       that.onHistoryPrevious();
+                  },
+                  "Alt-1":function (ed) {
+                      interactions.speakHistory(1);
+                  },
+                  "Alt-2":function (ed) {
+                      interactions.speakHistory(2);
+                  },
+                  "Alt-3":function (ed) {
+                      interactions.speakHistory(3);
+                  },
+                  "Alt-4":function (ed) {
+                      interactions.speakHistory(4);
+                  },
+                  "Alt-5":function (ed) {
+                      interactions.speakHistory(5);
+                  },
+                  "Alt-6":function (ed) {
+                      interactions.speakHistory(6);
+                  },
+                  "Alt-7":function (ed) {
+                      interactions.speakHistory(7);
+                  },
+                  "Alt-8":function (ed) {
+                      interactions.speakHistory(8);
+                  },
+                  "Alt-9":function (ed) {
+                      interactions.speakHistory(9);
+                  },
+                  "Alt-0":function (ed) {
+                      interactions.speakHistory(0);
                   }
               }},
             function(container) {
@@ -191,10 +251,8 @@ WeSchemeInteractions = (function () {
         parentDiv.appendChild(textareaSpan);
         that.interactions.addToInteractions(parentDiv);
                         
-        // ARIA: don't read the group, the caret or the contents
-        parentDiv.setAttribute(   "aria-hidden", "true");
+        // ARIA: don't read the caret
         promptSpan.setAttribute(  "aria-hidden", "true");
-        textareaSpan.setAttribute("aria-hidden", "true");
 
         // // FIXME: figure out how to get the line height
         // dynamically, because I have no idea how to do
@@ -261,8 +319,9 @@ WeSchemeInteractions = (function () {
 
     Prompt.prototype.doHistoryPart2 = function(increment) {
         this.historyIndex += increment;
+        var dom = this.textContainer.getDiv();
+        this.interactions.say(this.historyArray[this.historyIndex]);
         this.textContainer.setCode(this.historyArray[this.historyIndex]);
-        // TODO: !!! setCursorToEnd doesn't yet work.
         this.textContainer.setCursorToEnd();
     };
 
@@ -411,6 +470,7 @@ WeSchemeInteractions = (function () {
     var makeFreshEvaluator = function(that, afterInit) {         
         var evaluator = new Evaluator({
             write: function(thing) {
+                var ariaText = thing.ariaText || thing.innerText;
                 // if it's a canvas element, make double-clicking generate an image file in a new window
                 // use Blobs instead of dataURL, since some browser/OS combos choke on Very Long URLs
                 // see https://code.google.com/p/chromium/issues/detail?id=69227
@@ -439,18 +499,12 @@ WeSchemeInteractions = (function () {
                                         }
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
-                    // Accessibility: canvas elements serve as our image types
-                    var ariaText = document.createTextNode(thing.ariaText);
-                    thing.setAttribute("role", "image");
-                    thing.appendChild(ariaText);
-                                    
                 }
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
+                that.sayAndForget(ariaText);
+                if(ariaText!=="") that.previousOutputDescriptions.push(ariaText);
                 rewrapOutput(thing);
-                // ARIA: create alternate text for canvas element
-                thing.setAttribute("role", "alert");
-                thing.setAttribute("aria-atomic", "true");
             },
             transformDom : function(dom) {
                 var result = that._transformDom(dom);
@@ -595,6 +649,11 @@ WeSchemeInteractions = (function () {
 
     WeSchemeInteractions.prototype.setFocus = function(focus) {
         this.focus = focus;
+    };
+
+    WeSchemeInteractions.prototype.focus = function() {
+        console.log('focusing on current prompt');
+        this.prompt.focus();
     };
 
     WeSchemeInteractions.prototype.addOnReset = function(onReset) {
