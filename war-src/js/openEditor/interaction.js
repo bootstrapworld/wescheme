@@ -783,7 +783,9 @@ WeSchemeInteractions = (function () {
     };
 
     WeSchemeInteractions.prototype.handleError = function(err) {
-        this.addToInteractions(renderErrorAsDomNode(this, err));
+        var dom = renderErrorAsDomNode(this, err);
+        this.addToInteractions(dom);
+        this.say(dom.textContent);
         this.addToInteractions("\n");
     };
 
