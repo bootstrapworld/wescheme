@@ -652,7 +652,6 @@ WeSchemeInteractions = (function () {
     };
 
     WeSchemeInteractions.prototype.focus = function() {
-        console.log('focusing on current prompt');
         this.prompt.focus();
     };
 
