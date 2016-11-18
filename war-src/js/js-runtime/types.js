@@ -137,6 +137,7 @@ function makeRParen(){
 }
 
 //////////////////////////////////////////////////////////////////////
+// Struct Types
 StructType = function(name, type, numberOfArgs, numberOfFields, firstField,
 		      constructor, predicate, accessor, mutator) {
 	this.name = name;
@@ -739,8 +740,6 @@ var explicitConsDomNode = function(p, cache) {
     return topNode;
 };
 
-
-
 //////////////////////////////////////////////////////////////////////
 // Vectors
 Vector = function(n, initialElements) {
@@ -1012,6 +1011,7 @@ var makeRenderEffectType = function(name, superType, initFieldCnt, impl, guard) 
 	}
 	return newType;
 };
+
 //////////////////////////////////////////////////////////////////////
 // generic, top-level description functions
 var toWrittenString = function(x, cache) {
@@ -1032,22 +1032,22 @@ var toWrittenString = function(x, cache) {
     }
 
     if (x == undefined || x == null) {
-	return "#<undefined>";
+		return "#<undefined>";
     }
     if (typeof(x) == 'string') {
-	return escapeString(x.toString());
+		return escapeString(x.toString());
     }
     if (typeof(x) != 'object' && typeof(x) != 'function') {
-	return x.toString();
+		return x.toString();
     }
 
     var returnVal;
     if (typeof(x.toWrittenString) !== 'undefined') {
-	returnVal = x.toWrittenString(cache);
+		returnVal = x.toWrittenString(cache);
     } else if (typeof(x.toDisplayedString) !== 'undefined') {
-	returnVal = x.toDisplayedString(cache);
+		returnVal = x.toDisplayedString(cache);
     } else {
-	returnVal = x.toString();
+		returnVal = x.toString();
     }
     cache.remove(x);
     return returnVal;
@@ -1267,11 +1267,9 @@ var rationalToDomNode = function(n) {
     var showingRepeating = true;
 
     numberNode.onclick = function(e) {
-	showingRepeating = !showingRepeating;
-	repeatingDecimalNode.style['display'] = 
-	    (showingRepeating ? 'inline' : 'none')
-	fractionalNode.style['display'] = 
-	    (!showingRepeating ? 'inline' : 'none')
+		showingRepeating = !showingRepeating;
+		repeatingDecimalNode.style['display'] = (showingRepeating ? 'inline' : 'none')
+		fractionalNode.style['display'] = (!showingRepeating ? 'inline' : 'none')
     };
     numberNode.style['cursor'] = 'pointer';
     numberNode.className = "wescheme-number Rational";
@@ -1353,8 +1351,6 @@ var ThreadCell = function(v, isPreserved) {
 
 
 //////////////////////////////////////////////////////////////////////
-
-
 // Wrapper around functions that return multiple values.
 var ValuesWrapper = function(elts) {
     this.elts = elts;
@@ -1363,11 +1359,15 @@ var ValuesWrapper = function(elts) {
 ValuesWrapper.prototype.toDomNode = function(cache) {
     var parent = document.createElement("span");
     parent.style.whiteSpace = "pre";
+    var ariaText = "Value Wrapper with "+this.elts.length
+    	+ "element"+(this.elts.length===1? "" : "s")+":";
     if ( this.elts.length > 0 ) {
 	    parent.appendChild( toDomNode(this.elts[0], cache) );
 	    for (var i = 1; i < this.elts.length; i++) {
+	    	var dom = toDomNode(this.elts[i], cache);
 		    parent.appendChild( document.createTextNode('\n') );
-		    parent.appendChild( toDomNode(this.elts[i], cache) );
+		    parent.appendChild(dom);
+		    ariaText += " "+ dom.ariaText || dom.textContent;
 	    }
     }
     return parent;
@@ -1409,25 +1409,22 @@ var ClosureValue = function(name, locs, numParams, paramTypes, isRest, closureVa
 
 ClosureValue.prototype.toString = function() {
     if (this.name !== Empty.EMPTY) {
-	return helpers.format("#<function:~a>", [this.name]);
+		return helpers.format("#<function:~a>", [this.name]);
     } else {
-	return "#<function>";
+		return "#<function>";
     }
 };
-
 var CaseLambdaValue = function(name, closures) {
     this.name = name;
     this.closures = closures;
 };
-
 CaseLambdaValue.prototype.toString = function() {
     if (this.name !== Empty.EMPTY) {
-	return helpers.format("#<case-lambda-procedure:~a>", [this.name]);
+		return helpers.format("#<case-lambda-procedure:~a>", [this.name]);
     } else {
-	return "#<case-lambda-procedure>";
+		return "#<case-lambda-procedure>";
     }
 };
-
 var ContinuationClosureValue = function(vstack, cstack) {
     this.name = false;
     this.vstack = vstack.slice(0);
@@ -1436,20 +1433,17 @@ var ContinuationClosureValue = function(vstack, cstack) {
 
 ContinuationClosureValue.prototype.toString = function() {
     if (this.name !== Empty.EMPTY) {
-	return helpers.format("#<function:~a>", [this.name]);
+		return helpers.format("#<function:~a>", [this.name]);
     } else {
-	return "#<function>";
+		return "#<function>";
     }
 };
-
-
 
 //////////////////////////////////////////////////////////////////////
 var PrefixValue = function() {
     this.slots = [];
     this.definedMask = [];
 };
-
 PrefixValue.prototype.addSlot = function(v) {
     if (v === undefined) { 
 		this.slots.push(types.UNDEFINED);
@@ -1467,7 +1461,6 @@ PrefixValue.prototype.addSlot = function(v) {
 		}
     }
 };
-
 PrefixValue.prototype.ref = function(n, srcloc) {
     if (this.slots[n] instanceof GlobalBucket) {
     	if (this.definedMask[n]) {
@@ -1500,18 +1493,13 @@ PrefixValue.prototype.set = function(n, v) {
 	this.definedMask[n] = true;
     }
 };
-
-
 PrefixValue.prototype.length = function() { 
     return this.slots.length;
 };
-
-
 var GlobalBucket = function(name, value) {
     this.name = name;
     this.value = value;
 };
-
 var ModuleVariableRecord = function(resolvedModuleName,
 				    variableName) {
     this.resolvedModuleName = resolvedModuleName;
@@ -1519,67 +1507,44 @@ var ModuleVariableRecord = function(resolvedModuleName,
 };
 
 //////////////////////////////////////////////////////////////////////
-
-
+// Variable Reference
 var VariableReference = function(prefix, pos) {
     this.prefix = prefix;
     this.pos = pos;
 };
-
 VariableReference.prototype.ref = function() {
     return this.prefix.ref(this.pos);
 };
-
 VariableReference.prototype.set = function(v) {
     this.prefix.set(this.pos, v);
 }
 
 //////////////////////////////////////////////////////////////////////
-
 // Continuation Marks
-
 var ContMarkRecordControl = function(dict) {
     this.dict = dict || {};
 };
-
 ContMarkRecordControl.prototype.invoke = function(state) {
     // No-op: the record will simply pop off the control stack.
 };
-
 ContMarkRecordControl.prototype.update = function(key, val) {
- /*
-    var newDict = makeLowLevelEqHash();
-    // FIXME: what's the javascript idiom for hash key copy?
-    // Maybe we should use a rbtree instead?
-    var oldKeys = this.dict.keys();
-    for (var i = 0; i < oldKeys.length; i++) {
-	    newDict.put( oldKeys[i], this.dict.get(oldKeys[i]) );
-    }
-    newDict.put(key, val);
-    return new ContMarkRecordControl(newDict);
-  */
-  this.dict[key.val] = val;
+ this.dict[key.val] = val;
   return this;
 };
-
 var ContinuationMarkSet = function(dict) {
     this.dict = dict;
 }
-
 ContinuationMarkSet.prototype.toDomNode = function(cache) {
     var dom = document.createElement("span");
     dom.appendChild(document.createTextNode('#<continuation-mark-set>'));
     return dom;
 };
-
 ContinuationMarkSet.prototype.toWrittenString = function(cache) {
     return '#<continuation-mark-set>';
 };
-
 ContinuationMarkSet.prototype.toDisplayedString = function(cache) {
     return '#<continuation-mark-set>';
 };
-
 ContinuationMarkSet.prototype.ref = function(key) {
     if ( this.dict.containsKey(key) ) {
 	    return this.dict.get(key);
@@ -1587,20 +1552,14 @@ ContinuationMarkSet.prototype.ref = function(key) {
     return [];
 };
 
-
 //////////////////////////////////////////////////////////////////////
-
+// Continuation Prompt
 var ContinuationPrompt = function() {
 };
-
 var defaultContinuationPrompt = new ContinuationPrompt();
 
-
-
 //////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////
-
+// Primitive Procedure
 var PrimProc = function(name, numParams, isRest, assignsToValueRegister, impl) {
     this.name = name;
     this.numParams = numParams;
@@ -1608,51 +1567,39 @@ var PrimProc = function(name, numParams, isRest, assignsToValueRegister, impl) {
     this.assignsToValueRegister = assignsToValueRegister;
     this.impl = impl;
 };
-
 PrimProc.prototype.toString = function() {
     return ("#<function:" + this.name + ">");
 };
-
 PrimProc.prototype.toWrittenString = function(cache) {
     return ("#<function:" + this.name + ">");
 };
-
 PrimProc.prototype.toDisplayedString = function(cache) {
     return ("#<function:" + this.name + ">");
 };
-
-
 PrimProc.prototype.toDomNode = function(cache) {
     var node = document.createElement("span");
     node.className = "wescheme-primproc";
     node.appendChild(document.createTextNode("#<function:"+ this.name +">"));
     return node;
 };
-
-
+//////////////////////////////////////////////////////////////////////
+// Case Primitive
 var CasePrimitive = function(name, cases) {
     this.name = name;
     this.cases = cases;
 };
-
 CasePrimitive.prototype.toDomNode = function(cache) {
     var node = document.createElement("span");
     node.className = "wescheme-caseprimitive";
     node.appendChild(document.createTextNode("#<function:"+ this.name +">"));
     return node;
 };
-
 CasePrimitive.prototype.toWrittenString = function(cache) {
     return ("#<function:" + this.name + ">");
 };
-
 CasePrimitive.prototype.toDisplayedString = function(cache) {
     return ("#<function:" + this.name + ">");
 };
-
-
-
-
 /////////////////////////////////////////////////////////////////////
 // Colored Error Message Support
 
@@ -1729,22 +1676,14 @@ var makeList = function(args) {
     }
     return result;
 };
-
-
 var makeVector = function(args) {
     return Vector.makeInstance(args.length, args);
 };
-
 var makeString = function(s) {
 	if (s instanceof Str) {
 		return s;
 	}
 	else if (s instanceof Array) {
-//		for (var i = 0; i < s.length; i++) {
-//			if ( typeof s[i] !== 'string' || s[i].length != 1 ) {
-//				return undefined;
-//			}
-//		}
 		return Str.makeInstance(s);
 	}
 	else if (typeof s === 'string') {
@@ -1756,8 +1695,6 @@ var makeString = function(s) {
 					  false);
 	}
 };
-
-
 var makeHashEq = function(lst) {
 	var newHash = new EqHashTable();
 	while ( !lst.isEmpty() ) {
@@ -1766,8 +1703,6 @@ var makeHashEq = function(lst) {
 	}
 	return newHash;
 };
-
-
 var makeHashEqual = function(lst) {
 	var newHash = new EqualHashTable();
 	while ( !lst.isEmpty() ) {
@@ -1776,7 +1711,6 @@ var makeHashEqual = function(lst) {
 	}
 	return newHash;
 };
-
 
 //if there is not enough location information available,
 //this allows for highlighting to be turned off
