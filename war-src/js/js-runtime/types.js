@@ -5,10 +5,6 @@
 var types = {};
 (function () {
 
-//////////////////////////////////////////////////////////////////////
-var appendChild = function(parent, child) {
-    parent.appendChild(child);
-};
 var hasOwnProperty = {}.hasOwnProperty;
 
 //////////////////////////////////////////////////////////////////////
@@ -58,6 +54,18 @@ UnionFind.prototype.find = function(ptr) {
 UnionFind.prototype.merge = function(ptr1, ptr2) {
 	this.parentMap.put(this.find(ptr1), this.find(ptr2));
 };
+
+//////////////////////////////////////////////////////////////////////
+// simpleToDomNode : String String String -> <SPAN>
+// Consumes the displayed contents and the ariaText, and produces a span
+function simpleToDomNode(contents, className, ariaText) {
+	var wrapper = document.createElement("span");
+    wrapper.className = className;
+	wrapper.ariaText = ariaText;
+	wrapper.setAttribute("aria-label", ariaText);
+    wrapper.appendChild(document.createTextNode(contents));
+    return wrapper;
+}
 
 //////////////////////////////////////////////////////////////////////
 // Class inheritance infrastructure
@@ -257,7 +265,7 @@ var Struct = Class.extend({
 
 	toDomNode: function(cache) {
 	    //    cache.put(this, true);
-	    var wrapper = document.createElement("div"),
+	    var wrapper = document.createElement("span"),
             constructor= document.createElement("span");
             constructor.appendChild(document.createTextNode(this._constructorName)),
             ariaText = this._constructorName + ":";
@@ -267,7 +275,7 @@ var Struct = Class.extend({
 	    for(i = 0; i < this._fields.length; i++) {
 	    	var dom = toDomNode(this._fields[i], cache);
 	    	ariaText += " "+dom.ariaText;
-            appendChild(wrapper, dom);
+            wrapper.appendChild(dom);
 	    }
 	    wrapper.appendChild(makeRParen());
 	    wrapper.ariaText = ariaText;
@@ -463,6 +471,11 @@ Boolean.prototype.toWrittenString = function(cache) {
     return "false";
 };
 Boolean.prototype.toDisplayedString = Boolean.prototype.toWrittenString;
+Boolean.prototype.toDomNode = function() {
+	return simpleToDomNode( this.toString(), 
+							"wescheme-boolean", 
+							this.toString() + ", a Boolean");
+};
 Boolean.prototype.toString = function() { return this.valueOf() ? "true" : "false"; };
 Boolean.prototype.isEqual = function(other, aUnionFind){
     return this == other;
@@ -509,13 +522,9 @@ Char.prototype.toDisplayedString = function (cache) {
     return this.val;
 };
 Char.prototype.toDomNode = function() {
-	var wrapper = document.createElement("span");
-	var ariaText = this.toString().substring(2) + ", a Character";
-	wrapper.appendChild(document.createTextNode(this.toString()));
-	wrapper.className = "wescheme-character";
-	wrapper.ariaText = ariaText;
-	wrapper.setAttribute("aria-label", ariaText);
-	return wrapper;
+	return simpleToDomNode( this.toString(), 
+							"wescheme-character", 
+							this.toString().substring(2) + ", a Character");
 }
 Char.prototype.getValue = function() {
     return this.val;
@@ -553,12 +562,12 @@ Symbol.prototype.toDisplayedString = function(cache) {
     return this.val;
 };
 Symbol.prototype.toDomNode = function(cache) {
-    var wrapper = document.createElement("span");
-    wrapper.className = "wescheme-symbol";
-    wrapper.style.fontFamily = 'monospace';
-    wrapper.style.whiteSpace = "pre";
-    wrapper.appendChild(document.createTextNode("'" + this.val));
-    return wrapper;
+	var dom = simpleToDomNode(this.toString(), 
+							"wescheme-symbol", 
+							"'"+this.val + ", a Symbol");
+    dom.style.fontFamily = 'monospace';
+    dom.style.whiteSpace = "pre";
+    return dom;
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -585,11 +594,10 @@ Empty.prototype.toDisplayedString = function(cache) { return "empty"; };
 Empty.prototype.toString = function(cache) { return "()"; }; 
 Empty.prototype.toDomNode = function(cache) { 
 	var wrapper = document.createElement("span");
-    wrapper.className = "wescheme-symbol";
-    wrapper.style.fontFamily = 'monospace';
-    wrapper.style.whiteSpace = "pre";
-    wrapper.appendChild(document.createTextNode("empty"));
-    return wrapper;
+	var dom = simpleToDomNode("empty", "wescheme-symbol", "empty");
+    dom.style.fontFamily = 'monospace';
+    dom.style.whiteSpace = "pre";
+    return dom;
 };
 
 // Empty.append: (listof X) -> (listof X)
@@ -698,7 +706,7 @@ Cons.prototype.toDomNode = function(cache) {
     while ( p instanceof Cons ) {
     	i++;
     	var dom = toDomNode(p.first(), cache);
-    	appendChild(node, dom);
+    	node.appendChild(dom);
 		ariaElts += " " + dom.ariaText || dom.textContent;
     	p = p.rest();
     }
@@ -725,7 +733,7 @@ var explicitConsDomNode = function(p, cache) {
       trailingRParens += ")";
       var first = toDomNode(p.first(), cache);
       ariaText += " " + first.ariaText || first.textContent;
-      appendChild(node, first);
+      node.appendChild(first);
       var restSpan = document.createElement("span");
       node.appendChild(restSpan);
       node.appendChild(makeRParen());
@@ -734,7 +742,7 @@ var explicitConsDomNode = function(p, cache) {
     }
     var rest = toDomNode(p, cache);
     ariaText += " " + (rest.ariaText || rest.textContent) + ")"+trailingRParens;
-    appendChild(node, rest);
+    node.appendChild(rest);
     topNode.ariaText = ariaText;
     topNode.setAttribute("aria-label", ariaText);
     return topNode;
@@ -820,7 +828,7 @@ Vector.prototype.toDomNode = function(cache) {
     for (var i = 0; i < this.length(); i++) {
     	var dom = toDomNode(this.ref(i), cache)
     	ariaText+=" "+dom.ariaText
-    	appendChild(wrapper, dom);
+    	wrapper.appendChild(dom);
     }
     wrapper.appendChild(rVect);
     wrapper.setAttribute("aria-label", ariaText);
@@ -1097,14 +1105,17 @@ var toDomNode = function(x, cache) {
     if (! cache) {
     	cache = makeLowLevelEqHash();
     }
+    // try using the value's native toDomNode method, if it exists
     if(typeof(x.toDomNode) === 'undefined') {
     	console.log('TODOMNODE IS NOT DEFINED FOR ', x);
+    } else {
+    	return x.toDomNode(cache);
     }
-
+    // Not all numbers have it, so use a special toDomNode
     if (isNumber(x)) {
 		return numberToDomNode(x);
     }
-
+    // Deal with unknown objects differently
     if (typeof(x) == 'object') {
 	    if (cache.containsKey(x)) {
         var node = document.createElement("span");
@@ -1114,12 +1125,14 @@ var toDomNode = function(x, cache) {
 	    }
 	    cache.put(x, true);
     }
+    // Deal with js-null and js-undefined differently
     if (x == undefined || x == null) {
       var node = document.createElement("span");
       node.style['font-family'] = 'monospace';
       node.appendChild(document.createTextNode("#<undefined>"));
       return node;
     }
+    // Deal with strings differently
     if (typeof(x) == 'string') {
         return textToDomNode(toWrittenString(x));
     }
@@ -1127,11 +1140,10 @@ var toDomNode = function(x, cache) {
         return textToDomNode(x.toString());
     }
 
+    // See if we can find something useful from toWrittenString or toDisplayedString
     var returnVal;
     if (x.nodeType) {
 		returnVal =  x;
-    } else if (typeof(x.toDomNode) !== 'undefined') {
-		returnVal =  x.toDomNode(cache);
     } else if (typeof(x.toWrittenString) !== 'undefined') {	
         returnVal = textToDomNode(x.toWrittenString(cache))
     } else if (typeof(x.toDisplayedString) !== 'undefined') {
@@ -1171,9 +1183,8 @@ var textToDomNode = function(text) {
         displayedString.appendChild(document.createTextNode(displayedChunks[i]));
         rawString.appendChild(document.createTextNode(rawChunks[i]));
     }
-    var datatype = (text==="true" | text==="false")? "boolean" : "string";
-    wrapper.className = "wescheme-" + datatype;
-    var ariaText = displayedChunks.join(" ") +  ", a " + datatype;
+    wrapper.className = "wescheme-string";
+    var ariaText = displayedChunks.join(" ") +  ", a String";
     wrapper.ariaText = ariaText;
     wrapper.setAttribute("aria-label", ariaText);
     wrapper.style.fontFamily = 'monospace';
@@ -1197,34 +1208,30 @@ var textToDomNode = function(text) {
 // numberToDomNode: jsnum -> dom
 // Given a jsnum, produces a dom-node representation.
 var numberToDomNode = function(n) {
-    var node = document.createElement("span"), ariaText;
-    node.classList.add("wescheme-number");
- 	node.appendChild(document.createTextNode(n.toString()));
- 	var ariaText = n.toString();
+    var className, ariaText = n.toString();
     if (jsnums.isExact(n)) {
       if (jsnums.isInteger(n)) {
-          node.classList.add("Integer");
+          className = "wescheme-number Integer";
           ariaText += ", an Integer";
       } else if (jsnums.isRational(n)) {
           node = rationalToDomNode(n);
+          className = node.className;
           ariaText = node.ariaText + ", a Rational";
       } else if (isComplex(n)) {
-          node.classList.add("Complex");
+          className = "wescheme-number Complex";
           ariaText += ", a Complex Number";
       } else {
           ariaText += ", a Number";
       }
     } else {
     	if (isComplex(n)) {
-          node.classList.add("Complex");
+          className = " wescheme-numberComplex";
           ariaText += ", a Complex Number";
       	} else {
       		ariaText += ", a Number";
       	}
     }
-    node.ariaText = ariaText;
-    node.setAttribute("aria-label", ariaText);
-    return node;
+    return simpleToDomNode(n.toString(), className, ariaText);
 };
 
 // rationalToDomNode: rational -> dom-node
@@ -1385,18 +1392,13 @@ var VoidValue = function() {};
 VoidValue.prototype.toString = function() {
 	return "#<void>";
 };
-
 var VOID_VALUE = new VoidValue();
-
 
 var EofValue = function() {};
 EofValue.prototype.toString = function() {
 	return "#<eof>";
 }
-
 var EOF_VALUE = new EofValue();
-
-
 var ClosureValue = function(name, locs, numParams, paramTypes, isRest, closureVals, body) {
     this.name = name;
     this.locs = locs;
