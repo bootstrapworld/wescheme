@@ -722,20 +722,29 @@ Cons.prototype.toDomNode = function(cache) {
 var explicitConsDomNode = function(p, cache) {
     var topNode = document.createElement("span");
     var node = topNode, constructor = document.createElement("span");
-       constructor.appendChild(document.createTextNode("cons"));
+       	constructor.appendChild(document.createTextNode("cons")),
+       	ariaText = "", trailingRParens="";
 
     node.className = "wescheme-cons";
     while ( p instanceof Cons ) {
       node.appendChild(makeLParen());
       node.appendChild(constructor);
-      appendChild(node, toDomNode(p.first(), cache));
+      ariaText += " (cons";
+      trailingRParens += ")";
+      var first = toDomNode(p.first(), cache);
+      ariaText += " " + first.ariaText || first.textContent;
+      appendChild(node, first);
       var restSpan = document.createElement("span");
       node.appendChild(restSpan);
       node.appendChild(makeRParen());
       node = restSpan;
       p = p.rest();
     }
-    appendChild(node, toDomNode(p, cache));
+    var rest = toDomNode(p, cache);
+    ariaText += " " + (rest.ariaText || rest.textContent) + ")"+trailingRParens;
+    appendChild(node, rest);
+    topNode.ariaText = ariaText;
+    topNode.setAttribute("aria-label", ariaText);
     return topNode;
 };
 
