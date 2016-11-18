@@ -466,15 +466,6 @@ Boolean.prototype.toString = function() { return this.valueOf() ? "true" : "fals
 Boolean.prototype.isEqual = function(other, aUnionFind){
     return this == other;
 };
-Boolean.prototype.toDomNode = function () {
-	var wrapper = document.createElement("span");
-	var ariaText = this.toString() + ", a Boolean";
-	wrapper.appendChild(document.createTextNode(this.toString()));
-	wrapper.className = "wescheme-boolean";
-	wrapper.ariaText = ariaText;
-	wrapper.setAttribute("aria-label", ariaText);
-	return wrapper;
-};
 
 //////////////////////////////////////////////////////////////////////
 // Chars
@@ -1123,7 +1114,6 @@ var toDomNode = function(x, cache) {
 	    }
 	    cache.put(x, true);
     }
-
     if (x == undefined || x == null) {
       var node = document.createElement("span");
       node.style['font-family'] = 'monospace';
@@ -1181,8 +1171,9 @@ var textToDomNode = function(text) {
         displayedString.appendChild(document.createTextNode(displayedChunks[i]));
         rawString.appendChild(document.createTextNode(rawChunks[i]));
     }
-    wrapper.className = "wescheme-string";
-    var ariaText = displayedChunks.join(" ") +  ", a String";
+    var datatype = (text==="true" | text==="false")? "boolean" : "string";
+    wrapper.className = "wescheme-" + datatype;
+    var ariaText = displayedChunks.join(" ") +  ", a " + datatype;
     wrapper.ariaText = ariaText;
     wrapper.setAttribute("aria-label", ariaText);
     wrapper.style.fontFamily = 'monospace';
