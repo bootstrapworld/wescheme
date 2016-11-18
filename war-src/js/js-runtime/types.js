@@ -2,35 +2,21 @@
 // helper functions
 
 //var jsnums = require('./js-numbers');
-
-
 var types = {};
-
-
 (function () {
 
 //////////////////////////////////////////////////////////////////////
-
-
 var appendChild = function(parent, child) {
     parent.appendChild(child);
 };
-
-
-
 var hasOwnProperty = {}.hasOwnProperty;
 
 //////////////////////////////////////////////////////////////////////
-
-
-
 var _eqHashCodeCounter = 0;
 makeEqHashCode = function() {
     _eqHashCodeCounter++;
     return _eqHashCodeCounter;
 };
-
-    
 // getHashCode: any -> (or fixnum string)
 // Produces a hashcode appropriate for eq.
 getEqHashCode = function(x) {
@@ -45,10 +31,7 @@ getEqHashCode = function(x) {
     }
     return 0;
 };
-
-
 // Union/find for circular equality testing.
-
 var UnionFind = function() {
 	// this.parenMap holds the arrows from an arbitrary pointer
 	// to its parent.
@@ -76,12 +59,8 @@ UnionFind.prototype.merge = function(ptr1, ptr2) {
 	this.parentMap.put(this.find(ptr1), this.find(ptr2));
 };
 
-
-
 //////////////////////////////////////////////////////////////////////
-
 // Class inheritance infrastructure
-
 // This code copied directly from http://ejohn.org/blog/simple-javascript-inheritance/
 var Class = (function(){
 	var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
@@ -158,8 +137,6 @@ function makeRParen(){
 }
 
 //////////////////////////////////////////////////////////////////////
-
-
 StructType = function(name, type, numberOfArgs, numberOfFields, firstField,
 		      constructor, predicate, accessor, mutator) {
 	this.name = name;
@@ -173,16 +150,12 @@ StructType = function(name, type, numberOfArgs, numberOfFields, firstField,
 	this.accessor = accessor;
 	this.mutator = mutator;
 };
-
 StructType.prototype.toString = function() {
 	return '#<struct-type:' + this.name + '>';
 };
-
 StructType.prototype.isEqual = function(other, aUnionFind) {
 	return this === other;
 };
-
-
 var makeStructureType = function(theName, parentType, initFieldCnt, autoFieldCnt, autoV, guard) {
     // If no parent type given, then the parent type is Struct
     if ( !parentType ) {
@@ -258,7 +231,6 @@ var makeStructureType = function(theName, parentType, initFieldCnt, autoFieldCnt
 			  function(x, i) { return x._fields[i + this.firstField]; },
 			  function(x, i, v) { x._fields[i + this.firstField] = v; });
 };
-
 // Structures.
 var Struct = Class.extend({
 	init: function (constructorName, fields) {
@@ -273,8 +245,8 @@ var Struct = Class.extend({
 	    buffer.push("(");
 	    buffer.push(this._constructorName);
 	    for(i = 0; i < this._fields.length; i++) {
-		buffer.push(" ");
-		buffer.push(toWrittenString(this._fields[i], cache));
+			buffer.push(" ");
+			buffer.push(toWrittenString(this._fields[i], cache));
 	    }
 	    buffer.push(")");
 	    return buffer.join("");
@@ -284,17 +256,22 @@ var Struct = Class.extend({
 
 	toDomNode: function(cache) {
 	    //    cache.put(this, true);
-	    var node = document.createElement("div"),
+	    var wrapper = document.createElement("div"),
             constructor= document.createElement("span");
-            constructor.appendChild(document.createTextNode(this._constructorName));
+            constructor.appendChild(document.createTextNode(this._constructorName)),
+            ariaText = this._constructorName + ":";
 	    var i;
-	    node.appendChild(makeLParen());
-	    node.appendChild(constructor);
+	    wrapper.appendChild(makeLParen());
+	    wrapper.appendChild(constructor);
 	    for(i = 0; i < this._fields.length; i++) {
-                appendChild(node, toDomNode(this._fields[i], cache));
+	    	var dom = toDomNode(this._fields[i], cache);
+	    	ariaText += " "+dom.ariaText;
+            appendChild(wrapper, dom);
 	    }
-	    node.appendChild(makeRParen());
-	    return node;
+	    wrapper.appendChild(makeRParen());
+	    wrapper.ariaText = ariaText;
+	    wrapper.setAttribute("aria-label", ariaText);
+	    return wrapper;
 	},
 
 
@@ -317,199 +294,197 @@ var Struct = Class.extend({
 });
 Struct.prototype.type = Struct;
 
-
-
 //////////////////////////////////////////////////////////////////////
-
-// Regular expressions.
-
-var RegularExpression = function(pattern) {
-    this.pattern = pattern;
+// Hashtables
+// makeLowLevelEqHash: -> hashtable
+// Constructs an eq hashtable that uses Moby's getEqHashCode function.
+var makeLowLevelEqHash = function() {
+    return new _Hashtable(function(x) { return getEqHashCode(x); },
+			  function(x, y) { return x === y; });
 };
 
+var EqHashTable = function(inputHash) {
+    this.hash = makeLowLevelEqHash();
+    this.mutable = true;
 
-var ByteRegularExpression = function(pattern) {
-    this.pattern = pattern;
 };
-
-
-
-
-//////////////////////////////////////////////////////////////////////
-
-// Paths
-
-var Path = function(p) {
-    this.path = p;
+EqHashTable = EqHashTable;
+EqHashTable.prototype.toWrittenString = function(cache) {
+    var keys = this.hash.keys();
+    var ret = [];
+    for (var i = 0; i < keys.length; i++) {
+	    var keyStr = types.toWrittenString(keys[i], cache);
+	    var valStr = types.toWrittenString(this.hash.get(keys[i]), cache);
+	    ret.push('(' + keyStr + ' . ' + valStr + ')');
+    }
+    return ('#hasheq(' + ret.join(' ') + ')');
 };
-
-
-//////////////////////////////////////////////////////////////////////
-
-// Bytes
-
-var Bytes = function(bts, mutable) {
-    this.bytes = bts;
-    this.mutable = (mutable === undefined) ? false : mutable;
+EqHashTable.prototype.toDisplayedString = function(cache) {
+    var keys = this.hash.keys();
+    var ret = [];
+    for (var i = 0; i < keys.length; i++) {
+	    var keyStr = types.toDisplayedString(keys[i], cache);
+	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
+	    ret.push('(' + keyStr + ' . ' + valStr + ')');
+    }
+    return ('#hasheq(' + ret.join(' ') + ')');
 };
+EqHashTable.prototype.isEqual = function(other, aUnionFind) {
+    if ( !(other instanceof EqHashTable) ) {
+	return false; 
+    }
 
-Bytes.prototype.get = function(i) {
-	return this.bytes[i];
-};
+    if (this.hash.keys().length != other.hash.keys().length) { 
+	return false;
+    }
 
-Bytes.prototype.set = function(i, b) {
-	if (this.mutable) {
-		this.bytes[i] = b;
+    var keys = this.hash.keys();
+    for (var i = 0; i < keys.length; i++){
+	if ( !(other.hash.containsKey(keys[i]) &&
+	       isEqual(this.hash.get(keys[i]),
+		       other.hash.get(keys[i]),
+		       aUnionFind)) ) {
+		return false;
 	}
+    }
+    return true;
 };
-
-Bytes.prototype.length = function() {
-	return this.bytes.length;
+var EqualHashTable = function(inputHash) {
+	this.hash = new _Hashtable(function(x) {
+			return toWrittenString(x); 
+		},
+		function(x, y) {
+			return isEqual(x, y, new UnionFind()); 
+		});
+	this.mutable = true;
 };
-
-Bytes.prototype.copy = function(mutable) {
-	return new Bytes(this.bytes.slice(0), mutable);
+EqualHashTable = EqualHashTable;
+EqualHashTable.prototype.toWrittenString = function(cache) {
+    var keys = this.hash.keys();
+    var ret = [];
+    for (var i = 0; i < keys.length; i++) {
+	    var keyStr = types.toWrittenString(keys[i], cache);
+	    var valStr = types.toWrittenString(this.hash.get(keys[i]), cache);
+	    ret.push('(' + keyStr + ' . ' + valStr + ')');
+    }
+    return ('#hash(' + ret.join(' ') + ')');
 };
-
-Bytes.prototype.subbytes = function(start, end) {
-	if (end == null || end == undefined) {
-		end = this.bytes.length;
-	}
-	
-	return new Bytes( this.bytes.slice(start, end), true );
+EqualHashTable.prototype.toDisplayedString = function(cache) {
+    var keys = this.hash.keys();
+    var ret = [];
+    for (var i = 0; i < keys.length; i++) {
+	    var keyStr = types.toDisplayedString(keys[i], cache);
+	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
+	    ret.push('(' + keyStr + ' . ' + valStr + ')');
+    }
+    return ('#hash(' + ret.join(' ') + ')');
 };
-
-
-Bytes.prototype.toString = function() {
-	var ret = '';
-	for (var i = 0; i < this.bytes.length; i++) {
-		ret += String.fromCharCode(this.bytes[i]);
-	}
-
-	return ret;
+EqualHashTable.prototype.toDomNode = function(cache) {
+	var wrapper = document.createElement("span"),
+		hashSymbol = document.createElement("span"),
+    	keys = this.hash.keys(),
+    	ariaText = "hashtable with "+keys.length + " item"+(keys.length==1? "" : "s")+": ";
+    wrapper.appendChild(document.createTextNode(this.toDisplayedString()));
+    for (var i = 0; i < keys.length; i++) {
+	    var keyDom = toDomNode(keys[i], cache);
+	    var valDom = toDomNode(this.hash.get(keys[i]), cache);
+	    ariaText += " "+keyDom.ariaText+" maps to "+valDom.ariaText;
+    }
+    wrapper.ariaText = ariaText;
+    wrapper.setAttribute("aria-label", ariaText);
+    return wrapper;
 };
-
-Bytes.prototype.toDisplayedString = Bytes.prototype.toString;
-
-Bytes.prototype.toWrittenString = function() {
-	var ret = ['#"'];
-	for (var i = 0; i < this.bytes.length; i++) {
-		ret.push( escapeByte(this.bytes[i]) );
-	}
-	ret.push('"');
-	return ret.join('');
+EqualHashTable.prototype.isEqual = function(other, aUnionFind) {
+    if ( !(other instanceof EqualHashTable) ) {
+		return false; 
+    }
+    if (this.hash.keys().length != other.hash.keys().length) { 
+		return false;
+    }
+    var keys = this.hash.keys();
+    for (var i = 0; i < keys.length; i++){
+		if (! (other.hash.containsKey(keys[i]) &&
+		       isEqual(this.hash.get(keys[i]),
+			       other.hash.get(keys[i]),
+			       aUnionFind))) {
+		    return false;
+		}
+    }
+    return true;
 };
-
-var escapeByte = function(aByte) {
-	var ret = [];
-	var returnVal;
-	switch(aByte) {
-		case 7: returnVal = '\\a'; break;
-		case 8: returnVal = '\\b'; break;
-		case 9: returnVal = '\\t'; break;
-		case 10: returnVal = '\\n'; break;
-		case 11: returnVal = '\\v'; break;
-		case 12: returnVal = '\\f'; break;
-		case 13: returnVal = '\\r'; break;
-		case 34: returnVal = '\\"'; break;
-		case 92: returnVal = '\\\\'; break;
-		default: if (val >= 32 && val <= 126) {
-				 returnVal = String.fromCharCode(val);
-			 }
-			 else {
-				 ret.push( '\\' + val.toString(8) );
-			 }
-			 break;
-	}
-	return returnVal;
-};
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 // Boxes
-    
 var Box = function(x, mutable) {
 	this.val = x;
 	this.mutable = mutable;
 };
-
 Box.prototype.unbox = function() {
     return this.val;
 };
-
 Box.prototype.set = function(newVal) {
     if (this.mutable) {
 	    this.val = newVal;
     }
 };
-
 Box.prototype.toString = function() {
     return "#&" + this.val.toString();
 };
-
 Box.prototype.toWrittenString = function(cache) {
     return "#&" + toWrittenString(this.val, cache);
 };
-
 Box.prototype.toDisplayedString = function(cache) {
     return "#&" + toDisplayedString(this.val, cache);
 };
-
 Box.prototype.toDomNode = function(cache) {
-    var parent = document.createElement("span"),
+    var wrapper = document.createElement("span"),
     boxSymbol = document.createElement("span");
     boxSymbol.appendChild(document.createTextNode("#&"));
-    parent.className = "wescheme-box";
-    parent.appendChild(boxSymbol);
-    parent.appendChild(toDomNode(this.val, cache));
-    return parent;
+    var ariaText = "a box containing: "+toDomNode(this.val).ariaText;
+    wrapper.className = "wescheme-box";
+	wrapper.ariaText = ariaText;
+	wrapper.setAttribute("aria-label", ariaText);
+    wrapper.appendChild(boxSymbol);
+    wrapper.appendChild(toDomNode(this.val, cache));
+    return wrapper;
 };
 
 //////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
+// Booleans
 // We are reusing the built-in Javascript boolean class here.
 Logic = {
     TRUE : true,
     FALSE : false
 };
-
-// WARNING
 // WARNING: we are extending the built-in Javascript boolean class here!
-// WARNING
 Boolean.prototype.toWrittenString = function(cache) {
     if (this.valueOf()) { return "true"; }
     return "false";
 };
 Boolean.prototype.toDisplayedString = Boolean.prototype.toWrittenString;
-
 Boolean.prototype.toString = function() { return this.valueOf() ? "true" : "false"; };
-
 Boolean.prototype.isEqual = function(other, aUnionFind){
     return this == other;
 };
+Boolean.prototype.toDomNode = function () {
+	var wrapper = document.createElement("span");
+	var ariaText = this.toString() + ", a Boolean";
+	wrapper.appendChild(document.createTextNode(this.toString()));
+	wrapper.className = "wescheme-boolean";
+	wrapper.ariaText = ariaText;
+	wrapper.setAttribute("aria-label", ariaText);
+	return wrapper;
+};
 
-
-
-
+//////////////////////////////////////////////////////////////////////
 // Chars
 // Char: string -> Char
 Char = function(val){
     this.val = val;
 };
-    
 Char.makeInstance = function(val){
     return new Char(val);
 };
-
 Char.prototype.toString = function() {
 	var code = this.val.charCodeAt(0);
 	var returnVal;
@@ -537,32 +512,33 @@ Char.prototype.toString = function() {
 	}
 	return returnVal;
 };
-
 Char.prototype.toWrittenString = Char.prototype.toString;
-
 Char.prototype.toDisplayedString = function (cache) {
     return this.val;
 };
-
+Char.prototype.toDomNode = function() {
+	var wrapper = document.createElement("span");
+	var ariaText = this.toString().substring(2) + ", a Character";
+	wrapper.appendChild(document.createTextNode(this.toString()));
+	wrapper.className = "wescheme-character";
+	wrapper.ariaText = ariaText;
+	wrapper.setAttribute("aria-label", ariaText);
+	return wrapper;
+}
 Char.prototype.getValue = function() {
     return this.val;
 };
-
 Char.prototype.isEqual = function(other, aUnionFind){
     return other instanceof Char && this.val == other.val;
 };
 
-//////////////////////////////////////////////////////////////////////
-    
+////////////////////////////////////////////////////////////////////// 
 // Symbols
-
-//////////////////////////////////////////////////////////////////////
 var Symbol = function(val) {
     this.val = val;
 };
-
 var symbolCache = {};
-    
+  
 // makeInstance: string -> Symbol.
 Symbol.makeInstance = function(val) {
     // To ensure that we can eq? symbols with equal values.
@@ -570,26 +546,20 @@ Symbol.makeInstance = function(val) {
 	symbolCache[val] = new Symbol(val);
     }
     return symbolCache[val];
-};
-    
+}; 
 Symbol.prototype.isEqual = function(other, aUnionFind) {
     return other instanceof Symbol &&
     this.val == other.val;
 };
-    
-
 Symbol.prototype.toString = function() {
     return this.val;
 };
-
 Symbol.prototype.toWrittenString = function(cache) {
     return this.val;
 };
-
 Symbol.prototype.toDisplayedString = function(cache) {
     return this.val;
 };
-
 Symbol.prototype.toDomNode = function(cache) {
     var wrapper = document.createElement("span");
     wrapper.className = "wescheme-symbol";
@@ -599,71 +569,16 @@ Symbol.prototype.toDomNode = function(cache) {
     return wrapper;
 };
 
-
-
 //////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-// Keywords
-
-var Keyword = function(val) {
-    this.val = val;
-};
-
-var keywordCache = {};
-    
-
-// makeInstance: string -> Keyword.
-Keyword.makeInstance = function(val) {
-    // To ensure that we can eq? symbols with equal values.
-    if (!(hasOwnProperty.call(keywordCache, val))) {
-	keywordCache[val] = new Keyword(val);
-    }
-    return keywordCache[val];
-};
-    
-Keyword.prototype.isEqual = function(other, aUnionFind) {
-    return other instanceof Keyword &&
-    this.val == other.val;
-};
-    
-
-Keyword.prototype.toString = function() {
-    return this.val;
-};
-
-Keyword.prototype.toWrittenString = function(cache) {
-    return this.val;
-};
-
-Keyword.prototype.toDisplayedString = function(cache) {
-    return this.val;
-};
-
-
-//////////////////////////////////////////////////////////////////////
-
-
-    
-    
-    
-Empty = function() {
-};
+// Cons, Lists and Empty    
+Empty = function() {};
 Empty.EMPTY = new Empty();
-
-
 Empty.prototype.isEqual = function(other, aUnionFind) {
     return other instanceof Empty;
 };
-
 Empty.prototype.reverse = function() {
     return this;
 };
-
 Empty.prototype.first = function() {
     throw new Error("first can't be applied on empty.");
 };
@@ -675,35 +590,36 @@ Empty.prototype.isEmpty = function() {
 };
 Empty.prototype.toWrittenString = function(cache) { return "empty"; };
 Empty.prototype.toDisplayedString = function(cache) { return "empty"; };
-Empty.prototype.toString = function(cache) { return "()"; };
+Empty.prototype.toString = function(cache) { return "()"; }; 
+Empty.prototype.toDomNode = function(cache) { 
+	var wrapper = document.createElement("span");
+    wrapper.className = "wescheme-symbol";
+    wrapper.style.fontFamily = 'monospace';
+    wrapper.style.whiteSpace = "pre";
+    wrapper.appendChild(document.createTextNode("empty"));
+    return wrapper;
+};
 
-
-    
 // Empty.append: (listof X) -> (listof X)
 Empty.prototype.append = function(b){
     return b;
 };
-    
 Cons = function(f, r) {
     this.f = f;
     this.r = r;
 };
-
 Cons.prototype.reverse = function() {
     var lst = this;
     var ret = Empty.EMPTY;
     while (!lst.isEmpty()){
-	ret = Cons.makeInstance(lst.first(), ret);
-	lst = lst.rest();
+		ret = Cons.makeInstance(lst.first(), ret);
+		lst = lst.rest();
     }
     return ret;
 };
-    
 Cons.makeInstance = function(f, r) {
     return new Cons(f, r);
 };
-
-
 // FIXME: can we reduce the recursion on this?
 Cons.prototype.isEqual = function(other, aUnionFind) {
     if (! (other instanceof Cons)) {
@@ -712,19 +628,15 @@ Cons.prototype.isEqual = function(other, aUnionFind) {
     return (isEqual(this.first(), other.first(), aUnionFind) &&
 	    isEqual(this.rest(), other.rest(), aUnionFind));
 };
-    
 Cons.prototype.first = function() {
     return this.f;
-};
-    
+};  
 Cons.prototype.rest = function() {
     return this.r;
-};
-    
+};  
 Cons.prototype.isEmpty = function() {
     return false;
-};
-    
+};  
 // Cons.append: (listof X) -> (listof X)
 Cons.prototype.append = function(b){
     if (b === Empty.EMPTY)
@@ -732,30 +644,27 @@ Cons.prototype.append = function(b){
     var ret = b;
     var lst = this.reverse();
     while ( !lst.isEmpty() ) {
-	ret = Cons.makeInstance(lst.first(), ret);
-	lst = lst.rest();
+		ret = Cons.makeInstance(lst.first(), ret);
+		lst = lst.rest();
     }
 	
     return ret;
 };
-    
-
 Cons.prototype.toWrittenString = function(cache) {
     //    cache.put(this, true);
     var texts = ["list"];
     var p = this;
     while ( p instanceof Cons ) {
-	texts.push(toWrittenString(p.first(), cache));
-	p = p.rest();
+		texts.push(toWrittenString(p.first(), cache));
+		p = p.rest();
     }
     if ( p !== Empty.EMPTY ) {
-	// If not a list, we've got to switch over to cons pair
-	// representation.
-	return explicitConsString(this, cache, toWrittenString);
+		// If not a list, we've got to switch over to cons pair
+		// representation.
+		return explicitConsString(this, cache, toWrittenString);
     }
     return "(" + texts.join(" ") + ")";
 };
-
 var explicitConsString = function(p, cache, f) {
     var texts = [];
     var tails = []
@@ -770,37 +679,20 @@ var explicitConsString = function(p, cache, f) {
     texts.push(f(p, cache));
     return (texts.join("") + tails.join(""));
 };
-
-
 Cons.prototype.toString = Cons.prototype.toWrittenString;
-
 Cons.prototype.toDisplayedString = function(cache) {
     //    cache.put(this, true);
     var texts = ["list"];
     var p = this;
     while ( p instanceof Cons ) {
-	texts.push(toDisplayedString(p.first(), cache));
-	p = p.rest();
+		texts.push(toDisplayedString(p.first(), cache));
+		p = p.rest();
     }
     if ( p !== Empty.EMPTY ) {
-	return explicitConsString(this, cache, toDisplayedString);
+		return explicitConsString(this, cache, toDisplayedString);
     }
-//    while (true) {
-//	if ((!(p instanceof Cons)) && (!(p instanceof Empty))) {
-//	    texts.push(".");
-//	    texts.push(toDisplayedString(p, cache));
-//	    break;
-//	}
-//	if (p.isEmpty()) 
-//	    break;
-//	texts.push(toDisplayedString(p.first(), cache));
-//	p = p.rest();
-//    }
     return "(" + texts.join(" ") + ")";
 };
-
-
-
 Cons.prototype.toDomNode = function(cache) {
     //    cache.put(this, true);
     var node = document.createElement("span"),
@@ -808,20 +700,25 @@ Cons.prototype.toDomNode = function(cache) {
     node.className = "wescheme-cons";
     abbr.appendChild(document.createTextNode("list"));
  
-     node.appendChild(makeLParen());
-     node.appendChild(abbr);
-    var p = this;
+    node.appendChild(makeLParen());
+    node.appendChild(abbr);
+    var p = this, i = 0, ariaElts = "";
     while ( p instanceof Cons ) {
-      appendChild(node, toDomNode(p.first(), cache));
-      p = p.rest();
+    	i++;
+    	var dom = toDomNode(p.first(), cache);
+    	appendChild(node, dom);
+		ariaElts += " " + dom.ariaText || dom.textContent;
+    	p = p.rest();
     }
     if ( p !== Empty.EMPTY ) {
-	return explicitConsDomNode(this, cache);
+		return explicitConsDomNode(this, cache);
     }
- node.appendChild(makeRParen());
+ 	node.appendChild(makeRParen());
+ 	var ariaText = "list of "+i+ " element"+(i==1? "" : "s")+": "+ariaElts;
+ 	node.setAttribute("aria-label", ariaText);
+ 	node.ariaText = ariaText;
     return node;
 };
-
 var explicitConsDomNode = function(p, cache) {
     var topNode = document.createElement("span");
     var node = topNode, constructor = document.createElement("span");
@@ -832,7 +729,6 @@ var explicitConsDomNode = function(p, cache) {
       node.appendChild(makeLParen());
       node.appendChild(constructor);
       appendChild(node, toDomNode(p.first(), cache));
-
       var restSpan = document.createElement("span");
       node.appendChild(restSpan);
       node.appendChild(makeRParen());
@@ -846,46 +742,45 @@ var explicitConsDomNode = function(p, cache) {
 
 
 //////////////////////////////////////////////////////////////////////
-
+// Vectors
 Vector = function(n, initialElements) {
     this.elts = new Array(n);
     if (initialElements) {
-	for (var i = 0; i < n; i++) {
-	    this.elts[i] = initialElements[i];
-	}
+		for (var i = 0; i < n; i++) {
+		    this.elts[i] = initialElements[i];
+		}
     } else {
-	for (var i = 0; i < n; i++) {
-	    this.elts[i] = undefined;
-	}
+		for (var i = 0; i < n; i++) {
+		    this.elts[i] = undefined;
+		}
     }
     this.mutable = true;
 };
 Vector.makeInstance = function(n, elts) {
     return new Vector(n, elts);
 }
-    Vector.prototype.length = function() {
+Vector.prototype.length = function() {
 	return this.elts.length;
-    };
+};
 Vector.prototype.ref = function(k) {
     return this.elts[k];
 };
 Vector.prototype.set = function(k, v) {
     this.elts[k] = v;
 };
-
 Vector.prototype.isEqual = function(other, aUnionFind) {
     if (other != null && other != undefined && other instanceof Vector) {
-	if (other.length() != this.length()) {
-	    return false
-	}
-	for (var i = 0; i <  this.length(); i++) {
-	    if (! isEqual(this.elts[i], other.elts[i], aUnionFind)) {
-		return false;
-	    }
-	}
-	return true;
+		if (other.length() != this.length()) {
+		    return false
+		}
+		for (var i = 0; i <  this.length(); i++) {
+		    if (! isEqual(this.elts[i], other.elts[i], aUnionFind)) {
+			return false;
+		    }
+		}
+		return true;
     } else {
-	return false;
+		return false;
     }
 };
 
@@ -896,7 +791,6 @@ Vector.prototype.toList = function() {
     }	
     return ret;
 };
-
 Vector.prototype.toWrittenString = function(cache) {
     //    cache.put(this, true);
     var texts = [];
@@ -905,7 +799,6 @@ Vector.prototype.toWrittenString = function(cache) {
     }
     return "#(" + texts.join(" ") + ")";
 };
-
 Vector.prototype.toDisplayedString = function(cache) {
     //    cache.put(this, true);
     var texts = [];
@@ -914,117 +807,87 @@ Vector.prototype.toDisplayedString = function(cache) {
     }
     return "#(" + texts.join(" ") + ")";
 };
-
 Vector.prototype.toDomNode = function(cache) {
-    //    cache.put(this, true);
-    var node = document.createElement("span"),
+    var wrapper = document.createElement("span"),
         lVect = document.createElement("span"),
         rVect = document.createElement("span");
     lVect.appendChild(document.createTextNode("#("));
     lVect.className = "lParen";
     rVect.appendChild(document.createTextNode(")"));
     rVect.className = "rParen";
-    node.className = "wescheme-vector";
-    node.appendChild(lVect);
+    wrapper.className = "wescheme-vector";
+    wrapper.appendChild(lVect);
+    var ariaText = "a vector of size "+this.length() + ": ";
     for (var i = 0; i < this.length(); i++) {
-      appendChild(node, toDomNode(this.ref(i), cache));
+    	var dom = toDomNode(this.ref(i), cache)
+    	ariaText+=" "+dom.ariaText
+    	appendChild(wrapper, dom);
     }
-    node.appendChild(rVect);
-    return node;
+    wrapper.appendChild(rVect);
+    wrapper.setAttribute("aria-label", ariaText);
+    wrapper.ariaText = ariaText;
+    return wrapper;
 };
 
-
 //////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-// Now using mutable strings
+// Strings
 var Str = function(chars) {
 	this.chars = chars;
 	this.length = chars.length;
 	this.mutable = true;
 }
-
 Str.makeInstance = function(chars) {
 	return new Str(chars);
 }
-
 Str.fromString = function(s) {
 	return Str.makeInstance(s.split(""));
 }
-
 Str.prototype.toString = function() {
 	return this.chars.join("");
 }
-
 Str.prototype.toWrittenString = function(cache) {
     return escapeString(this.toString());
 }
-
 Str.prototype.toDisplayedString = Str.prototype.toString;
-
 Str.prototype.copy = function() {
 	return Str.makeInstance(this.chars.slice(0));
 }
-
 Str.prototype.substring = function(start, end) {
 	if (end == null || end == undefined) {
 		end = this.length;
-	}
-	
+	}	
 	return Str.makeInstance( this.chars.slice(start, end) );
 }
-
 Str.prototype.charAt = function(index) {
 	return this.chars[index];
 }
-
 Str.prototype.charCodeAt = function(index) {
 	return this.chars[index].charCodeAt(0);
 }
-
 Str.prototype.replace = function(expr, newStr) {
 	return Str.fromString( this.toString().replace(expr, newStr) );
 }
-
-
 Str.prototype.isEqual = function(other, aUnionFind) {
 	if ( !(other instanceof Str || typeof(other) == 'string') ) {
 		return false;
 	}
 	return this.toString() === other.toString();
 }
-
-
 Str.prototype.set = function(i, c) {
 	this.chars[i] = c;
 }
-
 Str.prototype.toUpperCase = function() {
 	return Str.fromString( this.chars.join("").toUpperCase() );
 }
-
 Str.prototype.toLowerCase = function() {
 	return Str.fromString( this.chars.join("").toLowerCase() );
 }
-
 Str.prototype.match = function(regexpr) {
 	return this.toString().match(regexpr);
 }
-
-
-//var _quoteReplacingRegexp = new RegExp("[\"\\\\]", "g");
 var escapeString = function(s) {
     return '"' + replaceUnprintableStringChars(s) + '"';
-//    return '"' + s.replace(_quoteReplacingRegexp,
-//			      function(match, submatch, index) {
-//				  return "\\" + match;
-//			      }) + '"';
 };
-
 var replaceUnprintableStringChars = function(s) {
 	var ret = [];
 	for (var i = 0; i < s.length; i++) {
@@ -1055,190 +918,30 @@ var replaceUnprintableStringChars = function(s) {
 	return ret.join('');
 };
 
-
-/*
-// Strings
-// For the moment, we just reuse Javascript strings.
-String = String;
-String.makeInstance = function(s) {
-    return s.valueOf();
-};
-    
-    
-// WARNING
-// WARNING: we are extending the built-in Javascript string class here!
-// WARNING
-String.prototype.isEqual = function(other, aUnionFind){
-    return this == other;
-};
-    
-var _quoteReplacingRegexp = new RegExp("[\"\\\\]", "g");
-String.prototype.toWrittenString = function(cache) {
-    return '"' + this.replace(_quoteReplacingRegexp,
-			      function(match, submatch, index) {
-				  return "\\" + match;
-			      }) + '"';
-};
-
-String.prototype.toDisplayedString = function(cache) {
-    return this;
-};
-*/
-
-
 //////////////////////////////////////////////////////////////////////
-
-// makeLowLevelEqHash: -> hashtable
-// Constructs an eq hashtable that uses Moby's getEqHashCode function.
-var makeLowLevelEqHash = function() {
-    return new _Hashtable(function(x) { return getEqHashCode(x); },
-			  function(x, y) { return x === y; });
-};
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////
-// Hashtables
-var EqHashTable = function(inputHash) {
-    this.hash = makeLowLevelEqHash();
-    this.mutable = true;
-
-};
-EqHashTable = EqHashTable;
-
-EqHashTable.prototype.toWrittenString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toWrittenString(keys[i], cache);
-	    var valStr = types.toWrittenString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hasheq(' + ret.join(' ') + ')');
-};
-
-EqHashTable.prototype.toDisplayedString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toDisplayedString(keys[i], cache);
-	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hasheq(' + ret.join(' ') + ')');
-};
-
-EqHashTable.prototype.isEqual = function(other, aUnionFind) {
-    if ( !(other instanceof EqHashTable) ) {
-	return false; 
-    }
-
-    if (this.hash.keys().length != other.hash.keys().length) { 
-	return false;
-    }
-
-    var keys = this.hash.keys();
-    for (var i = 0; i < keys.length; i++){
-	if ( !(other.hash.containsKey(keys[i]) &&
-	       isEqual(this.hash.get(keys[i]),
-		       other.hash.get(keys[i]),
-		       aUnionFind)) ) {
-		return false;
-	}
-    }
-    return true;
-};
-
-
-
-var EqualHashTable = function(inputHash) {
-	this.hash = new _Hashtable(function(x) {
-			return toWrittenString(x); 
-		},
-		function(x, y) {
-			return isEqual(x, y, new UnionFind()); 
-		});
-	this.mutable = true;
-};
-
-EqualHashTable = EqualHashTable;
-
-EqualHashTable.prototype.toWrittenString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toWrittenString(keys[i], cache);
-	    var valStr = types.toWrittenString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hash(' + ret.join(' ') + ')');
-};
-EqualHashTable.prototype.toDisplayedString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toDisplayedString(keys[i], cache);
-	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hash(' + ret.join(' ') + ')');
-};
-
-EqualHashTable.prototype.isEqual = function(other, aUnionFind) {
-    if ( !(other instanceof EqualHashTable) ) {
-	return false; 
-    }
-
-    if (this.hash.keys().length != other.hash.keys().length) { 
-	return false;
-    }
-
-    var keys = this.hash.keys();
-    for (var i = 0; i < keys.length; i++){
-	if (! (other.hash.containsKey(keys[i]) &&
-	       isEqual(this.hash.get(keys[i]),
-		       other.hash.get(keys[i]),
-		       aUnionFind))) {
-	    return false;
-	}
-    }
-    return true;
-};
-
-
-//////////////////////////////////////////////////////////////////////
-
+// Native JS-objects
 var JsObject = function(name, obj) {
 	this.name = name;
 	this.obj = obj;
 };
-
 JsObject.prototype.toString = function() {
 	return '#<js-object:' + typeof(this.obj) + ':' + this.name + '>';
 };
-
 JsObject.prototype.isEqual = function(other, aUnionFind) {
 	return (this.obj === other.obj);
 };
 
 //////////////////////////////////////////////////////////////////////
-
+// World Configs
 var WorldConfig = function(startup, shutdown, args) {
 	this.startup = startup;
 	this.shutdown = shutdown;
 	this.startupArgs = args;
 	this.shutdownArg = undefined;
 };
-
 WorldConfig.prototype.toString = function() {
 	return '#<world-config>';
 };
-
 WorldConfig.prototype.isEqual = function(other, aUnionFind) {
 	if ( ! isEqual(this.startup, other.startup, aUnionFind) ||
 	     ! isEqual(this.shutdown, other.shutdown, aUnionFind) ||
@@ -1253,8 +956,6 @@ WorldConfig.prototype.isEqual = function(other, aUnionFind) {
 	}
 	return true;
 };
-
-
 var Effect = makeStructureType('effect', false, 0, 0, false, false);
 Effect.type.prototype.invokeEffect = function(k) {
 	helpers.raise(types.incompleteExn(
@@ -1262,21 +963,6 @@ Effect.type.prototype.invokeEffect = function(k) {
 			'effect type created without using make-effect-type',
 			[]));
 };
-//Effect.handlerIndices = [];
-
-
-//var wrapHandler = function(handler, caller, changeWorld) {
-//	return types.jsObject('function', function() {
-//		var externalArgs = arguments;
-//		changeWorld(function(w, k) {
-//			var args = helpers.map(helpers.wrapJsObject, externalArgs);
-//			args.unshift(w);
-//			caller(handler, args, k);
-//		});
-//	});
-//};
-
-
 var makeEffectType = function(name, superType, initFieldCnt, impl, guard, caller) {
 	if ( !superType ) {
 		superType = Effect;
@@ -1305,8 +991,6 @@ var makeEffectType = function(name, superType, initFieldCnt, impl, guard, caller
 
 	return newType;
 };
-
-
 var RenderEffect = makeStructureType('render-effect', false, 0, 0, false, false);
 RenderEffect.type.prototype.callImplementation = function(caller, k) {
 	helpers.raise(types.incompleteExn(
@@ -1314,7 +998,6 @@ RenderEffect.type.prototype.callImplementation = function(caller, k) {
 			'render effect created without using make-render-effect-type',
 			[]));
 };
-
 var makeRenderEffectType = function(name, superType, initFieldCnt, impl, guard) {
 	if ( !superType ) {
 		superType = RenderEffect;
@@ -1327,31 +1010,17 @@ var makeRenderEffectType = function(name, superType, initFieldCnt, impl, guard) 
 		var args = this._fields.slice(0, lastFieldIndex);
 		caller(impl, args, k);
 	}
-
 	return newType;
 };
-
 //////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
+// generic, top-level description functions
 var toWrittenString = function(x, cache) {
     if (! cache) { 
      	cache = makeLowLevelEqHash();
+    }
+
+    if(typeof(x.toWrittenString) === 'undefined') {
+    	console.log('TOWRITTENSTRING IS NOT DEFINED FOR ', x);
     }
 
     if (typeof(x) == 'object') {
@@ -1384,11 +1053,13 @@ var toWrittenString = function(x, cache) {
     return returnVal;
 };
 
-
-
 var toDisplayedString = function(x, cache) {
     if (! cache) {
     	cache = makeLowLevelEqHash();
+    }
+
+    if(typeof(x.toWrittenString) === 'undefined') {
+    	console.log('TODISPLAYEDSTRING IS NOT DEFINED FOR ', x);
     }
     if (typeof(x) == 'object') {
 	    if (cache.containsKey(x)) {
@@ -1398,22 +1069,22 @@ var toDisplayedString = function(x, cache) {
     }
 
     if (x == undefined || x == null) {
-	return "#<undefined>";
+		return "#<undefined>";
     }
     if (typeof(x) == 'string') {
-	return x;
+		return x;
     }
     if (typeof(x) != 'object' && typeof(x) != 'function') {
-	return x.toString();
+		return x.toString();
     }
 
     var returnVal;
     if (typeof(x.toDisplayedString) !== 'undefined') {
-	returnVal = x.toDisplayedString(cache);
+		returnVal = x.toDisplayedString(cache);
     } else if (typeof(x.toWrittenString) !== 'undefined') {
-	returnVal = x.toWrittenString(cache);
+		returnVal = x.toWrittenString(cache);
     } else {
-	returnVal = x.toString();
+		returnVal = x.toString();
     }
     cache.remove(x);
     return returnVal;
@@ -1426,9 +1097,12 @@ var toDomNode = function(x, cache) {
     if (! cache) {
     	cache = makeLowLevelEqHash();
     }
-    
+    if(typeof(x.toDomNode) === 'undefined') {
+    	console.log('TODOMNODE IS NOT DEFINED FOR ', x);
+    }
+
     if (isNumber(x)) {
-	return numberToDomNode(x);
+		return numberToDomNode(x);
     }
 
     if (typeof(x) == 'object') {
@@ -1456,9 +1130,9 @@ var toDomNode = function(x, cache) {
 
     var returnVal;
     if (x.nodeType) {
-	returnVal =  x;
+		returnVal =  x;
     } else if (typeof(x.toDomNode) !== 'undefined') {
-	returnVal =  x.toDomNode(cache);
+		returnVal =  x.toDomNode(cache);
     } else if (typeof(x.toWrittenString) !== 'undefined') {	
         returnVal = textToDomNode(x.toWrittenString(cache))
     } else if (typeof(x.toDisplayedString) !== 'undefined') {
@@ -1477,7 +1151,6 @@ function unicodeToChar(text) {
                return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
           });
 }
-
 
 var textToDomNode = function(text) {
     var rawChunks = text.split("\n");
@@ -1499,7 +1172,10 @@ var textToDomNode = function(text) {
         displayedString.appendChild(document.createTextNode(displayedChunks[i]));
         rawString.appendChild(document.createTextNode(rawChunks[i]));
     }
-    wrapper.className = (text==="true" || text==="false")? "wescheme-boolean" : "wescheme-string";
+    wrapper.className = "wescheme-string";
+    var ariaText = displayedChunks.join(" ") +  ", a String";
+    wrapper.ariaText = ariaText;
+    wrapper.setAttribute("aria-label", ariaText);
     wrapper.style.fontFamily = 'monospace';
     wrapper.style.whiteSpace = "pre-wrap";
     wrapper.appendChild(rawString);
@@ -1518,37 +1194,37 @@ var textToDomNode = function(text) {
     return wrapper;
 };
 
-
-
 // numberToDomNode: jsnum -> dom
 // Given a jsnum, produces a dom-node representation.
 var numberToDomNode = function(n) {
-    var node;
+    var node = document.createElement("span"), ariaText;
+    node.classList.add("wescheme-number");
+ 	node.appendChild(document.createTextNode(n.toString()));
+ 	var ariaText = n.toString();
     if (jsnums.isExact(n)) {
       if (jsnums.isInteger(n)) {
-          node = document.createElement("span");
-          node.className = "wescheme-number Integer";
-          node.appendChild(document.createTextNode(n.toString()));
-          return node;
+          node.classList.add("Integer");
+          ariaText += ", an Integer";
       } else if (jsnums.isRational(n)) {
-          return rationalToDomNode(n);
+          node = rationalToDomNode(n);
+          ariaText = node.ariaText + ", a Rational";
       } else if (isComplex(n)) {
-          node = document.createElement("span");
-          node.className = "wescheme-number Complex";
-          node.appendChild(document.createTextNode(n.toString()));
-          return node;
+          node.classList.add("Complex");
+          ariaText += ", a Complex Number";
       } else {
-          node = document.createElement("span");
-          node.className = "wescheme-number";
-          node.appendChild(document.createTextNode(n.toString()));
-          return node;
+          ariaText += ", a Number";
       }
     } else {
-      node = document.createElement("span");
-      node.className = "wescheme-number";
-      node.appendChild(document.createTextNode(n.toString()));
-      return node;
+    	if (isComplex(n)) {
+          node.classList.add("Complex");
+          ariaText += ", a Complex Number";
+      	} else {
+      		ariaText += ", a Number";
+      	}
     }
+    node.ariaText = ariaText;
+    node.setAttribute("aria-label", ariaText);
+    return node;
 };
 
 // rationalToDomNode: rational -> dom-node
@@ -1599,22 +1275,15 @@ var rationalToDomNode = function(n) {
     };
     numberNode.style['cursor'] = 'pointer';
     numberNode.className = "wescheme-number Rational";
+    numberNode.ariaText = String(jsnums.numerator(n))+" over "+String(jsnums.denominator(n));
     return numberNode;
-
 };
 
-    // Alternative: use <sup> and <sub> tags
-
-
-
-
-
 var isNumber = jsnums.isSchemeNumber;
-var isComplex = isNumber;
+var isComplex = function(n) {return n instanceof jsnums.Complex; };
 var isString = function(s) {
 	return (typeof s === 'string' || s instanceof Str);
 }
-
 
 // isEqual: X Y -> boolean
 // Returns true if the objects are equivalent; otherwise, returns false.
@@ -1647,9 +1316,6 @@ var isEqual = function(x, y, aUnionFind) {
     }
     return false;
 };
-
-
-
 
 
 // liftToplevelToFunctionValue: primitive-function string fixnum scheme-value -> scheme-value
@@ -1741,9 +1407,6 @@ var ClosureValue = function(name, locs, numParams, paramTypes, isRest, closureVa
     this.body = body;
 };
 
-
-
-
 ClosureValue.prototype.toString = function() {
     if (this.name !== Empty.EMPTY) {
 	return helpers.format("#<function:~a>", [this.name]);
@@ -1751,7 +1414,6 @@ ClosureValue.prototype.toString = function() {
 	return "#<function>";
     }
 };
-
 
 var CaseLambdaValue = function(name, closures) {
     this.name = name;
@@ -1765,8 +1427,6 @@ CaseLambdaValue.prototype.toString = function() {
 	return "#<case-lambda-procedure>";
     }
 };
-
-
 
 var ContinuationClosureValue = function(vstack, cstack) {
     this.name = false;
@@ -1785,9 +1445,6 @@ ContinuationClosureValue.prototype.toString = function() {
 
 
 //////////////////////////////////////////////////////////////////////
-
-
-
 var PrefixValue = function() {
     this.slots = [];
     this.definedMask = [];
@@ -1795,19 +1452,19 @@ var PrefixValue = function() {
 
 PrefixValue.prototype.addSlot = function(v) {
     if (v === undefined) { 
-	this.slots.push(types.UNDEFINED);
-	this.definedMask.push(false);
+		this.slots.push(types.UNDEFINED);
+		this.definedMask.push(false);
     } else {
         this.slots.push(v);
-	if (v instanceof GlobalBucket) {
-	    if (v.value === types.UNDEFINED) {
-		this.definedMask.push(false);
-	    } else {
-		this.definedMask.push(true);
-	    }
-	} else {
-	    this.definedMask.push(true);
-	}
+		if (v instanceof GlobalBucket) {
+		    if (v.value === types.UNDEFINED) {
+				this.definedMask.push(false);
+		    } else {
+				this.definedMask.push(true);
+		    }
+		} else {
+		    this.definedMask.push(true);
+		}
     }
 };
 
@@ -1822,7 +1479,7 @@ PrefixValue.prototype.ref = function(n, srcloc) {
                             ": this variable is not defined"]),
     			[this.slots[n].name]));
     	}
-        } else {
+    } else {
     	if (this.definedMask[n]) {
     	    return this.slots[n];
     	} else {
@@ -1855,17 +1512,11 @@ var GlobalBucket = function(name, value) {
     this.value = value;
 };
 
-
-
 var ModuleVariableRecord = function(resolvedModuleName,
 				    variableName) {
     this.resolvedModuleName = resolvedModuleName;
     this.variableName = variableName;
 };
-
-
-
-
 
 //////////////////////////////////////////////////////////////////////
 
@@ -1910,8 +1561,6 @@ ContMarkRecordControl.prototype.update = function(key, val) {
   this.dict[key.val] = val;
   return this;
 };
-
-
 
 var ContinuationMarkSet = function(dict) {
     this.dict = dict;
@@ -1985,7 +1634,6 @@ var CasePrimitive = function(name, cases) {
     this.name = name;
     this.cases = cases;
 };
-
 
 CasePrimitive.prototype.toDomNode = function(cache) {
     var node = document.createElement("span");
@@ -2073,11 +1721,6 @@ MultiPart.prototype.toString = function() {
 
 
 //////////////////////////////////////////////////////////////////////
-
-
-
-
-
 var makeList = function(args) {
     var result = Empty.EMPTY;
     var i;
@@ -2143,8 +1786,6 @@ var isNoLocation = function(o) {
   return o === NoLocation;
 };
 
-
-
 var Posn = makeStructureType('posn', false, 2, 0, false, false);
 var Color = makeStructureType('color', false, 4, 0, false, false);
 var ArityAtLeast = makeStructureType('arity-at-least', false, 1, 0, false,
@@ -2164,15 +1805,10 @@ types.complex = jsnums.makeComplex;
 types.bignum = jsnums.makeBignum;
 types.list = makeList;
 types.vector = makeVector;
-types.regexp = function(p) { return new RegularExpression(p) ; }
-types.byteRegexp = function(p) { return new ByteRegularExpression(p) ; }
 types['char'] = Char.makeInstance;
 types['string'] = makeString;
 types.box = function(x) { return new Box(x, true); };
 types.boxImmutable = function(x) { return new Box(x, false); };
-types.path = function(x) { return new Path(x); };
-types.bytes = function(x, mutable) { return new Bytes(x, mutable); };
-types.keyword = function(k) { return new Keyword(k); };
 types.pair = function(x, y) { return Cons.makeInstance(x, y); };
 types.hash = makeHashEqual;
 types.hashEq = makeHashEq;
@@ -2215,7 +1851,6 @@ types.isVector = function(x) { return x instanceof Vector; };
 types.isBox = function(x) { return x instanceof Box; };
 types.isHash = function(x) { return (x instanceof EqHashTable ||
 				     x instanceof EqualHashTable); };
-types.isByteString = function(x) { return x instanceof Bytes; };
 types.isStruct = function(x) { return x instanceof Struct; };
 types.isPosn = Posn.predicate;
 types.isArityAtLeast = ArityAtLeast.predicate;
@@ -2368,42 +2003,13 @@ types.isEffectType = function(x) {
 
 
 types.isEffect = Effect.predicate;
-
-//types.EffectDoNothing = makeEffectType('effect:do-nothing',
-//				       false,
-//				       0,
-//				       function(k) { k(); },
-//				       [],
-//				       function(k) { k(new ValuesWrapper([])); },
-//				       function(f, args, k) { f(k); });
-//types.effectDoNothing = EffectDoNothing.constructor;
-//types.isEffectDoNothing = EffectDoNothing.predicate;
-
-
-//RenderEffect = makeStructureType('render-effect', false, 2, 0, false,
-//		function(k, domNode, effects, name) {
-//			helpers.checkListOf(effects, helpers.procArityContains(0), name, 'procedure (arity 0)', 2);
-//			k( new ValuesWrapper([domNode, effects]) );
-//		});
-
 types.makeRenderEffectType = makeRenderEffectType;
 types.isRenderEffectType = function(x) {
 	return (x instanceof StructType && x.type.prototype.callImplementation) ? true : false;
 };
-
-//types.RenderEffect = RenderEffect;
-//types.makeRenderEffect = RenderEffect.constructor;
 types.isRenderEffect = RenderEffect.predicate;
-//types.renderEffectDomNode = function(x) { return RenderEffect.accessor(x, 0); };
-//types.renderEffectEffects = function(x) { return RenderEffect.accessor(x, 1); };
-//types.setRenderEffectEffects = function(x, v) { RenderEffect.mutator(x, 1, v); };
-
-
 types.NoLocation = NoLocation;
 types.isNoLocation = isNoLocation;
-
-
-
 types.ColoredPart = ColoredPart;
 types.Message = Message;
 types.isColoredPart = isColoredPart;
@@ -2412,8 +2018,5 @@ types.GradientPart = GradientPart;
 types.isGradientPart = isGradientPart;
 types.MultiPart = MultiPart;
 types.isMultiPart = isMultiPart;
-
-
-
 })();
 
