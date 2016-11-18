@@ -728,7 +728,7 @@ var explicitConsDomNode = function(p, cache) {
     node.className = "wescheme-cons";
     while ( p instanceof Cons ) {
       node.appendChild(makeLParen());
-      node.appendChild(constructor);
+      node.appendChild(constructor.cloneNode(true));
       ariaText += " (cons";
       trailingRParens += ")";
       var first = toDomNode(p.first(), cache);
