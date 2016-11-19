@@ -261,7 +261,7 @@ var Struct = Class.extend({
 	    return buffer.join("");
 	},
 
-	toDisplayedString: function(cache) { return this.toWrittenString(cache); },
+	toDisplayedString: this.toWrittenString,
 
 	toDomNode: function(cache) {
 	    //    cache.put(this, true);
@@ -328,16 +328,7 @@ EqHashTable.prototype.toWrittenString = function(cache) {
     }
     return ('#hasheq(' + ret.join(' ') + ')');
 };
-EqHashTable.prototype.toDisplayedString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toDisplayedString(keys[i], cache);
-	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hasheq(' + ret.join(' ') + ')');
-};
+EqHashTable.prototype.toDisplayedString = this.toWrittenString;
 EqHashTable.prototype.isEqual = function(other, aUnionFind) {
     if ( !(other instanceof EqHashTable) ) {
 	return false; 
@@ -378,16 +369,7 @@ EqualHashTable.prototype.toWrittenString = function(cache) {
     }
     return ('#hash(' + ret.join(' ') + ')');
 };
-EqualHashTable.prototype.toDisplayedString = function(cache) {
-    var keys = this.hash.keys();
-    var ret = [];
-    for (var i = 0; i < keys.length; i++) {
-	    var keyStr = types.toDisplayedString(keys[i], cache);
-	    var valStr = types.toDisplayedString(this.hash.get(keys[i]), cache);
-	    ret.push('(' + keyStr + ' . ' + valStr + ')');
-    }
-    return ('#hash(' + ret.join(' ') + ')');
-};
+EqualHashTable.prototype.toDisplayedString = toWrittenString;
 EqualHashTable.prototype.toDomNode = function(cache) {
 	var wrapper = document.createElement("span"),
 		hashSymbol = document.createElement("span"),
@@ -442,9 +424,7 @@ Box.prototype.toString = function() {
 Box.prototype.toWrittenString = function(cache) {
     return "#&" + toWrittenString(this.val, cache);
 };
-Box.prototype.toDisplayedString = function(cache) {
-    return "#&" + toDisplayedString(this.val, cache);
-};
+Box.prototype.toDisplayedString = this.toWrittenString;
 Box.prototype.toDomNode = function(cache) {
     var wrapper = document.createElement("span"),
     boxSymbol = document.createElement("span");
@@ -558,9 +538,7 @@ Symbol.prototype.toString = function() {
 Symbol.prototype.toWrittenString = function(cache) {
     return this.val;
 };
-Symbol.prototype.toDisplayedString = function(cache) {
-    return this.val;
-};
+Symbol.prototype.toDisplayedString = this.toWrittenString;
 Symbol.prototype.toDomNode = function(cache) {
 	var dom = simpleToDomNode(this.toString(), 
 							"wescheme-symbol", 
@@ -590,7 +568,7 @@ Empty.prototype.isEmpty = function() {
     return true;
 };
 Empty.prototype.toWrittenString = function(cache) { return "empty"; };
-Empty.prototype.toDisplayedString = function(cache) { return "empty"; };
+Empty.prototype.toDisplayedString = this.toWrittenString;
 Empty.prototype.toString = function(cache) { return "()"; }; 
 Empty.prototype.toDomNode = function(cache) { 
 	var wrapper = document.createElement("span");
@@ -680,19 +658,7 @@ var explicitConsString = function(p, cache, f) {
     return (texts.join("") + tails.join(""));
 };
 Cons.prototype.toString = Cons.prototype.toWrittenString;
-Cons.prototype.toDisplayedString = function(cache) {
-    //    cache.put(this, true);
-    var texts = ["list"];
-    var p = this;
-    while ( p instanceof Cons ) {
-		texts.push(toDisplayedString(p.first(), cache));
-		p = p.rest();
-    }
-    if ( p !== Empty.EMPTY ) {
-		return explicitConsString(this, cache, toDisplayedString);
-    }
-    return "(" + texts.join(" ") + ")";
-};
+Cons.prototype.toDisplayedString = this.toWrittenString;
 Cons.prototype.toDomNode = function(cache) {
     //    cache.put(this, true);
     var node = document.createElement("span"),
@@ -806,14 +772,7 @@ Vector.prototype.toWrittenString = function(cache) {
     }
     return "#(" + texts.join(" ") + ")";
 };
-Vector.prototype.toDisplayedString = function(cache) {
-    //    cache.put(this, true);
-    var texts = [];
-    for (var i = 0; i < this.length(); i++) {
-	texts.push(toDisplayedString(this.ref(i), cache));
-    }
-    return "#(" + texts.join(" ") + ")";
-};
+Vector.prototype.toDisplayedString = this.toWrittenString;
 Vector.prototype.toDomNode = function(cache) {
     var wrapper = document.createElement("span"),
         lVect = document.createElement("span"),
@@ -1544,9 +1503,7 @@ ContinuationMarkSet.prototype.toDomNode = function(cache) {
 ContinuationMarkSet.prototype.toWrittenString = function(cache) {
     return '#<continuation-mark-set>';
 };
-ContinuationMarkSet.prototype.toDisplayedString = function(cache) {
-    return '#<continuation-mark-set>';
-};
+ContinuationMarkSet.prototype.toDisplayedString = this.toWrittenString;
 ContinuationMarkSet.prototype.ref = function(key) {
     if ( this.dict.containsKey(key) ) {
 	    return this.dict.get(key);
@@ -1575,9 +1532,7 @@ PrimProc.prototype.toString = function() {
 PrimProc.prototype.toWrittenString = function(cache) {
     return ("#<function:" + this.name + ">");
 };
-PrimProc.prototype.toDisplayedString = function(cache) {
-    return ("#<function:" + this.name + ">");
-};
+PrimProc.prototype.toDisplayedString = this.toWrittenString;
 PrimProc.prototype.toDomNode = function(cache) {
     var node = document.createElement("span");
     node.className = "wescheme-primproc";

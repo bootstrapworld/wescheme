@@ -294,7 +294,7 @@ if (typeof(world) === 'undefined') {
     };
 
     BaseImage.prototype.toWrittenString = function(cache) { return "<image>"; };
-    BaseImage.prototype.toDisplayedString = function(cache) { return "<image>"; };
+    BaseImage.prototype.toDisplayedString = this.toWrittenString;
 
     // Best-Guess equivalence for images. If they're vertex-based we're in luck,
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
