@@ -52,6 +52,7 @@
 
 
 
+    var bigBangLog = document.getElementById('bigBangLog');
 
 
     var caller;
@@ -451,7 +452,7 @@
 	var wrappedHandlers = [];
 	var wrappedRedraw;
 	var wrappedRedrawCss;
-  var lastThreeFrameDraws = []; // for FPS calculation
+  	var lastThreeFrameDraws = []; // for FPS calculation
 	
 
   // on-draw may define separate DOM and CSS handlers
@@ -493,7 +494,7 @@
   // on-redraw defines an image-producing handler, and a dummy CSS handler
   else if (config.lookup('onRedraw')) {
 	    var reusableCanvas = undefined;
-	    var reusableCanvasNode = undefined;	    
+	    var reusableCanvasNode = undefined;
 	    wrappedRedraw = function(w, k) {
         var nextFrame = function(t) {
           lastThreeFrameDraws = [t/1000].concat(lastThreeFrameDraws); // save the # ms
@@ -529,6 +530,10 @@
 		                     reusableCanvas.height = height;			
 		                     var ctx = reusableCanvas.getContext("2d");
 		                     aScene.render(ctx, 0, 0);
+		                     var log = document.createElement("span");
+		                     log.className = "screenreader-only";
+		                     log.appendChild(document.createTextNode(aScene.ariaText));
+		                     toplevelNode.appendChild(log);
 		                 },
 		                 0);
 
