@@ -126,13 +126,13 @@ WeSchemeInteractions = (function () {
         this.prompt.setText(t);
     };
 
-    // announce a msg by adding it to the log, then (optionally) forget it by deleting
+    // announce a msg by prepending it to the log, then (optionally) forget it by deleting
     WeSchemeInteractions.prototype.say = function(msg, forget) {
         if(msg==='') return;
         var announcements = document.getElementById("announcementlist");
         var li = document.createElement("LI");
         li.appendChild(document.createTextNode(msg));
-        announcements.appendChild(li);
+        announcements.insertBefore(li, announcements.firstChild);
         if(forget) { 
             setTimeout(function(){
                 announcements.removeChild(li);
@@ -177,16 +177,10 @@ WeSchemeInteractions = (function () {
                           CodeMirror.commands.newlineAndIndent(ed);
                       }
                   },
-                  "Ctrl-N":function (ed) {
+                  "Alt-Down":function (ed) {
                       that.onHistoryNext();
                   },
-                  "Ctrl-P":function (ed) {
-                      that.onHistoryPrevious();
-                  },
-                  "Alt-N":function (ed) {
-                      that.onHistoryNext();
-                  },
-                  "Alt-P":function (ed) {
+                  "Alt-Up":function (ed) {
                       that.onHistoryPrevious();
                   },
                   "Alt-1":function (ed) {
@@ -252,7 +246,7 @@ WeSchemeInteractions = (function () {
         that.interactions.addToInteractions(parentDiv);
                         
         // ARIA: don't read the caret
-        promptSpan.setAttribute(  "aria-hidden", "true");
+        promptSpan.setAttribute("aria-hidden", "true");
 
         // // FIXME: figure out how to get the line height
         // dynamically, because I have no idea how to do
@@ -599,7 +593,7 @@ WeSchemeInteractions = (function () {
                         dialog.dblclick(toggleFullScreen);
                     }
 
-                    var innerArea = jQuery("<div class='evaluatorToplevelNode'></div>");
+                    var innerArea = jQuery("<div class='evaluatorToplevelNode' role='log' aria-live='assertive'></div>");
                     innerArea.css("background-color", "white");
                     // make sure there are no other topLevelEvaluationNodes
                     while(dialog[0].firstChild) dialog[0].removeChild(dialog[0].firstChild);

@@ -49,6 +49,9 @@
 }());
 //////////////////////////////////////////////////////////////////////
 
+var bigBangLog = document.getElementById('bigBangLog');
+
+
 var caller;
 var setCaller = function(c) {
 	caller = function(op, args, k) {
@@ -446,7 +449,7 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
   	// on-redraw defines an image-producing handler, and a dummy CSS handler
   	else if (config.lookup('onRedraw')) {
 	    var reusableCanvas = undefined;
-	    var reusableCanvasNode = undefined;	    
+	    var reusableCanvasNode = undefined;
 	    wrappedRedraw = function(w, k) {
         var nextFrame = function(t) {
           lastThreeFrameDraws = [t/1000].concat(lastThreeFrameDraws); // save the # ms
@@ -482,6 +485,10 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 		                     reusableCanvas.height = height;			
 		                     var ctx = reusableCanvas.getContext("2d");
 		                     aScene.render(ctx, 0, 0);
+		                     var log = document.createElement("span");
+		                     log.className = "screenreader-only";
+		                     log.appendChild(document.createTextNode(aScene.ariaText));
+		                     toplevelNode.appendChild(log);
 		                 },
 		                 0);
 
