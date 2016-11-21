@@ -31,12 +31,12 @@ body{background: url(images/bootBG.png) no-repeat fixed white; background-positi
   z-index:		5;
   color: white;
 }
-h1{
+.h1{
   font-size: 38px;
   padding-left: 65px;
 }
 
-h2{
+.h2{
   font-size: 14px;
   font-style: italic;
   padding-left: 65px;

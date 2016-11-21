@@ -56,8 +56,8 @@
 
 
 <div class="header" style="position: fixed;">
-    <h1 class="title">My Programs</h1>
-    <h2>Welcome, <%= s.getNickname() %></h2>
+    <span class="title h1">My Programs</span><br/>
+    <span class="h2">Welcome, <%= s.getNickname() %></span>
 </div>
 
 
