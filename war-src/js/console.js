@@ -1,15 +1,11 @@
 // console.js provides the functionality for the console: listing
 // current projects, deleting and sharing projects.
-
-
 goog.require('plt.wescheme.AjaxActions');
 goog.require('plt.wescheme.SharingDialog');
 goog.require('plt.wescheme.DeleteDialog');
 goog.require("plt.wescheme.ProgramDigest");
 goog.require("plt.wescheme.helpers");
 goog.require("plt.wescheme.browserCheck");
-
-
 
 // loadProgramList: (-> void) -> void
 // Load up the program list and fill the document with it.
@@ -22,18 +18,15 @@ var loadProgramList = function(k) {
 	function(dom) {
 	    var programListUl = clearConsoleListing();	
 	    dom.find("ProgramDigest").each(function() {	
-		var digest = jQuery(this);
-		
-
-		if (digest.children("published").text() == 'true') {
-		    // skip it
-		} else {
-		    addProgramEntry(digest, 
-				    new plt.wescheme.ProgramDigest(digest),
-				    programListUl);
-		}
+			var digest = jQuery(this);
+			if (digest.children("published").text() == 'true') {
+			    // skip it
+			} else {
+			    addProgramEntry(digest, 
+					    		new plt.wescheme.ProgramDigest(digest),
+					    		programListUl);
+			}
 	    });
-	    
 	    if (typeof(k) === 'function') { k(); }
 	},
         
@@ -42,10 +35,6 @@ var loadProgramList = function(k) {
 	    alert("Could not load list of projects")
 	});
 }
-
-
-
-
 
 // clearConsoleListing: -> ul
 // clears the contents of the console list, returning a fresh
@@ -69,8 +58,6 @@ var clearConsoleListing = function() {
     return programListUl
 }
 
-
-
 var addProgramEntry = function(digest, aProgramDigest, programListUl) {
     // The program entry
     var programEntry = (jQuery("<li/>").addClass("ProgramEntry"));
@@ -83,20 +70,6 @@ var addProgramEntry = function(digest, aProgramDigest, programListUl) {
 		.attr("href", "/openEditor?pid="+id)
 		.attr("target", "_editor" + id)
 		.text(title));
-
-
-    // form.submit(function() { 
-// 	console.log("opening first window");
-// 	submitPost("/openEditor",
-// 		   { pid: id },
-// 		   { target: "wescheme_editor_" + id });
-// 	console.log("opening second window");
-// 	submitPost("/openEditor",
-// 		   { pid: id },
-// 		   { target: "2ndwindowwescheme_editor_" + id });
-// 	return false;
-//     });
-
 
     var modifiedSpan = (jQuery("<span/>")
 			.text(plt.wescheme.helpers.prettyPrintDate(
@@ -116,18 +89,6 @@ var addProgramEntry = function(digest, aProgramDigest, programListUl) {
     
     programListUl.append(programEntry);
 };
-
-
-
-// Automatic refreshing has been turned off: too much traffic.
-
-// var continueRefreshingProgramList = function() {
-//     // Every 30 seconds, refresh the program list.
-//     var DELAY_BETWEEN_RELOADS = 30000;
-//     setTimeout(function() { loadProgramList(continueRefreshingProgramList); },
-// 	       DELAY_BETWEEN_RELOADS);
-// };
-
 
 jQuery(document).ready(function() {
     plt.wescheme.browserCheck();
