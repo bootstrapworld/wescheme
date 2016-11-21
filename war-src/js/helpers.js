@@ -42,73 +42,75 @@ goog.provide("plt.wescheme.helpers");
     // Makes a social bookmarks span, given a title and a URL to link to.
     plt.wescheme.helpers.generateSocialBookmarks = function(title, url) {
 
-	var span = document.createElement("span");
-	span.className = "socialBookmarks";
-	var addBookmarklet = function(name, imgSrc, url) {
-	    var a = document.createElement("a");
-	    var img = document.createElement("img");
-	    a.className = "socialBookmarklet";
-	    a.title = "Share via " + name;
-	    img.src = imgSrc;
-	    img.alt = "Share via " + name;
-	    img.className = "socialBookmarklet";
-	    a.appendChild(img);
-	    a.href = url;
-      a.target = "_blank";
-	    span.appendChild(a);
-	};
+		var list = document.createElement("ul");
+		list.className = "socialBookmarks";
+		var addBookmarklet = function(name, imgSrc, url) {
+		    var a = document.createElement("a");
+		    var img = document.createElement("img");
+		    var li = document.createElement("li");
+		    a.className = "socialBookmarklet";
+		    a.title = "Share via " + name;
+		    img.src = imgSrc;
+		    img.alt = "Share via " + name;
+		    img.className = "socialBookmarklet";
+		    a.appendChild(img);
+		    a.href = url;
+	        a.target = "_blank";
+	        li.appendChild(a);
+		    list.appendChild(li);
+		};
 
-	var encodeKeyPairs = function(attrs) {
-	    var key, buffer = [];
-	    for (key in attrs) {
-		if (Object.hasOwnProperty.call(attrs, key)) {
-		    buffer.push(key + "=" + encodeURIComponent(attrs[key]));
+		var encodeKeyPairs = function(attrs) {
+		    var key, buffer = [];
+		    for (key in attrs) {
+			if (Object.hasOwnProperty.call(attrs, key)) {
+			    buffer.push(key + "=" + encodeURIComponent(attrs[key]));
+			}
+		    }
+		    return buffer.join("&");
 		}
-	    }
-	    return buffer.join("&");
-	}
 
 
-	addBookmarklet("email",
-		       "/images/icon_email.png",
-		       "https://mail.google.com/mail/u/0/?view=cm&fs=1&tf=1" +
-            encodeKeyPairs({su: title,
-                            body: url}));
+		addBookmarklet("email",
+			       "/images/icon_email.png",
+			       "https://mail.google.com/mail/u/0/?view=cm&fs=1&tf=1" +
+	            encodeKeyPairs({su: title,
+	                            body: url}));
 
-	addBookmarklet("Facebook",
-                 "/images/icon_facebook.png",
-                 "http://www.facebook.com/sharer.php" + "?" +
-                 encodeKeyPairs({u: url,
-                                t: title}));
- 
-	addBookmarklet("Twitter",
-		       "/images/icon_twitter.png",
-		       "http://twitter.com/home?" +
-		       encodeKeyPairs({status: url}));
-	
-	addBookmarklet("Google+",
-		       "/images/icon_gplus.png",
-		       "https://plus.google.com/share?" +
-		       encodeKeyPairs({url: url}));
+		addBookmarklet("Facebook",
+	                 "/images/icon_facebook.png",
+	                 "http://www.facebook.com/sharer.php" + "?" +
+	                 encodeKeyPairs({u: url,
+	                                t: title}));
+	 
+		addBookmarklet("Twitter",
+			       "/images/icon_twitter.png",
+			       "http://twitter.com/home?" +
+			       encodeKeyPairs({status: url}));
+		
+		addBookmarklet("Google+",
+			       "/images/icon_gplus.png",
+			       "https://plus.google.com/share?" +
+			       encodeKeyPairs({url: url}));
 
-	addBookmarklet("Pinterest",
-                 "/images/icon_pinterest.png",
-                 "http://pinterest.com/pin/create/button/?" +
-                 encodeKeyPairs({url: url,
-                                description: title}));
- 
-	addBookmarklet("Reddit",
-                 "/images/icon_reddit.png",
-                 "http://www.reddit.com/submit?" +
-                 encodeKeyPairs({url: url,
-                                title: title}));
- 
-	addBookmarklet("Barcode",
-				"/images/icon_qrcode.png",
-				"http://qrcode.kaywa.com/img.php" + "?" + 
-				   encodeKeyPairs({s: 8, d: url}));
- 
- return span;
+		addBookmarklet("Pinterest",
+	                 "/images/icon_pinterest.png",
+	                 "http://pinterest.com/pin/create/button/?" +
+	                 encodeKeyPairs({url: url,
+	                                description: title}));
+	 
+		addBookmarklet("Reddit",
+	                 "/images/icon_reddit.png",
+	                 "http://www.reddit.com/submit?" +
+	                 encodeKeyPairs({url: url,
+	                                title: title}));
+	 
+		addBookmarklet("Barcode",
+					"/images/icon_qrcode.png",
+					"http://qrcode.kaywa.com/img.php" + "?" + 
+					   encodeKeyPairs({s: 8, d: url}));
+	 
+		 return list;
     };
 
 
