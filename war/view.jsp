@@ -62,13 +62,13 @@ alert("Unable to load program");
 WeScheme is unable to find your program.
 </div>
 <% } %>
-
+<main>
 <% if (aProgram != null) { %>
 <a id="runIt" class="linkbutton"
    href="/run?publicId=<%= encodedId %>">Play</a>
 <% } %>
 
-<img id="Logo" src="css/images/BigLogo.png" alt="WeScheme Logo">
+<img id="Logo" src="css/images/BigLogo.png" alt="">
 
 
 <% if (aProgram != null && isPublic) { %>
@@ -88,10 +88,10 @@ WeScheme is unable to find your program.
 <c:out escapeXml="true" value="<%= notes %>" />
 </div>
 
-<h2><div id="socialBookmarks"></div></h2>
 <h2 id="bottomMessage" style="display: none">Sometimes YouTube. Perhaps iPhone. Together, WeScheme!</h2>
+<div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
 
-
+</main>
 
 
 <div id="footer">
