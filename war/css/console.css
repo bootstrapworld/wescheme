@@ -12,6 +12,14 @@ body{background: url(images/bootBG.png) no-repeat fixed white; background-positi
   display: inline-block;
 }
 
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
+}
 
 /* 65px: LOGO AND TITLE */
 .header{
@@ -175,13 +183,14 @@ img:hover+div, #programList ul li img+div:hover{display: inline-block; }
 
 
 
-span.socialBookmarks{
+ul.socialBookmarks{
   display: block;
-  width:   100%;
+  padding-left:  0px;
   text-align: center;
   border-top: solid 1px black;
+  list-style-type: none;
 }
-
+.socialBookmarks li { display: inline; }
 /* remove top-border from tooltip */
 .tooltip .socialBookmarks{border-top: none;}
 
