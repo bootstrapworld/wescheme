@@ -34,27 +34,6 @@ var UnionFind = function() {
 	this.parentMap = makeLowLevelEqHash();
 }
 
-// find: ptr -> UnionFindNode
-// Returns the representative for this ptr.
-UnionFind.prototype.find = function(ptr) {
-	var parent = (this.parentMap.containsKey(ptr) ? 
-		      this.parentMap.get(ptr) : ptr);
-	if (parent === ptr) {
-	    return parent;
-	} else {
-	    var rep = this.find(parent);
-	    // Path compression:
-	    this.parentMap.put(ptr, rep);
-	    return rep;
-	}
-};
-
-// merge: ptr ptr -> void
-// Merge the representative nodes for ptr1 and ptr2.
-UnionFind.prototype.merge = function(ptr1, ptr2) {
-	this.parentMap.put(this.find(ptr1), this.find(ptr2));
-};
-
 //////////////////////////////////////////////////////////////////////
 // simpleToDomNode : String String String -> <SPAN>
 // Consumes the displayed contents and the ariaText, and produces a span
@@ -328,24 +307,22 @@ EqHashTable.prototype.toWrittenString = function(cache) {
     }
     return ('#hasheq(' + ret.join(' ') + ')');
 };
-EqHashTable.prototype.toDisplayedString = this.toWrittenString;
+EqHashTable.prototype.toDisplayedString = EqHashTable.prototype.toWrittenString;
 EqHashTable.prototype.isEqual = function(other, aUnionFind) {
     if ( !(other instanceof EqHashTable) ) {
-	return false; 
+		return false; 
     }
-
     if (this.hash.keys().length != other.hash.keys().length) { 
-	return false;
+		return false;
     }
-
     var keys = this.hash.keys();
     for (var i = 0; i < keys.length; i++){
-	if ( !(other.hash.containsKey(keys[i]) &&
-	       isEqual(this.hash.get(keys[i]),
-		       other.hash.get(keys[i]),
-		       aUnionFind)) ) {
-		return false;
-	}
+		if ( !(other.hash.containsKey(keys[i]) &&
+		       isEqual(this.hash.get(keys[i]),
+			       other.hash.get(keys[i]),
+			       aUnionFind)) ) {
+			return false;
+		}
     }
     return true;
 };
@@ -369,7 +346,7 @@ EqualHashTable.prototype.toWrittenString = function(cache) {
     }
     return ('#hash(' + ret.join(' ') + ')');
 };
-EqualHashTable.prototype.toDisplayedString = toWrittenString;
+EqualHashTable.prototype.toDisplayedString = EqualHashTable.prototype.toWrittenString;
 EqualHashTable.prototype.toDomNode = function(cache) {
 	var wrapper = document.createElement("span"),
 		hashSymbol = document.createElement("span"),
@@ -1171,16 +1148,16 @@ var numberToDomNode = function(n) {
     if (jsnums.isExact(n)) {
       if (jsnums.isInteger(n)) {
           className = "wescheme-number Integer";
-          ariaText += ", an Integer";
+          ariaText += "";
       } else if (jsnums.isRational(n)) {
           node = rationalToDomNode(n);
           className = node.className;
-          ariaText = node.ariaText + ", a Rational";
+          ariaText = node.ariaText + ", Rational";
       } else if (isComplex(n)) {
           className = "wescheme-number Complex";
-          ariaText += ", a Complex Number";
+          ariaText += ", Complex Number";
       } else {
-          ariaText += ", a Number";
+          ariaText += ", Number";
       }
     } else {
     	if (isComplex(n)) {
