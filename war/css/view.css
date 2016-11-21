@@ -35,7 +35,8 @@ img{background: none;
 	border:		solid 5px black;
 	-moz-border-radius: 160px; 
 }
-
+.socialBookmarks {padding-left: 0px; list-style-type: none; }
+.socialBookmarks li { display: inline; }
 #footer{
 	display:	none;
 	position:	fixed;
@@ -71,6 +72,15 @@ a.linkbutton{
 a:hover{
 	background: rgb(117, 50, 138);
 	text-decoration: none;
+}
+
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
 }
 
 .linkbutton{

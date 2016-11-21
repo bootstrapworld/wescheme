@@ -12,6 +12,14 @@ body{background: url(images/bootBG.png) no-repeat fixed white; background-positi
   display: inline-block;
 }
 
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
+}
 
 /* 65px: LOGO AND TITLE */
 .header{
@@ -178,7 +186,7 @@ span.socialBookmarks{
   text-align:   center;
   border-top:   solid 1px black;
 }
-
+.socialBookmarks li { display: inline; }
 /* remove top-border from tooltip */
 .tooltip .socialBookmarks{border-top: none;}
 a.socialBookmarklet { border: 0px solid black; }

@@ -354,11 +354,12 @@ p.location-paragraph {
     margin-bottom: 0px;
 }
 
-span.socialBookmarks{
+ul.socialBookmarks{
     display: block;
-    width:   100%;
+    padding-left:  0px;
     text-align: center;
     border-top: solid 1px black;
+    list-style-type: none;
 }
 
 a.socialBookmarklet {
@@ -371,6 +372,7 @@ img.socialBookmarklet {
     width:   24px;
 }
 
+.socialBookmarks li { display: inline; }
 
 /* To make spans as top-aligned inlined blocks, as used in the REPL */
 span.top-aligned-inline-block {
