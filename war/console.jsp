@@ -63,6 +63,7 @@
 
 
 <div id="toolbar">
+  <h2 class="screenreader-only">Navigation</h2>
 	<ul>
 		<li class="start">
 		  <a href="/openEditor" target="_blank">
