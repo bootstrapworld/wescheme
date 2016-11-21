@@ -357,7 +357,7 @@
       	  </div>
 
       	  <div id="interactions" class="goog-splitpane-second-container">
-      	    <div  id="inter" 
+      	    <div  id="inter" tabindex="-1" 
                   role="application" 
                   aria-label="Interactions">
               <h2 class="screenreader-only">Interactions</h2>
