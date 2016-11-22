@@ -48,57 +48,56 @@
 
 
 <body>
-<h1 id="programTitle"><c:out escapeXml="true" value="<%= title %>" /></h1>
+  <h1 id="programTitle"><c:out escapeXml="true" value="<%= title %>" /></h1>
+  <div id="publicId" style="display: none">
+    <c:out escapeXml="true" value="<%= publicId %>" />
+  </div>
 
-<div id="publicId"
-     style="display: none"><c:out escapeXml="true" value="<%= publicId %>" /></div>
 
+  <% if (aProgram == null) { %>
+    <script type="text/javascript">
+    alert("Unable to load program");
+    </script>
+    <div>
+    WeScheme is unable to find your program.
+    </div>
+  <% } %>
+  <main>
+    <% if (aProgram != null) { %>
+      <a id="runIt" class="linkbutton" aria-label="Run, F7"
+         href="/run?publicId=<%= encodedId %>">Run</a>
+    <% } %>
 
-<% if (aProgram == null) { %>
+    <img id="Logo" src="css/images/BigLogo.png" alt="">
+
+    <% if (aProgram != null && isPublic) { %>
+      <a id="viewSource" class="linkbutton"
+         href="/openEditor?publicId=<%= encodedId %>">Edit</a>
+    <% } %>
+
+    <% if (false) { %>
+      <a id="androidApk"  class="linkbutton"
+         style="display: none">Download Android APK</a>
+    <% } %>
+
+    <div id="notes">
+      <c:out escapeXml="true" value="<%= notes %>" />
+    </div>
+
+    <h2 id="bottomMessage" style="display: none">
+      Sometimes YouTube. Perhaps iPhone. Together, WeScheme!
+    </h2>
+    <div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
+  </main>
+
+  <jsp:include page="/footer.jsp"/>
+
+</body>
 <script type="text/javascript">
-alert("Unable to load program");
+document.body.addEventListener("keydown", function(e){
+  if(e.keyCode === 118) { 
+    document.getElementById("runIt").click();
+  }
+});
 </script>
-<div>
-WeScheme is unable to find your program.
-</div>
-<% } %>
-<main>
-<% if (aProgram != null) { %>
-<a id="runIt" class="linkbutton"
-   href="/run?publicId=<%= encodedId %>">Play</a>
-<% } %>
-
-<img id="Logo" src="css/images/BigLogo.png" alt="">
-
-
-<% if (aProgram != null && isPublic) { %>
-<a id="viewSource" 
-   class="linkbutton"
-   href="/openEditor?publicId=<%= encodedId %>">Edit</a>
-<% } %>
-
-<% if (false) { %>
-<a id="androidApk" 
-   class="linkbutton"
-   style="display: none">Download Android APK</a>
-<% } %>
-
-
-<div id="notes">
-<c:out escapeXml="true" value="<%= notes %>" />
-</div>
-
-<h2 id="bottomMessage" style="display: none">Sometimes YouTube. Perhaps iPhone. Together, WeScheme!</h2>
-<div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
-
-</main>
-
-
-<div id="footer">
-<a href="#">About</a>
-
-<a href="#">Contact</a>
-<a href="#">Copyright</a>
-</div>
-
-</body></html>
+</html>
