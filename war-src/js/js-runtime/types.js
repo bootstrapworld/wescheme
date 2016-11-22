@@ -963,10 +963,6 @@ var toWrittenString = function(x, cache) {
      	cache = makeLowLevelEqHash();
     }
 
-    if(typeof(x.toWrittenString) === 'undefined') {
-    	console.log('TOWRITTENSTRING IS NOT DEFINED FOR ', x);
-    }
-
     if (typeof(x) == 'object') {
 	    if (cache.containsKey(x)) {
 		    return "...";
@@ -1002,9 +998,6 @@ var toDisplayedString = function(x, cache) {
     	cache = makeLowLevelEqHash();
     }
 
-    if(typeof(x.toWrittenString) === 'undefined') {
-    	console.log('TODISPLAYEDSTRING IS NOT DEFINED FOR ', x);
-    }
     if (typeof(x) == 'object') {
 	    if (cache.containsKey(x)) {
 		    return "...";
@@ -1042,9 +1035,7 @@ var toDomNode = function(x, cache) {
     	cache = makeLowLevelEqHash();
     }
     // try using the value's native toDomNode method, if it exists
-    if(typeof(x.toDomNode) === 'undefined') {
-    	console.log('TODOMNODE IS NOT DEFINED FOR ', x);
-    } else {
+    if(typeof(x.toDomNode) !== 'undefined') {
     	return x.toDomNode(cache);
     }
     // Not all numbers have it, so use a special toDomNode
@@ -1275,6 +1266,10 @@ var liftToplevelToFunctionValue = function(primitiveF,
 	lifted.toWrittenString = function(cache) { 
 	    return "#<function:" + name + ">";
 	};
+	lifted.toDomNode = function() {
+	console.log('lifted');
+		return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ",a function");
+	};
 	lifted.toDisplayedString = lifted.toWrittenString;
 	lifted.procedureArity = procedureArityDescription;
 	primitiveF._mobyLiftedFunction = lifted;
@@ -1352,6 +1347,11 @@ ClosureValue.prototype.toString = function() {
 		return "#<function>";
     }
 };
+ClosureValue.prototype.toDomNode = function () {
+	console.log('ClosureValue');
+	return simpleToDomNode(this.toString(), "wescheme-primproc", 
+		this.name === Empty.EMPTY? "anonymous function" : this.name + ", a function");
+};
 var CaseLambdaValue = function(name, closures) {
     this.name = name;
     this.closures = closures;
@@ -1376,7 +1376,10 @@ ContinuationClosureValue.prototype.toString = function() {
 		return "#<function>";
     }
 };
-
+ContinuationClosureValue.prototype.toDomNode = function () {
+	console.log('ContinuationClosureValue');
+	return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ", a function");
+};
 //////////////////////////////////////////////////////////////////////
 var PrefixValue = function() {
     this.slots = [];
@@ -1506,15 +1509,11 @@ var PrimProc = function(name, numParams, isRest, assignsToValueRegister, impl) {
 PrimProc.prototype.toString = function() {
     return ("#<function:" + this.name + ">");
 };
-PrimProc.prototype.toWrittenString = function(cache) {
-    return ("#<function:" + this.name + ">");
-};
-PrimProc.prototype.toDisplayedString = this.toWrittenString;
+PrimProc.prototype.toWrittenString = PrimProc.prototype.toString;
+PrimProc.prototype.toDisplayedString = PrimProc.prototype.toString;
 PrimProc.prototype.toDomNode = function(cache) {
-    var node = document.createElement("span");
-    node.className = "wescheme-primproc";
-    node.appendChild(document.createTextNode("#<function:"+ this.name +">"));
-    return node;
+	console.log('PrimProc');
+    return simpleToDomNode(this.toString(), "wescheme-primproc", this.name + ", a function");
 };
 //////////////////////////////////////////////////////////////////////
 // Case Primitive
@@ -1522,19 +1521,16 @@ var CasePrimitive = function(name, cases) {
     this.name = name;
     this.cases = cases;
 };
+
+CasePrimitive.prototype.toString = function(cache) {
+    return ("#<function:" + this.name + ">");
+};
+CasePrimitive.prototype.toWrittenString = CasePrimitive.prototype.toString;
+CasePrimitive.prototype.toDisplayedString = CasePrimitive.prototype.toString;
 CasePrimitive.prototype.toDomNode = function(cache) {
-    var node = document.createElement("span");
-    node.className = "wescheme-caseprimitive";
-    node.appendChild(document.createTextNode("#<function:"+ this.name +">"));
-    return node;
-};
-CasePrimitive.prototype.toWrittenString = function(cache) {
-    return ("#<function:" + this.name + ">");
-};
-CasePrimitive.prototype.toDisplayedString = function(cache) {
-    return ("#<function:" + this.name + ">");
-};
-/////////////////////////////////////////////////////////////////////
+	console.log('CasePrimitive');
+    return simpleToDomNode(this.toString(), "wescheme-caseprimitive", this.name + ", a function");
+};/////////////////////////////////////////////////////////////////////
 // Colored Error Message Support
 
 var Message = function(args) {
