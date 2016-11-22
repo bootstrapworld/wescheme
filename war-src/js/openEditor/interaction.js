@@ -512,7 +512,11 @@ WeSchemeInteractions = (function () {
             evaluator,
             function() {
                 evaluator.makeToplevelNode = function() {
+                    // block screen-readers
+                    document.getElementById('editor').setAttribute('aria-hidden', true);
                     var handleClose = function(event, ui) {
+                        // unblock screen-readers
+                        document.getElementById('editor').removeAttribute('aria-hidden');
                         that.evaluator.requestBreak();
                         dialog.dialog("destroy");
                     };
@@ -593,7 +597,7 @@ WeSchemeInteractions = (function () {
                         dialog.dblclick(toggleFullScreen);
                     }
 
-                    var innerArea = jQuery("<div class='evaluatorToplevelNode' role='log' aria-live='assertive'></div>");
+                    var innerArea = jQuery("<div class='evaluatorToplevelNode' role='log' aria-live='polite'></div>");
                     innerArea.css("background-color", "white");
                     // make sure there are no other topLevelEvaluationNodes
                     while(dialog[0].firstChild) dialog[0].removeChild(dialog[0].firstChild);
@@ -746,6 +750,13 @@ WeSchemeInteractions = (function () {
     // Evaluate the source code and accumulate its effects.
     WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK) {
         var that = this;
+        // ugly hack to make sure that focus is returned to wherever it
+        // was before the Run command was initiated
+        function putFocus(){
+            var defInFocus = plt.wescheme.WeSchemeEditor.defnInFocus;
+            if(defInFocus) jQuery("#definitions").click();
+            else that.focusOnPrompt();
+        }
         setTimeout(
             withCancellingOnReset(
                 that,
@@ -760,7 +771,7 @@ WeSchemeInteractions = (function () {
                             that,
                             function() { 
                                 that.enableInput();
-                                that.focusOnPrompt();
+                                putFocus();
                                 contK();
                             }),
                         withCancellingOnReset(
@@ -768,7 +779,7 @@ WeSchemeInteractions = (function () {
                             function(err) { 
                                 that.handleError(err); 
                                 that.enableInput();
-                                that.focusOnPrompt();
+                                putFocus();
                                 contK();
                             }));
                 }),

@@ -40,6 +40,11 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             doTheSharing(false);
         };
 
+        var handleClose = function() {
+          // unblock screen-readers
+          document.getElementById('editor').removeAttribute('aria-hidden');
+        };
+
         // Does the brunt work of the sharing.
         // If sharing is completely successful, onSuccess will be called.
         // If at any point, something breaks, onFailure will be called.
@@ -57,10 +62,13 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             that.actions.share(newPid, isPublic,
                                function(sharedProgram) {
                                    var newDialog = jQuery("<div/>");
+                                   // block screen-readers
+                                   document.getElementById('editor').setAttribute('aria-hidden', true);
                                    newDialog.dialog(
                                        {title: 'Sharing your program',
                                         bgiframe : true,
                                         modal : true,
+                                        beforeClose: handleClose,
                                         close : function() {
                                             if (onShareSuccess) {onShareSuccess(sharedProgram);}
                                         }
@@ -108,11 +116,14 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             if (onAbort) { onAbort(); }
         };
 
+        // block screen-readers
+        document.getElementById('editor').setAttribute('aria-hidden', true);
         if (this.pid) {
             dialogWindow.append(jQuery("<p/>").text("Publishing will let your friends run this program. Would you like them to be able to see your code, too?"));
             dialogWindow.dialog({title: 'Publish My Program',
                                  bgiframe : true,
                                  modal : true,
+                                 beforeClose: handleClose,
                                  overlay : {opacity: 0.5, background: 'black'},
                                  buttons : { "Yes" : shareWithSource,
                                              "No" : shareWithoutSource }
@@ -123,6 +134,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             dialogWindow.dialog({title: 'Sharing your program',
                                  bgiframe : true,
                                  modal : true,
+                                 beforeClose: handleClose,
                                  overlay : {opacity: 0.5, background: 'black'},
                                  buttons : {}
                                 });

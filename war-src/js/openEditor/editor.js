@@ -72,7 +72,7 @@ var WeSchemeEditor;
     this.suppressWarningBeforeUnloadB = startsWith(
 					       this.suppressWarningBeforeUnloadE,
 					       false);
-
+    this.lastCursor = null;
 
 
 	new plt.wescheme.WeSchemeInteractions(
@@ -680,6 +680,8 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.run = function(after) {
       var that = this;
+      var focusFn = plt.wescheme.WeSchemeEditor.defnInFocus? that.defn.focus : that.interactions.focus;
+      console.log('focused on...', plt.wescheme.WeSchemeEditor.defnInFocus? "d":"i");
       // if the isRunning flag is true, bail
       if(that.isRunning===true) return false;
       // otherwise, set it to true

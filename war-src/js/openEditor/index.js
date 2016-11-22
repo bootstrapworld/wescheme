@@ -88,7 +88,7 @@ var initializeEditor;
 	var pid = attrs['pid'];
 	var publicId = attrs['publicId'];
   
-  var defnInFocus = true;
+    plt.wescheme.WeSchemeEditor.defnInFocus = true;
 
 
 	// Fixme: trigger file load if the pid has been provided.
@@ -124,7 +124,7 @@ var initializeEditor;
                                       submitPost("/logout");
                                   }
                               });
-            jQuery("#definitions").click(function() { defnInFocus = true;});
+            jQuery("#definitions").click(function() { plt.wescheme.WeSchemeEditor.defnInFocus = true;});
             var afterLoad1 = function() {
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }
                else { afterLoad2(); }
@@ -138,7 +138,7 @@ var initializeEditor;
                 }
                 // Set up interactions afterwards.
                 jQuery("#interactions").click(function(e) {
-                  defnInFocus = false;
+                  plt.wescheme.WeSchemeEditor.defnInFocus = false;
                   myEditor.interactions.focusOnPrompt();
                   e.stopPropagation();
                   e.preventDefault();
