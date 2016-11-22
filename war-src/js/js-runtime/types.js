@@ -1268,7 +1268,7 @@ var liftToplevelToFunctionValue = function(primitiveF,
 	};
 	lifted.toDomNode = function() {
 	console.log('lifted');
-		return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ",a function");
+		return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ", a function");
 	};
 	lifted.toDisplayedString = lifted.toWrittenString;
 	lifted.procedureArity = procedureArityDescription;
@@ -1348,7 +1348,6 @@ ClosureValue.prototype.toString = function() {
     }
 };
 ClosureValue.prototype.toDomNode = function () {
-	console.log('ClosureValue');
 	return simpleToDomNode(this.toString(), "wescheme-primproc", 
 		this.name === Empty.EMPTY? "anonymous function" : this.name + ", a function");
 };
@@ -1377,8 +1376,8 @@ ContinuationClosureValue.prototype.toString = function() {
     }
 };
 ContinuationClosureValue.prototype.toDomNode = function () {
-	console.log('ContinuationClosureValue');
-	return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ", a function");
+	return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", 
+		this.name === Empty.EMPTY? "anonymous function" : this.name + ", a function");
 };
 //////////////////////////////////////////////////////////////////////
 var PrefixValue = function() {
@@ -1512,7 +1511,6 @@ PrimProc.prototype.toString = function() {
 PrimProc.prototype.toWrittenString = PrimProc.prototype.toString;
 PrimProc.prototype.toDisplayedString = PrimProc.prototype.toString;
 PrimProc.prototype.toDomNode = function(cache) {
-	console.log('PrimProc');
     return simpleToDomNode(this.toString(), "wescheme-primproc", this.name + ", a function");
 };
 //////////////////////////////////////////////////////////////////////
@@ -1528,7 +1526,6 @@ CasePrimitive.prototype.toString = function(cache) {
 CasePrimitive.prototype.toWrittenString = CasePrimitive.prototype.toString;
 CasePrimitive.prototype.toDisplayedString = CasePrimitive.prototype.toString;
 CasePrimitive.prototype.toDomNode = function(cache) {
-	console.log('CasePrimitive');
     return simpleToDomNode(this.toString(), "wescheme-caseprimitive", this.name + ", a function");
 };/////////////////////////////////////////////////////////////////////
 // Colored Error Message Support
