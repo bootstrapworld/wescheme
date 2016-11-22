@@ -48,6 +48,42 @@
     margin: 20px;
     padding-bottom: 20px;
   }
+
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
+  }
+  #footer{
+    position: fixed;
+    width:    100%;
+    bottom:   0px;
+    height:   20px;
+    color:    white;
+    background: black;
+    text-align: center;
+    margin:   0px;
+    padding:  0px;
+    left:           0px;
+  }
+  #footer ul, #footer ul li {display: inline;}
+  #footer a{
+    display:  inline-block; 
+    width:    24%;
+    margin:   0px;
+    padding:  0px;
+    color:    white;
+    clear:    none;
+    text-decoration: none;
+  }
+
+  #footer a:hover{
+    background: #546DAF;
+    text-decoration: none;
+  }
   #interactions{ white-space: pre; font-family: monospace; display: inline-block;}
   #fullscreenButton{ margin-right: 20px; }
 
@@ -66,8 +102,8 @@
 </head>
 
 <body onload="plt.wescheme.runner.init('<%= compilationServerUrl %>', '<%= publicId%>')">
-<div id="interactions">
-</div>
-
+  <main id="interactions" role="log" aria-live="assertive">
+  </main>
+  <jsp:include page="/footer.jsp"/>
 </body>
 </html>
