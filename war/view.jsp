@@ -64,15 +64,19 @@
   <% } %>
   <main>
     <% if (aProgram != null) { %>
-      <a id="runIt" class="linkbutton" aria-label="Run, F7"
-         href="/run?publicId=<%= encodedId %>">Run</a>
+      <a id="runIt" class="button" aria-label="Run, F7" aria-describedby="runDescription"
+         href="/run?publicId=<%= encodedId %>">Run
+         <span class="tooltip" id="runDescription">Run the code &amp; show the output</span>
+      </a>
     <% } %>
 
     <img id="Logo" src="css/images/BigLogo.png" alt="">
 
     <% if (aProgram != null && isPublic) { %>
-      <a id="viewSource" class="linkbutton"
-         href="/openEditor?publicId=<%= encodedId %>">Edit</a>
+      <a id="viewSource" class="button" aria-label="Edit, F8" aria-describedby="editDescription"
+         href="/openEditor?publicId=<%= encodedId %>">Edit
+          <span class="tooltip" id="runDescription">Open the code in a new editor</span>
+      </a>
     <% } %>
 
     <% if (false) { %>

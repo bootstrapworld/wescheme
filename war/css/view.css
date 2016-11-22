@@ -67,16 +67,26 @@ img{background: none;
 
 div#notes{padding: 20px; max-width: 500px; margin: 0px auto;}
 
-a.linkbutton{
-	display:	inline-block; 
+a.button{
+	text-align:	center;
+	vertical-align: middle;
+	border:		solid 1px black;
+	background: lightsteelblue;
+	font-size:	1em;
+  	font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
 	width:		120px;
-	margin:		0px;
-	padding:	0px;
-	color:		white;
-	clear:		none;
+	height:		22px;
+	cursor:		pointer;
+	display: 	inline-block;
+	position: 	relative;
 	text-decoration: none;
-  background:	#B6D990;
+	color:		black;
 }
+a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
+a.button:hover{
+	background: gray;
+}
+a.button:hover>span.tooltip{ opacity: 0.5; };
 
 .programName {
 	font-size: 30px;
