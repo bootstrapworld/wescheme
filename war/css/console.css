@@ -115,44 +115,34 @@ a:hover span{display: inline; position: absolute; background:rgb(117, 50, 138); 
 
 /* flex: PROGRAM LIST */
 div#programList{
-  position:		absolute;
-  top:			85px;
-  width:			100%;
+  position:		 absolute;
+  top:			   85px;
+  width:			 100%;
 }
-
-#programList ul{
-  margin:			0px;
-  padding:		0px;
+div#programList table{
+    border-spacing: 0px; 
+    margin-top:     20px; 
+    width:          100%;
+    min-width:      600px;
+    border-collapse:collapse;
 }
-
-#programList ul li{
-  display:		block;
-  list-style:		none;
-  float:			left;
-  z-index:		0;
-}
-
 .ProgramTitle, .ProgramModified, .ProgramPublished{
-  display:		inline-block;
-  border:			0px;
+  border:			  0px;
   background:		none;
 }
 
 
 .EntryHeader{font-weight: bold; font-size: 12px; border-bottom: 1px black solid; width: 100%; padding: 5px 0px; margin-top: 20px;}
-li.ProgramEntry{line-height: 24px;  padding: 5px 0px; width: 100%;}
-li.ProgramEntry:hover{ background: rgb(117, 50, 138);}
-li.ProgramEntry:hover * { color: white;}
+.ProgramEntry{line-height: 28px;  padding: 5px 0px; width: 100%;}
+.ProgramEntry:hover { background: rgb(117, 50, 138);}
+.ProgramEntry:hover * { color: white;}
 
 
-.ProgramTitle{width: 40%; min-width: 250px; margin-left: 65px; cursor: pointer; font-size: 16px; text-align: left;}
-.ProgramId{width: 100px;}
-.ProgramModified{text-align: left; width: 175px;}
-.ProgramPublished{width: 50px; text-align: center;}
-.ProgramPublished img.button {width: 18px; height: 18px; cursor: pointer; position: relative}
-.ProgramDelete{width: 50px; text-align: center;}
-.ProgramDelete img.button {width: 18px; height: 18px; cursor: pointer;}
-input.ProgramModified{cursor: pointer; font-size: 16px; text-align: left;}
+.ProgramTitle{width: 40%; min-width: 250px; font-size: 16px; }
+.ProgramTitle span{ margin-left: 65px; }
+.ProgramModified{ width: 175px;}
+.ProgramPublished, .ProgramDelete{width: 50px; text-align: center; }
+img.button {width: 18px; height: 18px; cursor: pointer; position: relative;}
 
 /* Link Sharing Box */
 div.sharebox{
@@ -179,7 +169,7 @@ a.delicious{background: url(images/icon_delicious.gif) no-repeat; padding-left: 
 a.twitter{background: url(images/icon_twitter.gif) no-repeat; padding-left: 25px;}
 a.email{background: url(images/icon_email.gif) no-repeat; padding-left: 25px;}
 
-img:hover+div, #programList ul li img+div:hover{display: inline-block; }
+img:hover+div, #programList img+div:hover{display: inline-block; }
 
 
 

@@ -16,7 +16,7 @@ var loadProgramList = function(k) {
     actions.listProjects(
 	// On successful project list loading, load the list
 	function(dom) {
-	    var programListUl = clearConsoleListing();	
+	    var programListTable = clearConsoleListing();	
 	    dom.find("ProgramDigest").each(function() {	
 			var digest = jQuery(this);
 			if (digest.children("published").text() == 'true') {
@@ -24,7 +24,7 @@ var loadProgramList = function(k) {
 			} else {
 			    addProgramEntry(digest, 
 					    		new plt.wescheme.ProgramDigest(digest),
-					    		programListUl);
+					    		programListTable);
 			}
 	    });
 	    if (typeof(k) === 'function') { k(); }
@@ -36,58 +36,62 @@ var loadProgramList = function(k) {
 	});
 }
 
-// clearConsoleListing: -> ul
+// clearConsoleListing: -> table
 // clears the contents of the console list, returning a fresh
 // ul entry where things can be appended.
 var clearConsoleListing = function() {
-    var programListDiv = jQuery("#programList");
-    var sharedListDiv = jQuery("#sharedList");
-
-    programListDiv.empty();
-    sharedListDiv.empty();
-
-    var programListUl = jQuery("<ul/>");
-    programListDiv.append(programListUl);
-    // Headers
-    programListUl.append(
-	jQuery("<li/>").addClass("EntryHeader")
-	    .append(jQuery("<span/>").addClass("ProgramTitle").text("Program Title"))
-	    .append(jQuery("<span/>").addClass("ProgramModified").text("Last Modified (D/M/YYYY)"))
-	    .append(jQuery("<span/>").addClass("ProgramPublished").text("Share"))
-	    .append(jQuery("<span/>").addClass("ProgramDelete").text("Delete")));
-    return programListUl
+    var programListDiv = document.getElementById("programList");
+    // remove the table
+    programListDiv.removeChild(programListDiv.firstChild); 
+    // rebuild the table, add the header, and return a pointer to it
+    var programListTable = document.createElement("table");
+    programListTable.innerHTML = "<tr class='EntryHeader'>"
+    	+ "<td class='ProgramTitle'><span>Program Title</span></td>"
+    	+ "<td class='ProgramModified'>Last Modified (D/M/YYYY)</td>"
+    	+ "<td class='ProgramPublished'>Share</td><td class='ProgramDelete'>Delete</td>"
+    	+ "<td class='spacer'></td></tr>";
+    programListDiv.appendChild(programListTable);
+    return programListTable.firstChild;
 }
 
-var addProgramEntry = function(digest, aProgramDigest, programListUl) {
-    // The program entry
-    var programEntry = (jQuery("<li/>").addClass("ProgramEntry"));
-
-    var title = aProgramDigest.getTitle() || "(No name)";
+var addProgramEntry = function(digest, aProgramDigest, programListTable) {
+    var row = document.createElement("tr");
+    row.className = "ProgramEntry";
+    // Program Name
+    var name = document.createElement("td");
+    var span = document.createElement("span");
     var id = aProgramDigest.getId();
-    var anchor = jQuery("<span/>")
-	.addClass("ProgramTitle")
-	.append(jQuery("<a/>")
-		.attr("href", "/openEditor?pid="+id)
-		.attr("target", "_editor" + id)
-		.text(title));
-
-    var modifiedSpan = (jQuery("<span/>")
-			.text(plt.wescheme.helpers.prettyPrintDate(
-			    aProgramDigest.getModified()))
-			.addClass("ProgramModified"));
-    var shareSpan = plt.wescheme.SharingDialog.makeShareButton(
-	aProgramDigest, loadProgramList);
-
+    name.className = "ProgramTitle";
+    var link = document.createElement("a");
+    link.href = "/openEditor?pid="+id;
+    link.target = "_editor" + id;
+    link.innerHTML = aProgramDigest.getTitle() || "(No name)";
+    span.appendChild(link);
+    name.appendChild(span);
+    // Last Modified
+	var modified = document.createElement("td");
+	modified.className = "ProgramModified";
+	modified.innerHTML = plt.wescheme.helpers.prettyPrintDate(aProgramDigest.getModified());
+    // Share
+    var shareTD = document.createElement("td");
+    var shareSpan = plt.wescheme.SharingDialog.makeShareButton(aProgramDigest, loadProgramList);
+    shareTD.className = "ProgramPublished";
+    shareTD.appendChild(shareSpan[0]);
+    // Delete
+    var deleteTD = document.createElement("td");
     var deleteSpan = plt.wescheme.DeleteDialog.makeDeleteButton(
-	aProgramDigest, loadProgramList, loadProgramList);
-
-    (programEntry
-     .append(anchor)
-     .append(modifiedSpan)
-     .append(shareSpan)
-     .append(deleteSpan));
-    
-    programListUl.append(programEntry);
+						aProgramDigest, loadProgramList, loadProgramList);
+    deleteTD.className = "ProgramDelete";
+    deleteTD.appendChild(deleteSpan[0]);
+    // Spacer
+    var spacer = document.createElement("td");
+    // add TDs for name, modified, share and delete
+    row.appendChild(name);
+    row.appendChild(modified);
+    row.appendChild(shareTD);
+    row.appendChild(deleteTD);
+    row.appendChild(spacer);
+    programListTable.appendChild(row);
 };
 
 jQuery(document).ready(function() {
