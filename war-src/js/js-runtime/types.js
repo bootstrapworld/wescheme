@@ -423,17 +423,14 @@ Logic = {
     FALSE : false
 };
 // WARNING: we are extending the built-in Javascript boolean class here!
-Boolean.prototype.toWrittenString = function(cache) {
-    if (this.valueOf()) { return "true"; }
-    return "false";
-};
-Boolean.prototype.toDisplayedString = Boolean.prototype.toWrittenString;
+Boolean.prototype.toString = function() { return this.valueOf() ? "true" : "false"; };
+Boolean.prototype.toWrittenString = Boolean.prototype.toString
+Boolean.prototype.toDisplayedString = Boolean.prototype.toString;
 Boolean.prototype.toDomNode = function() {
 	return simpleToDomNode( this.toString(), 
 							"wescheme-boolean", 
 							this.toString() + ", a Boolean");
 };
-Boolean.prototype.toString = function() { return this.valueOf() ? "true" : "false"; };
 Boolean.prototype.isEqual = function(other, aUnionFind){
     return this == other;
 };
@@ -501,7 +498,7 @@ var symbolCache = {};
 Symbol.makeInstance = function(val) {
     // To ensure that we can eq? symbols with equal values.
     if (!(hasOwnProperty.call(symbolCache, val))) {
-	symbolCache[val] = new Symbol(val);
+		symbolCache[val] = new Symbol(val);
     }
     return symbolCache[val];
 }; 
@@ -578,10 +575,10 @@ Cons.makeInstance = function(f, r) {
 // FIXME: can we reduce the recursion on this?
 Cons.prototype.isEqual = function(other, aUnionFind) {
     if (! (other instanceof Cons)) {
-	return Logic.FALSE;
+		return Logic.FALSE;
     }
     return (isEqual(this.first(), other.first(), aUnionFind) &&
-	    isEqual(this.rest(), other.rest(), aUnionFind));
+	    	isEqual(this.rest(), other.rest(), aUnionFind));
 };
 Cons.prototype.first = function() {
     return this.f;
@@ -624,12 +621,11 @@ var explicitConsString = function(p, cache, f) {
     var texts = [];
     var tails = []
     while ( p instanceof Cons ) {
-	texts.push("(cons ");
-	texts.push(f(p.first(), cache));
-	texts.push(" ");
-
-	tails.push(")");
-	p = p.rest();
+		texts.push("(cons ");
+		texts.push(f(p.first(), cache));
+		texts.push(" ");
+		tails.push(")");
+		p = p.rest();
     }
     texts.push(f(p, cache));
     return (texts.join("") + tails.join(""));
@@ -647,7 +643,6 @@ Cons.prototype.toDomNode = function(cache) {
     node.appendChild(abbr);
     var p = this, i = 0, ariaElts = "";
     while ( p instanceof Cons ) {
-    	i++;
     	var dom = toDomNode(p.first(), cache);
     	node.appendChild(dom);
 		ariaElts += " " + dom.ariaText || dom.textContent;
@@ -737,7 +732,7 @@ Vector.prototype.isEqual = function(other, aUnionFind) {
 Vector.prototype.toList = function() {
     var ret = Empty.EMPTY;
     for (var i = this.length() - 1; i >= 0; i--) {
-	ret = Cons.makeInstance(this.elts[i], ret);	    
+		ret = Cons.makeInstance(this.elts[i], ret);	    
     }	
     return ret;
 };
@@ -745,7 +740,7 @@ Vector.prototype.toWrittenString = function(cache) {
     //    cache.put(this, true);
     var texts = [];
     for (var i = 0; i < this.length(); i++) {
-	texts.push(toWrittenString(this.ref(i), cache));
+		texts.push(toWrittenString(this.ref(i), cache));
     }
     return "#(" + texts.join(" ") + ")";
 };
