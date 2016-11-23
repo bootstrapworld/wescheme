@@ -1,0 +1,93 @@
+body{
+    width:      100%;
+    height:     100%;
+    min-width:  300px;
+    padding:    0px;
+    margin:     0px;
+    border:     0px;
+    background: white;
+    text-align: center;
+    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
+}
+
+#footer{
+    position:   fixed;
+    width:      100%;
+    bottom:     0px;
+    height:     20px;
+    color:      white;
+    background: black;
+    text-align: center;
+    margin:     0px;
+    padding:    0px;
+    left:           0px;
+}
+#footer ul, #footer ul li {display: inline;}
+
+#footer a{
+    display:    inline-block; 
+    width:      24%;
+    margin:     0px;
+    padding:    0px;
+    color:      white;
+    clear:      none;
+    text-decoration: none;
+}
+
+#footer a:hover{
+    background: #546DAF;
+    text-decoration: none;
+}
+
+a.button{
+    text-align: center;
+    vertical-align: middle;
+    border:     solid 1px black;
+    background: lightsteelblue;
+    font-size:  1em;
+    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
+    width:      120px;
+    height:     22px;
+    cursor:     pointer;
+    display:    inline-block;
+    position:   relative;
+    text-decoration: none;
+    color:      black;
+}
+a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
+a.button:hover{
+    background: gray;
+}
+a.button:hover>span.tooltip{ opacity: 0.5; };
+
+ul.socialBookmarks{  padding: 0px; }
+ul.socialBookmarks{
+  display:      block;
+  padding-left: 0px;
+  margin-left:  0px;
+  text-align:   center;
+  border-top:   solid 1px black;
+  list-style-type: none;
+}
+.socialBookmarks li { display: inline; }
+/* remove top-border from tooltip */
+.tooltip .socialBookmarks{border-top: none;}
+
+a.socialBookmarklet {
+  border: 0px solid black;
+}
+
+img.socialBookmarklet {
+  border: 0px solid black;
+  padding: 5px;
+  width:   24px;
+}
+
+.screenreader-only {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px 1px 1px 1px);
+    clip: rect(1px, 1px, 1px, 1px);
+}

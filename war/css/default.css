@@ -1,81 +1,34 @@
 /* Some global settings */
 html {
-    height: 100%;
-    min-width: 320px;
+    height:     100%;
+    min-width:  320px;
     background: white;
-    padding:		0px;
+    padding:	0px;
     margin:		0px;
-    border: 0px;
-    overflow: hidden;
+    border:     0px;
+    overflow:   hidden;
+    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
-html, body, h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #footer, #inter, input{
+body {text-align: left;}
+
+h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #inter, input{
     padding:	0px;
     margin:		0px;
     border:     0px;
 }
 
-.screenreader-only {
-    position: absolute !important;
-    height: 1px;
-    width: 1px;
-    overflow: hidden;
-    clip: rect(1px 1px 1px 1px);
-    clip: rect(1px, 1px, 1px, 1px);
-}
-
-body {
+#editor, #top, #middle, #splitpane, #bottom {
     width:   100%;
-    height:  100%;
     padding: 0px;
     margin:  0px;
     border: 0px;
 }
 
-
-
-#editor {
-    width:   100%;
-    height:  100%;
-    padding: 0px;
-    margin:  0px;
-    border: 0px;
-}
-
-
-#top {
-    width: 100%;
-    padding: 0px;
-    margin: 0px;
-    border: 0px;
-}
-
-
-#middle {
-    width: 100%;
+#editor, #middle {
     height: 100%;
-    padding: 0px;
-    margin: 0px;
-    border: 0px;
     font-size: 10pt;
 }
-
-#splitpane {
-    width: 100%;
-    height: 100%;
-    padding: 0px;
-    margin: 0px;
-    border: 0px;
-}
-
-
-#bottom {
-    width: 100%;
-    padding: 0px;
-    margin: 0px;
-    border: 0px;
-}
-
 
 .goog-splitpane-handle {
     position: absolute;
@@ -116,7 +69,6 @@ body {
     padding-bottom:  4px;
     color:           white;
     font-size:       28px;
-    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
     padding-top:     5px;
 }
 
@@ -135,39 +87,34 @@ a.h2:hover{text-decoration: underline;}
     clear:        both;
     white-space:   nowrap;
     padding-top:   5px;
-    border-top:		solid 1px black;
+    border-top:	solid 1px black;
     margin:       0px;
     background:   lightgray;
     font-size:    12px;
-    font-family:   Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
 #FileControls *{
-    width:     auto;
-    float:			left;
-    margin:			0px 10px;
+    width:      auto;
+    float:		left;
+    margin:		0px 10px;
 }
 
 /* 20px: TOOLBAR, BUTTONS, ETC */
 #ProgramControls{
     width:          100%;
-/*    height:         25px;	/* leave room for the border */
     background:     #B6D990;
     clear:          both;
-    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
 #ProgramControls ul{
     clear:			both;
     list-style-type: none;
-
 }
 
 #ProgramControls li{
     float:        left;
     text-align:		center;
     width:        16%;
-/*    height:       25px; */
     max-width:     125px;
     min-width:     80px;
     font-size:     14px;
@@ -210,8 +157,8 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 /* DEFINITIONS */
 #definitions{
-    width:                  100%;
-    height:                  50%;
+    width:          100%;
+    height:         50%;
     clear:			both;
     text-align:		center;
     padding:		0px;
@@ -239,39 +186,33 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     overflow:		auto;
     background:		white url(/css/images/fadeIcon.png) no-repeat right bottom;
     font-family:	Monaco, sans-serif;
-    padding:        0px;
-    margin: 		0px;
-    borders:		0px;
 }
 #defn:hover{background:	white url(/css/images/fadeWords.png) no-repeat right bottom;}
 
 
-
-
-
 /* INTERACTIONS */
 #interactions{
-    border-top:		solid 1px black;
-    clear:         both;
-    width:         100%;
-    height:        50%;
-    background:		 white url(images/blank.gif) no-repeat;
-    overflow:      auto;
-    margin-left:   4px;
+    border-top:	    solid 1px black;
+    clear:          both;
+    width:          100%;
+    height:         50%;
+    background:		white url(images/blank.gif) no-repeat;
+    overflow:       auto;
+    margin-left:    4px;
 }
 
 #interactions:hover{
     background:	white url(/css/images/interactions.png) no-repeat right bottom;}
 
 #inter {
-    width:              100%;
-    height:		100%;
-    padding:		0px;
-    margin:		0px;
-    overflow:		auto;
+    width:         100%;
+    height:		   100%;
+    padding:	   0px;
+    margin:		   0px;
+    overflow:       auto;
     font-family:	Monaco, sans-serif;
-    background:         none;
-    position: absolute;
+    background:     none;
+    position:       absolute;
 }
 
 /* everything in the interactions window should have a small
@@ -290,8 +231,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     background:         none;
 }
 
-
-/* 22px: FOOTER */
+/* 22px: STATUSBAR */
 #statusbar {
     clear:          both;
     width:          100%;
@@ -305,19 +245,15 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     left:           -10px;
     transition:     .5s;
     opacity:        0;
-    font-family:     Lato, Century Gothic, Arial, Helvetica, sans-serif;
     z-index:        999;
     font-size:      12px;
     display:        none;
 }
 
 
-
-
 div#publicId, div#publicIdLabel{ display: none; }
 
-
-
+/* ERROR MESSAGES */
 div.moby-error {
     border-width: 1px 0px;
     color: red;
@@ -328,12 +264,10 @@ div.moby-error {
 	font-style: italic;
     padding-left: 6px;
     padding-right: 6px;
-  /*  min-width: 22px; */
     margin: 0px 5px;
     cursor: pointer;
     white-space: pre;
 }
-
 
 /* Break errors will not show up in red, to avoid scaring students away */
 div.moby-break-error {
@@ -341,37 +275,15 @@ div.moby-break-error {
     width: 100%;
 }
 
-
 div.error-stack-trace {
     max-height: 100px;
     overflow: auto;
 }
 
-
 p.location-paragraph {
     margin-top: 0px;
     margin-bottom: 0px;
 }
-
-ul.socialBookmarks{
-    display: block;
-    padding-left:  0px;
-    text-align: center;
-    border-top: solid 1px black;
-    list-style-type: none;
-}
-
-a.socialBookmarklet {
-    border: 0px solid black;
-}
-
-img.socialBookmarklet {
-    border: 0px solid black;
-    padding: 5px;
-    width:   24px;
-}
-
-.socialBookmarks li { display: inline; }
 
 /* To make spans as top-aligned inlined blocks, as used in the REPL */
 span.top-aligned-inline-block {
@@ -385,17 +297,9 @@ span.top-aligned-inline-block {
 }
 
 
-.highlight1 {
-    background-color: green;
-}
-
-.highlight2 {
-    background-color: blue;
-}
-
-.highlight3 {
-    background-color: yellow;
-}
+.highlight1 { background-color: green; }
+.highlight2 { background-color: blue; }
+.highlight3 { background-color: yellow; }
 
 
 *:fullscreen, *:-webkit-full-screen, *:ms-fullscreen{

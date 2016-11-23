@@ -1,99 +1,18 @@
-body{
-	width:		100%;
-	min-width:	300px;
-	height:		100%;
-	padding:	0px;
-	margin:		0px;
-	background:	white;
-	text-align:	center;
-  font-family:    Lato, Century Gothic, Arial, Helvetica, sans-serif;
-}
-div#text{text-align: left; padding: 30px;}
-div#text li{padding-top: 10px;}
-div#text a{font-family: Courier; font-weight: bold;}
-div#text a:hover{text-decoration: none;}
 
-h1, h2{
+h1 {
 	text-align:	center;
 	width:		100%;
-	background: white;
+	font-size: 60px; 
+	margin-bottom: 0px;
 }
 
-h1{font-size: 60px; margin-bottom: 0px;}
-h2{font-size: 20px;}
-
-img{background: none; 	vertical-align: middle; width: 40%; max-width: 450px;}
-#splash{
-	position:	absolute;
-	width:		100%;
-	min-width:	650px;
-	text-align:	center;
-	top:		150px;
-}
-#login{
-	display:	none;
-	width:		280px;
-	height:		275px;
-	background-image: url(images/halfscr-blue.gif);
-	border:		solid 5px black;
-	-moz-border-radius: 160px; 
-}
-
-#footer{
-	position:	fixed;
-	width:		100%;
-	bottom:		0px;
-	height:		20px;
-	color:		white;
-	background:	black;
-	text-align:	center;
-	margin:		0px;
-	padding:	0px;
-	left:           0px;
-}
-#footer ul, #footer ul li {display: inline;}
+img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
 
 #links {
        margin-top: 1.5em;
        margin-bottom: 1.5em;
 }
 
-
-#footer a{
-	display:	inline-block; 
-	width:		24%;
-	margin:		0px;
-	padding:	0px;
-	color:		white;
-	clear:		none;
-	text-decoration: none;
-}
-
-#footer a:hover{
-	background: #546DAF;
-	text-decoration: none;
-}
-
-a.button{
-	text-align:	center;
-	vertical-align: middle;
-	border:		solid 1px black;
-	background: lightsteelblue;
-	font-size:	1em;
-  	font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
-	width:		120px;
-	height:		22px;
-	cursor:		pointer;
-	display: 	inline-block;
-	position: 	relative;
-	text-decoration: none;
-	color:		black;
-}
-a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
-a.button:hover{
-	background: gray;
-}
-a.button:hover>span.tooltip{ opacity: 0.5; };
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
-  input{font-size: 14px; width: 100px;}
+  a.button{font-size: 12px; width: 100px;}
 }

@@ -16,9 +16,6 @@
     <!-- Google analytics support -->
     <jsp:include page="/google-analytics.jsp"/>
 
-    <link rel="stylesheet" type="text/css" href="/css/default.css" />
-    <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" />
-
     <!-- dynamic script loading -->
     <script src="/js/loadScript-min.js" type="text/javascript"></script>
 
@@ -40,6 +37,10 @@
     <!-- JQuery UI style sheet -->
     <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
 
+
+    <link rel="stylesheet" type="text/css" href="/css/common.css" />
+    <link rel="stylesheet" type="text/css" href="/css/default.css" />
+    <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" />
 
     <!-- EasyXDM and json -->
     <script src="/js/easyXDM/easyXDM-min.js" type="text/javascript"></script>

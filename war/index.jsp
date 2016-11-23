@@ -35,6 +35,7 @@ UserService us = UserServiceFactory.getUserService();
     <script src="/js/splash-calc-min.js" type="text/javascript"></script>
 
 
+    <link rel="stylesheet" type="text/css" href="/css/common.css" />
     <link rel="stylesheet" type="text/css" href="/css/splash.css" id="style" />
     <script type="text/javascript">
         var onOpenEditor = function() {
