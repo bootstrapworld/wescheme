@@ -35,6 +35,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head><title><c:out escapeXml="true" value="<%= title %>" /></title>
+<link rel="stylesheet" type="text/css" href="css/common.css" />
 <link rel="stylesheet" type="text/css" href="css/view.css" id="style" />
 
 <!-- Google analytics support -->
@@ -88,7 +89,7 @@
       <c:out escapeXml="true" value="<%= notes %>" />
     </div>
 
-    <h2 id="bottomMessage" style="display: none">
+    <h2 id="bottomMessage" style="display: none" aria-hidden="true">
       Sometimes YouTube. Perhaps iPhone. Together, WeScheme!
     </h2>
     <div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
