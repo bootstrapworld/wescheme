@@ -5484,7 +5484,7 @@ PRIMITIVES['image-url'] =
 					" (unable to load: " + originalPath + ")",
 					[])));
 			 };
-			 rawImage.src = path;
+			 rawImage.src = path; 
 		     });
 		 });
 
