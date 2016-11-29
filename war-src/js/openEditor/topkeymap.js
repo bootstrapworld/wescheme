@@ -9,6 +9,7 @@ var F6_KEYCODE = 117
 var F7_KEYCODE = 118
 var F8_KEYCODE = 119
 var F9_KEYCODE = 120
+var F11_KEYCODE = 122
 var BACKSPACE_KEYCODE = 8;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
@@ -79,6 +80,12 @@ plt.wescheme.topKeymap = function(e) {
 
     if (e.keyCode === F9_KEYCODE) {
       myEditor.share();
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F11_KEYCODE) {
+      myEditor.showPicker(false);
       cancelEvent(e);
       return false;
     }

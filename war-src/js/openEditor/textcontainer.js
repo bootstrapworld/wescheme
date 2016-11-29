@@ -13,6 +13,7 @@ var WeSchemeTextContainer;
 	// There's a non-obvious assumption of the textarea implementation:
 	// The DIV is already attached to document.body.
 	// If this assumptions are violated, then Bad Things happen.
+	var gensym = 0;
 	WeSchemeTextContainer = function(aDiv, options, afterInitialization, id) {
 		var that = this;
 		this.div = aDiv;
@@ -27,8 +28,9 @@ var WeSchemeTextContainer;
                                             that.impl = anImpl;
                                             afterInitialization(that);
                                           });
-    tc.editor.getWrapperElement().id = id;
-    tc.editor.getWrapperElement().impl = tc;
+	    tc.editor.getWrapperElement().id = id || 'textContainerID'+gensym;
+	    tc.editor.getWrapperElement().impl = tc;
+	    gensym++;
 	};
 
 	WeSchemeTextContainer.prototype.refresh = function() {
