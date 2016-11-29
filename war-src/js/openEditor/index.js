@@ -118,7 +118,7 @@ var initializeEditor;
             jQuery("#updateNotes").click(function()  { myEditor.showNotesDialog(); });
             jQuery("#undo").click(function()  { myEditor.defn.impl.editor.undo(); });
             jQuery("#redo").click(function()  { myEditor.defn.impl.editor.redo(); });
-            jQuery("#images").click(function() { myEditor.showPicker(defnInFocus); });
+            jQuery("#images").click(function() { myEditor.showPicker(plt.wescheme.WeSchemeEditor.defnInFocus); });
             jQuery("#logout").click(function() { 
                                   if(confirm("You will be logged out of WeScheme and other Google services.")) {
                                       submitPost("/logout");
