@@ -38,24 +38,12 @@ h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #inter, input{
     background: linear-gradient(to right, rgb(191, 191, 191) 0%, rgb(217, 217, 217) 40%, rgb(217, 217, 217) 60%, rgb(191, 191, 191) 100%);
     min-width: 10px;
 }
-
-.goog-splitpane-handle-horizontal {
-    cursor: col-resize;
-}
-
-.goog-splitpane-handle-vertical {
-    cursor: row-resize;
-}
-
+.goog-splitpane-handle-horizontal { cursor: col-resize; }
+.goog-splitpane-handle-vertical { cursor: row-resize; }
 .goog-splitpane-first-container,
-.goog-splitpane-second-container {
-    overflow: none;
-    position: absolute;
-}
+.goog-splitpane-second-container { overflow: none; position: absolute; }
 
-.form {
-    display: inline-block;
-}
+.form { display: inline-block; }
 
 
 /* 65px: LOGO AND TITLE */
@@ -71,12 +59,10 @@ h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #inter, input{
     font-size:       28px;
     padding-top:     5px;
 }
-
 #Navigation * {display: inline-block; vertical-align: baseline;}
 
 a.h1{ font-weight: bold; padding-left: 65px;}
 a.h2{ font-size: 20px; font-weight: lighter; padding-left: 4px;}
-
 a.h2, a.h2:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
 a.h2:hover{text-decoration: underline;}
 
