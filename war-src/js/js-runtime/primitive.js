@@ -5462,19 +5462,9 @@ PRIMITIVES['image-url'] =
 		 false, false,
 		 function(aState, path) {
 		     check(aState, path, isString, "image-url", "string", 1);  //fixme? if using bitmap/url, error says image-url...
-		     var originalPath = path.toString();
-		     var a = document.createElement("a");
-			 a.href = originalPath;
-			 // If the path is a GDrive path, skip the proxy and trust the user's GDrive settings
- 			 if(a.hostname === "drive.google.com" && a.pathname === "/uc") {
-				path = originalPath;
-			 }
-			 // If it's anything else, see if we need to define a proxy
-		     else if (aState.getImageProxyHook()) {
+		     if (aState.getImageProxyHook()) {
 			 	path = (aState.getImageProxyHook() + "?url=" + encodeURIComponent(path.toString()));
-		     } 
-		     // Give up and use the path, unmolested
-		     else {
+		     } else {
 			 	path = path.toString();
 		     }
 
