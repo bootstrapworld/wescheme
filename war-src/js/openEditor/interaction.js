@@ -790,6 +790,7 @@ WeSchemeInteractions = (function () {
         var dom = renderErrorAsDomNode(this, err);
         this.addToInteractions(dom);
         this.say(dom.textContent);
+        this.previousOutputDescriptions.push(dom.textContent);
         this.addToInteractions("\n");
     };
 
