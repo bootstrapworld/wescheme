@@ -5854,26 +5854,26 @@ PRIMITIVES['image->color-list'] =
 // Note: this has to be done asynchonously.
 var colorListToImage = function(aState, listOfColors, width, height, pinholeX, pinholeY) {
     checkListOf(aState, listOfColors, isColor, 'color-list->image', 'image', 1);
-    check(aState, width, isNatural, 'color-list->image', 'natural', 2);
-    check(aState, height, isNatural, 'color-list->image', 'natural', 3);
+    check(aState, width, isNonNegativeReal, 'color-list->image', 'non-negative number', 2);
+    check(aState, height, isNonNegativeReal, 'color-list->image', 'non-negative number', 3);
     check(aState, pinholeX, isNatural, 'color-list->image', 'natural', 4);
     check(aState, pinholeY, isNatural, 'color-list->image', 'natural', 5);
-    var canvas = world.Kernel.makeCanvas(jsnums.toFixnum(width),
-					 jsnums.toFixnum(height)),
-    ctx = canvas.getContext("2d"),
-    imageData = ctx.createImageData(jsnums.toFixnum(width),
-				    jsnums.toFixnum(height)),
-    data = imageData.data,
-    aColor, i = 0;
+    var width = Math.max(jsnums.toFixnum(width), 1);
+    var height = Math.max(jsnums.toFixnum(height), 1);
+    console.log(width, height);
+    var canvas 	= world.Kernel.makeCanvas(width, height),
+		ctx 	= canvas.getContext("2d"),
+    	imageData = ctx.createImageData(width, height),
+    	data 	= imageData.data,
+    	aColor, i = 0;
     while (listOfColors !== types.EMPTY) {
-	aColor = listOfColors.first();
-	data[i] = jsnums.toFixnum(types.colorRed(aColor));
-	data[i+1] = jsnums.toFixnum(types.colorGreen(aColor));
-	data[i+2] = jsnums.toFixnum(types.colorBlue(aColor));
-	data[i+3] = jsnums.toFixnum(types.colorAlpha(aColor));
-
-	i += 4;
-	listOfColors = listOfColors.rest();
+		aColor = listOfColors.first();
+		data[i] = jsnums.toFixnum(types.colorRed(aColor));
+		data[i+1] = jsnums.toFixnum(types.colorGreen(aColor));
+		data[i+2] = jsnums.toFixnum(types.colorBlue(aColor));
+		data[i+3] = jsnums.toFixnum(types.colorAlpha(aColor));
+		i += 4;
+		listOfColors = listOfColors.rest();
     };
     ctx.putImageData(imageData, 0, 0);
     var path = canvas.toDataURL("image/png");
@@ -5895,6 +5895,14 @@ var colorListToImage = function(aState, listOfColors, width, height, pinholeX, p
     });
 };
 
+
+PRIMITIVES['color-list->image'] = 
+    new PrimProc('color-list->image',
+		 5,
+		 false, false,
+                 function(aState, colorList, width, height, x, y){
+                     return colorListToImage(aState, colorList, width, height, x, y);
+                 });
 
 PRIMITIVES['color-list->image'] = 
     new PrimProc('color-list->image',
