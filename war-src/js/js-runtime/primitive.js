@@ -5462,6 +5462,7 @@ PRIMITIVES['image-url'] =
 		 false, false,
 		 function(aState, path) {
 		     check(aState, path, isString, "image-url", "string", 1);  //fixme? if using bitmap/url, error says image-url...
+			 var originalPath = path.toString();
 		     if (aState.getImageProxyHook()) {
 			 	path = (aState.getImageProxyHook() + "?url=" + encodeURIComponent(path.toString()));
 		     } else {
@@ -5585,7 +5586,6 @@ var colorListToImage = function(aState, listOfColors, width, height, pinholeX, p
     check(aState, pinholeY, isNatural, 'color-list->image', 'natural', 5);
     var width = Math.max(jsnums.toFixnum(width), 1);
     var height = Math.max(jsnums.toFixnum(height), 1);
-    console.log(width, height);
     var canvas 	= world.Kernel.makeCanvas(width, height),
 		ctx 	= canvas.getContext("2d"),
     	imageData = ctx.createImageData(width, height),
@@ -5613,7 +5613,7 @@ var colorListToImage = function(aState, listOfColors, width, height, pinholeX, p
 	rawImage.onerror = function(e) {
 	    restarter(types.schemeError(types.incompleteExn(
 		types.exnFail,
-		" (unable to load: " + originalPath + ")",
+		" (unable to load image from color-list)",
 		[])));
 	};
 	rawImage.src = path;
