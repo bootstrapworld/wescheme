@@ -109,17 +109,6 @@ WeSchemeInteractions = (function () {
         this.withColoredErrorMessages = false;
     };
 
-
-
-    // clearLine: -> void
-    // Make sure we're on a line that's clear of any floats.
-    WeSchemeInteractions.prototype.clearLine = function() {
-        var clearDiv = document.createElement("div");
-        clearDiv.style.clear = 'left';
-        clearDiv.setAttribute("aria-hidden", true); // ARIA: don't read the clear DIV
-        this.addToInteractions(clearDiv);
-    };
-
     // Sets the text in the prompt.
     WeSchemeInteractions.prototype.setPromptText = function(t) {
         this.prompt.setText(t);
@@ -144,7 +133,6 @@ WeSchemeInteractions = (function () {
 
     // speak the nth interaction and result (0=10)
     WeSchemeInteractions.prototype.speakHistory = function(n) {
-        console.log('speakHistory');
         if(n===0) { n = 10; }// use 0 as 10
         var historySize = this.prompt.historyArray.length-1; // the last elt is always ""
         if(n > historySize) { return false; } // don't speak a history that doesn't exist!
@@ -671,8 +659,6 @@ WeSchemeInteractions = (function () {
         } 
     };
 
-    
-
     // Returns if x is a dom node.
     function isDomNode(x) {
         return (x.nodeType != undefined);
@@ -874,7 +860,6 @@ WeSchemeInteractions = (function () {
         return new types.Message(msg);
     };
 
-
     // that: ???
     // msgDom: dom.  The target element that we write output to.
     // args: arrayof (U string ColoredPart GradiantPart MultiPart)
@@ -1003,9 +988,6 @@ WeSchemeInteractions = (function () {
             }
         }
     };
-
-
-
 
 
     // that: ???
