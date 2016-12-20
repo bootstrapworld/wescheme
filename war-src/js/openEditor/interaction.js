@@ -110,17 +110,6 @@ WeSchemeInteractions = (function () {
         this.withColoredErrorMessages = false;
     };
 
-
-
-    // clearLine: -> void
-    // Make sure we're on a line that's clear of any floats.
-    WeSchemeInteractions.prototype.clearLine = function() {
-        var clearDiv = document.createElement("div");
-        clearDiv.style.clear = 'left';
-        clearDiv.setAttribute("aria-hidden", true); // ARIA: don't read the clear DIV
-        this.addToInteractions(clearDiv);
-    };
-
     // Sets the text in the prompt.
     WeSchemeInteractions.prototype.setPromptText = function(t) {
         this.prompt.setText(t);
@@ -461,7 +450,7 @@ WeSchemeInteractions = (function () {
     };
 
 
-    var makeFreshEvaluator = function(that, afterInit) {         
+    var makeFreshEvaluator = function(that, afterInit) {
         var evaluator = new Evaluator({
             write: function(thing) {
                 var ariaText = thing.ariaText || thing.innerText;
@@ -497,7 +486,7 @@ WeSchemeInteractions = (function () {
                 thing.className += " replOutput";
                 that.addToInteractions(thing);
                 that.sayAndForget(ariaText);
-                if(ariaText!=="") that.previousOutputDescriptions.push(ariaText);
+                if(ariaText !== "") that.previousOutputDescriptions.push(ariaText);
                 rewrapOutput(thing);
             },
             transformDom : function(dom) {
@@ -505,9 +494,7 @@ WeSchemeInteractions = (function () {
                 return result;
             }
         });
-
         var dialog = jQuery("<div/>");
-                        
         that.initializeRoundRobinCompilation(
             evaluator,
             function() {
@@ -667,8 +654,6 @@ WeSchemeInteractions = (function () {
         } 
     };
 
-    
-
     // Returns if x is a dom node.
     function isDomNode(x) {
         return (x.nodeType != undefined);
@@ -769,7 +754,7 @@ WeSchemeInteractions = (function () {
                         aSource,
                         withCancellingOnReset(
                             that,
-                            function() { 
+                            function() {
                                 that.enableInput();
                                 putFocus();
                                 contK();
@@ -817,7 +802,6 @@ WeSchemeInteractions = (function () {
     
     Color.prototype.toString = function() {
        return "rgb(" + this.red +"," + this.green + "," + this.blue + ")";
-      
     };
 
     //proper order is id offset line column span
@@ -1001,9 +985,6 @@ WeSchemeInteractions = (function () {
     };
 
 
-
-
-
     // that: ???
     // msgDom: dom.  The target element that we write output to.
     // args: arrayof (U string ColoredPart GradiantPart MultiPart)
@@ -1052,9 +1033,6 @@ WeSchemeInteractions = (function () {
                                      errorLoc.span,
                                      pinkColor+"");
     };
-
-
-
 
     //that, dom, Color, string, nonempty array[loc]
     //does the coloring and makes a link to the location in the definitions
