@@ -256,22 +256,20 @@ WeSchemeInteractions = (function () {
             that.focus();
     };
 
-    // TODO: historyPreviousIsOk and historyNextIsOk don't have to be methods.
-
-    Prompt.prototype.historyPreviousIsOk = function(index, length) {
+    function historyPreviousIsOk(index, length) {
         return (index > 0);
-    };
+    }
 
-    Prompt.prototype.historyNextIsOk = function(index, length) {
+    function historyNextIsOk(index, length) {
         return ((length - index) > 1);
     }
 
     Prompt.prototype.onHistoryPrevious = function() {
-        this.doHistory(-1, this.historyPreviousIsOk);
+        this.doHistory(-1, historyPreviousIsOk);
     };
 
     Prompt.prototype.onHistoryNext = function() {
-        this.doHistory(1, this.historyNextIsOk);
+        this.doHistory(1, historyNextIsOk);
     };
 
     Prompt.prototype.doHistory = function(increment, incrementIsOk) {
@@ -335,8 +333,10 @@ WeSchemeInteractions = (function () {
     };
 
     // setRecentOutput : String -> Void
-    Prompt.prototype.setRecentOutput = function(str) {
-        this.historyArray[this.historyIndex - 1].output = str;
+    Prompt.prototype.setRecentOutput = function(str) {;
+        if((this.historyIndex > 0) && (this.historyIndex < this.historyArray.length)) {
+            this.historyArray[this.historyIndex - 1].output = str;
+        }
     }
 
     // hasExpressionToEvaluate: -> boolean
