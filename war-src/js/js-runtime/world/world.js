@@ -434,6 +434,37 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
+    function describeImage(fileImage) {
+        var canvas = fileImage.toDomNode();
+        var base64Data = canvas.toDataURL(); // default type is image/png (see request)
+         // Strip out the file prefix when you convert to json.
+        var visionRequest = {requests: [{image: { content: base64Data.replace("data:image/jpeg;base64,", "") },
+                                         features: [{type: "image/png", maxResults: 200}]}]};
+        console.log("json request is ", visionRequest, JSON.stringify(visionRequest));
+        try {
+            jQuery.ajax({
+                type:       'POST',
+                url:        "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.APP_ID,
+                dataType:   'json',
+                data:       JSON.stringify(visionRequest),
+                headers:    { "Content-Type": "application/json" },
+                success: function(data, textStatus, jqXHR) {
+                    console.log("success!", data);
+                    fileImage.ariaText = data;
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log('Error when loading img description: ' + textStatus + ' ' + errorThrown);
+                    fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
+                },
+                async: true
+            });
+        } catch (e) {
+            console.log(e);
+            fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
+        }
+        console.log("after trying to describe, ariaText is ", fileImage.ariaText);
+    }
+
 
     //////////////////////////////////////////////////////////////////////
     // FileImage: string node -> Image
@@ -442,7 +473,6 @@ if (typeof(world) === 'undefined') {
         var self = this;
         this.src = src;
         this.isLoaded = false;
-        this.ariaText = " image file from "+decodeURIComponent(src).slice(16);
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
         this.animationHackImg = undefined;
@@ -452,6 +482,7 @@ if (typeof(world) === 'undefined') {
             this.isLoaded = true;
             self.width = self.img.width;
             self.height = self.img.height;
+            describeImage(self); // initiate an async Google Vision lookup
         } else {
             // fixme: we may want to do something blocking here for
             // onload, since we don't know at this time what the file size
@@ -462,6 +493,7 @@ if (typeof(world) === 'undefined') {
                 self.isLoaded = true;
                 self.width = self.img.width;
                 self.height = self.img.height;
+                describeImage(imageCache[path]); // initiate an async Google Vision lookup
             };
             this.img.onerror = function(e) {
                 self.img.onerror = "";
