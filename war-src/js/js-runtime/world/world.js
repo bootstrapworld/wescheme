@@ -434,37 +434,58 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
-    function describeImage(fileImage) {
-        var canvas = fileImage.toDomNode();
-        var base64Data = canvas.toDataURL(); // default type is image/png (see request)
-         // Strip out the file prefix when you convert to json.
-        var visionRequest = {requests: [{image: { content: base64Data.replace("data:image/jpeg;base64,", "") },
-                                         features: [{type: "image/png", maxResults: 200}]}]};
+    function describeImagesInCache() {
+        // collect all undescribed fileImages in an array
+        var undescribedImages = [];
+        for (var src in imageCache) {
+            if (imageCache.hasOwnProperty(src) && !imageCache[src].labeled) {
+                undescribedImages.push(imageCache[src]);
+            }
+        }
+        console.log("there are "+undescribedImages.length+" undescribed images", undescribedImages);
+        // bail if there's no work to be done
+        if(undescribedImages.length === 0) return;
+
+        // do some work! create a batch request for all undescribed images
+        var visionRequest = {requests: undescribedImages.map(function(img){
+            var base64Data = img.toDomNode().toDataURL();
+            // Strip out the file prefix in the base64 data, ask for max 100 labels
+            return {image: {content: base64Data.replace("data:image/png;base64,", "") }, 
+                            features: [{type: "LABEL_DETECTION", maxResults: 100}]};
+        })};
+        var CONFIDENCE_THRESHOLD = 0.75;
         console.log("json request is ", visionRequest, JSON.stringify(visionRequest));
         try {
             jQuery.ajax({
                 type:       'POST',
-                url:        "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.APP_ID,
+                url:        "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY,
                 dataType:   'json',
                 data:       JSON.stringify(visionRequest),
-                headers:    { "Content-Type": "application/json" },
+                headers:    { "Content-Type": "application/json", "Access-Control-Allow-Origin" : "*" },
                 success: function(data, textStatus, jqXHR) {
                     console.log("success!", data);
-                    fileImage.ariaText = data;
+                    data.responses.forEach(function(response, i){
+                        // sort labels by *descending* confidence (in-place!)
+                        response.labelAnnotations.sort(function(label1, label2){
+                            return (label1.confidence < label2.confidence)? 1 : -1; // reverse order!
+                        });
+                        // grab the describption with the highest confidence (the last one in sorted order)
+                        var bestLabel = response.labelAnnotations[0].description;
+                        // grab the undescribedImage that corresponds to this response, and set the ariaText
+                        imageCache[undescribedImages[i].src].labeled = true;
+                        imageCache[undescribedImages[i].src].ariaText = " an image of a " + bestLabel;
+                    });
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     console.log('Error when loading img description: ' + textStatus + ' ' + errorThrown);
-                    fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
+                    //fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
                 },
                 async: true
             });
         } catch (e) {
             console.log(e);
-            fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
         }
-        console.log("after trying to describe, ariaText is ", fileImage.ariaText);
     }
-
 
     //////////////////////////////////////////////////////////////////////
     // FileImage: string node -> Image
@@ -473,16 +494,18 @@ if (typeof(world) === 'undefined') {
         var self = this;
         this.src = src;
         this.isLoaded = false;
+        this.ariaText = " image file from "+decodeURIComponent(src).slice(16);
+        this.labeled = false;
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
         this.animationHackImg = undefined;
 
         if (rawImage && rawImage.complete) { 
-            this.img = rawImage;
-            this.isLoaded = true;
+            self.img = rawImage;
+            self.isLoaded = true;
             self.width = self.img.width;
             self.height = self.img.height;
-            describeImage(self); // initiate an async Google Vision lookup
+
         } else {
             // fixme: we may want to do something blocking here for
             // onload, since we don't know at this time what the file size
@@ -493,7 +516,6 @@ if (typeof(world) === 'undefined') {
                 self.isLoaded = true;
                 self.width = self.img.width;
                 self.height = self.img.height;
-                describeImage(imageCache[path]); // initiate an async Google Vision lookup
             };
             this.img.onerror = function(e) {
                 self.img.onerror = "";
@@ -505,7 +527,10 @@ if (typeof(world) === 'undefined') {
     };
     FileImage.prototype = heir(BaseImage.prototype);
 
+    // set up the cache, and describe all images within it every 5sec
     var imageCache = {};
+    var visionAPITimer = setInterval(describeImagesInCache, 5000);
+
     FileImage.makeInstance = function(path, rawImage, afterInit) {
         if (! (path in imageCache)) {
             imageCache[path] = new FileImage(path, rawImage, afterInit);
