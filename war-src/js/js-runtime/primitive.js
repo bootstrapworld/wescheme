@@ -5461,31 +5461,30 @@ PRIMITIVES['image-url'] =
 		 1,
 		 false, false,
 		 function(aState, path) {
-		     check(aState, path, isString, "image-url", "string", 1);  //fixme? if using bitmap/url, error says image-url...
-			 var originalPath = path.toString();
-		     if (aState.getImageProxyHook()) {
+		    check(aState, path, isString, "image-url", "string", 1);  //fixme? if using bitmap/url, error says image-url...
+			var originalPath = path.toString();
+		    if (aState.getImageProxyHook()) {
 			 	path = (aState.getImageProxyHook() + "?url=" + encodeURIComponent(path.toString()));
-		     } else {
+		    } else {
 			 	path = path.toString();
-		     }
-
-		     return PAUSE(function(restarter, caller) {
-       notifyLoading(originalPath);
-			 var rawImage = new Image();
-			 rawImage.onload = function() {
-			     world.Kernel.fileImage(
-				 path,
-				 rawImage,
-			         restarter);
-			 };
-			 rawImage.onerror = function(e) {
-			     restarter(types.schemeError(types.incompleteExn(
+		    }
+		    return PAUSE(function(restarter, caller) {
+	       		notifyLoading(originalPath);
+				var rawImage = new Image();
+				rawImage.onload = function() {
+				    world.Kernel.fileImage(
+					path,
+					rawImage,
+				    restarter);
+				};
+			rawImage.onerror = function(e) {
+			    restarter(types.schemeError(types.incompleteExn(
 					types.exnFail,
 					" (unable to load: " + originalPath + ")",
 					[])));
-			 };
-			 rawImage.src = path;
-		     });
+			};
+			rawImage.src = path;
+		    });
 		 });
 
 
