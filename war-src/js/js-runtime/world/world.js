@@ -450,18 +450,26 @@ if (typeof(world) === 'undefined') {
         var visionRequest = {requests: undescribedImages.map(function(img){
             var base64Data = img.toDomNode().toDataURL();
             // Strip out the file prefix in the base64 data, ask for max 100 labels
-            return {image: {content: base64Data.replace("data:image/png;base64,", "") }, 
+            return {image: {content: "base64Data.replace("data:image/png;base64,", "")" }, 
                             features: [{type: "LABEL_DETECTION", maxResults: 100}]};
         })};
         var CONFIDENCE_THRESHOLD = 0.75;
-        console.log("json request is ", visionRequest, JSON.stringify(visionRequest));
+        var jsonString = JSON.stringify(visionRequest);
+        console.log("json request is ", visionRequest, jsonString);
         try {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() { console.log("success!"); }
+            xhr.onerror = function () { console.log("failure"); }
+            xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
+            xhr.setRequestHeader("content-type", "application/json");
+            xhr.send(jsonString);
+            /*
             jQuery.ajax({
                 type:       'POST',
                 url:        "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY,
                 dataType:   'json',
-                data:       JSON.stringify(visionRequest),
-                headers:    { "Content-Type": "application/json", "Access-Control-Allow-Origin" : "*" },
+                data:       jsonString,
+                headers:    { "Content-Type": "application/json" },
                 success: function(data, textStatus, jqXHR) {
                     console.log("success!", data);
                     data.responses.forEach(function(response, i){
@@ -482,6 +490,7 @@ if (typeof(world) === 'undefined') {
                 },
                 async: true
             });
+            */
         } catch (e) {
             console.log(e);
         }
@@ -527,7 +536,7 @@ if (typeof(world) === 'undefined') {
     };
     FileImage.prototype = heir(BaseImage.prototype);
 
-    // set up the cache, and describe all images within it every 5sec
+    // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
     var visionAPITimer = setInterval(describeImagesInCache, 5000);
 
