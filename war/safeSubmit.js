@@ -56,9 +56,12 @@
 	return result;
     };
 
+    // if it's a GET request, OR isn't a wescheme request at all, use native send()
     var instrumentedSend = function(body){
-	if (this.method == "GET") {
+	if (this.method == "GET" ||
+		this.responseURL.indexOf("wescheme") == -1) {
 	    return this._send.apply(this, arguments);
+    // if it's a POST to a WeScheme server, attach the CSRF token
 	} else {
 	    if( body == null || body == ""){
 		body = "?";
