@@ -434,6 +434,7 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
+    var MAX_BYTES = 1048576 * 4; // Google Vision wants <4MB
     function describeImagesInCache() {
         // collect all undescribed fileImages in an array
         var undescribedImages = [];
@@ -442,57 +443,53 @@ if (typeof(world) === 'undefined') {
                 undescribedImages.push(imageCache[src]);
             }
         }
-        console.log("there are "+undescribedImages.length+" undescribed images", undescribedImages);
         // bail if there's no work to be done
         if(undescribedImages.length === 0) return;
 
         // do some work! create a batch request for all undescribed images
-        var visionRequest = {requests: undescribedImages.map(function(img){
+        console.log("contacting Google about the "+undescribedImages.length+" undescribed images in cache", imageCache);
+        var requests = [];
+        undescribedImages.forEach(function(img){
             var base64Data = img.toDomNode().toDataURL();
-            // Strip out the file prefix in the base64 data, ask for max 100 labels
-            return {image: {content: "base64Data.replace("data:image/png;base64,", "")" }, 
-                            features: [{type: "LABEL_DETECTION", maxResults: 100}]};
-        })};
+            var imgFileSize = Math.round(base64Data.length * 3/4);
+            console.log("file size is "+(imgFileSize/1024)+"kb");
+            // if it's too big, give up and use a generic label
+            if(imgFileSize > MAX_BYTES) {
+                imageCache[img.src].labeled = true;
+                imageCache[img.src].ariaText = "a large image";
+                return requests;
+            // Otherwise, strip out the file prefix in the base64 data, ask for up to 10 labels
+            } else {
+                requests.push({image: {content: base64Data.replace("data:image/png;base64,", "") }, 
+                                features: [{type: "LABEL_DETECTION", maxResults: 10}]});
+            }
+        });
         var CONFIDENCE_THRESHOLD = 0.75;
-        var jsonString = JSON.stringify(visionRequest);
-        console.log("json request is ", visionRequest, jsonString);
+        var jsonString = JSON.stringify({requests: requests});
+        console.log(jsonString);
         try {
             var xhr = new XMLHttpRequest();
-            xhr.onload = function() { console.log("success!"); }
+            xhr.onload = function() { 
+                var data = JSON.parse(this.responseText);
+                console.log(data.responses);
+                data.responses.forEach(function(response, i){
+                    // sort labels by *descending* confidence (in-place!), then grab the
+                    // label with the highest confidence
+                    response.labelAnnotations.sort(function(label1, label2){
+                        return (label1.confidence < label2.confidence)? 1 : -1; // reverse order!
+                    });
+                    var bestLabel = response.labelAnnotations[0].description;
+                    // update the FileImage in the imageCache
+                    imageCache[undescribedImages[i].src].labeled = true;
+                    imageCache[undescribedImages[i].src].ariaText = " an image of a " + bestLabel;
+                });
+            }
             xhr.onerror = function () { console.log("failure"); }
             xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
             xhr.setRequestHeader("content-type", "application/json");
             xhr.send(jsonString);
-            /*
-            jQuery.ajax({
-                type:       'POST',
-                url:        "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY,
-                dataType:   'json',
-                data:       jsonString,
-                headers:    { "Content-Type": "application/json" },
-                success: function(data, textStatus, jqXHR) {
-                    console.log("success!", data);
-                    data.responses.forEach(function(response, i){
-                        // sort labels by *descending* confidence (in-place!)
-                        response.labelAnnotations.sort(function(label1, label2){
-                            return (label1.confidence < label2.confidence)? 1 : -1; // reverse order!
-                        });
-                        // grab the describption with the highest confidence (the last one in sorted order)
-                        var bestLabel = response.labelAnnotations[0].description;
-                        // grab the undescribedImage that corresponds to this response, and set the ariaText
-                        imageCache[undescribedImages[i].src].labeled = true;
-                        imageCache[undescribedImages[i].src].ariaText = " an image of a " + bestLabel;
-                    });
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.log('Error when loading img description: ' + textStatus + ' ' + errorThrown);
-                    //fileImage.ariaText = " image file from "+decodeURIComponent(fileImage.src).slice(16);
-                },
-                async: true
-            });
-            */
         } catch (e) {
-            console.log(e);
+            console.log('Google Vision API lookup failed', e);
         }
     }
 
@@ -546,6 +543,7 @@ if (typeof(world) === 'undefined') {
             return imageCache[path];
         } else {
             afterInit(imageCache[path]);
+            console.log("returning from cache", imageCache[path]);
             return imageCache[path];
         }
     };
