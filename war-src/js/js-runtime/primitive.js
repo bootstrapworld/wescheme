@@ -5487,8 +5487,8 @@ PRIMITIVES['image-url'] =
 		    });
 		 });
 
-PRIMITIVES['video-url'] =
-new PrimProc('video-url',
+PRIMITIVES['video/url'] =
+	new PrimProc('video/url',
 			 1,
 			 false, false,
 			 function(aState, path) {
@@ -5511,7 +5511,6 @@ new PrimProc('video-url',
 										rawVideo.src = path.toString();
 										});
 			 });
-PRIMITIVES['video/url'] = PRIMITIVES['video-url'];
 
 PRIMITIVES['image-width'] =
     new PrimProc('image-width',
