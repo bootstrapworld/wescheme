@@ -482,7 +482,7 @@ if (typeof(world) === 'undefined') {
                     var bestLabel = response.labelAnnotations[0].description;
                     // update the FileImage in the imageCache
                     imageCache[undescribedImages[i].src].labeled = true;
-                    imageCache[undescribedImages[i].src].ariaText = " an image of a " + bestLabel;
+                    imageCache[undescribedImages[i].src].ariaText = bestLabel;
                 });
             }
             xhr.onerror = function () { console.log("failure"); }
