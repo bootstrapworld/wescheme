@@ -90,9 +90,11 @@ plt.wescheme.WeSchemeStatusBar = WeSchemeStatusBar = (function() {
 
     WeSchemeStatusBar.prototype.notify = function(msg, waitForNextMessage) {
       var that = this;
-      var li = document.createElement("li");
-      li.appendChild(document.createTextNode(msg));
-      that.announcements.appendChild(li);
+      if(msg.indexOf("Waiting on") == -1) {
+        var li = document.createElement("li");
+        li.appendChild(document.createTextNode(msg));
+        that.announcements.appendChild(li);
+      }
       var fadeOutFn = function() {
         that.statusbar.fadeOut("fast", function () { that.statusbar.text(""); });
       };
