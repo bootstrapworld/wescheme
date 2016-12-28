@@ -5461,7 +5461,7 @@ PRIMITIVES['image-url'] =
 		 1,
 		 false, false,
 		 function(aState, path) {
-		    check(aState, path, isString, "image-url", "string", 1);  //fixme? if using bitmap/url, error says image-url...
+		    check(aState, path, isString, "bitmap/url", "string", 1);
 			var originalPath = path.toString();
 		    if (aState.getImageProxyHook()) {
 			 	path = (aState.getImageProxyHook() + "?url=" + encodeURIComponent(path.toString()));
@@ -5486,9 +5486,6 @@ PRIMITIVES['image-url'] =
 			rawImage.src = path;
 		    });
 		 });
-
-
-PRIMITIVES['open-image-url'] = PRIMITIVES['image-url'];
 
 PRIMITIVES['video-url'] =
 new PrimProc('video-url',
