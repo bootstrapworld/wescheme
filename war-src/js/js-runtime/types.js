@@ -666,7 +666,8 @@ Cons.prototype.toDomNode = function(cache) {
     while ( p instanceof Cons ) {
     	var dom = toDomNode(p.first(), cache);
     	node.appendChild(dom);
-		ariaElts += " " + dom.ariaText || dom.textContent;
+    	i++;
+		ariaElts += ", " + dom.ariaText || dom.textContent;
     	p = p.rest();
     }
     if ( p !== Empty.EMPTY ) {

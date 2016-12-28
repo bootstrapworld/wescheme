@@ -487,6 +487,7 @@ WeSchemeInteractions = (function () {
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
                 }
                 thing.className += " replOutput";
+                thing.setAttribute("aria-label", ariaText);
                 that.addToInteractions(thing);
                 that.sayAndForget(ariaText);
                 if(ariaText!=="") that.prompt.setRecentOutput(ariaText);
