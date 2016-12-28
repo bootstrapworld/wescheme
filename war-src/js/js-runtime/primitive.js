@@ -5483,11 +5483,11 @@ PRIMITIVES['image-url'] =
 					types.exnFail,
 					" (unable to load: " + originalPath + ")",
 					[])));
-			 };
-			 rawImage.src = path; 
-		     }); 
-		 }); 
- 
+			};
+			rawImage.src = path;
+		    });
+		 });
+
 PRIMITIVES['video/url'] =
 	new PrimProc('video/url',
 			 1,
