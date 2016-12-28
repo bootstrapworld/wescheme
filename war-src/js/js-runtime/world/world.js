@@ -447,12 +447,14 @@ if (typeof(world) === 'undefined') {
         if(undescribedImages.length === 0) return;
 
         // do some work! create a batch request for all undescribed images
-        console.log("contacting Google about the "+undescribedImages.length+" undescribed images in cache", imageCache);
         var requests = [];
-        undescribedImages.forEach(function(img){
-            var base64Data = img.toDomNode().toDataURL();
+        undescribedImages.forEach(function(img) {
+            var canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            canvas.getContext("2d").drawImage(img.animationHackImg, 0, 0);
+            var base64Data = canvas.toDataURL();
             var imgFileSize = Math.round(base64Data.length * 3/4);
-            console.log("file size is "+(imgFileSize/1024)+"kb");
             // if it's too big, give up and use a generic label
             if(imgFileSize > MAX_BYTES) {
                 imageCache[img.src].labeled = true;
@@ -466,7 +468,6 @@ if (typeof(world) === 'undefined') {
         });
         var CONFIDENCE_THRESHOLD = 0.75;
         var jsonString = JSON.stringify({requests: requests});
-        console.log(jsonString);
         try {
             var xhr = new XMLHttpRequest();
             xhr.onload = function() { 
@@ -476,7 +477,7 @@ if (typeof(world) === 'undefined') {
                     // sort labels by *descending* confidence (in-place!), then grab the
                     // label with the highest confidence
                     response.labelAnnotations.sort(function(label1, label2){
-                        return (label1.confidence < label2.confidence)? 1 : -1; // reverse order!
+                        return (label1.confidence < label2.confidence)? 1 : -1; // descending order!
                     });
                     var bestLabel = response.labelAnnotations[0].description;
                     // update the FileImage in the imageCache
@@ -506,28 +507,27 @@ if (typeof(world) === 'undefined') {
         // animationHack: see installHackToSupportAnimatedGifs() for details.
         this.animationHackImg = undefined;
 
-        if (rawImage && rawImage.complete) { 
-            self.img = rawImage;
+        function onImgLoad() {
             self.isLoaded = true;
             self.width = self.img.width;
             self.height = self.img.height;
+        }
 
+        if (rawImage && rawImage.complete) {
+            self.img = rawImage;
+            onImgLoad();
         } else {
             // fixme: we may want to do something blocking here for
             // onload, since we don't know at this time what the file size
             // should be, nor will drawImage do the right thing until the
             // file is loaded.
-            this.img = new Image();
-            this.img.onload = function() {
-                self.isLoaded = true;
-                self.width = self.img.width;
-                self.height = self.img.height;
-            };
-            this.img.onerror = function(e) {
+            self.img = new Image();
+            self.img.onload = onImgLoad;
+            self.img.onerror = function(e) {
                 self.img.onerror = "";
                 self.img.src = "http://www.wescheme.org/images/broken.png";
             };
-            this.img.src = src;
+            self.img.src = src;
         }
         this.installHackToSupportAnimatedGifs(afterInit);
     };
