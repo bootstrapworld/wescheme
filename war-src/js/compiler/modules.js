@@ -243,11 +243,9 @@ plt.compiler = plt.compiler || {};
                                             ,"flip-vertical"
                                             ,"text"
                                             ,"text/font"
-                                            ,"video-url"       // needs network
                                             ,"video/url"       // needs network
                                             ,"bitmap/url"      // needs network
                                             ,"image-url"       // needs network
-                                            ,"open-image-url"  // needs network
                                             ,"image?"
                                             ,"image=?"
                                             ,"image-width"
@@ -271,7 +269,7 @@ plt.compiler = plt.compiler || {};
                                             ,"side-count?"
                                             ,"step-count?"
                                             ].map(function(binding){
-                                                    var needsPermission = ["video/url", "bitmap/url", "image-url", "open-image-url"];
+                                                    var needsPermission = ["video/url", "bitmap/url", "image-url"];
                                                     var permissions = (needsPermission.indexOf(binding) > -1)? ["android.permission.INTERNET"] : [];
                                                     return new constantBinding(binding, '"moby/world"', permissions, false);
                                                   }))
