@@ -13,10 +13,13 @@ import org.wescheme.project.Program;
  *
  */
 public class Queries {
+	static final int BATCH_SIZE = 20;
+
 	@SuppressWarnings("unchecked")
 	public static List<Program> getBacklinkedPrograms(PersistenceManager pm,
 			Long programId) {
 		Query query = pm.newQuery(Program.class);
+		query.getFetchPlan().setFetchSize(BATCH_SIZE);
 		query.setFilter("backlink_ == id");
 		query.setOrdering("time_ desc");
 		query.declareParameters("Long id");
@@ -36,6 +39,7 @@ public class Queries {
 	 */
 	public static List<Program> getUserPrograms(PersistenceManager pm, String userName) {
 		Query query = pm.newQuery(Program.class);
+		query.getFetchPlan().setFetchSize(BATCH_SIZE);
 		query.setFilter("owner_ == ownerParam");
 		query.setOrdering("time_ desc");
 		query.declareParameters("String ownerParam");		       
