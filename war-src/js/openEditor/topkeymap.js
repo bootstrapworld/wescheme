@@ -16,6 +16,7 @@ var ZOOMIN_KEYCODE = 187;
 var ZOOMOUT_KEYCODE = 189;
 var DIM_KEYCODE = 113;
 var BRIGHTEN_KEYCODE = 114;
+var QUESTION_KEYCODE = 191;
 
 
 // Global state: checks to see whether or not we're in the middle of a
@@ -110,6 +111,13 @@ plt.wescheme.topKeymap = function(e) {
       document.getElementById('middle').style.fontSize=(size-1)+'pt';
       var cms = document.getElementsByClassName('CodeMirror');
       for(var i=0; i<cms.length; i++){ cms[i].CodeMirror.refresh(); }
+      return false;
+    }
+
+    if (e.keyCode === QUESTION_KEYCODE && 
+        e.metaKey) {
+      myEditor.toggleHelp();
+      cancelEvent(e);
       return false;
     }
 

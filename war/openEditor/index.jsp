@@ -229,7 +229,7 @@
     </script>
   </head>
 
-  <body>
+  <body onload="myEditor.doOnce()">
     <div id="editor">
       <div class="top" id="top">
 
@@ -341,6 +341,8 @@
             <img src="/images/small-info.png"></a>
           <a role="button" href="javascript: void(0)" aria-label="Undo" id="undo" class="clickableAnchor"><img src="/images/undo.png"></a>
           <a role="button" href="javascript: void(0)" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
+          <a role="button" href="javascript: void(0)" aria-label="Help" id="help" class="clickableAnchor" style="float: right;">
+            <img src="/images/small-help.png"></a>
           <div id="statusbar" role="marquee" aria-relevant="text"></div>
       	</div>
       </div> 
@@ -386,6 +388,40 @@
       <!-- end bottom -->
 
     </div> <!-- end editor -->
+
+    <div id="helpDialog" tabindex="-1">
+      <h1>WeScheme Help</h1>
+      <p>
+      Welcome to WeScheme! This help window can be turned on and off by clicking the <img alt="help" src="/images/small-help.png"> icon in the toolbar, or by typing <kbd aria-label="Control question mark">Ctrl-?</kbd> (or <kbd aria-label="Command question mark">Cmd-?</kbd> on a mac). You can also hide this window by clicking on it, or hitting any key.
+      <p>
+      <p>
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Everywhere</h2>
+        <ul class="shortcuts">
+          <li>Run - <kbd>F7</kbd></li>
+          <li>Stop - <kbd>F8</kbd></li>
+          <li>Help - <kbd aria-label="Control question mark">Ctr-?</kbd></li>
+          <li>Switch Focus - <kbd>F6</kbd></li>
+        </ul>
+      </div>
+
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Definitions Only</h2>
+        <ul class="shortcuts">
+          <li>Indent Line - <kbd>Tab</kbd></li>
+          <li>Indent All - <kbd aria-label="Control Tab">Ctrl-Tab</kbd></li>
+        </ul>
+      </div>
+
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Interactions Only</h2>
+        <ul class="shortcuts">
+          <li>Previous Entry - <kbd>Alt-Up</kbd></li>
+          <li>Next Entry - <kbd>Alt-Down</kbd></li>
+          <li>Speak History - <kbd>Alt-1</kbd>, <kbd>Alt-2</kbd> ...</li>
+        </ul>
+      </div>
+    </div>
 
     <!-- invisible form for error logging from the local processor -->
     <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>

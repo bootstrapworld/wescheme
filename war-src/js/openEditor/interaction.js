@@ -22,6 +22,9 @@ WeSchemeInteractions = (function () {
     'use strict';
 
     var Prompt, makeFreshId;
+    var ISMAC = navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i)?true:false;
+    var MODKEY = ISMAC? "Alt" : "Ctrl";
+
 
     // WeSchemeInteractions: div (WeSchemeInteractions -> void) -> WeScheme
     var WeSchemeInteractions = function(interactionsDiv, afterInit) {
