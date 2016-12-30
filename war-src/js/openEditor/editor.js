@@ -27,7 +27,6 @@ var WeSchemeEditor;
     // the timer to show the error message
     var delayedErrorTimer;
 
-
     //
     // These are the dependencies we're trying to maintain.
     //
@@ -72,8 +71,6 @@ var WeSchemeEditor;
     this.suppressWarningBeforeUnloadB = startsWith(
 					       this.suppressWarningBeforeUnloadE,
 					       false);
-    this.lastCursor = null;
-
 
 	new plt.wescheme.WeSchemeInteractions(
 					      attrs.interactions,
@@ -569,6 +566,25 @@ var WeSchemeEditor;
         dialog.show(onSuccess, onFail);
     };
 
+    WeSchemeEditor.prototype.toggleHelp = function() {
+		var help = document.getElementById("helpDialog");
+    	function showHelp(){
+    		help.style.top = "25%";
+			help.focus();
+			document.getElementById('editor').setAttribute('aria-activedescendant', help.id);
+    	}
+    	function hideHelp(){
+    		help.style.top = "100%";
+    		help.blur();
+    	}
+		if(help.style.top == "100%") {
+			showHelp();
+		} else { 
+			hideHelp();
+		}
+		help.onclick = hideHelp;
+		help.onkeydown = hideHelp;
+    }
     
     // Shows an Image Picker enabling choosing an image from Google Drive to the 
     // Definitions console. The image chosen will be translated into a function
@@ -680,8 +696,6 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.run = function(after) {
       var that = this;
-      var focusFn = plt.wescheme.WeSchemeEditor.defnInFocus? that.defn.focus : that.interactions.focus;
-      console.log('focused on...', plt.wescheme.WeSchemeEditor.defnInFocus? "d":"i");
       // if the isRunning flag is true, bail
       if(that.isRunning===true) return false;
       // otherwise, set it to true
@@ -735,6 +749,15 @@ var WeSchemeEditor;
     WeSchemeEditor.prototype.getTokenizer = function() {
         return plt.wescheme.tokenizer;
     };
+
+    // Do new thing once (use version as the cookie value)
+    var current_version = 239;
+   	WeSchemeEditor.prototype.doOnce = function() {
+	  if (!(document.cookie.replace(/(?:(?:^|.*;\s*)wescheme_version\s*\=\s*([^;]*).*$)|^.*$/, "$1") >= current_version)) {
+	  	this.toggleHelp();
+	    document.cookie = "wescheme_version="+current_version+"; expires=Fri, 31 Dec 9999 23:59:59 GMT";
+	  }
+	}
 
 })();
 
