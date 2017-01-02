@@ -40,38 +40,38 @@
     };
 
     var instrumentedOpen = function() {
-	var method = arguments[0].toUpperCase();
-	var url = arguments[1];
+		var method = arguments[0].toUpperCase();
+		var url = arguments[1];
 
-	if (method.toUpperCase() == "GET") {
-	    if (url.match(/\?/)) {
-		url = url + "&" + "token=" + encodeURIComponent(getCookie("token"));
-	    } else {
-		url = url + "?" + "token=" + encodeURIComponent(getCookie("token"));
-	    }
-	    arguments[1] = url;
-	}
-	var result = this._open.apply(this, arguments);
-	this.method = method;
-	this.url = url;
-	return result;
+		if (method.toUpperCase() == "GET") {
+		    if (url.match(/\?/)) {
+				url = url + "&" + "token=" + encodeURIComponent(getCookie("token"));
+		    } else {
+				url = url + "?" + "token=" + encodeURIComponent(getCookie("token"));
+		    }
+		    arguments[1] = url;
+		}
+		var result = this._open.apply(this, arguments);
+		this.method = method;
+		return result;
     };
 
     // if it's a GET request, OR isn't a wescheme request at all, use native send()
     var instrumentedSend = function(body){
-	if (this.method == "GET" ||
-		this.responseURL.indexOf("wescheme") == -1) {
-	    return this._send.apply(this, arguments);
-    // if it's a POST to a WeScheme server, attach the CSRF token
-	} else {
-	    if( body == null || body == ""){
-		body = "?";
-	    } else {
-		body += "&";
-	    }
-	    body += "token=" + encodeURIComponent(getCookie("token"));
-	    return this._send.call(this, body);
-	}
+    	console.log(this.method);
+		if (this.method == "GET" ||
+			this.responseURL.indexOf("wescheme") == -1) {
+		    return this._send.apply(this, arguments);
+	    // if it's a POST to a WeScheme server, attach the CSRF token
+		} else {
+		    if( body == null || body == ""){
+				body = "?";
+		    } else {
+				body += "&";
+		    }
+		    body += "token=" + encodeURIComponent(getCookie("token"));
+		    return this._send.call(this, body);
+		}
     };
 
 
@@ -80,28 +80,28 @@
     // Returns the version of Internet Explorer or a -1
     // (indicating the use of another browser).
     {
-	var rv = undefined; // Return value assumes failure.
-	if (navigator.appName == 'Microsoft Internet Explorer')
-	{
-	    var ua = navigator.userAgent;
-	    var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
-	    if (re.exec(ua) != null)
-		rv = parseFloat( RegExp.$1 );
-	}
-	return rv;
+		var rv = undefined; // Return value assumes failure.
+		if (navigator.appName == 'Microsoft Internet Explorer')
+		{
+		    var ua = navigator.userAgent;
+		    var re  = new RegExp("MSIE ([0-9]{1,}[\.0-9]{0,})");
+		    if (re.exec(ua) != null)
+			rv = parseFloat( RegExp.$1 );
+		}
+		return rv;
     };
 
 
 
 
     var isIE7OrBelow = function() {
-	var version = getInternetExplorerVersion();
-	return ((version != undefined) && (Math.floor(version) <= 7));
+		var version = getInternetExplorerVersion();
+		return ((version != undefined) && (Math.floor(version) <= 7));
     };
 
     var isIE8 = function() {
-	var version = getInternetExplorerVersion();
-	return ((version != undefined) && (Math.floor(version) == 8));
+		var version = getInternetExplorerVersion();
+		return ((version != undefined) && (Math.floor(version) == 8));
     };
     
 
@@ -111,37 +111,37 @@
     XMLHttpRequest.prototype._open = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype._send = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.open = function() {
-	return instrumentedOpen.apply(this, arguments);
+		return instrumentedOpen.apply(this, arguments);
     };
     XMLHttpRequest.prototype.send = function() {
-	return instrumentedSend.apply(this, arguments);
+		return instrumentedSend.apply(this, arguments);
     };
     
     //////////////////////////////////////////////////////////////////////
     // We now need to handle form submissions.
     if (isIE7OrBelow()) {
-	// IE Hack for IE <=7
-	Element = function () {};
-	Element.prototype._submit = Element.prototype.submit;
-	Element.prototype.submit = function() {
-	    newsubmit.apply(this, arguments);
-	}
+		// IE Hack for IE <=7
+		Element = function () {};
+		Element.prototype._submit = Element.prototype.submit;
+		Element.prototype.submit = function() {
+		    newsubmit.apply(this, arguments);
+		}
 	
     } else if (isIE8()) {
-	HTMLFormElement.prototype._submit = HTMLFormElement.prototype.submit;
-	HTMLFormElement.prototype.submit = function() {
-	    return newsubmit.apply(this, arguments);
-	};
+		HTMLFormElement.prototype._submit = HTMLFormElement.prototype.submit;
+		HTMLFormElement.prototype.submit = function() {
+		    return newsubmit.apply(this, arguments);
+		};
     } else {
-	// If a script calls someForm.submit(), the onsubmit event does not fire,
-	// so we need to redefine the submit method of the HTMLFormElement class.
-	if (typeof(HTMLFormElement) == 'undefined') {
-	    HTMLFormElement = function() {};
-	    new HTMLFormElement();
-	}
-	HTMLFormElement.prototype._submit = HTMLFormElement.prototype.submit;
-	HTMLFormElement.prototype.submit = function(event) {
-	    return newsubmit.apply(this, arguments);
-	}
+		// If a script calls someForm.submit(), the onsubmit event does not fire,
+		// so we need to redefine the submit method of the HTMLFormElement class.
+		if (typeof(HTMLFormElement) == 'undefined') {
+		    HTMLFormElement = function() {};
+		    new HTMLFormElement();
+		}
+		HTMLFormElement.prototype._submit = HTMLFormElement.prototype.submit;
+		HTMLFormElement.prototype.submit = function(event) {
+		    return newsubmit.apply(this, arguments);
+		}
     }
 }());
