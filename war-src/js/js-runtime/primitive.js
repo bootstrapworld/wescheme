@@ -51,7 +51,7 @@ var callWithValues = function(f, vals) {
 };
 
 var procedureArity = function(aState, proc) {
-	check(aState, proc, isFunction, 'procedure-arity', 'function name', 1, [proc]);
+	check(aState, proc, isFunction, 'procedure-arity', 'function', 1, [proc]);
 			
 	var singleCaseArity = function(aCase) {
 		if (aCase instanceof types.ContinuationClosureValue) {
@@ -148,8 +148,19 @@ var append = function(aState, initArgs) {
 }
 
 
-
-
+function checkHandlerArity(aState, event, expected, actual) {
+	var positionStack = 
+		state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
+	var locationList = positionStack[positionStack.length - 1];
+	var eventLoc = locationList.first(), handlerLoc = locationList.rest().first();
+	if(actual !== expected) {
+		var msg = new types.Message([new types.ColoredPart(event, eventLoc), 
+					": expected a " + expected + "-argument function as input, but given",
+					new types.ColoredPart("a function",  handlerLoc), 
+					"of " + actual + " arguments"]);
+		raise( types.incompleteExn(types.exnFailContract, msg, []) );
+	}
+}
 
 
 var foldHelp = function(f, acc, args) {
@@ -274,28 +285,26 @@ var WorldConfigOption = types.Class.extend({
 	    throw types.internalError("unimplemented", false);
 	},
 
-	toDomNode: function(cache) {
-	    var div = document.createElement('div');
-	    div.appendChild(document.createTextNode("(" + this.name + " ...)"));
-	    return div;
-	},
-
 	toWrittenString: function(cache) {
 	    return "(" + this.name + " ...)";
 	},
 
-	toDisplayedString: function(cache) {
-	    return "(" + this.name + " ...)";
-	}
-});
+	toDisplayedString: this.toWrittenString,
+
+	toDomNode: function(cache) {
+	    var div = document.createElement('div');
+	    div.appendChild(document.createTextNode(this.toWrittenString()));
+	    return div;
+	}});
 
 
 var isWorldConfigOption = function(x) { return x instanceof WorldConfigOption; };
 
 
-
 var onEvent = function(funName, inConfigName, numArgs) {
     return function(aState, handler) {
+		checkHandlerArity(aState, funName, numArgs, handler.numParams);
+
 		return onEventBang(funName, inConfigName)(
 			    aState,
 				handler,
@@ -305,8 +314,8 @@ var onEvent = function(funName, inConfigName, numArgs) {
 
 var onEventBang = function(funName, inConfigName) {
     return function(aState, handler, effectHandler) {
-		check(aState, handler, isFunction, funName, 'function name', 1, arguments);
-		check(aState, effectHandler, isFunction, funName, 'function name', 2, arguments);
+		check(aState, handler, isFunction, funName, 'function', 1, arguments);
+		check(aState, effectHandler, isFunction, funName, 'function', 2, arguments);
 		return new (WorldConfigOption.extend({
 			    init: function() {
 				this._super(funName);
@@ -932,7 +941,7 @@ PRIMITIVES['for-each'] =
 		     function(aState, f, firstArg, arglists) {
 		 	 var allArgs = [f, firstArg].concat(arglists);
 		 	 arglists.unshift(firstArg);
-			 check(aState, f, isFunction, 'for-each', 'function name', 1, allArgs);
+			 check(aState, f, isFunction, 'for-each', 'function', 1, allArgs);
 			 arrayEach(arglists, function(lst, i) {checkList(aState, lst, 'for-each', i+2, allArgs);});
 			 checkAllSameLength(aState, arglists, 'for-each', allArgs);
 
@@ -1082,29 +1091,6 @@ PRIMITIVES['make-struct-type'] =
 		return getMakeStructTypeReturns(aStructType);
 	    });
 			    
-/*			   
-PRIMITIVES['make-struct-field-accessor'] =
-	makeOptionPrimitive(
-	    'make-struct-field-accessor',
-	    2,
-	    [false],
-	    true,
-	    function(aState, userArgs, accessor, fieldPos, fieldName) {
-	    	check(aState, accessor, function(x) { return x instanceof StructAccessorProc && x.numParams > 1; },
-		      'make-struct-field-accessor', 'accessor procedure that requires a field index', 1, userArgs);
-		check(aState, fieldPos, isNatural, 'make-struct-field-accessor', 'exact non-negative integer', 2, userArgs);
-		check(aState, fieldName, function(x) { return x === false || isSymbol(x); },
-		      'make-struct-field-accessor', 'symbol or #f', 3, userArgs);
-	    	var fixnumPos = jsnums.toFixnum(fieldPos);
-	    	var procName = accessor.typeName + '-'
-			+ (fieldName ? fieldName.toString() : 'field' + fixnumPos);
-
-		aState.v = new StructAccessorProc(accessor.typeName, procName, 1, false, false,
-					      function(x) {
-						  return accessor.impl(x, fixnumPos);
-					      });
-	    });
-*/
 PRIMITIVES['make-struct-field-accessor'] =
 	makeOptionPrimitive(
 	    'make-struct-field-accessor',
@@ -1183,7 +1169,7 @@ PRIMITIVES['apply'] =
 		 true, false,
 		 function(aState, f, firstArg, args) {
 		 	var allArgs = [f, firstArg].concat(args);
-		 	check(aState, f, isFunction, 'apply', 'function name', 1, allArgs);
+		 	check(aState, f, isFunction, 'apply', 'function', 1, allArgs);
 		 	args.unshift(firstArg);
 
 			var lastArg = args.pop();
@@ -1212,7 +1198,7 @@ PRIMITIVES['call-with-values'] =
 		 false, false,
 		 function(aState, g, r) {
 		 	check(aState, g, procArityContains(0), 'call-with-values', 'procedure (arity 0)', 1, arguments);
-			check(aState, r, isFunction, 'call-with-values', 'function name', 2, arguments);
+			check(aState, r, isFunction, 'call-with-values', 'function', 2, arguments);
 			return CALL(g, [],
 				function(res) {
 					return callWithValues(r, res);
@@ -1225,7 +1211,7 @@ PRIMITIVES['compose'] =
 		 0,
 		 true, false,
 		 function(aState, procs) {
-		 	arrayEach(procs, function(p, i) {check(aState, p, isFunction, 'compose', 'function name', i+1, procs);});
+		 	arrayEach(procs, function(p, i) {check(aState, p, isFunction, 'compose', 'function', i+1, procs);});
 
 			if (procs.length == 0) {
 				return PRIMITIVES['values'];
@@ -2672,7 +2658,7 @@ PRIMITIVES['map'] =
 		 function(aState, f, lst, arglists) {
 		 	var allArgs = [f, lst].concat(arglists);
 		 	arglists.unshift(lst);
-		 	check(aState, f, isFunction, 'map', 'function name', 1, allArgs);
+		 	check(aState, f, isFunction, 'map', 'function', 1, allArgs);
 		 	arrayEach(arglists, function(x, i) {checkList(aState, x, 'map', i+2, allArgs);});
 			checkAllSameLength(aState, arglists, 'map', allArgs);
 
@@ -2704,7 +2690,7 @@ PRIMITIVES['andmap'] =
 		 function(aState, f, lst, arglists) {
 		 	var allArgs = [f, lst].concat(arglists);
 		 	arglists.unshift(lst);
-		  	check(aState, f, isFunction, 'andmap', 'function name', 1, allArgs);
+		  	check(aState, f, isFunction, 'andmap', 'function', 1, allArgs);
 		  	arrayEach(arglists, function(x, i) {checkList(aState, x, 'andmap', i+2, allArgs);});
 			checkAllSameLength(aState, arglists, 'andmap', allArgs);
   
@@ -2736,7 +2722,7 @@ PRIMITIVES['ormap'] =
 		 function(aState, f, lst, arglists) {
 		 	var allArgs = [f, lst].concat(arglists);
 		 	arglists.unshift(lst);
-		  	check(aState, f, isFunction, 'ormap', 'function name', 1, allArgs);
+		  	check(aState, f, isFunction, 'ormap', 'function', 1, allArgs);
 		  	arrayEach(arglists, function(x, i) {checkList(aState, x, 'ormap', i+2, allArgs);});
 			checkAllSameLength(aState, arglists, 'ormap', allArgs);
 
@@ -2829,7 +2815,7 @@ PRIMITIVES['memf'] =
 		 2,
 		 false, true,
 		 function(aState, f, initList) {
-		 	check(aState, f, isFunction, 'memf', 'function name', 1, arguments);
+		 	check(aState, f, isFunction, 'memf', 'function', 1, arguments);
 			checkList(aState, initList, 'memf', 2, arguments);
 
 			var memfHelp = function(lst) {
@@ -2939,7 +2925,7 @@ PRIMITIVES['filter'] =
 		 2,
 		 false, false,
 		 function(aState, f, lst) {
-		 	check(aState, f, procArityContains(1), 'filter', 'function name (arity 1)', 1, arguments);
+		 	check(aState, f, procArityContains(1), 'filter', 'function (arity 1)', 1, arguments);
 			checkList(aState, lst, 'filter', 2);
 
 			var filterHelp = function(f, lst, acc) {
@@ -2968,7 +2954,7 @@ PRIMITIVES['foldl'] =
 		 function(aState, f, initAcc, lst, arglists) {
 		 	arglists.unshift(lst);
 			var allArgs = [f, initAcc].concat(arglists);
-		 	check(aState, f, isFunction, 'foldl', 'function name', 1, allArgs);
+		 	check(aState, f, isFunction, 'foldl', 'function', 1, allArgs);
 			arrayEach(arglists, function(x, i) {checkList(aState, x, 'foldl', i+3, allArgs);});
 			checkAllSameLength(aState, arglists, 'foldl', allArgs);
 	
@@ -2982,7 +2968,7 @@ PRIMITIVES['foldr'] =
 		 function(aState, f, initAcc, lst, arglists) {
 		 	arglists.unshift(lst);
 			var allArgs = [f, initAcc].concat(arglists);
-		 	check(aState, f, isFunction, 'foldr', 'function name', 1, allArgs);
+		 	check(aState, f, isFunction, 'foldr', 'function', 1, allArgs);
 			arrayEach(arglists, function(x, i) {checkList(aState, x, 'foldr', i+3, allArgs);});
 			checkAllSameLength(aState, arglists, 'foldr', allArgs);
 
@@ -3005,7 +2991,7 @@ PRIMITIVES['argmax'] =
 		 false, false,
 		 function(aState, f, initList) {
 		 	var args = arguments
-		 	check(aState, f, isFunction, 'argmax', 'function name', 1, args);
+		 	check(aState, f, isFunction, 'argmax', 'function', 1, args);
 			check(aState, initList, isPair, 'argmax', 'non-empty list', 2, args);
 
 			var argmaxHelp = function(lst, curMaxVal, curMaxElt) {
@@ -3039,7 +3025,7 @@ PRIMITIVES['argmin'] =
 		 false, false,
 		 function(aState, f, initList) {
 		 	var args = arguments;
-		 	check(aState, f, isFunction, 'argmin', 'function name', 1, args);
+		 	check(aState, f, isFunction, 'argmin', 'function', 1, args);
 			check(aState, initList, isPair, 'argmin', 'non-empty list', 2, args);
 
 			var argminHelp = function(lst, curMaxVal, curMaxElt) {
@@ -3073,7 +3059,7 @@ PRIMITIVES['build-list'] =
 		 false, false,
 		 function(aState, num, f) {
 		 	check(aState, num, isNatural, 'build-list', 'non-negative exact integer', 1, arguments);
-			check(aState, f, isFunction, 'build-list', 'function name', 2, arguments);
+			check(aState, f, isFunction, 'build-list', 'function', 2, arguments);
 
 			var buildListHelp = function(n, acc) {
 				if ( jsnums.greaterThanOrEqual(n, num) ) {
@@ -3215,7 +3201,7 @@ PRIMITIVES['hash-map'] =
 		 false, false,
 		 function(aState, ht, f) {
 		 	check(aState, ht, isHash, 'hash-map', 'hash', 1, arguments);
-			check(aState, f, isFunction, 'hash-map', 'function name', 2, arguments);
+			check(aState, f, isFunction, 'hash-map', 'function', 2, arguments);
 			
 			var keys = ht.hash.keys();
 			var hashMapHelp = function(i, acc) {
@@ -3239,7 +3225,7 @@ PRIMITIVES['hash-for-each'] =
 		 false, false,
 		 function(aState, ht, f) {
 		 	check(aState, ht, isHash, 'hash-for-each', 'hash', 1, arguments);
-			check(aState, f, isFunction, 'hash-for-each', 'function name', 2, arguments);
+			check(aState, f, isFunction, 'hash-for-each', 'function', 2, arguments);
 		     
 		 	var keys = ht.hash.keys();
 
@@ -3814,7 +3800,7 @@ PRIMITIVES['build-string'] =
 		 false, false,
 		 function(aState, num, f) {
 		 	check(aState, num, isNatural, 'build-string', 'non-negative exact integer', 1, arguments);
-			check(aState, f, isFunction, 'build-string', 'function name', 2, arguments);
+			check(aState, f, isFunction, 'build-string', 'function', 2, arguments);
 
 			var buildStringHelp = function(n, acc) {
 				if ( jsnums.greaterThanOrEqual(n, num) ) {
@@ -4255,7 +4241,7 @@ PRIMITIVES['build-vector'] =
 		 false, false,
 		 function(aState, num, f) {
 		 	check(aState, num, isNatural, 'build-vector', 'non-negative exact integer', 1, arguments);
-			check(aState, f, isFunction, 'build-vector', 'function name', 2, arguments);
+			check(aState, f, isFunction, 'build-vector', 'function', 2, arguments);
 
 			var buildVectorHelp = function(n, acc) {
 				if ( jsnums.greaterThanOrEqual(n, num) ) {
@@ -5989,12 +5975,12 @@ var ToDraw = WorldConfigOption.extend({
 
  // The default tick delay is 28 times a second.
  // On slower browsers, we'll force all delays to be >= 1/10
- var slow_browser = false;
- if(window.plt !== undefined){
+var slow_browser = false;
+if(window.plt !== undefined){
    var clientInfo  = plt.wescheme.BrowserDetect,
        slow_browser= (clientInfo.browser==="Explorer") && (clientInfo.version<11);
- }
- var DEFAULT_TICK_DELAY = slow_browser? (types.rational(1, 8)) : (types.rational(1, 28));
+}
+var DEFAULT_TICK_DELAY = slow_browser? (types.rational(1, 8)) : (types.rational(1, 28));
 
 PRIMITIVES['on-tick'] =
 	new CasePrimitive(
@@ -6002,9 +5988,10 @@ PRIMITIVES['on-tick'] =
 	    [new PrimProc('on-tick',
 			  1,
 			  false, false,
-			  function(aState, f) {
-			      check(aState, f, isFunction, "on-tick", "function name", 1);
-			      return new OnTickBang(f,
+			  function(aState, handler) {
+			      check(aState, handler, isFunction, "on-tick", "function", 1);
+			      checkHandlerArity(aState, 'on-tick', 1, handler.numParams);
+			      return new OnTickBang(handler,
 						    new PrimProc('', 1, false, false,
 								 function(aState, w) { return types.effectDoNothing(); }),
 						    DEFAULT_TICK_DELAY);
@@ -6012,10 +5999,11 @@ PRIMITIVES['on-tick'] =
 	     new PrimProc('on-tick',
 			  2,
 			  false, false,
-			  function(aState, f, aDelay) {
-			      check(aState, f, isFunction, "on-tick", "function name", 1, arguments);
+			  function(aState, handler, aDelay) {
+			      check(aState, handler, isFunction, "on-tick", "function", 1, arguments);
+			      checkHandlerArity(aState, 'on-tick', 1, handler.numParams);
 			      check(aState, aDelay, isNonNegativeReal, "on-tick", "non-negative number", 2, arguments);
-			      return new OnTickBang(f,
+			      return new OnTickBang(handler,
 						    new PrimProc('', 1, false, false,
 								 function(aState, w) { return types.effectDoNothing(); }),
                 slow_browser? Math.max(jsnums.toFixnum(aDelay), jsnums.toFixnum(DEFAULT_TICK_DELAY)) : aDelay);
@@ -6029,16 +6017,18 @@ PRIMITIVES['on-tick!'] =
 		      2,
 		      false, false,
 		      function(aState, handler, effectHandler) {
-			  check(aState, handler, isFunction, "on-tick!", "function name", 1, arguments);
-			  check(aState, effectHandler, isFunction, "on-tick!","function name", 2, arguments);
+				  check(aState, handler, isFunction, "on-tick!", "function", 1, arguments);
+			      checkHandlerArity(aState, 'on-tick!', 1, handler.numParams);
+				  check(aState, effectHandler, isFunction, "on-tick!","function", 2, arguments);
 			  return new OnTickBang(handler, effectHandler, DEFAULT_TICK_DELAY);
 		      }),
 	 new PrimProc('on-tick!',
 		      3,
 		      false, false,
 		      function(aState, handler, effectHandler, aDelay)  {
-			  check(aState, handler, isFunction, "on-tick!", "function name", 1, arguments);
-			  check(aState, effectHandler, isFunction, "on-tick!","function name", 2, arguments);
+			  check(aState, handler, isFunction, "on-tick!", "function", 1, arguments);
+			  checkHandlerArity(aState, 'on-tick!', 1, handler.numParams);
+			  check(aState, effectHandler, isFunction, "on-tick!","function", 2, arguments);
 			  check(aState, aDelay, isNonNegativeReal, "on-tick!", "non-negative number", 3, arguments);
 			  return new OnTickBang(handler, effectHandler,
                               slow_browser? Math.max(jsnums.toFixnum(aDelay), jsnums.toFixnum(DEFAULT_TICK_DELAY)) : aDelay);
@@ -6072,51 +6062,24 @@ PRIMITIVES['mouse=?'] =
 			return mouseA===mouseB;
 });
 
-
-
-// PRIMITIVES['on-announce'] = new PrimProc('on-announce', 1, false, false,
-// 					 onEvent('on-announce', 'onAnnounce', 3));
-// PRIMITIVES['on-announce!'] = new PrimProc('on-announce!', 2, false, false,
-// 					  onEventBang('on-announce!', 'onAnnounce'));
-
-// PRIMITIVES['on-location-change'] = new PrimProc('on-location-change', 1, false, false,
-// 						onEvent('on-location-change', 'onLocationChange', 3));
-// PRIMITIVES['on-location-change!'] = new PrimProc('on-location-change!', 2, false, false,
-// 						 onEventBang('on-location-change!', 'onLocationChange'));
-
-
-// PRIMITIVES['on-tilt!'] = new PrimProc('on-tilt!', 2, false, false, onEventBang('on-tilt!', 'onTilt'));
-
-// PRIMITIVES['on-acceleration'] = new PrimProc('on-acceleration', 1, false, false,
-// 					     onEvent('on-acceleration', 'onAcceleration', 4));
-// PRIMITIVES['on-acceleration!'] = new PrimProc('on-acceleration!', 2, false, false,
-// 					      onEventBang('on-acceleration!', 'onAcceleration'));
-
-// PRIMITIVES['on-sms-receive'] = new PrimProc('on-sms-receive', 1, false, false,
-// 					    onEvent('on-sms-receive', 'onSmsReceive', 3));
-// PRIMITIVES['on-sms-receive!'] = new PrimProc('on-sms-receive!', 2, false, false,
-// 					     onEventBang('on-sms-receive!', 'onSmsReceive'));
-
-// PRIMITIVES['on-shake'] = new PrimProc('on-shake', 1, false, false, onEvent('on-shake', 'onShake', 1));
-// PRIMITIVES['on-shake!'] = new PrimProc('on-shake!', 2, false, false, onEventBang('on-shake!', 'onShake'));
-
-
 PRIMITIVES['stop-when'] =
  new CasePrimitive('stop-when',
     [new PrimProc('stop-when',
 			  1,
 			  false, false,
 			  function(aState, handler) {
-			      check(aState, handler, isFunction, "stop-when", "function name", 1);
-            // by default, there's an empty last picture handler
-            return new StopWhen(handler, null);
+			      check(aState, handler, isFunction, "stop-when", "function", 1);
+			      checkHandlerArity(aState, 'stop-when', 1, handler.numParams);
+	            // by default, there's an empty last picture handler
+	            return new StopWhen(handler, null);
         }),
     new PrimProc('stop-when',
 			  2,
 			  false, false,
 			  function(aState, handler, lastPicture) {
-			      check(aState, handler, isFunction, "stop-when", "function name", 1);
-            check(aState, lastPicture, isFunction, "stop-when", "function name", 2);
+		      check(aState, handler, isFunction, "stop-when", "function", 1);
+		      checkHandlerArity(aState, 'stop-when', 1, handler.numParams);
+            check(aState, lastPicture, isFunction, "stop-when", "function", 2);
             return new StopWhen(handler, lastPicture);
         })
      ]);
@@ -6129,9 +6092,10 @@ PRIMITIVES['on-redraw'] =
     new PrimProc('on-redraw',
 		 1,
 		 false, false,
-		 function(aState, f) {
-		     check(aState, f, isFunction, 'on-redraw', "function name", 1);
-         return new ToDraw(f);
+		 function(aState, handler) {
+		     check(aState, handler, isFunction, 'on-redraw', "function", 1);
+		     checkHandlerArity(aState, 'on-redraw', 1, handler.numParams);
+         return new ToDraw(handler);
 		 });
 
 
@@ -6139,9 +6103,10 @@ PRIMITIVES['to-draw'] =
     new PrimProc('to-draw',
 		 1,
 		 false, false,
-		 function(aState, f) {
-		     check(aState, f, isFunction, 'to-draw', "function name", 1);
-         return new ToDraw(f);
+		 function(aState, handler) {
+		     check(aState, handler, isFunction, 'to-draw', "function", 1);
+		     checkHandlerArity(aState, 'to-draw', 1, handler.numParams);
+         return new ToDraw(handler);
 		 });
 
 
@@ -6150,29 +6115,31 @@ PRIMITIVES['on-draw'] =
 	[new PrimProc('on-draw',
 		      1,
 		      false, false,
-		      function(aState, domHandler) {
-			  check(aState, domHandler, isFunction, 'on-draw', "function name", 1);
+		      function(aState, handler) {
+			  check(aState, handler, isFunction, 'on-draw', "function", 1);
+		      checkHandlerArity(aState, 'on-draw', 1, handler.numParams);
 			  return new (WorldConfigOption.extend({
 				    init: function() {
 					this._super('on-draw');
 				    },
 				    configure: function(config) {
-					return config.updateAll({'onDraw': domHandler});
+					return config.updateAll({'onDraw': handler});
 				    }
 				}))();
 		      }),
 	 new PrimProc('on-draw',
 		      2,
 		      false, false,
-		      function(aState, domHandler, styleHandler) {
-		 	  check(aState, domHandler, isFunction, 'on-draw', "function name", 1, arguments);
-			  check(aState, styleHandler, isFunction, 'on-draw', "function name", 2, arguments);
+		      function(aState, handler, styleHandler) {
+		 	  check(aState, handler, isFunction, 'on-draw', "function", 1, arguments);
+			  check(aState, styleHandler, isFunction, 'on-draw', "function", 2, arguments);
+			  checkHandlerArity(aState, 'on-draw', 1, handler.numParams);
 			  return new (WorldConfigOption.extend({
 				    init: function() {
 					this._super('on-draw');
 				    },
 				    configure: function(config) {
-					return config.updateAll({'onDraw': domHandler,
+					return config.updateAll({'onDraw': handler,
 								 'onDrawCss': styleHandler});
 				    }
 				}))();
@@ -6238,8 +6205,8 @@ PRIMITIVES['js-div'] =
 
 var jsButtonBang = function(funName) {
     return function(aState, worldUpdateF, effectF, attribList) {
-		check(aState, worldUpdateF, isFunction, funName, "function name", 1);
-		check(aState, effectF, isFunction, funName, "function name", 2);
+		check(aState, worldUpdateF, isFunction, funName, "function", 1);
+		check(aState, effectF, isFunction, funName, "function", 2);
 		checkListOf(undefined, attribList, isAssocList, funName, '(listof X Y)', 3);
 
 		var attribs = attribList ? assocListToHash(attribList) : {};
@@ -6271,7 +6238,7 @@ PRIMITIVES['js-button!'] =
 
 var jsInput = function(type, updateF, attribList) {
 	check(aState, type, isString, 'js-input', 'string', 1);
-	check(aState, updateF, isFunction, 'js-input', "function name", 2);
+	check(aState, updateF, isFunction, 'js-input', "function", 2);
 	checkListOf(undefined, attribList, isAssocList, 'js-input', '(listof X Y)', 3);
 
 	var attribs = attribList ? assocListToHash(attribList) : {};
@@ -6327,7 +6294,7 @@ PRIMITIVES['js-text'] =
 
 var jsSelect = function(optionList, updateF, attribList) {
 	checkListOf(undefined, optionList, isString, 'js-select', 'listof string', 1);
-	check(aState, updateF, isFunction, 'js-select', "function name", 2);
+	check(aState, updateF, isFunction, 'js-select', "function", 2);
 	checkListOf(undefined, attribList, isAssocList, 'js-select', '(listof X Y)', 3);
 
 	var attribs = attribList ? assocListToHash(attribList) : {};
@@ -6388,7 +6355,7 @@ PRIMITIVES['animate'] =
 		 1,
 		 false, false,
 		 function(aState, f) {
-        check(aState, f, isFunction, "animate", "function name", 1);
+        check(aState, f, isFunction, "animate", "function", 1);
         check(aState, f, procArityContains(1), "animate", "1-argument function", 1);
        // on-tick is just add1, to-draw is f
        var handlers = [new OnTickBang(PRIMITIVES['add1'],
@@ -6466,8 +6433,8 @@ PRIMITIVES['make-world-config'] =
 		 true, false,
 		 function(aState, startup, shutdown, handlers) {
 		 	var allArgs = [startup, shutdown].concat(handlers);
-		 	check(aState, startup, isFunction, 'make-world-config', "function name", 1, allArgs);
-			check(aState, shutdown, procArityContains(1), 'make-world-config', 'function name (arity 1)', 2, allArgs);
+		 	check(aState, startup, isFunction, 'make-world-config', "function", 1, allArgs);
+			check(aState, shutdown, procArityContains(1), 'make-world-config', 'function (arity 1)', 2, allArgs);
 			arrayEach(handlers, function(x, i) { check(aState, x, isFunction, 'make-world-config', 'handler', i+3, allArgs); });
 
 			if ( !procArityContains(handlers.length)(startup) ) {
@@ -6493,7 +6460,7 @@ PRIMITIVES['make-effect-type'] =
 		check(aState, superType, function(x) { return x === false || types.isEffectType(x) },
 		      'make-effect-type', 'effect type or #f', 2, userArgs);
 		check(aState, fieldCnt, isNatural, 'make-effect-type', 'exact non-negative integer', 3, userArgs);
-		check(aState, impl, isFunction, 'make-effect-type', "function name", 4, userArgs);
+		check(aState, impl, isFunction, 'make-effect-type', "function", 4, userArgs);
 //		checkListOf(aState, handlerIndices, isNatural, 'make-effect-type', 'exact non-negative integer', 5);
 		check(aState, guard, function(x) { return x === false || isFunction(x); }, 'make-effect-type', 'procedure or #f', 6, userArgs);
 		// Check the number of arguments on the guard
@@ -6557,7 +6524,7 @@ PRIMITIVES['make-render-effect-type'] =
 		check(aState, superType, function(x) { return x === false || types.isEffectType(x) },
 		      'make-render-effect-type', 'effect type or #f', 2, userArgs);
 		check(aState, fieldCnt, isNatural, 'make-render-effect-type', 'exact non-negative integer', 3, userArgs);
-		check(aState, impl, isFunction, 'make-render-effect-type', "function name", 4, userArgs);
+		check(aState, impl, isFunction, 'make-render-effect-type', "function", 4, userArgs);
 		check(aState, guard, function(x) { return x === false || isFunction(x); }, 'make-render-effect-type', 'procedure or #f', 6, userArgs);
 		// Check the number of arguments on the guard
 		var numberOfGuardArgs = fieldCnt + 1 + (superType ? superType.numberOfArgs : 0);
@@ -6709,7 +6676,7 @@ PRIMITIVES['procedure->cps-js-fun'] =
 		 1,
 		 false, false,
 		 function(aState, proc) {
-		 	check(aState, proc, isFunction, 'procedure->cps-js-fun', "function name", 1);
+		 	check(aState, proc, isFunction, 'procedure->cps-js-fun', "function", 1);
 
 			var caller = makeCaller(aState);
 			return types.jsObject(proc.name + ' (cps)', function() {
@@ -6726,7 +6693,7 @@ PRIMITIVES['procedure->void-js-fun'] =
 		 1,
 		 false, false,
 		 function(aState, proc) {
-		 	check(aState, proc, isFunction, 'procedure->void-js-fun', "function name", 1);
+		 	check(aState, proc, isFunction, 'procedure->void-js-fun', "function", 1);
 
 			var caller = makeCaller(aState);
 			return types.jsObject(proc.name + ' (void)', function() {
