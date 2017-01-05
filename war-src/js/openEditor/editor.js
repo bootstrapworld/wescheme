@@ -583,7 +583,7 @@ var WeSchemeEditor;
 			hideHelp();
 		}
 		help.onclick = hideHelp;
-		help.onkeydown = hideHelp;
+		help.onkeyup = hideHelp;
     }
     
     // Shows an Image Picker enabling choosing an image from Google Drive to the 
