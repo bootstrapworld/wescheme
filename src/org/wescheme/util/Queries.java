@@ -23,6 +23,7 @@ public class Queries {
 		query.setFilter("backlink_ == id");
 		query.setOrdering("time_ desc");
 		query.declareParameters("Long id");
+		query.setRange(0,1);
 		try {
 			List<Program> pl = (List<Program>) query.execute(programId);
 			return pl;
