@@ -302,7 +302,7 @@ var isWorldConfigOption = function(x) { return x instanceof WorldConfigOption; }
 
 
 var onEvent = function(funName, inConfigName, numArgs) {
-	return function(aState, handler) {
+    return function(aState, handler) {
 		checkHandlerArity(aState, funName, numArgs, handler.numParams);
 
 		return onEventBang(funName, inConfigName)(
