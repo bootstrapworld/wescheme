@@ -40,7 +40,11 @@
    (lambda (p)
      (and (file-exists? p)
           (regexp-match #px".js$" (path->string (file-name-from-path p)))
-          (not (regexp-match #px"[.-]min.js$" (path->string (file-name-from-path p))))))
+          (not (regexp-match #px"[.-]min.js$" (path->string (file-name-from-path p))))
+          ;; probably a more efficient way to do this, but I'm no regexp pro
+          ;; we ONLY care about codemirror2/lib - nothing else
+          (or (not (regexp-match #px"codemirror2" (path->string p)))
+                   (regexp-match #px"codemirror2.lib" (path->string p)))))
    (simplify-path path)))
 
 (for ([file js-files])
