@@ -100,7 +100,7 @@
   (call-system "cd" "../../../")
   (unless (directory-exists? codemirror-dest-dir) 
     (make-directory* codemirror-dest-dir))
-  (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/lib"))
+  (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/"))
 
 (define (ensure-codemirror-installed!)
   (unless (directory-exists? codemirror-src-dir)
