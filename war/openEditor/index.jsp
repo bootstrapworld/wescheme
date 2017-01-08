@@ -56,14 +56,14 @@
     <script src="/js/jquery/jquery.center-in-client-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.blockUI-min.js" type="text/javascript"></script>
 
-    <script src="/js/codemirror2/lib/codemirror-min.js" type="text/javascript"></script>
-    <script src="/js/codemirror2/addon/edit/matchbrackets.js" type="text/javascript"></script>
-    <script src="/js/codemirror2/addon/runmode/runmode.js" type="text/javascript"></script>
-    <script src="/js/codemirror2-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
+    <script src="/js/codemirror/lib/codemirror-min.js" type="text/javascript"></script>
+    <script src="/js/codemirror/addon/edit/matchbrackets.js" type="text/javascript"></script>
+    <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
+    <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/codemirror.css" id="style" />
-    <link rel="stylesheet" type="text/css" href="/js/codemirror2/lib/codemirror.css"></link>
-    <link rel="stylesheet" type="text/css" href="/js/codemirror2-contrib/scheme2/schemecolors.css"></link>
+    <link rel="stylesheet" type="text/css" href="/js/codemirror/lib/codemirror.css"></link>
+    <link rel="stylesheet" type="text/css" href="/js/codemirror-contrib/scheme2/schemecolors.css"></link>
 
     <link rel="stylesheet" type="text/css" href="/css/definitions.css"></link>
 

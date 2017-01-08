@@ -14,7 +14,8 @@
 (define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
 (define-runtime-path compiler-jar-path (build-path "bin" "compiler.jar"))
 
-(define-runtime-path codemirror-dir (build-path "war" "js" "codemirror2"))
+(define-runtime-path codemirror-src-dir (build-path "war-src" "js" "codemirror"))
+(define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
 (define appengine-version "1.9.34")
 (define appengine-url
@@ -84,13 +85,18 @@
 (define (generate-js-runtime!)
   (call-system "bash" "./generate-js-runtime.sh"))
 
+(define (copy-codemirror-lib!)
+  (unless (directory-exists? codemirror-dest-dir) 
+    (make-directory* codemirror-dest-dir))
+  (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/lib"))
+
 (define (ensure-codemirror-installed!)
-  (unless (directory-exists? codemirror-dir)
+  (unless (directory-exists? codemirror-src-dir)
     (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
     (call-system "git" "submodule" "init")
     (call-system "git" "submodule" "update")
     
-    (unless (directory-exists? codemirror-dir)
+    (unless (directory-exists? codemirror-src-dir)
       (fprintf (current-error-port) "Codemirror could not be pulled successfully.  Exiting.\n")
       (exit 0))))
 
@@ -146,6 +152,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (generate-js-runtime!)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(copy-codemirror-lib!)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
