@@ -25,7 +25,15 @@
 (define appengine-dir
   (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
 
-
+;; out-of-date?: path path -> boolean
+;; Returns true if the target file looks at least as new as the source file.
+(define (out-of-date? source-file target-file)
+  (cond
+   [(not (file-exists? target-file))
+    #t]
+   [else
+    (>= (file-or-directory-modify-seconds source-file)
+        (file-or-directory-modify-seconds target-file))]))
 
 (define (call-system #:pipe-input-from (pipe-input-from #f)
                      #:pipe-output-to (pipe-output-to #f)
@@ -85,7 +93,11 @@
 (define (generate-js-runtime!)
   (call-system "bash" "./generate-js-runtime.sh"))
 
-(define (copy-codemirror-lib!)
+;; cd into CM, build a fresh copy, then move it to war/js/codemirror/lib
+(define (update-codemirror-lib!)
+  (call-system "cd" "./war-src/js/codemirror/")
+  (call-system "npm" "build")
+  (call-system "cd" "../../../")
   (unless (directory-exists? codemirror-dest-dir) 
     (make-directory* codemirror-dest-dir))
   (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/lib"))
@@ -155,7 +167,10 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(copy-codemirror-lib!)
+(when (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
+                    "./war/js/codemirror/lib/codemirror.js")
+  (printf "Updating CodeMirror and copying lib\n")
+  (update-codemirror-lib!))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
