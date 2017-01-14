@@ -19,6 +19,8 @@ import org.wescheme.util.CacheHelpers;
 import org.wescheme.util.Queries;
 import org.wescheme.util.XML;
 
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
 
 
@@ -69,6 +71,8 @@ public class Program implements Serializable {
 	@Persistent
 	private Long backlink_;
 
+	@Persistent
+	private Long mostRecentShare_;
 
 	@Persistent
 	private Text notes;
@@ -89,6 +93,7 @@ public class Program implements Serializable {
 		this.owner_ 	= ownerName;
 		this.author_ = owner_;
 		this.backlink_ = null;
+		this.mostRecentShare_ = null;
 		this.updateTime();
 	}
 
@@ -111,6 +116,7 @@ public class Program implements Serializable {
 		p.updateTime();
 
 		p = pm.makePersistent(p);
+		this.setMostRecentShare(p.getId());
 		return p;
 	}
 
@@ -203,6 +209,20 @@ public class Program implements Serializable {
 		this.updateTime();
 	}
 
+	public Long getMostRecentShare() {
+		return this.mostRecentShare_;
+	}
+
+	public void setMostRecentShare(Long id) {
+		this.mostRecentShare_ = id;
+		this.markOwnerCacheDirty();
+	}
+
+	private Program getMostRecentShareAsProgram(PersistenceManager pm) {
+		Key k = KeyFactory.createKey("Program", this.mostRecentShare_);
+		Program prog = pm.getObjectById(Program.class, k);
+		return prog;
+	}
 
 	public Element toXML(PersistenceManager pm) { return this.toXML(true, pm); }
 
@@ -318,6 +338,18 @@ public class Program implements Serializable {
 	 * @return
 	 */
 	public List<Program> getBacklinkedPrograms(PersistenceManager pm) {
-		return Queries.getBacklinkedPrograms(pm, this.id);
+		List<Program> pl;
+		if (this.mostRecentShare_ == null) {
+			pl = Queries.getBacklinkedPrograms(pm, this.id);
+			if (pl.size() > 0) {
+				Program mostRecentShare = pl.get(0);
+				this.setMostRecentShare(mostRecentShare.getId());
+			}
+		} else {
+			pl = new ArrayList<Program>();
+			Program mostRecentShare = this.getMostRecentShareAsProgram(pm);
+			pl.add(0, mostRecentShare);
+		}
+		return pl;
 	}
 }
