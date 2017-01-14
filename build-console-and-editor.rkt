@@ -81,14 +81,16 @@
 
 
 (define (build src dest)
-  (make-directory* (path-only (string-append "war/" dest)))
+  (make-directory* (path-only (string-append "war/" dest "-new.js")))
   (call-system "python"
                (build-path closure-dir "bin" "calcdeps.py")
                "-i" (string-append "war-src/js/" src)
                "-p" (path->string closure-dir)
                "-p" "war-src/js"
                "-o" "script"
-               #:pipe-output-to (string-append "war/js/" dest)))
+               #:pipe-output-to (string-append "war/js/" dest "-new.js"))
+  (update-compiled-libs! (string-append "war/js/" dest "-new.js")
+                        (string-append "war/js/" dest ".js")))
 
 (define (generate-js-runtime!)
   (call-system "bash" "./generate-js-runtime.sh"))
@@ -155,6 +157,9 @@
              "Google AppEngine API installed.\n")))
 
 
+(define (update-compiled-libs! new-path old-path)
+  (call-system "bash" "./update-compiled-files.sh" new-path old-path))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ensure-codemirror-installed!)
 (ensure-closure-library-installed!)
@@ -163,7 +168,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (generate-js-runtime!)
-
+(update-compiled-libs!  "war/js/mzscheme-vm/support-new.js"
+                        "war/js/mzscheme-vm/support.js")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
@@ -197,22 +203,22 @@
 
 ;; ######################################################################
 (printf "Building splash\n")
-(build "splash.js" "splash-calc.js")
+(build "splash.js" "splash-calc")
 
 (printf "Building console\n")
-(build "console.js" "console-calc.js")
+(build "console.js" "console-calc")
 
 (printf "Building view\n")
-(build "view.js" "view-calc.js")
+(build "view.js" "view-calc")
 
 (printf "Building run\n")
-(build "run.js" "run-calc.js")
+(build "run.js" "run-calc")
 
 (printf "Building editor\n")
-(build "openEditor/index.js" "openEditor/openEditor-calc.js")
+(build "openEditor/index.js" "openEditor/openEditor-calc")
 
 (printf "Building compiler\n")
-(build "compiler/index.js" "compiler/compiler-calc.js")
+(build "compiler/index.js" "compiler/compiler-calc")
 
 ;; ######################################################################
 (printf "Compressing JavaScript libraries.  This may take a few minutes, depending if this is the first time this has been run.\n")

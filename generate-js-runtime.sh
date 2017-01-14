@@ -1,7 +1,6 @@
 #!/bin/bash
 
 orig_dir=`pwd`
-target=$orig_dir/war/js/mzscheme-vm/support.js
 target_new=$orig_dir/war/js/mzscheme-vm/support-new.js
 platform=browser
 testing=false
@@ -31,17 +30,6 @@ done;
 if [ "$testing" = true ]; then
 	echo '    Adding exports for testing'
 	cat exports.js >> $target_new;
-fi
-
-# if the new one is different, replace it
-if diff $target_new $target > /dev/null
-then
-    echo "No difference in support.js. Keeping old one."
-    rm -f $target_new
-else
-    echo "support.js has been updated! Replacing."
-    rm -f $target
-    mv $target_new $target
 fi
 
 echo '    Done!'
