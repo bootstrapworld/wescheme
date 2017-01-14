@@ -95,8 +95,7 @@
 
 ;; cd into CM, build a fresh copy, then move it to war/js/codemirror/lib
 (define (update-codemirror-lib!)
-  (call-system "cd" "./war-src/js/codemirror/")
-  (call-system "npm" "build")
+  (call-system "npm" "install" "war-src/js/codemirror/")
   (call-system "cd" "../../../")
   (unless (directory-exists? codemirror-dest-dir) 
     (make-directory* codemirror-dest-dir))
@@ -167,10 +166,12 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(when (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
+(if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
                     "./war/js/codemirror/lib/codemirror.js")
-  (printf "Updating CodeMirror and copying lib\n")
-  (update-codemirror-lib!))
+  (begin
+    (printf "Updating CodeMirror and copying lib\n")
+    (update-codemirror-lib!))
+  (printf "CodeMirror is up to date\n"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
