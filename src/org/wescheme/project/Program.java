@@ -3,7 +3,6 @@ package org.wescheme.project;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -27,8 +26,6 @@ import com.google.appengine.api.datastore.Text;
 
 @PersistenceCapable(identityType = IdentityType.APPLICATION)
 public class Program implements Serializable {
-
-	static Logger logger = Logger.getLogger(Program.class.getName());
 
 	/**
 	 * 
@@ -217,13 +214,11 @@ public class Program implements Serializable {
 	}
 
 	public void setMostRecentShare(Long id) {
-		logger.info("setMostRecentShare: " + this.id.toString() + " now points to " + id.toString());
 		this.mostRecentShare_ = id;
 		this.markOwnerCacheDirty();
 	}
 
 	private Program getMostRecentShareAsProgram(PersistenceManager pm) {
-		logger.info("getMostRecentShareAsProgram: this.mostRecentShare_ == " + this.mostRecentShare_.toString());
 		Key k = KeyFactory.createKey("Program", this.mostRecentShare_);
 		Program prog = pm.getObjectById(Program.class, k);
 		return prog;
