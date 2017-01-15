@@ -14,7 +14,8 @@
 (define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
 (define-runtime-path compiler-jar-path (build-path "bin" "compiler.jar"))
 
-(define-runtime-path codemirror-dir (build-path "war" "js" "codemirror2"))
+(define-runtime-path codemirror-src-dir (build-path "war-src" "js" "codemirror"))
+(define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
 (define appengine-version "1.9.34")
 (define appengine-url
@@ -24,7 +25,15 @@
 (define appengine-dir
   (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
 
-
+;; out-of-date?: path path -> boolean
+;; Returns true if the target file looks at least as new as the source file.
+(define (out-of-date? source-file target-file)
+  (cond
+   [(not (file-exists? target-file))
+    #t]
+   [else
+    (>= (file-or-directory-modify-seconds source-file)
+        (file-or-directory-modify-seconds target-file))]))
 
 (define (call-system #:pipe-input-from (pipe-input-from #f)
                      #:pipe-output-to (pipe-output-to #f)
@@ -72,25 +81,37 @@
 
 
 (define (build src dest)
-  (make-directory* (path-only (string-append "war/" dest)))
+  (make-directory* (path-only (string-append "war/" dest "-new.js")))
   (call-system "python"
                (build-path closure-dir "bin" "calcdeps.py")
                "-i" (string-append "war-src/js/" src)
                "-p" (path->string closure-dir)
                "-p" "war-src/js"
                "-o" "script"
-               #:pipe-output-to (string-append "war/js/" dest)))
+               #:pipe-output-to (string-append "war/js/" dest "-new.js"))
+  (update-compiled-libs! (string-append "war/js/" dest "-new.js")
+                        (string-append "war/js/" dest ".js")))
 
 (define (generate-js-runtime!)
   (call-system "bash" "./generate-js-runtime.sh"))
 
+;; cd into CM, build a fresh copy, then move it to war/js/codemirror/lib
+(define (update-codemirror-lib!)
+  (call-system "npm" "install" "war-src/js/codemirror/")
+  (call-system "cd" "../../../")
+  (unless (directory-exists? codemirror-dest-dir) 
+    (make-directory* codemirror-dest-dir))
+  (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/")
+  (call-system "cp" "-r" "./war-src/js/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
+  (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
+  
 (define (ensure-codemirror-installed!)
-  (unless (directory-exists? codemirror-dir)
+  (unless (directory-exists? codemirror-src-dir)
     (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
     (call-system "git" "submodule" "init")
     (call-system "git" "submodule" "update")
     
-    (unless (directory-exists? codemirror-dir)
+    (unless (directory-exists? codemirror-src-dir)
       (fprintf (current-error-port) "Codemirror could not be pulled successfully.  Exiting.\n")
       (exit 0))))
 
@@ -138,6 +159,9 @@
              "Google AppEngine API installed.\n")))
 
 
+(define (update-compiled-libs! new-path old-path)
+  (call-system "bash" "./update-compiled-files.sh" new-path old-path))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ensure-codemirror-installed!)
 (ensure-closure-library-installed!)
@@ -146,6 +170,16 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (generate-js-runtime!)
+(update-compiled-libs!  "war/js/mzscheme-vm/support-new.js"
+                        "war/js/mzscheme-vm/support.js")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
+                    "./war/js/codemirror/lib/codemirror.js")
+  (begin
+    (printf "Updating CodeMirror and copying lib\n")
+    (update-codemirror-lib!))
+  (printf "CodeMirror is up to date\n"))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -171,22 +205,22 @@
 
 ;; ######################################################################
 (printf "Building splash\n")
-(build "splash.js" "splash-calc.js")
+(build "splash.js" "splash-calc")
 
 (printf "Building console\n")
-(build "console.js" "console-calc.js")
+(build "console.js" "console-calc")
 
 (printf "Building view\n")
-(build "view.js" "view-calc.js")
+(build "view.js" "view-calc")
 
 (printf "Building run\n")
-(build "run.js" "run-calc.js")
+(build "run.js" "run-calc")
 
 (printf "Building editor\n")
-(build "openEditor/index.js" "openEditor/openEditor-calc.js")
+(build "openEditor/index.js" "openEditor/openEditor-calc")
 
 (printf "Building compiler\n")
-(build "compiler/index.js" "compiler/compiler-calc.js")
+(build "compiler/index.js" "compiler/compiler-calc")
 
 ;; ######################################################################
 (printf "Compressing JavaScript libraries.  This may take a few minutes, depending if this is the first time this has been run.\n")
