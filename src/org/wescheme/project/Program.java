@@ -3,7 +3,9 @@ package org.wescheme.project;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
+import javax.jdo.JDOException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
@@ -17,8 +19,11 @@ import org.json.simple.JSONArray;
 import org.jdom.Element;
 import org.wescheme.util.CacheHelpers;
 import org.wescheme.util.Queries;
+import org.wescheme.util.PMF;
 import org.wescheme.util.XML;
 
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Text;
 
 
@@ -29,6 +34,8 @@ public class Program implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -8015242443391096978L;
+
+	static Logger logger = Logger.getLogger(Program.class.getName());
 
 	@PrimaryKey
 	@Persistent(valueStrategy = IdGeneratorStrategy.IDENTITY)
@@ -69,6 +76,8 @@ public class Program implements Serializable {
 	@Persistent
 	private Long backlink_;
 
+	@Persistent
+	private Long mostRecentShare_;
 
 	@Persistent
 	private Text notes;
@@ -89,6 +98,7 @@ public class Program implements Serializable {
 		this.owner_ 	= ownerName;
 		this.author_ = owner_;
 		this.backlink_ = null;
+		this.mostRecentShare_ = null;
 		this.updateTime();
 	}
 
@@ -111,6 +121,7 @@ public class Program implements Serializable {
 		p.updateTime();
 
 		p = pm.makePersistent(p);
+		this.setMostRecentShare(p.getId());
 		return p;
 	}
 
@@ -203,6 +214,36 @@ public class Program implements Serializable {
 		this.updateTime();
 	}
 
+	public Long getMostRecentShare() {
+		return this.mostRecentShare_;
+	}
+
+	public void setMostRecentShare(Long id) throws JDOException {
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+			Program selfForNewPersistenceManager = getProgramForPersistenceManager(pm, this.getId());
+			selfForNewPersistenceManager.mostRecentShare_ = id;
+			selfForNewPersistenceManager.markOwnerCacheDirty();
+		} finally {
+			pm.close();
+		}
+	}
+
+	private Program getMostRecentShareAsProgram(PersistenceManager pm) throws JDOException {
+		return getProgramForPersistenceManager(pm, this.mostRecentShare_);
+	}
+
+	private Program getProgramForPersistenceManager(PersistenceManager pm, Long id) throws JDOException {
+		try {
+			Key k = KeyFactory.createKey("Program", id);
+			Program prog = pm.getObjectById(Program.class, k);
+			return prog;
+		} catch(JDOException e) {
+			logger.warning("Exception occured while looking up program by id: " + id);
+			logger.warning(e.toString());
+			throw e;
+		}
+	}
 
 	public Element toXML(PersistenceManager pm) { return this.toXML(true, pm); }
 
@@ -317,7 +358,19 @@ public class Program implements Serializable {
 	 * @param pm
 	 * @return
 	 */
-	public List<Program> getBacklinkedPrograms(PersistenceManager pm) {
-		return Queries.getBacklinkedPrograms(pm, this.id);
+	public List<Program> getBacklinkedPrograms(PersistenceManager pm) throws JDOException {
+		List<Program> pl;
+		if (this.mostRecentShare_ == null) {
+			pl = Queries.getBacklinkedPrograms(pm, this.id);
+			if (pl.size() > 0) {
+				Program mostRecentShare = pl.get(0);
+				this.setMostRecentShare(mostRecentShare.getId());
+			}
+		} else {
+			pl = new ArrayList<Program>();
+			Program mostRecentShare = this.getMostRecentShareAsProgram(pm);
+			pl.add(0, mostRecentShare);
+		}
+		return pl;
 	}
 }
