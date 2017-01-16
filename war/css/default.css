@@ -25,7 +25,17 @@ h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #inter, input{
     border: 0px;
 }
 
-#editor, #middle {
+#top {
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    user-select: none;
+}
+
+
+#middle {
+    width: 100%;
     height: 100%;
     font-size: 10pt;
 }
