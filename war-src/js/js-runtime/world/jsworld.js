@@ -583,6 +583,9 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 
   	var mouseIsDown = false;
   	if (config.lookup('onMouse')) {
+	  	if(!(config.lookup('onRedraw') || config.lookup('onDraw'))) {
+	  		handleError("a mouse handler cannot be used without a draw handler");
+	  	}
   		
 	    var wrappedMouse = function(w, e, k) {
           // browsers don't send drag events for *all* move-while-down mouse events,
@@ -714,6 +717,7 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 
 
     var handleError = function(e) {
+    	console.log('handling error', e);
     	/*
 		helpers.reportError(e);
 		// When something bad happens, shut down 
@@ -736,18 +740,23 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 			 }
 			*/
 			if ( types.isSchemeError(e) ) {
+				console.log(1);
 				terminator(e);
 			}
 			else if ( types.isInternalError(e) ) {
+				console.log(2);
 				terminator(e);
 			}
 			else if (typeof(e) == 'string') {
+				console.log(3);
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e, [])) );
 			}
 			else if (e instanceof Error) {
+				console.log(4);
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e.message, [])) );
 			}
 			else {
+				console.log(5);
 				terminator( types.schemeError(e) );
 			}
 		});
