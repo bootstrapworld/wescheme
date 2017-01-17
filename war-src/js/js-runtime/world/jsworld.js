@@ -48,89 +48,83 @@
         };
 }());
 //////////////////////////////////////////////////////////////////////
+var bigBangLog = document.getElementById('bigBangLog');
 
 
-
-
-    var bigBangLog = document.getElementById('bigBangLog');
-
-
-    var caller;
-    var setCaller = function(c) {
-    	caller = function(op, args, k) {
+var caller;
+var setCaller = function(c) {
+	caller = function(op, args, k) {
 		c(op, args, k, handleError);
 	};
-    };
-    var unsetCaller = function() {
-    	caller = function() {
+};
+var unsetCaller = function() {
+	caller = function() {
 		throw new Error('caller not defined!');
 	};
-    };
-    unsetCaller();
+};
+unsetCaller();
 
-    // The restarted and things to set it
-    // Note that we never want to restart the same computation
-    // more than once, so we throw an error if someone tries to do that
-    var restarter;
-    var setRestarter = function(r) {
-	    var hasRestarted = false;
-	    restarter = function(v) {
-		    if (hasRestarted) {
-			    throw new Error('Cannot restart twice!');
-		    }
-		    hasRestarted = true;
-		    r(v);
-	    };
+// The restarted and things to set it
+// Note that we never want to restart the same computation
+// more than once, so we throw an error if someone tries to do that
+var restarter;
+var setRestarter = function(r) {
+    var hasRestarted = false;
+    restarter = function(v) {
+	    if (hasRestarted) {
+		    throw new Error('Cannot restart twice!');
+	    }
+	    hasRestarted = true;
+	    r(v);
     };
-    var unsetRestarter = function() {
+};
+var unsetRestarter = function() {
 	restarter = function() {
 		throw new Error('restarter not defined!');
 	};
-    };
-    unsetRestarter();
+};
+unsetRestarter();
 
-    var terminator;
-    var setTerminator = function(t) {
-	    terminator = t;
-    };
-    var unsetTerminator = function() {
+var terminator;
+var setTerminator = function(t) {
+    terminator = t;
+};
+var unsetTerminator = function() {
 	terminator = function() {
 		throw new Error('terminator not defined!');
 	};
-    };
-    unsetTerminator();
+};
+unsetTerminator();
 
 
 
-    var userConfigs = [];
+var userConfigs = [];
 
-    var startUserConfigs = function(k) {
-	    helpers.forEachK(userConfigs,
-			     function(aConfig, k2) {
-				caller(aConfig.startup, aConfig.startupArgs,
-					function(res) {
-						aConfig.shutdownArg = res;
-						k2()
-					});
-			     },
-			     handleError,
-			     k);
-    }
+var startUserConfigs = function(k) {
+    helpers.forEachK(userConfigs,
+		     function(aConfig, k2) {
+			caller(aConfig.startup, aConfig.startupArgs,
+				function(res) {
+					aConfig.shutdownArg = res;
+					k2()
+				});
+		     },
+		     handleError,
+		     k);
+}
 
-    var shutdownUserConfigs = function(k) {
-//	    console.log('shutting down user configs');
-	    var theConfigs = userConfigs;
-	    userConfigs = []
-	    helpers.forEachK(theConfigs,
-			     function(aConfig, k2) {
-//			     	console.log('    shutting down a config');
-			     	caller(aConfig.shutdown, [aConfig.shutdownArg], k2);
-			     },
-			     handleError,
-			     k);
-    }
+var shutdownUserConfigs = function(k) {
+    var theConfigs = userConfigs;
+    userConfigs = []
+    helpers.forEachK(theConfigs,
+		     function(aConfig, k2) {
+		     	caller(aConfig.shutdown, [aConfig.shutdownArg], k2);
+		     },
+		     handleError,
+		     k);
+}
 
-    var expandHandler = function(handler) {
+var expandHandler = function(handler) {
 	return types.jsObject('function', function() {
 		var wrappedStimulusArgs = [];
 		for (var i = 0; i < arguments.length; i++) {
@@ -144,112 +138,78 @@
 			},
 			function() {});
 	});
-    };
+};
 
+var deepUnwrapJsObjects = function(x, k) {
+    if ( types.isJsObject(x) ) {
+	    k(x.obj);
+    }
+    else if ( types.isRenderEffect(x) ) {
+	    x.callImplementation(caller, function(y) { deepUnwrapJsObjects(y, k); });
+    }
+	/*
+	    var effects = helpers.schemeListToArray( types.renderEffectEffects(x) ).reverse();
+	    types.setRenderEffectEffects(x, types.EMPTY);
 
-//    var unwrapWorldEffects = function(w) {
-//	if ( _js.has_effects(w) ) {
-//		var unwrappedEffects =
-//			helpers.map(function(e) {
-//					if ( types.isEffect(e) ) {
-//						return types.makeJsworldEffect(function(k) {
-//								caller(types.effectThunk(e), [], k);
-//							});
-//					}
-//					else {
-//						return e;
-//					}
-//				    },
-//				    w.getEffects());
-//		var returnVal = _js.with_multiple_effects(w.getWorld(), unwrappedEffects);
-//		return returnVal;
-//	}
-//	else {
-//		return w;
-//	}
-//    };
-
-
-    var deepUnwrapJsObjects = function(x, k) {
-	    if ( types.isJsObject(x) ) {
-		    k(x.obj);
-	    }
-	    else if ( types.isRenderEffect(x) ) {
-		    x.callImplementation(caller, function(y) { deepUnwrapJsObjects(y, k); });
-	    }
-//		    var effects = helpers.schemeListToArray( types.renderEffectEffects(x) ).reverse();
-//		    types.setRenderEffectEffects(x, types.EMPTY);
-//
-//		    helpers.forEachK(effects,
-//				     function(ef, k2) { caller(ef, [], k2); },
-//				     handleError,
-//				     function() { deepUnwrapJsObjects(types.renderEffectDomNode(x), k); });
-//	    }
-	    else if ( types.isPair(x) ) {
-		deepUnwrapJsObjects(x.first(), function(first) {
+	    helpers.forEachK(effects,
+			     function(ef, k2) { caller(ef, [], k2); },
+			     handleError,
+			     function() { deepUnwrapJsObjects(types.renderEffectDomNode(x), k); });
+	}
+	*/
+    else if ( types.isPair(x) ) {
+	deepUnwrapJsObjects(x.first(), function(first) {
 			deepUnwrapJsObjects(x.rest(), function(rest) {
 				k( types.cons(first, rest) );
 			});
 		});
-	    }
-	    else {
-		    k(x);
-	    }
-    };
-    
-
-
-
-
-
-
-
-    // isHandler: X -> boolean
-    // Right now, a handler is a function that consumes and produces
-    // configs.  We should tighten up the type check eventually.
-    var isHandler = function(x) {
-	return typeof(x) == 'function';
     }
+    else {
+	    k(x);
+    }
+};
 
 
+// isHandler: X -> boolean
+// Right now, a handler is a function that consumes and produces
+// configs.  We should tighten up the type check eventually.
+var isHandler = function(x) {
+	return typeof(x) == 'function';
+}
 
 
-    //////////////////////////////////////////////////////////////////////
-    //From this point forward, we define wrappers to integrate jsworld
-    //with Moby.
+//////////////////////////////////////////////////////////////////////
+//From this point forward, we define wrappers to integrate jsworld
+//with Moby.
 
 
-    // getBigBangWindow: -> window
-    var getBigBangWindow = function() {
-        if (window.document.getElementById("jsworld-div") !== undefined) {
-	    return window;
+// getBigBangWindow: -> window
+var getBigBangWindow = function() {
+    if (window.document.getElementById("jsworld-div") !== undefined) {
+    	return window;
 	} else {
 	    var newDiv = window.document.createElement("div");
 	    newDiv.id = 'jsworld-div';
 	    window.document.appendChild(newDiv);
 	    return window;
 	}
-    }
+}
 
 
-    // types are
-    // sexp: (cons node (listof sexp))
-    // css-style: (node (listof (list string string)))
+// types are
+// sexp: (cons node (listof sexp))
+// css-style: (node (listof (list string string)))
 
-    // Exports:
-
-
-
-
-    var isPair = types.isPair;
-    var isEmpty = function(x) { return x === types.EMPTY; };
-    var isList = function(x) { return (isPair(x) || isEmpty(x)); };
+// Exports:
+var isPair = types.isPair;
+var isEmpty = function(x) { return x === types.EMPTY; };
+var isList = function(x) { return (isPair(x) || isEmpty(x)); };
 
 
 
-    // The default printWorldHook will write the written content of the node.
-    // We probably want to invoke the pretty printer here instead!
-    Jsworld.printWorldHook = function(world, node) {
+// The default printWorldHook will write the written content of the node.
+// We probably want to invoke the pretty printer here instead!
+Jsworld.printWorldHook = function(world, node) {
 	var newNode;
 	if(node.lastChild == null) {
 	    newNode = types.toDomNode(world);
@@ -260,13 +220,13 @@
 	    node.replaceChild(newNode, node.lastChild);
 	    helpers.maybeCallAfterAttach(newNode);
 	}
-    };
+};
 
 
 
-    // Figure out the target of an event.
-    // http://www.quirksmode.org/js/events_properties.html#target
-    var findEventTarget = function(e) {
+// Figure out the target of an event.
+// http://www.quirksmode.org/js/events_properties.html#target
+var findEventTarget = function(e) {
 	var targ;
 	if (e.target) 
 	    targ = e.target;
@@ -275,27 +235,27 @@
 	if (targ.nodeType == 3) // defeat Safari bug
 	    targ = targ.parentNode;
 	return targ;
-    }
+}
 
-    // isNode: any -> boolean
-    // Returns true if the thing has a nodeType.
-    var isNode = function(thing) {
+// isNode: any -> boolean
+// Returns true if the thing has a nodeType.
+var isNode = function(thing) {
 	return typeof(thing.nodeType) != 'undefined';
-    }
+}
 
 
 
-    // checkWellFormedDomTree: X X (or number undefined) -> void
-    // Check to see if the tree is well formed.  If it isn't,
-    // we need to raise a meaningful error so the user can repair
-    // the structure.
-    //
-    // Invariants:
-    // The dom tree must be a pair.
-    // The first element must be a node.
-    // Each of the rest of the elements must be dom trees.
-    // If the first element is a text node, it must NOT have children.
-    var checkWellFormedDomTree = function(x, top, index) {
+// checkWellFormedDomTree: X X (or number undefined) -> void
+// Check to see if the tree is well formed.  If it isn't,
+// we need to raise a meaningful error so the user can repair
+// the structure.
+//
+// Invariants:
+// The dom tree must be a pair.
+// The first element must be a node.
+// Each of the rest of the elements must be dom trees.
+// If the first element is a text node, it must NOT have children.
+var checkWellFormedDomTree = function(x, top, index) {
 	var fail = function(formatStr, formatArgs) {
 		throw types.schemeError(
 			types.incompleteExn(types.exnFailContract,
@@ -337,11 +297,10 @@
 
 		fail(formatStr, formatArgs);
 	}
-    };
+};
 
-
-    // Compatibility for attaching events to nodes.
-    var attachEvent = function(node, eventName, fn) {
+// Compatibility for attaching events to nodes.
+var attachEvent = function(node, eventName, fn) {
 	if (node.addEventListener) {
 	    // Mozilla
 	    node.addEventListener(eventName, fn, false);
@@ -352,9 +311,9 @@
 	return function() {
 	    detachEvent(node, eventName, fn);
 	}
-    };
+};
 
-    var detachEvent = function(node, eventName, fn) {
+var detachEvent = function(node, eventName, fn) {
 	if (node.addEventListener) {
 	    // Mozilla
 	    node.removeEventListener(eventName, fn, false);
@@ -362,28 +321,28 @@
 	    // IE
 	    node.detachEvent('on' + eventName, fn, false);
 	}
-    }
+}
 
 
-    var preventDefault = function(event) {
+var preventDefault = function(event) {
 	if (event.preventDefault) {
 	    event.preventDefault();
 	} else {
 	    event.returnValue = false;
 	}
-    }
+}
 
-    var stopPropagation = function(event) {
+var stopPropagation = function(event) {
 	if (event.stopPropagation) {
 	    event.stopPropagation();
 	} else {
 	    event.cancelBubble = true;
 	}
-    }
+}
 
 
-    // bigBang: world dom (listof (list string string)) (arrayof handler) -> world
-    Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRestarter) {
+// bigBang: world dom (listof (list string string)) (arrayof handler) -> world
+Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRestarter) {
 
 	// shutdownListeners: arrayof (-> void)
 	// We maintain a list of thunks that need to be called as soon as we come out of
@@ -402,8 +361,6 @@
 	    });
 	}
 
-
-	//console.log('in high level big-bang');
 	setCaller(theCaller);
 	setRestarter(theRestarter);
 	setTerminator(function(w) {
@@ -430,8 +387,6 @@
 	attachEvent(toplevelNode, 'click', absorber);
 	shutdownListeners.push(function() { detachEvent(toplevelNode, 'click', absorber)});
 
-
-
 	var config = new world.config.WorldConfig();
 	for(var i = 0; i < handlers.length; i++) {
 	    if (isList(handlers[i])) {
@@ -453,9 +408,8 @@
 	var wrappedRedraw;
 	var wrappedRedrawCss;
   	var lastThreeFrameDraws = []; // for FPS calculation
-	
 
-  // on-draw may define separate DOM and CSS handlers
+  	// on-draw may define separate DOM and CSS handlers
 	if (config.lookup('onDraw')) {
 	    wrappedRedraw = function(w, k) {
         try {
@@ -491,8 +445,8 @@
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
 	}
  
-  // on-redraw defines an image-producing handler, and a dummy CSS handler
-  else if (config.lookup('onRedraw')) {
+  	// on-redraw defines an image-producing handler, and a dummy CSS handler
+  	else if (config.lookup('onRedraw')) {
 	    var reusableCanvas = undefined;
 	    var reusableCanvasNode = undefined;
 	    wrappedRedraw = function(w, k) {
@@ -557,8 +511,8 @@
 	    wrappedHandlers.push(_js.on_draw(wrappedRedraw, wrappedRedrawCss));
 	}
  
-  // if no draw handlers are defined, we just print the state of the world
-  else {
+  	// if no draw handlers are defined, we just print the state of the world
+  	else {
 	    wrappedHandlers.push(_js.on_world_change
 				 (function(w, k) { 
 				     Jsworld.printWorldHook(w, toplevelNode);
@@ -618,7 +572,6 @@
       wrappedHandlers.push(_js.stop_when(worldFunction, undefined, lastPictureFunction));
 	}
 	
-
 	if (config.lookup('onKey')) {
 	    // // TODO: add virtual key bindings
 	    // var removeVirtualKeys = addVirtualKeys(stimuli, toplevelNode);
@@ -634,8 +587,12 @@
 	    toplevelNode.focus();
 	}
 
-  var mouseIsDown = false;
-  if (config.lookup('onMouse')) {
+  	var mouseIsDown = false;
+  	if (config.lookup('onMouse')) {
+	  	if(!(config.lookup('onRedraw') || config.lookup('onDraw'))) {
+	  		handleError("a mouse handler cannot be used without a draw handler");
+	  	}
+  		
 	    var wrappedMouse = function(w, e, k) {
           // browsers don't send drag events for *all* move-while-down mouse events,
           // so we use state to track those events
@@ -663,46 +620,30 @@
           caller(config.lookup('onMouse'), [w, scaledX, scaledY, type], k);
 	    }
 	    wrappedHandlers.push(_js.on_mouse(wrappedMouse));
-  }
+  	}
  
-        if (config.lookup('onTap')) {
-	    var wrappedTap = function(w, e, k) {
-                var x = e.pageX, y = e.pageY;
-                var currentElement = e.target;
-                do {
-                    x -= currentElement.offsetLeft;
-                    y -= currentElement.offsetTop;
-                    currentElement = currentElement.offsetParent;
-                } while(currentElement);
+	if (config.lookup('onTap')) {
+		var wrappedTap = function(w, e, k) {
+	        var x = e.pageX, y = e.pageY;
+	        var currentElement = e.target;
+	        do {
+	            x -= currentElement.offsetLeft;
+	            y -= currentElement.offsetTop;
+	            currentElement = currentElement.offsetParent;
+	        } while(currentElement);
 
-		caller(config.lookup('onTap'), [w, x, y], k);
-	    }
-	    wrappedHandlers.push(_js.on_tap(wrappedTap));
-        }
-
+			caller(config.lookup('onTap'), [w, x, y], k);
+		}
+		wrappedHandlers.push(_js.on_tap(wrappedTap));
+	}
 
 	if (config.lookup('onTilt')) {
 	    var wrappedTilt = function(w, gamma, beta, k) {
-		caller(config.lookup('onTilt'), [w, jsnums.makeFloat(gamma), jsnums.makeFloat(beta)], k);
+			caller(config.lookup('onTilt'), [w, jsnums.makeFloat(gamma), jsnums.makeFloat(beta)], k);
 	    }
 	    wrappedHandlers.push(_js.on_tilt(wrappedTilt));
 	    toplevelNode.focus();
 	}
-
-
-// 	if (config.lookup('initialEffect')) {
-// 	    var updaters =
-// 		world.Kernel.applyEffect(config.lookup('initialEffect'));
-// 	    for (var i = 0 ; i < updaters.length; i++) {
-// 		if (config.lookup('stopWhen') && 
-// 		    config.lookup('stopWhen')([initWorld])) {
-// 		    break;
-// 		} else {
-// 		    initWorld = updaters[i](initWorld);
-// 		}
-// 	    }
-// 	}
-	
 
 	startUserConfigs(function() {
 		_js.big_bang(toplevelNode,
@@ -782,58 +723,65 @@
 
 
     var handleError = function(e) {
-//	helpers.reportError(e);
-	// When something bad happens, shut down 
-	// the world computation.
-//	helpers.reportError("Shutting down jsworld computations");
-//	world.stimuli.onShutdown(); 
-	world.stimuli.massShutdown();
-	shutdownUserConfigs(function() {
-//		console.log('Got an error, the error was:');
-//		console.log(e);
-		// if (typeof(console) !== 'undefined' && console.log) {
-		// 	if (e.stack) {
-		// 		console.log(e.stack);
-		// 	}
-		// 	else {
-		// 		console.log(e);
-		// 	}
-		// }
-		if ( types.isSchemeError(e) ) {
-			terminator(e);
-		}
-		else if ( types.isInternalError(e) ) {
-			terminator(e);
-		}
-		else if (typeof(e) == 'string') {
-			terminator( types.schemeError(types.incompleteExn(types.exnFail, e, [])) );
-		}
-		else if (e instanceof Error) {
-			terminator( types.schemeError(types.incompleteExn(types.exnFail, e.message, [])) );
-		}
-		else {
-			terminator( types.schemeError(e) );
-		}
-	});
+    	console.log('handling error', e);
+    	/*
+		helpers.reportError(e);
+		// When something bad happens, shut down 
+		// the world computation.
+		helpers.reportError("Shutting down jsworld computations");
+		world.stimuli.onShutdown(); 
+		*/
+		world.stimuli.massShutdown();
+		shutdownUserConfigs(function() {
+			/*
+			// console.log('Got an error, the error was:');
+			// console.log(e);
+			 if (typeof(console) !== 'undefined' && console.log) {
+			 	if (e.stack) {
+			 		console.log(e.stack);
+			 	}
+			 	else {
+			 		console.log(e);
+			 	}
+			 }
+			*/
+			if ( types.isSchemeError(e) ) {
+				console.log(1);
+				terminator(e);
+			}
+			else if ( types.isInternalError(e) ) {
+				console.log(2);
+				terminator(e);
+			}
+			else if (typeof(e) == 'string') {
+				console.log(3);
+				terminator( types.schemeError(types.incompleteExn(types.exnFail, e, [])) );
+			}
+			else if (e instanceof Error) {
+				console.log(4);
+				terminator( types.schemeError(types.incompleteExn(types.exnFail, e.message, [])) );
+			}
+			else {
+				console.log(5);
+				terminator( types.schemeError(e) );
+			}
+		});
     }
     
 
 
     // updateWorld: CPS( CPS(world -> world) -> void )
     Jsworld.updateWorld = function(updater, k) {
-	var wrappedUpdater = function(w, k2) {
-	    try {
-		updater(w, k2);
-	    } catch (e) {
-		// if (typeof(console) !== 'undefined' && console.log && e.stack) {
-		// 	    console.log(e.stack);
-		//     }
-		handleError(e);
-//		k2(w);
-	    }
-	}
+		var wrappedUpdater = function(w, k2) {
+		    try {
+				updater(w, k2);
+		    } catch (e) {
+				handleError(e);
+				//k2(w);
+		    }
+		}
 
-	_js.change_world(wrappedUpdater, k);
+		_js.change_world(wrappedUpdater, k);
     }
     
 
@@ -888,7 +836,6 @@
 
     Jsworld.input = function(type, updateF, attribs) {
 	    var wrappedUpdater = function(w, evt, k) {
-//		    console.log(e);
 		    caller(updateF, [w, evt], k);
 	    }
 	    return _js.input(type, wrappedUpdater, attribs);
@@ -921,7 +868,6 @@
 
     Jsworld.select = function(options, updateF, attribs) { 
 	    var wrappedUpdater = function(w, e, k) {
-//		    console.log(e);
 		    caller(updateF, [w, e.target.value], k);
 	    }
 	    return _js.select(attribs, options, wrappedUpdater);

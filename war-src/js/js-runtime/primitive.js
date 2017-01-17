@@ -300,7 +300,7 @@ var WorldConfigOption = types.Class.extend({
 var isWorldConfigOption = function(x) { return x instanceof WorldConfigOption; };
 
 var onEvent = function(funName, inConfigName, numArgs) {
-    return function(aState, handler) {
+	return function(aState, handler) {
 		checkHandlerArity(aState, funName, numArgs, handler.numParams);
 
 		return onEventBang(funName, inConfigName)(
@@ -5766,7 +5766,7 @@ PRIMITIVES['on-tilt'] = new PrimProc('on-tilt', 1, false, false, onEvent('on-til
 PRIMITIVES['on-key'] = new PrimProc('on-key', 1, false, false, onEvent('on-key', 'onKey', 2));
 PRIMITIVES['on-key!'] = new PrimProc('on-key!', 2, false, false, onEventBang('on-key!', 'onKey'));
  
-PRIMITIVES['on-mouse'] = new PrimProc('on-mouse', 1, false, false, onEvent('on-mouse', 'onMouse', 3));
+PRIMITIVES['on-mouse'] = new PrimProc('on-mouse', 1, false, false, onEvent('on-mouse', 'onMouse', 4));
 
 
 PRIMITIVES['mouse-event?'] =
