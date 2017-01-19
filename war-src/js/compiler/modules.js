@@ -200,7 +200,7 @@ plt.compiler = plt.compiler || {};
                                             ,"put-image"
                                             ,"place-image"
                                             ,"place-image/align"
-                                            ,"put-pinhole"
+                            //,"put-pinhole"
                                             ,"circle"
                                             ,"star"
                                             ,"polygon"
