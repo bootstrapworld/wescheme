@@ -45,49 +45,51 @@ h2{
   top:          65px;
   color:        black;
   z-index:		  5;
+  padding-left: 25px;
 }
 
-#toolbar ul {
-  clear:        both;
-  list-style-type:none;
+#toolbar ul { list-style-type:none; }
+#toolbar ul li { display: inline-block; width: 250px;}
+#toolbar ul li > * { display: inline-block; width: 180px; height: 20px}
+#toolbar ul li > *:hover {
+  background:   rgb(117, 50, 138);
+  color:        white;
+  cursor:       pointer;
 }
 
-#toolbar li.start{
-  float:			 left;
-  width:			 210px;
+#start a {
   text-align:  left;
-  clear:			 right;
+  padding-left: 40px;
 }
-
-
-#toolbar li.logout{
-  float:			 right;
-  width:			 125px;
-  text-align:  center;
-  background-repeat: no-repeat;
-  background-position: 0 50%;
-  clear:			 right;
+#bootstrapFiles span {
+  text-align: center;
+  padding: 0px 10px; 
 }
+#logout { float: right; text-align: center;}
+#logout * {width: 180px;}
+#logout:hover *{color: white;}
 
-
-#toolbar li a, #toolbar li a:visited, #toolbar li input{
-  display:		  block;
+#toolbar *, #toolbar a:visited {
   color:			  black;
-  width:			  100%;
   text-decoration:none;
   font-size:		14px;
   background:		none;
   border:			  0px;
-  height:			  20px;
-}
-#toolbar li.start a{padding-left: 65px;}
-
-#toolbar li a:hover, #toolbar li input:hover{
-  background:   rgb(117, 50, 138);
-  color:        white;
-  cursor:			  pointer;
 }
 
+#toolbar ul li #bootstrapFileList {
+  position:     absolute;
+  background:   #B6D990;
+  height:       auto;
+  display:      none;
+}
+#toolbar #bootstrapFiles:hover #bootstrapFileList {
+  position:     absolute;
+  display:      block;
+  width:        194px;
+  padding:      3px;
+}
+#bootstrapFileList li { padding: 1px 0px; } 
 
 /* tooltips */
 .tooltip {

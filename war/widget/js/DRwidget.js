@@ -729,6 +729,8 @@ var initializeWidget = (function () {
         
         // add a demo DR widget at cursor location
         var showWidget = function(){
+            var countingImg = new Image();
+            countingImg.src = "images/widget-count.png?timestamp="+new Date();
             clearForm();
 
             // document.getElementById('design-recipe-insertCode').disabled = true;
