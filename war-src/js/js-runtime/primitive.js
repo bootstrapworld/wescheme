@@ -2541,6 +2541,17 @@ PRIMITIVES['list'] =
 		 function(aState, v) { return types.list(v); });
 
 
+PRIMITIVES['make-list'] =
+    new PrimProc('make-list',
+		 2,
+		 false, false,
+		 function(aState, i, v) {
+			check(aState, i, isNatural, 'make-list', 'non-negative exact integer', 1, arguments);
+			var values = [];
+			for(var x = 0; x<i; x++){ values.push(v); }
+			return types.list(values);
+		 });
+
 PRIMITIVES['range'] =
     new PrimProc('range',
 		 3,
