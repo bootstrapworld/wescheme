@@ -213,9 +213,10 @@ var WeSchemeTextContainer;
   	var currentHighlightNumber = 0;
 	CodeMirrorImplementation.prototype.highlight = function(id, offset, line, column, span, color) {
 		offset--; //off-by-one otherwise
-		var stylesheet = document.styleSheets[0], //this is default.css
-        name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 
+		// make sure we're getting the right stylesheet!
+		var stylesheet = document.querySelectorAll('[href="/css/default.css"]')[0].sheet,
+        name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 		currentHighlightNumber++;
             
 	    if (stylesheet.insertRule) {
@@ -227,10 +228,8 @@ var WeSchemeTextContainer;
 		var start = this.editor.posFromIndex(parseInt(offset)),
         	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
         	highlightedArea = this.editor.markText(start, end, {className: name});
-
  		this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);
-
  		//return highlightedArea;
  		return {clear: function() { return highlightedArea.clear(); },
             	find: function() { return highlightedArea.find();  },

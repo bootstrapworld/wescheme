@@ -264,12 +264,11 @@ var WeSchemeEditor;
     WeSchemeEditor.prototype.highlight = function(id, offset, line, column, span, color) {
     	if(id === '<no-location>'){
 	    //do nothing
-    	}
-	else if (id === '<definitions>') {
-	    return this.defn.highlight(id, offset, line, column, span, color);
-	} else if (this.interactions.previousInteractionsTextContainers[id]) {
-	    return this.interactions.previousInteractionsTextContainers[id].highlight(id, offset, line, column, span, color);
-	}
+    	} else if (id === '<definitions>') {
+		    return this.defn.highlight(id, offset, line, column, span, color);
+		} else if (this.interactions.previousInteractionsTextContainers[id]) {
+		    return this.interactions.previousInteractionsTextContainers[id].highlight(id, offset, line, column, span, color);
+		}
     };
 
     WeSchemeEditor.prototype.setSelection = function(id, offset, line, column, span, color) {
