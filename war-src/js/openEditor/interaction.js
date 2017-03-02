@@ -770,7 +770,7 @@ WeSchemeInteractions = (function () {
                             }),
                         withCancellingOnReset(
                             that,
-                            function(err) { 
+                            function(err) {
                                 that.handleError(err); 
                                 that.enableInput();
                                 putFocus();
@@ -901,7 +901,6 @@ WeSchemeInteractions = (function () {
         var currColor = colors[colorIndex][0];
         var i;
 
-
         // Helper: iterate across elts, and pick a new tint.  Apply f on each elt with that new tint.
         var foreachTint = function(elts, f) {
             var currTint;
@@ -968,17 +967,14 @@ WeSchemeInteractions = (function () {
                     jQuery(msgDom).append("\u00bb"); // right-pointing-double-angle quotation mark
                     colorIndex = (colorIndex + 1) % colors.length;
                 }
-            }
-            else {
+            } else {
                 msgDom.appendChild(document.createTextNode(part.text+''));
             }
         };
 
         var doPlainPart = function(part) {
             msgDom.appendChild(document.createTextNode(part+''));
-            
         };
-
         for (i = 0; i < args.length; i++){
             currColor = colors[colorIndex][0];
             if (types.isColoredPart(args[i])) {
@@ -1122,10 +1118,8 @@ WeSchemeInteractions = (function () {
                 msg = that.evaluator.getMessageFromExn(err);
             }
         }
-
         var msgDom = document.createElement('div');
         msgDom['className'] = 'moby-error:message';
-
         if(types.isMessage(msg)) {
             if (that.withColoredErrorMessages) {
                 //if it is a Message, do special formatting
@@ -1136,8 +1130,7 @@ WeSchemeInteractions = (function () {
         } else {
             if(err.domMessage){
               dom.appendChild(err.domMessage);
-            }
-            else {
+            } else {
               msgDom.appendChild(document.createTextNode(msg));
             }
         } 
@@ -1147,7 +1140,6 @@ WeSchemeInteractions = (function () {
             var link = that.createLocationHyperlink(err.structuredError.location);
             dom.appendChild(link);
         }
-
         var stacktrace = that.evaluator.getTraceFromExn(err);
         var stacktraceDiv = document.createElement("div");
         stacktraceDiv['className'] = 'error-stack-trace';
@@ -1155,9 +1147,7 @@ WeSchemeInteractions = (function () {
             var anchor = that.createLocationHyperlink(stacktrace[i]);
             stacktraceDiv.appendChild(anchor);
         }
-
-        //do stuff with feedback here
-
+        
         // don't give a stack trace if the user halts the program
         if(!(types.isSchemeError(err) && types.isExnBreak(err.val))){
           dom.appendChild(stacktraceDiv);
