@@ -2789,7 +2789,22 @@ PRIMITIVES['memv'] =
 			return false;
 		 });
 
-PRIMITIVES['member'] = 
+
+PRIMITIVES['member'] =
+    new PrimProc('member',
+		 2,
+		 false, false,
+		 function(aState, item, lst) {
+		 	checkList(aState, lst, 'member', 2, arguments);
+		 	while ( !lst.isEmpty() ) {
+		 		if ( isEqual(item, lst.first()) ) {
+		 			return lst;
+		 		}
+		 		lst = lst.rest();
+		 	}
+		 	return false;
+		 });
+
 PRIMITIVES['member?'] =
     new PrimProc('member?',
 		 2,
