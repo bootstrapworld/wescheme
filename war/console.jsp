@@ -71,7 +71,7 @@
 		</li>
     <li id="bootstrapFiles">
       <span class="menu">
-        Bootstrap:1 Starter Files &#9660;
+        Bootstrap Starter Files &#9660;
       </span>
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="http://www.wescheme.org/view?publicId=sggzRzgU5T">NinjaCat</a></li>
