@@ -1082,7 +1082,7 @@ if (typeof(world) === 'undefined') {
     // TextImage: String Number Color String String String String any/c Boolean -> Image
     var TextImage = function(str, size, color, face, family, style, weight, underline, outline) {
         BaseImage.call(this);
-        this.str        = str;
+        this.str        = JSON.stringify(str); // show all escape chars
         this.size       = size;   // 18
         this.color      = color;  // red
         this.face       = face;   // Gill Sans
@@ -1109,7 +1109,7 @@ if (typeof(world) === 'undefined') {
         image.width = 42; image.height = 1;           // we use a dataURL to reduce dependency on external image files
         image.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWM4MbPgPwAGzwLR05RbqwAAAABJRU5ErkJggg==";
         container.style.cssText = "position: absolute; top: 0px; left: 0px; zIndex=-1; white-space: pre;";
-        parent.appendChild(document.createTextNode(str));
+        parent.appendChild(document.createTextNode(JSON.stringify(str))); // show all escape chars
         parent.appendChild(image);
         container.appendChild(parent);
         document.body.appendChild(container);
