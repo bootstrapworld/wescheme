@@ -66,13 +66,27 @@
 <div id="toolbar">
   <h2 class="screenreader-only">Navigation</h2>
 	<ul>
-		<li class="start">
+		<li id="start">
 		  <a href="/openEditor" target="_blank">
 		    Start a new program
 		  </a>
 		</li>
+    <li id="bootstrapFiles">
+      <span class="menu">
+        Bootstrap Starter Files &#9660;
+      </span>
+      <ul id="bootstrapFileList">
+        <li><a target="_blank" href="http://www.wescheme.org/view?publicId=sggzRzgU5T">NinjaCat</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=v4LVoL7R9m">Defining Values</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=qAGwmaRXYy">Game Template</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=EHgrsZlYNX">Rocket-Height</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/view?publicId=48low6MazC">Sam the Butterfly</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=E57eyBCTtD">Luigi's Pizza</a></li>
+      </ul>
+    </li>
 
-		<li class="logout">
+		<li id="logout">
 			<form id="logoutForm" method="POST" action="/logout">
 			<input name="logout" value="Logout" type="submit">
 			</form>

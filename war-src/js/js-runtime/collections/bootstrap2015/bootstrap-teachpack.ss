@@ -110,7 +110,7 @@
          (cx (posn-x screen-point))
          (cy (posn-y screen-point))
          (dbg-bkgnd (if (not (string=? (unbox *distances-color*) ""))
-                        (add-informative-triangle cx cy (unbox TITLE-COLOR)
+                        (add-informative-triangle cx cy (unbox *distances-color*)
                                                   background)
 
                         background)))

@@ -1,19 +1,26 @@
 /* Some global settings */
-body{
-  background: url(images/bootBG.png) no-repeat fixed white; 
-  background-position: bottom right; 
-  text-align: left;
+html, body, .EntryHeader{	min-width:		300px; }
+html, body, h1, h2, #header, #fileInfo, #toolbar *, #defn, #footer, #inter, input, form{
+  padding:		  0px;
+  font-family:  Lato, Century Gothic, Arial, Helvetica, sans-serif;
+  margin:			  0px;
+  font-weight:  lighter;
+}
+
+body{background: url(images/bootBG.png) no-repeat fixed white; background-position: bottom right; width: 100%;}
+.form {
+  display: inline-block;
 }
 
 /* 65px: LOGO AND TITLE */
 .header{
-  position:		fixed;
-  top:			0px;
-  width:			100%;
-  height:			65px;
-  background:		url(images/icon-trans.png) no-repeat black;
-  z-index:		5;
-  color: white;
+  position:		 fixed;
+  top:			   0px;
+  width:			 100%;
+  height:		   65px;
+  background:	 url(images/icon-trans.png) no-repeat black;
+  z-index:	   5;
+  color:       white;
 }
 .h1{
   font-size: 38px;
@@ -24,7 +31,7 @@ body{
   font-size: 14px;
   font-style: italic;
   padding-left: 65px;
-  color: lightgray;
+  color:        lightgray;
 }
 
 /* 20px: TOOLBAR, BUTTONS, ETC */
@@ -69,8 +76,7 @@ body{
   text-decoration:none;
   font-size:		14px;
   background:		none;
-  border:			0px;
-  height:			20px;
+  border:			  0px;
 }
 #toolbar li.start a{padding-left: 65px;}
 #toolbar li a:hover, #toolbar li input:hover{
@@ -78,7 +84,6 @@ body{
   color:      white;
   cursor:			pointer;
 }
-
 /* flex: PROGRAM LIST */
 div#programList{
   position:		 absolute;
@@ -119,7 +124,7 @@ img.button {width: 18px; height: 18px; cursor: pointer; position: relative;}
 img:hover+div, #programList img+div:hover{display: inline-block; }
 
 a.headerlink {
-  color: black;
+  color:        black;
   text-decoration:none;
 }
 
