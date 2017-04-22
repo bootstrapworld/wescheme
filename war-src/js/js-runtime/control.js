@@ -857,6 +857,7 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
     	}
     	return argColoredParts;
     }
+
     var procedureType = types.getProcedureType(procValue);
     if ( !procedureType ) {
 	    var argStr = getArgStr('; arguments were:');
@@ -874,12 +875,12 @@ var selectProcedureByArity = function(aState, n, procValue, operands) {
 
         var op = types.vector([exprLoc[0], exprLoc[1], exprLoc[2], exprLoc[3], 1]);
         var cp = types.vector([exprLoc[0], exprLoc[1] + exprLoc[4] - 1, exprLoc[2], exprLoc[3] + exprLoc[4] - 1, 1]);
-        var procString = procValue.toWrittenString? procValue.toWrittenString() : procValue.toString();
+
 	    helpers.raise(
 		types.incompleteExn(types.exnFailContract,
             new types.Message([new types.MultiPart("function call", [op, cp], true),
                                 ": expected function, given: ",
-                                new types.ColoredPart(procString, locationList.first())
+                                new types.ColoredPart(procValue.toWrittenString(), locationList.first())
                                 ]),
                              []));
 
