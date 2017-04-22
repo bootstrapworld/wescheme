@@ -1116,7 +1116,7 @@ if (typeof(world) === 'undefined') {
     // the polygon is inscribed in a circle, whose radius is length/2sin(pi/count)
     // another circle is inscribed in the polygon, whose radius is length/2tan(pi/count)
     // rotate a 3/4 quarter turn plus half the angle length to keep bottom base level
-    var PolygonImage = function(length, count, step, style, color) {
+    var PolygonImage = function(length, count, step, style, color, ariaOverride) {
         BaseImage.call(this);
         this.outerRadius = Math.round(length/(2*Math.sin(Math.PI/count)));
         this.innerRadius = Math.round(length/(2*Math.tan(Math.PI/count)));
@@ -1135,8 +1135,9 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        this.ariaText   = " a"+colorToSpokenString(color,style) + ", " + count
-                            +" sided polygon with each side of length " + length;
+        this.ariaText   = " a"+colorToSpokenString(color,style) + 
+            (ariaOverride? " " + ariaOverride + " of size "+length
+                : ", " + count+" sided polygon with each side of length " + length);
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
@@ -1682,8 +1683,8 @@ if (typeof(world) === 'undefined') {
     world.Kernel.rhombusImage = function(side, angle, style, color) {
         return new RhombusImage(side, angle, style, color);
     };
-    world.Kernel.polygonImage = function(length, count, step, style, color) {
-        return new PolygonImage(length, count, step, style, color);
+    world.Kernel.polygonImage = function(length, count, step, style, color, ariaOverride) {
+        return new PolygonImage(length, count, step, style, color, ariaOverride);
     };
     world.Kernel.posnImage = function(posns, style, color) {
         return new PosnImage(posns, style, color);

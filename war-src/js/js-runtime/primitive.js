@@ -4595,11 +4595,13 @@ PRIMITIVES['star'] =
 			  if (colorDb.get(color)) {
 			      color = colorDb.get(color);
 			  }
-			  return world.Kernel.polygonImage(jsnums.toFixnum(sideLength), 
-							   jsnums.toFixnum(5), 
-							   jsnums.toFixnum(2), 
-							   mode.toString(), 
-							   color);
+			  return world.Kernel.polygonImage(
+			  					jsnums.toFixnum(sideLength), 
+							   	jsnums.toFixnum(5), 
+							   	jsnums.toFixnum(2), 
+							   	mode.toString(), 
+							   	color,
+							   	"star");
 		      })]);
 
 
