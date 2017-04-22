@@ -1161,6 +1161,7 @@ var numberToDomNode = function(n) {
           node = rationalToDomNode(n);
           className = node.className;
           ariaText = node.ariaText + ", Rational";
+          return node;
       } else if (isComplex(n)) {
           className = "wescheme-number Complex";
           ariaText += ", Complex Number";
@@ -1284,7 +1285,6 @@ var liftToplevelToFunctionValue = function(primitiveF,
 	    return "#<function:" + name + ">";
 	};
 	lifted.toDomNode = function() {
-	console.log('lifted');
 		return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ", a function");
 	};
 	lifted.toDisplayedString = lifted.toWrittenString;
