@@ -747,18 +747,23 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 			 }
 			*/
 			if ( types.isSchemeError(e) ) {
+				console.log(1);
 				terminator(e);
 			}
 			else if ( types.isInternalError(e) ) {
+				console.log(2);
 				terminator(e);
 			}
 			else if (typeof(e) == 'string') {
+				console.log(3);
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e, [])) );
 			}
 			else if (e instanceof Error) {
+				console.log(4);
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e.message, [])) );
 			}
 			else {
+				console.log(5);
 				terminator( types.schemeError(e) );
 			}
 		});
