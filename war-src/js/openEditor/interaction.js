@@ -22,9 +22,6 @@ WeSchemeInteractions = (function () {
     'use strict';
 
     var Prompt, makeFreshId;
-    var ISMAC = navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i)?true:false;
-    var MODKEY = ISMAC? "Alt" : "Ctrl";
-
 
     // WeSchemeInteractions: div (WeSchemeInteractions -> void) -> WeScheme
     var WeSchemeInteractions = function(interactionsDiv, afterInit) {
@@ -53,13 +50,13 @@ WeSchemeInteractions = (function () {
                     };
 
                     // Note: When starting a new prompt, the last element of
-                    // "historyArray" is always {code: "", output: false}, and "historyIndex"
+                    // "historyArray" is always an empty string, and "historyIndex"
                     // is the index of the last element in "historyArray".
-                    // When recalling history, the last code element of "historyArray"
+                    // When recalling history, the last element of "historyArray"
                     // can be set to the line being edited (if different from the
                     // history it recalls), so that a user can back out of the
                     // history recall to return to the edited line.
-                    prompt.historyArray = [{code: "", output: false}];
+                    prompt.historyArray = [""];
                     prompt.historyIndex = 0;
                     prompt.maxSavedHistory = 100;
 
@@ -112,38 +109,21 @@ WeSchemeInteractions = (function () {
         this.withColoredErrorMessages = false;
     };
 
+
+
+    // clearLine: -> void
+    // Make sure we're on a line that's clear of any floats.
+    WeSchemeInteractions.prototype.clearLine = function() {
+        var clearDiv = document.createElement("div");
+        clearDiv.style.clear = 'left';
+        clearDiv.setAttribute("aria-hidden", true); // ARIA: don't read the clear DIV
+        this.addToInteractions(clearDiv);
+    };
+
     // Sets the text in the prompt.
     WeSchemeInteractions.prototype.setPromptText = function(t) {
         this.prompt.setText(t);
     };
-
-    // announce a msg by prepending it to the log, then (optionally) forget it by deleting
-    WeSchemeInteractions.prototype.say = function(msg, forget) {
-        if(msg==='') return;
-        var announcements = document.getElementById("announcementlist");
-        var li = document.createElement("LI");
-        li.appendChild(document.createTextNode(msg));
-        announcements.insertBefore(li, announcements.firstChild);
-        if(forget) { 
-            setTimeout(function(){
-                announcements.removeChild(li);
-            }, 1000);
-        }
-    }
-    WeSchemeInteractions.prototype.sayAndForget = function(msg) {
-        this.say(msg, true);
-    }
-
-    // speak the nth interaction and result (0=10)
-    WeSchemeInteractions.prototype.speakHistory = function(n) {
-        if(n===0) { n = 10; }// use 0 as 10
-        var historySize = this.prompt.historyArray.length-1; // the last elt is always ""
-        if(n > historySize) { return false; } // don't speak a history that doesn't exist!
-        var history = this.prompt.historyArray[historySize - n];
-        this.sayAndForget(history.code + (history.output? " evaluates to " + history.output
-                                                        : " did not produce any value"));
-        return true;
-    }
 
     //////////////////////////////////////////////////////////////////////
     Prompt = function(interactions, parentDiv, K) {
@@ -164,47 +144,20 @@ WeSchemeInteractions = (function () {
                       if (that.hasCompleteExpression()) {
                           that.onEvaluation();
                       } else {
-                        CodeMirror.commands.newlineAndIndent(ed);
+                          CodeMirror.commands.newlineAndIndent(ed);
                       }
                   },
-                  "Shift-Enter": function(ed) {
-                    CodeMirror.commands.newlineAndIndent(ed);
-                  },
-                  "Alt-Down":function (ed) {
+                  "Ctrl-N":function (ed) {
                       that.onHistoryNext();
                   },
-                  "Alt-Up":function (ed) {
+                  "Ctrl-P":function (ed) {
                       that.onHistoryPrevious();
                   },
-                  "Alt-1":function (ed) {
-                      interactions.speakHistory(1);
+                  "Alt-N":function (ed) {
+                      that.onHistoryNext();
                   },
-                  "Alt-2":function (ed) {
-                      interactions.speakHistory(2);
-                  },
-                  "Alt-3":function (ed) {
-                      interactions.speakHistory(3);
-                  },
-                  "Alt-4":function (ed) {
-                      interactions.speakHistory(4);
-                  },
-                  "Alt-5":function (ed) {
-                      interactions.speakHistory(5);
-                  },
-                  "Alt-6":function (ed) {
-                      interactions.speakHistory(6);
-                  },
-                  "Alt-7":function (ed) {
-                      interactions.speakHistory(7);
-                  },
-                  "Alt-8":function (ed) {
-                      interactions.speakHistory(8);
-                  },
-                  "Alt-9":function (ed) {
-                      interactions.speakHistory(9);
-                  },
-                  "Alt-0":function (ed) {
-                      interactions.speakHistory(0);
+                  "Alt-P":function (ed) {
+                      that.onHistoryPrevious();
                   }
               }},
             function(container) {
@@ -238,8 +191,10 @@ WeSchemeInteractions = (function () {
         parentDiv.appendChild(textareaSpan);
         that.interactions.addToInteractions(parentDiv);
                         
-        // ARIA: don't read the caret
-        promptSpan.setAttribute("aria-hidden", "true");
+        // ARIA: don't read the group, the caret or the contents
+        parentDiv.setAttribute(   "aria-hidden", "true");
+        promptSpan.setAttribute(  "aria-hidden", "true");
+        textareaSpan.setAttribute("aria-hidden", "true");
 
         // // FIXME: figure out how to get the line height
         // dynamically, because I have no idea how to do
@@ -262,26 +217,28 @@ WeSchemeInteractions = (function () {
             that.focus();
     };
 
-    function historyPreviousIsOk(index, length) {
-        return (index > 0);
-    }
+    // TODO: historyPreviousIsOk and historyNextIsOk don't have to be methods.
 
-    function historyNextIsOk(index, length) {
+    Prompt.prototype.historyPreviousIsOk = function(index, length) {
+        return (index > 0);
+    };
+
+    Prompt.prototype.historyNextIsOk = function(index, length) {
         return ((length - index) > 1);
     }
 
     Prompt.prototype.onHistoryPrevious = function() {
-        this.doHistory(-1, historyPreviousIsOk);
+        this.doHistory(-1, this.historyPreviousIsOk);
     };
 
     Prompt.prototype.onHistoryNext = function() {
-        this.doHistory(1, historyNextIsOk);
+        this.doHistory(1, this.historyNextIsOk);
     };
 
     Prompt.prototype.doHistory = function(increment, incrementIsOk) {
         if (this.historyArray.length > 1) {
             var code = jQuery.trim(this.textContainer.getCode());
-            if (code === this.historyArray[this.historyIndex].code) {
+            if (code === this.historyArray[this.historyIndex]) {
                 // The code *is* the same as the history slot, so do the increment if OK.
                 if (incrementIsOk(this.historyIndex, this.historyArray.length)) {
                     this.doHistoryPart2(increment);
@@ -294,7 +251,7 @@ WeSchemeInteractions = (function () {
                 var tentativeIndex = (this.historyArray.length - 1);
                 if (incrementIsOk(tentativeIndex, this.historyArray.length)) {
                     this.historyIndex = tentativeIndex;
-                    this.historyArray[this.historyIndex].code = code;
+                    this.historyArray[this.historyIndex] = code;
                     this.doHistoryPart2(increment);
                 }
             }
@@ -304,17 +261,16 @@ WeSchemeInteractions = (function () {
 
     Prompt.prototype.doHistoryPart2 = function(increment) {
         this.historyIndex += increment;
-        var dom = this.textContainer.getDiv();
-        this.interactions.say(this.historyArray[this.historyIndex].code);
-        this.textContainer.setCode(this.historyArray[this.historyIndex].code);
+        this.textContainer.setCode(this.historyArray[this.historyIndex]);
+        // TODO: !!! setCursorToEnd doesn't yet work.
         this.textContainer.setCursorToEnd();
     };
 
     Prompt.prototype.saveHistoryWithCleanup = function() {
         var newEntry = jQuery.trim(this.textContainer.getCode());
         var lastIndex = (this.historyArray.length - 1);
-        this.historyArray[lastIndex].code = newEntry;
-        var prevEntry = ((lastIndex < 1) ? null : this.historyArray[lastIndex - 1].code);
+        this.historyArray[lastIndex] = newEntry;
+        var prevEntry = ((lastIndex < 1) ? null : this.historyArray[lastIndex - 1]);
         if (prevEntry && (prevEntry === newEntry)) {
             // The new entry is the same as the previous, so fall through and
             // let the new entry be reset to a blank.
@@ -334,21 +290,19 @@ WeSchemeInteractions = (function () {
             // the array.
             lastIndex = this.historyArray.length;
         }
-        this.historyArray[lastIndex] = {code: "", output: false};
+        this.historyArray[lastIndex] = "";
         this.historyIndex = lastIndex;
     };
-
-    // setRecentOutput : String -> Void
-    Prompt.prototype.setRecentOutput = function(str) {;
-        if((this.historyIndex > 0) && (this.historyIndex < this.historyArray.length)) {
-            this.historyArray[this.historyIndex - 1].output = str;
-        }
-    }
 
     // hasExpressionToEvaluate: -> boolean
     // Return true if the prompt contains a complete expression
     Prompt.prototype.hasCompleteExpression = function() {
-        return plt.wescheme.tokenizer.hasCompleteExpression(this.textContainer.getCode());
+        var codePastCursor = this.textContainer.getCode(this.textContainer.getCursorStartPosition());
+        if (codePastCursor.match(new RegExp("[^\\s]"))) {
+            return false;
+        }
+        var codeUpToCursor = this.textContainer.getCode(0, this.textContainer.getCursorStartPosition());
+        return plt.wescheme.tokenizer.hasCompleteExpression(codeUpToCursor);
     };
 
 
@@ -457,7 +411,6 @@ WeSchemeInteractions = (function () {
     var makeFreshEvaluator = function(that, afterInit) {         
         var evaluator = new Evaluator({
             write: function(thing) {
-                var ariaText = thing.ariaText || thing.innerText;
                 // if it's a canvas element, make double-clicking generate an image file in a new window
                 // use Blobs instead of dataURL, since some browser/OS combos choke on Very Long URLs
                 // see https://code.google.com/p/chromium/issues/detail?id=69227
@@ -486,13 +439,18 @@ WeSchemeInteractions = (function () {
                                         }
                                       };
                     thing.style.cursor    = "url(css/images/dblclick.png), pointer";
+                    // Accessibility: canvas elements serve as our image types
+                    var ariaText = document.createTextNode(thing.ariaText);
+                    thing.setAttribute("role", "image");
+                    thing.appendChild(ariaText);
+                                    
                 }
                 thing.className += " replOutput";
-                thing.setAttribute("aria-label", ariaText);
                 that.addToInteractions(thing);
-                that.sayAndForget(ariaText);
-                if(ariaText!=="") that.prompt.setRecentOutput(ariaText);
                 rewrapOutput(thing);
+                // ARIA: create alternate text for canvas element
+                thing.setAttribute("role", "alert");
+                thing.setAttribute("aria-atomic", "true");
             },
             transformDom : function(dom) {
                 var result = that._transformDom(dom);
@@ -506,11 +464,7 @@ WeSchemeInteractions = (function () {
             evaluator,
             function() {
                 evaluator.makeToplevelNode = function() {
-                    // block screen-readers
-                    document.getElementById('editor').setAttribute('aria-hidden', true);
                     var handleClose = function(event, ui) {
-                        // unblock screen-readers
-                        document.getElementById('editor').removeAttribute('aria-hidden');
                         that.evaluator.requestBreak();
                         dialog.dialog("destroy");
                     };
@@ -591,7 +545,7 @@ WeSchemeInteractions = (function () {
                         dialog.dblclick(toggleFullScreen);
                     }
 
-                    var innerArea = jQuery("<div class='evaluatorToplevelNode' role='log' aria-live='polite'></div>");
+                    var innerArea = jQuery("<div class='evaluatorToplevelNode'></div>");
                     innerArea.css("background-color", "white");
                     // make sure there are no other topLevelEvaluationNodes
                     while(dialog[0].firstChild) dialog[0].removeChild(dialog[0].firstChild);
@@ -643,10 +597,6 @@ WeSchemeInteractions = (function () {
         this.focus = focus;
     };
 
-    WeSchemeInteractions.prototype.focus = function() {
-        this.prompt.focus();
-    };
-
     WeSchemeInteractions.prototype.addOnReset = function(onReset) {
         this.resetters.push(onReset);
     };
@@ -660,6 +610,8 @@ WeSchemeInteractions = (function () {
             }
         } 
     };
+
+    
 
     // Returns if x is a dom node.
     function isDomNode(x) {
@@ -742,13 +694,6 @@ WeSchemeInteractions = (function () {
     // Evaluate the source code and accumulate its effects.
     WeSchemeInteractions.prototype.runCode = function(aSource, sourceName, contK) {
         var that = this;
-        // ugly hack to make sure that focus is returned to wherever it
-        // was before the Run command was initiated
-        function putFocus(){
-            var defInFocus = plt.wescheme.WeSchemeEditor.defnInFocus;
-            if(defInFocus) jQuery("#definitions").click();
-            else that.focusOnPrompt();
-        }
         setTimeout(
             withCancellingOnReset(
                 that,
@@ -763,15 +708,15 @@ WeSchemeInteractions = (function () {
                             that,
                             function() { 
                                 that.enableInput();
-                                putFocus();
+                                that.focusOnPrompt();
                                 contK();
                             }),
                         withCancellingOnReset(
                             that,
-                            function(err) {
+                            function(err) { 
                                 that.handleError(err); 
                                 that.enableInput();
-                                putFocus();
+                                that.focusOnPrompt();
                                 contK();
                             }));
                 }),
@@ -779,10 +724,7 @@ WeSchemeInteractions = (function () {
     };
 
     WeSchemeInteractions.prototype.handleError = function(err) {
-        var dom = renderErrorAsDomNode(this, err);
-        this.addToInteractions(dom);
-        this.say(dom.textContent);
-        this.prompt.setRecentOutput(dom.textContent);
+        this.addToInteractions(renderErrorAsDomNode(this, err));
         this.addToInteractions("\n");
     };
 
@@ -862,6 +804,7 @@ WeSchemeInteractions = (function () {
         return new types.Message(msg);
     };
 
+
     // that: ???
     // msgDom: dom.  The target element that we write output to.
     // args: arrayof (U string ColoredPart GradiantPart MultiPart)
@@ -898,6 +841,7 @@ WeSchemeInteractions = (function () {
         var colorIndex = 0;
         var currColor = colors[colorIndex][0];
         var i;
+
 
         // Helper: iterate across elts, and pick a new tint.  Apply f on each elt with that new tint.
         var foreachTint = function(elts, f) {
@@ -965,14 +909,17 @@ WeSchemeInteractions = (function () {
                     jQuery(msgDom).append("\u00bb"); // right-pointing-double-angle quotation mark
                     colorIndex = (colorIndex + 1) % colors.length;
                 }
-            } else {
+            }
+            else {
                 msgDom.appendChild(document.createTextNode(part.text+''));
             }
         };
 
         var doPlainPart = function(part) {
             msgDom.appendChild(document.createTextNode(part+''));
+            
         };
+
         for (i = 0; i < args.length; i++){
             currColor = colors[colorIndex][0];
             if (types.isColoredPart(args[i])) {
@@ -986,6 +933,9 @@ WeSchemeInteractions = (function () {
             }
         }
     };
+
+
+
 
 
     // that: ???
@@ -1116,8 +1066,10 @@ WeSchemeInteractions = (function () {
                 msg = that.evaluator.getMessageFromExn(err);
             }
         }
+
         var msgDom = document.createElement('div');
         msgDom['className'] = 'moby-error:message';
+
         if(types.isMessage(msg)) {
             if (that.withColoredErrorMessages) {
                 //if it is a Message, do special formatting
@@ -1128,7 +1080,8 @@ WeSchemeInteractions = (function () {
         } else {
             if(err.domMessage){
               dom.appendChild(err.domMessage);
-            } else {
+            }
+            else {
               msgDom.appendChild(document.createTextNode(msg));
             }
         } 
@@ -1138,6 +1091,7 @@ WeSchemeInteractions = (function () {
             var link = that.createLocationHyperlink(err.structuredError.location);
             dom.appendChild(link);
         }
+
         var stacktrace = that.evaluator.getTraceFromExn(err);
         var stacktraceDiv = document.createElement("div");
         stacktraceDiv['className'] = 'error-stack-trace';
@@ -1145,7 +1099,9 @@ WeSchemeInteractions = (function () {
             var anchor = that.createLocationHyperlink(stacktrace[i]);
             stacktraceDiv.appendChild(anchor);
         }
-        
+
+        //do stuff with feedback here
+
         // don't give a stack trace if the user halts the program
         if(!(types.isSchemeError(err) && types.isExnBreak(err.val))){
           dom.appendChild(stacktraceDiv);
