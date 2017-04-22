@@ -102,6 +102,7 @@
   (unless (directory-exists? codemirror-dest-dir) 
     (make-directory* codemirror-dest-dir))
   (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/")
+  (call-system "mkdir" "./war/js/codemirror/addon")
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
   
