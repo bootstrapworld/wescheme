@@ -164,8 +164,11 @@ WeSchemeInteractions = (function () {
                       if (that.hasCompleteExpression()) {
                           that.onEvaluation();
                       } else {
-                          CodeMirror.commands.newlineAndIndent(ed);
+                        CodeMirror.commands.newlineAndIndent(ed);
                       }
+                  },
+                  "Shift-Enter": function(ed) {
+                    CodeMirror.commands.newlineAndIndent(ed);
                   },
                   "Alt-Down":function (ed) {
                       that.onHistoryNext();
@@ -345,12 +348,7 @@ WeSchemeInteractions = (function () {
     // hasExpressionToEvaluate: -> boolean
     // Return true if the prompt contains a complete expression
     Prompt.prototype.hasCompleteExpression = function() {
-        var codePastCursor = this.textContainer.getCode(this.textContainer.getCursorStartPosition());
-        if (codePastCursor.match(new RegExp("[^\\s]"))) {
-            return false;
-        }
-        var codeUpToCursor = this.textContainer.getCode(0, this.textContainer.getCursorStartPosition());
-        return plt.wescheme.tokenizer.hasCompleteExpression(codeUpToCursor);
+        return plt.wescheme.tokenizer.hasCompleteExpression(this.textContainer.getCode());
     };
 
 
