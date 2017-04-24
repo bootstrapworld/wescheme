@@ -1147,7 +1147,8 @@ if (typeof(world) === 'undefined') {
     // TextImage: String Number Color String String String String any/c Boolean -> Image
     var TextImage = function(str, size, color, face, family, style, weight, underline, outline) {
         BaseImage.call(this);
-        this.str        = JSON.stringify(str); // show all escape chars
+        str             = JSON.stringify(str) // show all escape chars
+        this.str        = str.substring(1, str.length-1); // chop off quotes
         this.size       = size;   // 18
         this.color      = color;  // red
         this.face       = face;   // Gill Sans
