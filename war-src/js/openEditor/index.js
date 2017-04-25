@@ -95,7 +95,7 @@ var initializeEditor;
 
 	var statusBar = new plt.wescheme.WeSchemeStatusBar(jQuery("#statusbar"));
 
-	var textContainerOptions = { width: "100%", lineNumbers: true, clone: true};
+	var textContainerOptions = { width: "100%", lineNumbers: true, clone: true, autoCloseBrackets: true};
 	new plt.wescheme.WeSchemeTextContainer(
 	    jQuery("#definitions").get(0),
 	    textContainerOptions,

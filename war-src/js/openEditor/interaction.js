@@ -253,7 +253,8 @@ WeSchemeInteractions = (function () {
                 readOnly: true,     // sets CM to readOnly mode, but still blinks the cursor
                 cursorBlinkRate: 0, // hides the cursor
                 inputStyle: "contenteditable", // ACCESSIBILITY: this hurts performance, but improves support for screen readers
-                matchBrackets: false },
+                matchBrackets: true,
+                autoCloseBrackets: true },
             function(container) {
                 var newId = makeFreshId();
                 that.interactions.previousInteractionsTextContainers[newId] = container;
