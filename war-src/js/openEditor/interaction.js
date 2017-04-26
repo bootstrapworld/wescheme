@@ -157,6 +157,7 @@ WeSchemeInteractions = (function () {
             innerDivElt,
             { dynamicHeight: true,
               lineNumbers: false,
+              autoCloseBrackets: true,
               //stylesheet: "/js/codemirror/contrib/scheme/css/schemecolors-interactive.css",
               makeTransparentIframe: true,
               extraKeys: {
