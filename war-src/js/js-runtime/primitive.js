@@ -2557,14 +2557,18 @@ PRIMITIVES['range'] =
 		 3,
 		 false, false,
 		 function(aState, start, end, step) {
-        check(aState, start, isNumber, 'range', 'number', 1, arguments);
-        check(aState, end,   isNumber, 'range', 'number', 2, arguments);
-        check(aState, step,  isNumber, 'range', 'number', 3, arguments);
-                 
-        var values = [];
-        for(var i = jsnums.toFixnum(start); i < jsnums.toFixnum(end); i += jsnums.toFixnum(step)){
-          values.push(i);
+	        check(aState, start, isNumber, 'range', 'number', 1, arguments);
+	        check(aState, end,   isNumber, 'range', 'number', 2, arguments);
+	        check(aState, step,  isNumber, 'range', 'number', 3, arguments);
+        
+        var start=jsnums.toFixnum(start), end=jsnums.toFixnum(end), step=jsnums.toFixnum(step),
+        	values = [];
+        if((start < end) && (step > 0)) { 			// if we'll eventually count up, do so
+        	for(var i=start; i<end; i+=step) { values.push(i); }
+        } else if((start > end) && (step < 0)) { 	// if we'll eventually count down, do so
+        	for(var i=start; i>end; i+=step) { values.push(i); }
         }
+        // return the constructed list, or the empty list if neither condition was met
         return types.list(values);
     });
 
