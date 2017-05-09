@@ -70,7 +70,7 @@
 		  </a>
 		</li>
     <li id="bootstrapFiles">
-      <span class="menu">
+      <span class="menu" onclick="this.classList.toggle('hovered')">
         Bootstrap Starter Files &#9660;
       </span>
       <ul id="bootstrapFileList">

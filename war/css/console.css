@@ -83,7 +83,8 @@ h2{
   height:       auto;
   display:      none;
 }
-#toolbar #bootstrapFiles:hover #bootstrapFileList {
+#bootstrapFiles:hover #bootstrapFileList, 
+#toolbar .hovered+#bootstrapFileList {
   position:     absolute;
   display:      block;
   width:        194px;
