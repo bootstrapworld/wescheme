@@ -39,7 +39,7 @@
 ; cull : Listof Beings -> Listof Beings
 ; get rid of every being that's even one pixel offscreen
 (define (cull beings)
-  (filter (λ (b) (and (> (being-x b) 0) (< (being-x b) WIDTH)
+  (filter (lambda (b) (and (> (being-x b) 0) (< (being-x b) WIDTH)
                       (> (being-y b) 0) (< (being-y b) HEIGHT))) beings))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Game Structures
@@ -74,7 +74,7 @@
         background ;; don't inform about the player itself
         (let ((dx (- cx px))
               (dy (- cy py))
-              (n->s (λ (num) (number->string (inexact->exact (round num))))))
+              (n->s (lambda (num) (number->string (inexact->exact (round num))))))
           (place-image 
            (text (n->s ((unbox *line-length*) cx px)) 12 color)
            (- cx (/ dx 2)) cy
@@ -102,7 +102,7 @@
          (cx (posn-x screen-point))
          (cy (posn-y screen-point))
          (dbg-bkgnd (if (not (string=? (unbox *distances-color*) ""))
-                        (add-informative-triangle cx cy (unbox TITLE-COLOR)
+                        (add-informative-triangle cx cy (unbox *distances-color*)
                                                   background)
 
                         background)))
@@ -133,12 +133,12 @@
 
 ; wrap-update : (Number->Number or Number Number -> Posn) (list String) -> (Being -> Being)
 ; wrap the update function to ensure that it takes and returns a Being
-(define (wrap-update f name)
+(define (wrap-update f)
   (cond
     [(= (procedure-arity f) 1)
-     (λ (b) (make-being (make-posn (f (being-x b)) (being-y b)) (being-costume b)))]
+     (lambda (b) (make-being (make-posn (f (being-x b)) (being-y b)) (being-costume b)))]
     [(= (procedure-arity f) 2)
-     (λ (b) (let ((new-posn (f (being-x b) (being-y b))))
+     (lambda (b) (let ((new-posn (f (being-x b) (being-y b))))
               (if (posn? new-posn) (make-being new-posn (being-costume b))
                   (begin (error "update-danger or update-target has been changed to accept an x- and y-coordinate, but is not returning a Posn.\n")
                          new-posn))))]))
@@ -261,7 +261,7 @@
              (update-target (wrap-update update-target*))
              (update-projectile (wrap-update update-projectile*))
              (update-player 
-              (λ (p k)(make-being               
+              (lambda (p k)(make-being               
                        (if (= (procedure-arity update-player*) 2) 
                            (make-posn (being-x p) (update-player* (being-y p) k))
                            (let ((new-posn (update-player* (being-x p) (being-y p) k)))
@@ -270,24 +270,24 @@
                                         new-posn))))
                        (being-costume p))))
              (onscreen? (if (= (procedure-arity onscreen*?) 1) 
-                            (λ (b) (onscreen*? (being-x b)))
-                            (λ (b) (onscreen*? (being-x b) (being-y b)))))
-             (collide? (λ (b1 b2) (collide*? (being-x b1) (being-y b1) 
+                            (lambda (b) (onscreen*? (being-x b)))
+                            (lambda (b) (onscreen*? (being-x b) (being-y b)))))
+             (collide? (lambda (b1 b2) (collide*? (being-x b1) (being-y b1) 
                                              (being-x b2) (being-y b2))))
 
              ; did a being collide with any of it's enemies?
-             (hit-by? (λ (b enemies) (ormap (λ (e) (collide? b e)) enemies)))
+             (hit-by? (lambda (b enemies) (ormap (lambda (e) (collide? b e)) enemies)))
 
              ; reset if a character hit an enemy or went offscreen, update otherwise
-             (reset-chars (λ (chars enemies update)
-                             (map (λ (b) (if (and (onscreen? b) (not (hit-by? b enemies)))
+             (reset-chars (lambda (chars enemies update)
+                             (map (lambda (b) (if (and (onscreen? b) (not (hit-by? b enemies)))
                                              (update b) (reset b update)))
                                   chars)))
 
              ; initialize lists of shots, targets, and dangers using "reset"
-             (targets (map (λ (img) (reset (make-being (make-posn 0 0) img) update-target))
+             (targets (map (lambda (img) (reset (make-being (make-posn 0 0) img) update-target))
                            (flatten (list targetImgs))))
-             (dangers (map (λ (img) (reset (make-being (make-posn 0 0) img) update-danger))
+             (dangers (map (lambda (img) (reset (make-being (make-posn 0 0) img) update-danger))
                            (flatten (list dangerImgs))))
              (shots '())
 
@@ -295,7 +295,7 @@
              (world (make-world dangers shots targets player background 100 title 0))
 
              ; keypress : World String -> World
-             (keypress (λ(w key)
+             (keypress (lambda(w key)
                          (cond
                            [(and (string=? key " ") (<= (world-score w) LOSS-SCORE)) world]
                            [(<= (world-score w) LOSS-SCORE) w]
@@ -309,7 +309,7 @@
                            [else (world-with-player w (update-player (world-player w) key))])))
 
              ; update-world : World -> World
-             (update-world (λ (w) 
+             (update-world (lambda (w) 
                               (let* ((player (world-player w))
                                      (bg (world-bg w))
                                      (title (world-title w))
@@ -326,7 +326,7 @@
 
                                      ; get points for shooting down dangers
                                      (score (+ (world-score w)
-                                               (if (ormap (λ(s) (hit-by? s (world-dangers w))) (world-shots w))
+                                               (if (ormap (lambda(s) (hit-by? s (world-dangers w))) (world-shots w))
                                                    *target-increment* 0))))
 
                                 ; check for gameover, collisions with the *original* dangers / targets
@@ -345,7 +345,7 @@
                                                     score title timer)]))
                               )))
         (big-bang world
-                  (stop-when (λ(w) (= (world-timer w) -1)))
+                  (stop-when (lambda(w) (= (world-timer w) -1)))
                   (on-tick update-world .1)
                   (to-draw draw-world)
                   (on-key keypress)))))
