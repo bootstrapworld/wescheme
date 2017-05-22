@@ -50,10 +50,6 @@
 //////////////////////////////////////////////////////////////////////
 var bigBangLog = document.getElementById('bigBangLog');
 
-
-var bigBangLog = document.getElementById('bigBangLog');
-
-
 var caller;
 var setCaller = function(c) {
 	caller = function(op, args, k) {
