@@ -5731,7 +5731,7 @@ PRIMITIVES['play-sound'] =
  
 PRIMITIVES['bitmap/url'] = 
 PRIMITIVES['image-url'] =
-    new PrimProc('image-url',
+    new PrimProc('bitmap/url',
 		 1,
 		 false, false,
 		 function(aState, path) {
