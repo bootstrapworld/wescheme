@@ -11,6 +11,7 @@ var F8_KEYCODE = 119
 var F9_KEYCODE = 120
 var F11_KEYCODE = 122
 var BACKSPACE_KEYCODE = 8;
+var ENTER_KEYCODE = 13;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
 var ZOOMOUT_KEYCODE = 189;
@@ -67,7 +68,8 @@ plt.wescheme.topKeymap = function(e) {
       return false;
     }
 
-    if (e.keyCode === F7_KEYCODE) {
+    if (e.keyCode === F7_KEYCODE || 
+        (e.keyCode === ENTER_KEYCODE && e.ctrlKey)) {
       myEditor.run();
       cancelEvent(e);
       return false;
