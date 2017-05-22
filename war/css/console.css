@@ -1,5 +1,5 @@
 /* Some global settings */
-html, body, .EntryHeader{	min-width:		300px; }
+html, body, .EntryHeader{	min-width:		300px; text-align: left;}
 html, body, h1, h2, #header, #fileInfo, #toolbar *, #defn, #footer, #inter, input, form{
   padding:		  0px;
   font-family:  Lato, Century Gothic, Arial, Helvetica, sans-serif;
