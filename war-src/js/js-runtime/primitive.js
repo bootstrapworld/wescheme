@@ -290,7 +290,6 @@ var WorldConfigOption = types.Class.extend({
 	},
 
 	toDisplayedString: this.toWrittenString,
-
 	toDomNode: function(cache) {
 	    var div = document.createElement('div');
 	    div.appendChild(document.createTextNode(this.toWrittenString()));
@@ -299,7 +298,6 @@ var WorldConfigOption = types.Class.extend({
 
 
 var isWorldConfigOption = function(x) { return x instanceof WorldConfigOption; };
-
 
 var onEvent = function(funName, inConfigName, numArgs) {
     return function(aState, handler) {

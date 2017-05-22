@@ -63,7 +63,7 @@
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
 
-    <link rel="stylesheet" type="text/css" href="/css/codemirror.css" id="style" />
+    <link rel="stylesheet" type="text/css" href="/css/codemirror.css" />
     <link rel="stylesheet" type="text/css" href="/js/codemirror/lib/codemirror.css"></link>
     <link rel="stylesheet" type="text/css" href="/js/codemirror-contrib/scheme2/schemecolors.css"></link>
 

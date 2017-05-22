@@ -48,6 +48,8 @@
         };
 }());
 //////////////////////////////////////////////////////////////////////
+var bigBangLog = document.getElementById('bigBangLog');
+
 
 var bigBangLog = document.getElementById('bigBangLog');
 
