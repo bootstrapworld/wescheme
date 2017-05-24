@@ -393,7 +393,7 @@
     <div id="helpDialog" tabindex="-1">
       <h1>WeScheme Help</h1>
       <p>
-      Welcome to WeScheme! This help window can be turned on and off by clicking the <img alt="help" src="/images/small-help.png"> icon in the toolbar, or by typing <kbd aria-label="Control question mark">Ctrl-?</kbd> (or <kbd aria-label="Command question mark">Cmd-?</kbd> on a mac). You can also hide this window by clicking on it, or hitting any key.
+      Welcome to WeScheme! This help window can be turned on and off by clicking the <img alt="help" src="/images/small-help.png"> icon in the toolbar, or by typing <kbd aria-label="Control question mark">Ctrl-?</kbd> (or <kbd aria-label="Command question mark">Cmd-?</kbd> on a mac). You can also hide this window by clicking on it.
       <p>
       <p>
       <div class="shortcutGroup" tabindex="-1">
@@ -401,6 +401,7 @@
         <ul class="shortcuts">
           <li>Run - <kbd>F7</kbd></li>
           <li>Stop - <kbd>F8</kbd></li>
+          <li>Share - <kbd>F9</kbd></li>
           <li>Help - <kbd aria-label="Control question mark">Ctr-?</kbd></li>
           <li>Switch Focus - <kbd>F6</kbd></li>
         </ul>
@@ -419,7 +420,7 @@
         <ul class="shortcuts">
           <li>Previous Entry - <kbd>Alt-Up</kbd></li>
           <li>Next Entry - <kbd>Alt-Down</kbd></li>
-          <li>Speak History - <kbd>Alt-1</kbd>, <kbd>Alt-2</kbd> ...</li>
+          <li>Speak History - <kbd>Alt-1</kbd>, <kbd>Alt-2</kbd>, etc</li>
         </ul>
       </div>
     </div>

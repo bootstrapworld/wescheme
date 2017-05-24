@@ -572,17 +572,16 @@ var WeSchemeEditor;
 			help.focus();
 			document.getElementById('editor').setAttribute('aria-activedescendant', help.id);
     	}
-    	function hideHelp(){
+    	function hideHelp(e){
     		help.style.top = "100%";
     		help.blur();
     	}
-		if(help.style.top == "100%") {
-			showHelp();
-		} else { 
+		if(help.style.top == "25%") {
 			hideHelp();
+		} else { 
+			showHelp();
 		}
 		help.onclick = hideHelp;
-		help.onkeyup = hideHelp;
     }
     
     // Shows an Image Picker enabling choosing an image from Google Drive to the 
