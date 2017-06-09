@@ -1495,7 +1495,6 @@ PRIMITIVES['/'] =
                          if (jsnums.equals(y, 0)) {
                              handleError(1);
                          }
-                         console.log('dividing', x, 'by', y);
 		 	 var res = jsnums.divide(x, y);		 	 
 
 		 	 for (var i = 0; i < args.length; i++) {
