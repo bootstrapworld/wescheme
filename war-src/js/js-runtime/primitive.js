@@ -1497,6 +1497,7 @@ PRIMITIVES['/'] =
                          if (jsnums.equals(y, 0)) {
                              handleError(1);
                          }
+                         console.log('dividing', x, 'by', y);
 		 	 var res = jsnums.divide(x, y);		 	 
 
 		 	 for (var i = 0; i < args.length; i++) {
@@ -2561,12 +2562,13 @@ PRIMITIVES['range'] =
 	        check(aState, end,   isNumber, 'range', 'number', 2, arguments);
 	        check(aState, step,  isNumber, 'range', 'number', 3, arguments);
         
-        var start=jsnums.toFixnum(start), end=jsnums.toFixnum(end), step=jsnums.toFixnum(step),
-        	values = [];
-        if((start < end) && (step > 0)) { 			// if we'll eventually count up, do so
-        	for(var i=start; i<end; i+=step) { values.push(i); }
-        } else if((start > end) && (step < 0)) { 	// if we'll eventually count down, do so
-        	for(var i=start; i>end; i+=step) { values.push(i); }
+        var values = [];
+    	// if we'll eventually count up, do so
+        if(jsnums.lessThan(start, end) && jsnums.greaterThan(step, 0)) { 
+        	for(var i=start; jsnums.lessThanOrEqual(i, end); i=jsnums.add(i, step)) { values.push(i); }
+		// if we'll eventually count down, do so
+		} else if(jsnums.greaterThan(start, end) && jsnums.lessThan(step, 0)) { 
+        	for(var i=start; jsnums.greaterThanOrEqual(i,end); i=jsnums.add(i,step)) { values.push(i); }
         }
         // return the constructed list, or the empty list if neither condition was met
         return types.list(values);
