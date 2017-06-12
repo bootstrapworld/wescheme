@@ -144,19 +144,23 @@ WeSchemeInteractions = (function () {
                       if (that.hasCompleteExpression()) {
                           that.onEvaluation();
                       } else {
-                          CodeMirror.commands.newlineAndIndent(ed);
+                        CodeMirror.commands.newlineAndIndent(ed);
                       }
                   },
+                  "Shift-Enter": function(ed) {
+                    CodeMirror.commands.newlineAndIndent(ed);
+                  },
+                  "Alt-Down":function (ed) {
+                      that.onHistoryNext();
+                  },
+                  "Alt-Up":function (ed) {
+                      that.onHistoryPrevious();
+                  },
+                  // TODO: LEGACY KEYS - REMOVE AFTER 7/1/17
                   "Ctrl-N":function (ed) {
                       that.onHistoryNext();
                   },
                   "Ctrl-P":function (ed) {
-                      that.onHistoryPrevious();
-                  },
-                  "Alt-N":function (ed) {
-                      that.onHistoryNext();
-                  },
-                  "Alt-P":function (ed) {
                       that.onHistoryPrevious();
                   }
               }},

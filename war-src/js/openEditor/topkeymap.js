@@ -5,13 +5,21 @@ goog.require('plt.wescheme.BrowserDetect');
 //FIXME: depends on global variable myEditor at toplevel.
 
 
-var F5_KEYCODE = 116
+
+// F1,F3,F5 and F10 are all commonly-reserved browser keys, so we can't use them
+var F6_KEYCODE = 117
+var F7_KEYCODE = 118
+var F8_KEYCODE = 119
+var F9_KEYCODE = 120
+var F11_KEYCODE = 122
 var BACKSPACE_KEYCODE = 8;
+var ENTER_KEYCODE = 13;
 var SAVE_KEYCODE = 83;
 var ZOOMIN_KEYCODE = 187;
 var ZOOMOUT_KEYCODE = 189;
 var DIM_KEYCODE = 113;
 var BRIGHTEN_KEYCODE = 114;
+var QUESTION_KEYCODE = 191;
 
 
 // Global state: checks to see whether or not we're in the middle of a
@@ -52,16 +60,28 @@ plt.wescheme.topKeymap = function(e) {
           return false;
     }
 
-    if (e.keyCode === F5_KEYCODE) {
+    if (e.keyCode === F7_KEYCODE || 
+        (e.keyCode === ENTER_KEYCODE && e.ctrlKey)) {
       myEditor.run();
-      e.cancelBubble = true;
-      if (e.stopPropagation) { e.stopPropagation(); }
-      e.returnValue = false;
-      if (e.preventDefault) { e.preventDefault(); }
-      if (! e.preventDefault) {
-          // IE-specific hack.
-          e.keyCode = 0;
-      }
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F8_KEYCODE) {
+      myEditor.requestBreak();
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F9_KEYCODE) {
+      myEditor.share();
+      cancelEvent(e);
+      return false;
+    }
+
+    if (e.keyCode === F11_KEYCODE) {
+      myEditor.showPicker(false);
+      cancelEvent(e);
       return false;
     }
 
