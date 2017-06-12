@@ -1,3 +1,5 @@
+<!-- All IE versions <=11 need at least a few polyfills  -->
+<script type="text/javascript" src="/js/compat/polyfills-min.js"></script>
 <!-- 
 	IE 9 fixes:
 		* IE9 fix for CM. See https://groups.google.com/forum/#!searchin/codemirror/whitespace/codemirror/xx_GCyYr5sE/dCH2KjBML2gJ 
