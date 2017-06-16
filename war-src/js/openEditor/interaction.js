@@ -150,10 +150,17 @@ WeSchemeInteractions = (function () {
                   "Shift-Enter": function(ed) {
                     CodeMirror.commands.newlineAndIndent(ed);
                   },
+                  // On ChromeBooks, Alt-Up/Down is PageUp/Down
                   "Alt-Down":function (ed) {
                       that.onHistoryNext();
                   },
+                  "PageDown":function (ed) {
+                      that.onHistoryNext();
+                  },
                   "Alt-Up":function (ed) {
+                      that.onHistoryPrevious();
+                  },
+                  "PageUp":function (ed) {
                       that.onHistoryPrevious();
                   },
                   // TODO: LEGACY KEYS - REMOVE AFTER 7/1/17
