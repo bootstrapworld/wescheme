@@ -181,6 +181,10 @@ WeSchemeInteractions = (function () {
                   "Alt-Up":function (ed) {
                       that.onHistoryPrevious();
                   },
+                  "PageUp":function (ed) {
+                      that.onHistoryPrevious();
+                  },
+                  // TODO: LEGACY KEYS - REMOVE AFTER 7/1/17
                   "Ctrl-N":function (ed) {
                       that.onHistoryPrevious();
                   },
