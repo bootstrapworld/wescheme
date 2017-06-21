@@ -354,6 +354,11 @@ plt.compiler = plt.compiler || {};
                                          ,["-", 1, true]
                                          ,["*", 0, true]
                                          ,["/", 1, true]
+
+                                         // Stats
+                                         ,["num-mean", 1, true]
+                                         ,["num-median", 1, true]
+                                         ,["num-mode", 1, true]
                                          
                                          // Logic
                                          ,["not", 1]

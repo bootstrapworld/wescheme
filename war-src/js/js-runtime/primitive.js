@@ -2963,6 +2963,87 @@ PRIMITIVES['filter'] =
 			return filterHelp(f, lst, types.EMPTY);
 		 });
 
+PRIMITIVES['num-mean'] = 
+    new PrimProc("num-mean",
+		 0,
+		 true, false,
+		 function(aState, args) {
+		     arrayEach(args, function(x, i) {check(aState, x, isNumber, 'mean', 'number', i+1, args);});
+
+		     if (args.length == 0) { 
+		     	var positionStack = 
+        			state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
+       		  	var locationList = positionStack[positionStack.length - 1];
+			 	raise( types.incompleteExn(types.exnFailContract, 
+			  		new types.Message([new types.ColoredPart("mean", locationList.first()),
+			  							": needs at least one input"]), 
+			  		[]));
+		     }
+		     var result = args[0];
+		     for (var i = 1; i < args.length; i++) {
+			  	result = jsnums.add(result, args[i]);
+		     }
+		     return jsnums.divide(result, args.length);
+		 });
+
+
+PRIMITIVES['num-median'] = 
+    new PrimProc("num-median",
+		 0,
+		 true, false,
+		 function(aState, args) {
+		     arrayEach(args, function(x, i) {check(aState, x, isNumber, 'median', 'number', i+1, args);});
+			 if (args.length%2 == 0) {
+			 	var positionStack = 
+        			state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
+       		  	var locationList = positionStack[positionStack.length - 1];
+       		  	var argCountError = args.length + "input" + (args.length==1? "s" : "");
+			 	raise( types.incompleteExn(types.exnFailContract, 
+			  		new types.Message([new types.ColoredPart("median", locationList.first()),
+			  							": only works on odd numbers of inputs, but given "
+			  							+ args.length + " inputs"]), 
+			  		[]));
+		     }
+		     // sort them, and return the middle one
+			 args.sort(jsnums.lessThan); // FIXME: not really stack safe, is it?
+		     
+		     return args[ Math.floor(args.length/2) ];
+		 });
+
+PRIMITIVES['num-mode'] = 
+    new PrimProc("num-mode",
+		 0,
+		 true, false,
+		 function(aState, args) {
+		     arrayEach(args, function(x, i) {check(aState, x, isNumber, 'mode', 'number', i+1, args);});
+		     // sort them
+			 args.sort(jsnums.greaterThan); // FIXME: not really stack safe, is it?
+			 console.log('sorted args are',args);
+			 console.log('native sorted args are',args.sort());
+			 var modes = types.EMPTY;
+			 var lastCount = highestCount = 0;
+
+			 args.forEach(function(v, idx){
+			 	// if it's something we've seen before
+			 	if(idx > 0 && jsnums.equals(v, args[idx-1])) {
+			 		lastCount++; // incrememnt the count
+			 		if(lastCount == highestCount) { modes = types.cons(v, modes); }
+			 		else if(lastCount > highestCount) { 
+			 			modes = types.cons(v, types.EMPTY);
+			 			highestCount = lastCount; 
+			 		}
+			 	// if it's new (or the first, which is by definition new)
+			 	} else {
+			 		lastCount = 1;
+			 		if(lastCount == highestCount) { modes = types.cons(v, modes); }
+			 		else if(lastCount > highestCount) { 
+			 			modes = types.cons(v, types.EMPTY);
+			 		}
+			 	}
+			 }, 0);
+			 return modes;
+		 });
+
 PRIMITIVES['foldl'] =
     new PrimProc('foldl',
 		 3,
