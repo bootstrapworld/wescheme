@@ -82,7 +82,7 @@
         <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=EHgrsZlYNX">Rocket-Height</a></li>
         <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
         <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=aX4MoqaZSw">Sam the Butterfly</a></li>
-        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=SW6F5joQYc">Luigi's Pizza</a></li>
+        <li><a target="_blank" href="http://www.wescheme.org/openEditor?publicId=5jBc52gFTV">Luigi's Pizza</a></li>
       </ul>
     </li>
 
