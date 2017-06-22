@@ -2976,7 +2976,7 @@ PRIMITIVES['num-mean'] =
        		  	var locationList = positionStack[positionStack.length - 1];
 			 	raise( types.incompleteExn(types.exnFailContract, 
 			  		new types.Message([new types.ColoredPart("mean", locationList.first()),
-			  							": needs at least one input"]), 
+			  							": expects at least one argument, but given zero"]), 
 			  		[]));
 		     }
 		     var result = args[0];
@@ -2993,21 +2993,20 @@ PRIMITIVES['num-median'] =
 		 true, false,
 		 function(aState, args) {
 		     arrayEach(args, function(x, i) {check(aState, x, isNumber, 'median', 'number', i+1, args);});
-			 if (args.length%2 == 0) {
+			 if (args.length == 0) {
 			 	var positionStack = 
         			state.captureCurrentContinuationMarks(aState).ref('moby-application-position-key');
        		  	var locationList = positionStack[positionStack.length - 1];
-       		  	var argCountError = args.length + "input" + (args.length==1? "s" : "");
 			 	raise( types.incompleteExn(types.exnFailContract, 
 			  		new types.Message([new types.ColoredPart("median", locationList.first()),
-			  							": only works on odd numbers of inputs, but given "
-			  							+ args.length + " inputs"]), 
+			  							": expects at least one argument, but given zero"]), 
 			  		[]));
 		     }
-		     // sort them, and return the middle one
-			 args.sort(jsnums.lessThan); // FIXME: not really stack safe, is it?
-		     
-		     return args[ Math.floor(args.length/2) ];
+		     // sort them
+			 args.sort(function(a,b){ return jsnums.greaterThan(a,b) || -1; }); // FIXME: not really stack safe, is it?
+			 // take the middle number, or the average of the two middle numbers
+			 return (args.length % 2 == 1)? args[ Math.floor(args.length/2) ]
+			 	: jsnums.divide(jsnums.add(args[args.length/2], args[args.length/2 + 1]), 2);
 		 });
 
 PRIMITIVES['num-mode'] = 
@@ -3017,16 +3016,14 @@ PRIMITIVES['num-mode'] =
 		 function(aState, args) {
 		     arrayEach(args, function(x, i) {check(aState, x, isNumber, 'mode', 'number', i+1, args);});
 		     // sort them
-			 args.sort(jsnums.greaterThan); // FIXME: not really stack safe, is it?
-			 console.log('sorted args are',args);
-			 console.log('native sorted args are',args.sort());
+			 args.sort(function(a,b){ return jsnums.greaterThan(a,b) || -1; }); // FIXME: not really stack safe, is it?
 			 var modes = types.EMPTY;
 			 var lastCount = highestCount = 0;
 
 			 args.forEach(function(v, idx){
 			 	// if it's something we've seen before
 			 	if(idx > 0 && jsnums.equals(v, args[idx-1])) {
-			 		lastCount++; // incrememnt the count
+			 		lastCount++; // increment the count
 			 		if(lastCount == highestCount) { modes = types.cons(v, modes); }
 			 		else if(lastCount > highestCount) { 
 			 			modes = types.cons(v, types.EMPTY);
@@ -3040,7 +3037,7 @@ PRIMITIVES['num-mode'] =
 			 			modes = types.cons(v, types.EMPTY);
 			 		}
 			 	}
-			 }, 0);
+			 });
 			 return modes;
 		 });
 
