@@ -474,16 +474,18 @@
                                                     myEditor.run(onSuccess);
                                                 },
                                           requestBreak : function(onSuccess) {
-                                                              myEditor.requestBreak();
-                                                              onSuccess();
-                                                         },
+                                                    myEditor.requestBreak();
+                                                    onSuccess();
+                                                },
                                           getDefinitionsText : function(onSuccess) {
-                                                                   onSuccess(myEditor.getDefinitionsText());
-                                                               },
+                                                   onSuccess(myEditor.getDefinitionsText());
+                                                },
                                           setDefinitionsText : function(v, onSuccess) {
-                                                                   myEditor.setDefinitionsText(v);
-                                                                   onSuccess();
-                                                               }}});
+                                                   myEditor.setDefinitionsText(v);
+                                                   onSuccess();
+                                                }
+                                              }
+                                });
    <% } %>
   </script>
 
