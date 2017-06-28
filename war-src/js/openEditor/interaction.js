@@ -171,27 +171,29 @@ WeSchemeInteractions = (function () {
                   "Shift-Enter": function(ed) {
                     CodeMirror.commands.newlineAndIndent(ed);
                   },
-                  // On ChromeBooks, Alt-Up/Down is PageUp/Down
                   "Alt-Down":function (ed) {
-                      that.onHistoryNext();
-                  },
-                  "PageDown":function (ed) {
                       that.onHistoryNext();
                   },
                   "Alt-Up":function (ed) {
                       that.onHistoryPrevious();
+                  },
+                  // On ChromeBooks, Alt-Up/Down is PageUp/Down
+                  "PageDown":function (ed) {
+                      that.onHistoryNext();
                   },
                   "PageUp":function (ed) {
                       that.onHistoryPrevious();
                   },
                   // TODO: LEGACY KEYS - REMOVE AFTER 7/1/17
                   "Ctrl-N":function (ed) {
+                      that.onHistoryNext();
+                  },
+                  "Ctrl-P":function (ed) {
                       that.onHistoryPrevious();
                   },
+                  // Speak history keys
                   "Alt-1":function (ed) {
                       interactions.speakHistory(1);
-                  "PageUp":function (ed) {
-                      that.onHistoryPrevious();
                   },
                   "Alt-2":function (ed) {
                       interactions.speakHistory(2);

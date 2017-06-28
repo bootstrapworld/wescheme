@@ -748,15 +748,6 @@ var WeSchemeEditor;
         return plt.wescheme.tokenizer;
     };
 
-    // Do new thing once (use version as the cookie value)
-    var current_version = 239;
-   	WeSchemeEditor.prototype.doOnce = function() {
-	  if (!(document.cookie.replace(/(?:(?:^|.*;\s*)wescheme_version\s*\=\s*([^;]*).*$)|^.*$/, "$1") >= current_version)) {
-	  	this.toggleHelp();
-	    document.cookie = "wescheme_version="+current_version+"; expires=Fri, 31 Dec 9999 23:59:59 GMT";
-	  }
-	}
-
 })();
 
 plt.wescheme.WeSchemeEditor = WeSchemeEditor;

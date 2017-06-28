@@ -66,15 +66,15 @@ var initializeEditor;
 
     var maybeHideHeaderAndFooter = function(hideHeader, hideToolbar, hideProjectName, hideFooter) {
 	if (hideHeader) {
-	    document.getElementById("header").style.display = 'none';
+	    document.getElementById("Navigation").style.display = 'none';
 	}
 
 	if (hideToolbar) {
-	    document.getElementById("toolbar").style.display = 'none';
+	    document.getElementById("ProgramControls").style.display = 'none';
 	}
 
 	if (hideProjectName) {
-	    document.getElementById("fileInfo").style.display = 'none';
+	    document.getElementById("FileControls").style.display = 'none';
 	}
 
 	if (hideFooter) {
