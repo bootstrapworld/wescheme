@@ -230,7 +230,7 @@
     </script>
   </head>
 
-  <body onload="myEditor.doOnce()">
+  <body>
     <div id="editor">
       <div class="top" id="top">
 
