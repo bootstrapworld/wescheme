@@ -76,13 +76,13 @@
         Bootstrap Starter Files &#9660;
       </span>
       <ul id="bootstrapFileList">
-        <li><a target="_blank" href="https://goo.gl/ApCvLW">NinjaCat</a></li>
-        <li><a target="_blank" href="https://goo.gl/RYSjxw">Defining Values</a></li>
-        <li><a target="_blank" href="https://goo.gl/97G65y">Game Template</a></li>
-        <li><a target="_blank" href="https://goo.gl/WzLKrp">Rocket-Height</a></li>
-        <li><a target="_blank" href="https://goo.gl/1SNnJR">Bug Hunting</a></li>
-        <li><a target="_blank" href="https://goo.gl/BLaekc">Sam the Butterfly</a></li>
-        <li><a target="_blank" href="https://goo.gl/tcwuNn">Luigi's Pizza</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/NinjaCat">NinjaCat</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/DefiningValues">Defining Values</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/GameTemplate">Game Template</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/RocketHeight">Rocket-Height</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/AlgebraBugHunting">Bug Hunting</a></li>
+        <li><a target="_blank" href="http://rebrand.ly/SamTheButterfly">Sam the Butterfly</a></li>
+        <li><a target="_blank" href="https://rebrand.ly/LuigisPizza">Luigi's Pizza</a></li>
       </ul>
     </li>
 
