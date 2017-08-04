@@ -111,6 +111,8 @@ plt.compiler = plt.compiler || {};
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2012/cage-teachpack"'))),
       cageTeachpack2014 = new moduleBinding("bootstrap2014/cage-teachpack",
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2014/cage-teachpack"')));
+      cageTeachpack2015 = new moduleBinding("bootstrap2015/cage-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap2015/cage-teachpack"')));
  
   // function-teachpack
   var functionTeachpack = new moduleBinding("bootstrap/function-teachpack",
@@ -660,6 +662,7 @@ plt.compiler = plt.compiler || {};
                               , cageTeachpack2011
                               , cageTeachpack2012
                               , cageTeachpack2014
+                              , cageTeachpack2015
                               , functionTeachpack
                               , functionTeachpack2011
                               , functionTeachpack2012

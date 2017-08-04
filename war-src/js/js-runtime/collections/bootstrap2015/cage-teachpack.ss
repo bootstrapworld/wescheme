@@ -25,13 +25,13 @@
 (define (move w key)
   (cond
     [(not (string? key)) w]
-    [(string=? key "left") 
+    [(or (string=? key "left") (string=? key "a"))
      (make-world (- (world-x w) 10) (world-y w))]
-    [(string=? key "right") 
+    [(or (string=? key "right") (string=? key "d"))
      (make-world (+ (world-x w) 10) (world-y w))]
-    [(string=? key "down") 
+    [(or (string=? key "down") (string=? key "s"))
      (make-world (world-x w) (- (world-y w) 10))]
-    [(string=? key "up") 
+    [(or (string=? key "up") (string=? key "w"))
      (make-world (world-x w) (+ (world-y w) 10))]
     [else w]))
 
