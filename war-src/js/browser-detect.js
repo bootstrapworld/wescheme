@@ -109,6 +109,12 @@ plt.wescheme.BrowserDetect = {
 	    subString: "Mozilla",
 	    identity: "Netscape",
 	    versionSearch: "Mozilla"
+	},
+	{ 		// for Edge
+	    string: navigator.userAgent,
+	    subString: "Edge",
+	    identity: "Edge",
+	    versionSearch: "Edge"
 	}
     ],
     dataOS : [

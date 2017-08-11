@@ -29,8 +29,8 @@ span.cm-scheme-punctuation.CodeMirror-matchingbracket {
 }
 span.cm-scheme-punctuation.CodeMirror-nonmatchingbracket {
   font-weight: bold;
-  color: red !important;
-  background-color: #d3d3d3;
+  color: black !important;
+  background-color: red !important;
 }
 
 #inter .CodeMirror-lines {
