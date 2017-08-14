@@ -22,7 +22,7 @@ Define coloring for basic WeScheme types, and re-use them for our CM instances
 .wescheme-boolean,    .cm-scheme-boolean   {color: darkred;}
 .wescheme-character,  .cm-scheme-character {color: orange;}
 .wescheme-symbol,     .cm-scheme-symbol    {color: steelblue;}
-.wescheme-comment,    .cm-scheme-comment   {color: orange; }
+.wescheme-comment,    .cm-scheme-comment   {color: #bd2bbd; }
 /* CM-only stuff */
 span.cm-scheme-punctuation                 {color: black;}
 span.cm-scheme-rparen                      {color: black;}

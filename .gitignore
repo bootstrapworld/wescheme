@@ -9,3 +9,6 @@ lib/
 
 # Downloaded on demand
 externals/appengine-java-sdk-*
+
+# secret API key
+war-src/js/openEditor/config.js
