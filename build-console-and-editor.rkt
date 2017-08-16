@@ -97,8 +97,9 @@
 
 ;; cd into CM, build a fresh copy, then move it to war/js/codemirror/lib
 (define (update-codemirror-lib!)
-  (call-system "npm" "install" "war-src/js/codemirror/")
-  (call-system "cd" "../../../")
+  (current-directory "war-src/js/codemirror/")
+  (call-system "npm" "install")
+  (current-directory "../../../")
   (unless (directory-exists? codemirror-dest-dir) 
     (make-directory* codemirror-dest-dir))
   (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/")

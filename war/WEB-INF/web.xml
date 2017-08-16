@@ -29,7 +29,7 @@
     <servlet-name>/cron/keyServer</servlet-name>
     <url-pattern>/cron/keyServer</url-pattern>
   </servlet-mapping>
-  
+
   <security-constraint>
         <web-resource-collection>
             <url-pattern>/cron/*</url-pattern>
@@ -38,7 +38,7 @@
             <role-name>admin</role-name>
         </auth-constraint>
    </security-constraint>
-  
+
 
   <!-- RemoteAPI: used for bulk data load -->
   <!-- http://code.google.com/appengine/docs/python/tools/uploadingdata.html -->
@@ -51,7 +51,7 @@
     <url-pattern>/remote_api</url-pattern>
   </servlet-mapping>
 
-    
+
   <servlet>
     <servlet-name>createUser</servlet-name>
     <servlet-class>org.wescheme.servlet.CreateUserServlet</servlet-class>
@@ -60,7 +60,7 @@
     <servlet-name>createUser</servlet-name>
     <url-pattern>/createUser</url-pattern>
   </servlet-mapping>
- 
+
  <servlet>
     <servlet-name>heartbeat</servlet-name>
     <servlet-class>org.wescheme.servlet.HeartbeatServlet</servlet-class>
@@ -69,8 +69,8 @@
     <servlet-name>heartbeat</servlet-name>
     <url-pattern>/heartbeat</url-pattern>
   </servlet-mapping>
- 
-  
+
+
   <servlet>
     <servlet-name>logout</servlet-name>
     <servlet-class>org.wescheme.servlet.LogoutServlet</servlet-class>
@@ -79,7 +79,7 @@
     <servlet-name>logout</servlet-name>
     <url-pattern>/logout</url-pattern>
   </servlet-mapping>
-  
+
   <servlet>
     <servlet-name>myDropboxes</servlet-name>
     <jsp-file>myDropboxes.jsp</jsp-file>
@@ -88,7 +88,7 @@
     <servlet-name>myDropboxes</servlet-name>
     <url-pattern>/myDropboxes</url-pattern>
   </servlet-mapping>
-  
+
   <servlet>
     <servlet-name>dropbox</servlet-name>
     <jsp-file>dropbox.jsp</jsp-file>
@@ -97,13 +97,13 @@
     <servlet-name>dropbox</servlet-name>
     <url-pattern>/dropbox</url-pattern>
   </servlet-mapping>
-  
-  
+
+
 
   <servlet>
     <servlet-name>openEditor</servlet-name>
     <jsp-file>/openEditor/index.jsp</jsp-file>
-  </servlet>  
+  </servlet>
   <servlet-mapping>
     <servlet-name>openEditor</servlet-name>
     <url-pattern>/openEditor</url-pattern>
@@ -164,15 +164,15 @@
     <servlet-name>listProjects</servlet-name>
     <servlet-class>org.wescheme.servlet.ListProjectsServlet</servlet-class>
   </servlet>
-  
-  
+
+
   <servlet-mapping>
     <servlet-name>listProjects</servlet-name>
     <url-pattern>/listProjects</url-pattern>
   </servlet-mapping>
 
-  
-  
+
+
   <servlet>
     <servlet-name>saveProject</servlet-name>
     <servlet-class>org.wescheme.servlet.SaveProjectServlet</servlet-class>
@@ -186,7 +186,7 @@
   <servlet>
     <servlet-name>loadProject</servlet-name>
     <servlet-class>org.wescheme.servlet.LoadProjectServlet</servlet-class>
-  </servlet>  
+  </servlet>
   <servlet-mapping>
     <servlet-name>loadProject</servlet-name>
     <url-pattern>/loadProject</url-pattern>
@@ -214,7 +214,7 @@
 
 
 
- 
+
   <servlet>
     <servlet-name>cloneProject</servlet-name>
     <servlet-class>org.wescheme.servlet.CloneProjectServlet</servlet-class>
@@ -244,5 +244,12 @@
     <url-pattern>/imageProxy</url-pattern>
   </servlet-mapping>
 
-
+  <servlet>
+    <servlet-name>letsencrypt</servlet-name>
+    <servlet-class>org.wescheme.servlet.LetsencryptServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>letsencrypt</servlet-name>
+    <url-pattern>/.well-known/acme-challenge/*</url-pattern>
+  </servlet-mapping>
 </web-app>
