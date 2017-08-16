@@ -54,7 +54,7 @@
       (find-executable-path cmd)))
 
   (define resolved-cmd-windows
-    (and (equal? (system-type) 'windows) 
+    (and (equal? (system-type) 'windows)
          (and (string? cmd)
               (find-executable-path (string-append cmd ".exe")))))
 
@@ -72,8 +72,8 @@
 
   (unless (equal? (subprocess-status a-subprocess) 0)
       (error 'build (format "I could not launch ~s" cmd)))
-   
-  
+
+
   (when pipe-input-from
     (close-input-port stdin))
   (when pipe-output-to
@@ -100,19 +100,19 @@
   (current-directory "war-src/js/codemirror/")
   (call-system "npm" "install")
   (current-directory "../../../")
-  (unless (directory-exists? codemirror-dest-dir) 
+  (unless (directory-exists? codemirror-dest-dir)
     (make-directory* codemirror-dest-dir))
   (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/")
-  (call-system "mkdir" "./war/js/codemirror/addon")
+  (call-system "mkdir" "-p" "./war/js/codemirror/addon")
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
-  
+
 (define (ensure-codemirror-installed!)
   (unless (directory-exists? codemirror-src-dir)
     (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
     (call-system "git" "submodule" "init")
     (call-system "git" "submodule" "update")
-    
+
     (unless (directory-exists? codemirror-src-dir)
       (fprintf (current-error-port) "Codemirror could not be pulled successfully.  Exiting.\n")
       (exit 0))))
@@ -128,7 +128,7 @@
     (unless (directory-exists? closure-dir)
       (fprintf (current-error-port) "The Closure library could not be installed; please check.\n")
       (exit 0))))
-  
+
 (define (ensure-appengine-installed!)
   (unless (directory-exists? appengine-dir)
     (fprintf (current-error-port)
@@ -138,7 +138,7 @@
           [else
            (fprintf (current-error-port)
                     "Trying to download it now... saving to ~s\n" appengine-zip-path)
-           (fprintf (current-error-port) 
+           (fprintf (current-error-port)
                     "(This will take a while; the API download is about 90 MB.)\n")
            (call-with-output-file appengine-zip-path
              (lambda (op)
@@ -146,7 +146,7 @@
                (copy-port ip op)
                (close-input-port ip)
                (close-output-port op)))])
-    (fprintf (current-error-port) 
+    (fprintf (current-error-port)
              "The API will be installed in: ~s" appengine-dir)
     (sleep 5)
     (unless (directory-exists? (build-path appengine-dir 'up))
@@ -176,7 +176,7 @@
                         "war/js/mzscheme-vm/support.js")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js" 
+(if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js"
                     "./war/js/codemirror/lib/codemirror.js")
   (begin
     (printf "Updating CodeMirror and copying lib\n")
