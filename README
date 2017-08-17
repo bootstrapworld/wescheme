@@ -12,7 +12,7 @@ The user-level documentation for the project is maintained in:
 
    https://github.com/dyoo/wescheme-docs
 
- 
+
 ----------------------------------------------------------------------
 Build dependencies:
 
@@ -22,16 +22,16 @@ In order to build the server, the following tools are needed:
  - Java Development Kit
  - Racket
  - Apache Ant.
- 
+
 All these should be accessible from $PATH. The tools assume a
 Unix-like environment to run shell commands, including 'unzip'. See
 the section below, if you're building the project on a Windows
-machine. 
+machine.
 
 Note: Do not use python 3.X: the build tools are only working on python 2.X.
 
-You will also need to make sure that the DEFAULT_ENCODING environment variable 
-on your system is set to "UTF-8". On some systems, the build will fail if 
+You will also need to make sure that the DEFAULT_ENCODING environment variable
+on your system is set to "UTF-8". On some systems, the build will fail if
 the appengine.xml settings differ from those of the environment.
 
 ----------------------------------------------------------------------
@@ -129,7 +129,7 @@ To install WeScheme, follow the instructions of the section
 execute the script 'build-console-and-editor.rkt', make sure that a
 softlink to your java.exe is defined the current directory. You can
 create such a link with the command:
-  
+
    ln -s "C:\Program Files (x86)\Java\jdk1.7.0_79\bin\java.exe" java
 
 Note that the link must be named "java" and not "java.exe".
@@ -155,3 +155,17 @@ Note that the tests as currently written have not yet been coded
 to respect some of the delays introduced by asynchronous JavaScript, so
 many of the tests will fail unless the speed of the testing framework is
 set to slightly slower than the "Fast" speed.
+
+----------------------------------------------------------------------
+
+Eclipse:
+
+- Install plugins here: https://developers.google.com/eclipse/docs/install-eclipse-4.6
+- If there is an error about DataNucleus, installing http://www.datanucleus.org/products/datanucleus/jdo/guides/eclipse.html might help
+- Need to set version to 1.7 if you are using 1.8 (Project > Properties > Java Compiler. Set Compiler compliance level to 1.7).
+
+----------------------------------------------------------------------
+
+Upload process:
+
+Bump version in `war/WEB-INF/appengine-web.xml` up. Then, run `rebuild-and-upload.sh`.

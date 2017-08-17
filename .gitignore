@@ -12,3 +12,12 @@ externals/appengine-java-sdk-*
 
 # secret API key
 war-src/js/openEditor/config.js
+
+war-src/AUTHORS
+war-src/LICENSE
+war-src/README
+war-src/all_tests.html
+war-src/alltests.js
+war-src/closure/
+war-src/deps.js
+war-src/third_party/
