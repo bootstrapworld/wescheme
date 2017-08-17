@@ -20,8 +20,8 @@ public class LetsencryptServlet extends HttpServlet {
 
     static {
     	// TODO: need to change this to the real key/secret when we will really deployed
-        challenges.put("8vkz1Up6jXWtTWmJpwYDgQ2PZ_K9pPMDD9BN7jFDsOI",
-                "8vkz1Up6jXWtTWmJpwYDgQ2PZ_K9pPMDD9BN7jFDsOI.NawKSO1YZlbXAqd2ul84Oxc51S-XWhJ4EojHZZ7hMDo");
+        challenges.put("R4fUbslsnpud3DENKy31YioazA0DoSmfz9IEebwo6kg",
+                "R4fUbslsnpud3DENKy31YioazA0DoSmfz9IEebwo6kg.xnkLFayDWFaQYM5Din_gPCYjVLTiuh20aqr0XROuXac");
     }
 
     @Override
