@@ -11,17 +11,17 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.ServletException;
 
 public class LetsencryptServlet extends HttpServlet {
-    
+
     /**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -3324616060342480492L;
 	public static final Map<String, String> challenges = new HashMap<String, String>();
-    
+
     static {
     	// TODO: need to change this to the real key/secret when we will really deployed
-        challenges.put("RzrvZ9gd7EH3i_TsJM-B0vdEMslD4oo_lwsagGskp6c",
-                "RzrvZ9gd7EH3i_TsJM-B0vdEMslD4oo_lwsagGskp6c.ONrZa3UelibSWEX270nTUiRZKPFXw096nENWbMGw0-E");
+        challenges.put("8vkz1Up6jXWtTWmJpwYDgQ2PZ_K9pPMDD9BN7jFDsOI",
+                "8vkz1Up6jXWtTWmJpwYDgQ2PZ_K9pPMDD9BN7jFDsOI.NawKSO1YZlbXAqd2ul84Oxc51S-XWhJ4EojHZZ7hMDo");
     }
 
     @Override
