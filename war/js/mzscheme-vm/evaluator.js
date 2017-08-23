@@ -83,7 +83,7 @@ var Evaluator = (function() {
 
     	this.aState.setDisplayHook(function(aStr) {
     	    var dom = document.createElement("span");
-                dom.style.whiteSpace = "pre";
+                dom.style.whiteSpace = "pre-wrap";
                 dom.style.fontFamily = "monospace";
                 var chunks = aStr.split("\n").filter(function(str){return str!=="";});
                 if (chunks.length > 0) {
