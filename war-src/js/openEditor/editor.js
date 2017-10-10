@@ -52,173 +52,163 @@ var WeSchemeEditor;
     //////////////////////////////////////////////////////////////////////
 
     WeSchemeEditor = function(attrs, afterInit) {
-	var that = this;
+		var that = this;
 
-	this.userName = attrs.userName; // string
-	this.actions = new plt.wescheme.AjaxActions();
-    this.onResize = undefined;
-    
-	// defn is assumed to be Containers.
-	// The only container we've got so far are TextContainers.
-	this.defn = attrs.defn;  // TextAreaContainer
-	this.isOwner = false;
-
-
-    this.suppressWarningBeforeUnloadE = receiverE();
-    // suppressWarningBeforeUnloadB: Behavior boolean
-    // Used to suppress the save warning.  Use
-    // suppressWarningBeforeUnloadE.sendEvent() to trigger.
-    this.suppressWarningBeforeUnloadB = startsWith(
-					       this.suppressWarningBeforeUnloadE,
-					       false);
-
-	new plt.wescheme.WeSchemeInteractions(
-					      attrs.interactions,
-					      function(interactions) {
-						  that.interactions = interactions;
-
-						  that.interactions.setSourceHighlighter(function(id, offset, line, column, span, color) {
-							  that.unhighlightAll();
-							  return that.highlight(id, offset, line, column, span, color);
-						      });
-
-						  that.interactions.setAddToCurrentHighlighter(function(id, offset, line, column, span, color) {
-							  return that.highlight(id, offset, line, column, span, color);
-						      });
-
-						  that.interactions.addOnReset(function() {that.defn.unhighlightAll()});
-						  that.interactions.setMoveCursor(function(id, offset){that.moveCursor(id, offset)});
-						  that.interactions.setScrollIntoView(function(id, offset, margin){that.scrollIntoView(id, offset, margin)});
-						  that.interactions.setFocus(function(id){that.focus(id)});
-						  that.interactions.addSetSelection(function(id, offset, line, column, span){
-							  that.setSelection(id, offset, line, column, span);});
-
-						  // pid: (or false number)
-						  that.pid = false;
+		this.userName = attrs.userName; // string
+		this.actions = new plt.wescheme.AjaxActions();
+	    this.onResize = undefined;
+	    
+		// defn is assumed to be Containers.
+		// The only container we've got so far are TextContainers.
+		this.defn = attrs.defn;  // TextAreaContainer
+		this.isOwner = false;
 
 
-						  //////////////////////////////////////////////////////////////////////
-						  // Flapjax stuff.
+	    this.suppressWarningBeforeUnloadE = receiverE();
+	    // suppressWarningBeforeUnloadB: Behavior boolean
+	    // Used to suppress the save warning.  Use
+	    // suppressWarningBeforeUnloadE.sendEvent() to trigger.
+	    this.suppressWarningBeforeUnloadB = startsWith(
+						       this.suppressWarningBeforeUnloadE,
+						       false);
 
-						  // The program title:
-						  that.filenameEntry = new FlapjaxValueHandler(
-											       attrs.filenameInput.get(0));
+		new plt.wescheme.WeSchemeInteractions(
+	      attrs.interactions,
+	      function(interactions) {
+			  that.interactions = interactions;
 
-						  that.filenameEntry.node.type = "text";
-						  that.filenameEntry.setValue("");
+			  that.interactions.setSourceHighlighter(function(id, offset, line, column, span, color) {
+				  that.unhighlightAll();
+				  return that.highlight(id, offset, line, column, span, color);
+		      });
 
-						  // Any time the filenameEntry changes, adjust the
-						  // document's title to match it.
-						  that.filenameEntry.behavior.changes().mapE(function(v) {
-							  document.title = (plt.wescheme.helpers.trimWhitespace(v) ||
-									    "<< Unnamed Program >>");
-							  plt.wescheme.WeSchemeIntentBus.notify("filename-changed", that);
-						      });
+			  that.interactions.setAddToCurrentHighlighter(function(id, offset, line, column, span, color) {
+				  return that.highlight(id, offset, line, column, span, color);
+		      });
 
-						  that.defn.getSourceB().changes().mapE(function() {
-							  //when text changes, everything unhighlighted
-							  that.unhighlightAll();
-							  plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
-						      });
+			  that.interactions.addOnReset(function() {that.defn.unhighlightAll()});
+			  that.interactions.setMoveCursor(function(id, offset){that.moveCursor(id, offset)});
+			  that.interactions.setScrollIntoView(function(id, offset, margin){that.scrollIntoView(id, offset, margin)});
+			  that.interactions.setFocus(function(id){that.focus(id)});
+			  that.interactions.addSetSelection(function(id, offset, line, column, span){
+				  that.setSelection(id, offset, line, column, span);});
 
-						  //////////////////////////////////////////////////////////////////////
-						  // EVENTS
-						  //////////////////////////////////////////////////////////////////////
-
-						  // savedE is a boolean eventStream which receives true
-						  // when a save has happened.
-						  that.savedE = receiverE();
-
-						  // loadedE is a boolean eventStream that receives true whenever
-						  // a load has happened.
-						  that.loadedE = receiverE();
-
-						  // publishedE is a boolean eventStream that receives true whenever
-						  // a program has been published;
-						  that.isPublishedE = receiverE();
-
-						  // contentChangedE event fires true if the source or filename
-						  // changes.
-						  that.contentChangedE = mergeE(
-										constantE(changes(that.defn.getSourceB()), true),
-										constantE(changes(that.filenameEntry.behavior), true));
+			  // pid: (or false number)
+			  that.pid = false;
 
 
-						  that.isOwnerE = receiverE();
+			  //////////////////////////////////////////////////////////////////////
+			  // Flapjax stuff.
 
-						  // loggedInB is a boolean behavior that's true when the user has
-						  // logged in.
-						  that.isLoggedInB = constantB(that._getIsLoggedIn());
+			  // The program title:
+			  that.filenameEntry = new FlapjaxValueHandler(attrs.filenameInput.get(0));
 
+			  that.filenameEntry.node.type = "text";
+			  that.filenameEntry.setValue("");
 
-						  // The program id pid as a behavior.
-						  // A number or false behavior.
-						  that.pidB = startsWith(
-									 that.loadedE.mapE(function(v) {
-										 return that.pid; }),
-									 that.pid);
+			  // Any time the filenameEntry changes, adjust the
+			  // document's title to match it.
+			  that.filenameEntry.behavior.changes().mapE(function(v) {
+				  document.title = (plt.wescheme.helpers.trimWhitespace(v) ||
+						    "<< Unnamed Program >>");
+				  plt.wescheme.WeSchemeIntentBus.notify("filename-changed", that);
+			      });
 
+			  that.defn.getSourceB().changes().mapE(function() {
+				  //when text changes, everything unhighlighted
+				  that.unhighlightAll();
+				  plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
+			      });
 
-						  // Returns true if the file is new.
-						  that.isNewFileB = startsWith(
-									       changes(that.pidB).mapE(function(v) {
-										       return that.pid == false; }),
-									       that.pid == false);
+			  //////////////////////////////////////////////////////////////////////
+			  // EVENTS
+			  //////////////////////////////////////////////////////////////////////
 
+			  // savedE is a boolean eventStream which receives true
+			  // when a save has happened.
+			  that.savedE = receiverE();
 
-						  that.isPublishedB = startsWith(that.isPublishedE,
-										 false);
+			  // loadedE is a boolean eventStream that receives true whenever
+			  // a load has happened.
+			  that.loadedE = receiverE();
 
+			  // publishedE is a boolean eventStream that receives true whenever
+			  // a program has been published;
+			  that.isPublishedE = receiverE();
 
-						  // isOwnerB is a boolean behavior that's true if we own the file,
-						  // and false otherwise.  It changes on load.
-						  that.isOwnerB = startsWith(that.isOwnerE, that.isOwner);
-
-
-						  // isDirtyB is initially false, and changes when
-						  // saves or changes to the source occur.
-						  that.isDirtyB = startsWith(
-									     mergeE(// false if we loaded a file
-										    constantE(that.loadedE, false),
-										    // false when the file becomes saved.
-										    constantE(that.savedE, false),
-										    // true if the content has changed.
-										    constantE(that.contentChangedE, true)),
-									     false);
-
-						  // isAutosaveEnabledB: enabled only when the definitions area is dirty
-						  //             and it hasn't been published yet
-						  //             and you own the file
-						  //             and you are logged in (non-"null" name)
-						  that.isAutosaveEnabledB = andB(that.isDirtyB,
-										 notB(that.isPublishedB),
-										 that.isOwnerB,
-										 that.isLoggedInB);
-
-						  // We'll fire off an autosave if the content has changed and
-						  // saving is enabled, and it's not a new file.
-						  that.autosaveRequestedE =
-						      calmE(andE(that.contentChangedE,
-								 changes(that.isAutosaveEnabledB)),
-							    constantB(AUTOSAVE_TIMEOUT));
+			  // contentChangedE event fires true if the source or filename
+			  // changes.
+			  that.contentChangedE = mergeE(
+							constantE(changes(that.defn.getSourceB()), true),
+							constantE(changes(that.filenameEntry.behavior), true));
 
 
+			  that.isOwnerE = receiverE();
 
-						  //////////////////////////////////////////////////////////////////////
-						  //////////////////////////////////////////////////////////////////////
-						  // HOOKS
+			  // loggedInB is a boolean behavior that's true when the user has
+			  // logged in.
+			  that.isLoggedInB = constantB(that._getIsLoggedIn());
 
-						  // Autosave
-						  that.autosaveRequestedE.mapE(function(v) {
-							  if (v) {
-							      that._autosave();
-							  }
-						      });
 
-						  if (afterInit) {
-						      afterInit(that);
-						  }
-					      });
+			  // The program id pid as a behavior.
+			  // A number or false behavior.
+			  that.pidB = startsWith(
+						 that.loadedE.mapE(function(v) {
+							 return that.pid; }),
+						 that.pid);
+
+			  // Returns true if the file is new.
+			  that.isNewFileB = startsWith(
+						       changes(that.pidB).mapE(function(v) {
+							       return that.pid == false; }),
+						       that.pid == false);
+
+			  that.isPublishedB = startsWith(that.isPublishedE, false);
+
+			  // isOwnerB is a boolean behavior that's true if we own the file,
+			  // and false otherwise.  It changes on load.
+			  that.isOwnerB = startsWith(that.isOwnerE, that.isOwner);
+
+
+			  // isDirtyB is initially false, and changes when
+			  // saves or changes to the source occur.
+			  that.isDirtyB = startsWith(
+						     mergeE(// false if we loaded a file
+							    constantE(that.loadedE, false),
+							    // false when the file becomes saved.
+							    constantE(that.savedE, false),
+							    // true if the content has changed.
+							    constantE(that.contentChangedE, true)),
+						     false);
+
+			  // isAutosaveEnabledB: enabled only when the definitions area is dirty
+			  //             and it hasn't been published yet
+			  //             and you own the file
+			  //             and you are logged in (non-"null" name)
+			  that.isAutosaveEnabledB = andB(that.isDirtyB,
+							 notB(that.isPublishedB),
+							 that.isOwnerB,
+							 that.isLoggedInB);
+
+			  // We'll fire off an autosave if the content has changed and
+			  // saving is enabled, and it's not a new file.
+			  that.autosaveRequestedE =
+			      calmE(andE(that.contentChangedE,
+					 changes(that.isAutosaveEnabledB)),
+				    constantB(AUTOSAVE_TIMEOUT));
+
+
+			  //////////////////////////////////////////////////////////////////////
+			  //////////////////////////////////////////////////////////////////////
+			  // HOOKS
+
+			  // Autosave
+			  that.autosaveRequestedE.mapE(function(v) {
+				  if (v) { that._autosave(); }
+		      });
+
+			  if (afterInit) { afterInit(that); }
+        });
 		this.focusCarousel = [	document.getElementById('Tools'), 
 								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
 								that.interactions.prompt.div[0],
@@ -228,29 +218,22 @@ var WeSchemeEditor;
     // Inserting the value of a boolean behavior into the enabled
     // attribute of a node.
     function insertEnabledB(aBooleanBehavior, jQueryNode) {
-	function f(v) {
-	    if (v) {
-		jQueryNode.removeAttr("disabled");
-	    } else {
-		jQueryNode.attr("disabled", "true");
-	    }
-
-	}
-	f(valueNow(aBooleanBehavior));
-	aBooleanBehavior.changes().mapE(f);
+		function f(v) {
+		    if (v) { jQueryNode.removeAttr("disabled"); }
+		    else { jQueryNode.attr("disabled", "true"); }
+		}
+		f(valueNow(aBooleanBehavior));
+		aBooleanBehavior.changes().mapE(f);
     }
-
 
     WeSchemeEditor.prototype.setOnResize = function(onResize) {
         this.onResize = onResize;
     };
 
-
     // Force a refresh on the size of the editor.
     WeSchemeEditor.prototype.forceOnResize = function() {
         this.onResize();
     };
-
 
     // Allow multi-colored error highlighting to be disabled
     // experimentally.
@@ -259,7 +242,6 @@ var WeSchemeEditor;
     WeSchemeEditor.prototype.disableColoredErrorMessages = function() {
         this.interactions.disableColoredErrorMessages();
     };
-
 
     WeSchemeEditor.prototype.highlight = function(id, offset, line, column, span, color) {
     	if(id === '<no-location>'){
@@ -273,56 +255,56 @@ var WeSchemeEditor;
 
     WeSchemeEditor.prototype.setSelection = function(id, offset, line, column, span, color) {
     	if (id === '<definitions>') {
-	    this.defn.setSelection(id, offset, line, column, span);
-	} else if (this.interactions.previousInteractionsTextContainers[id]) {
-	    this.interactions.previousInteractionsTextContainers[id].setSelection(id, offset, line, column, span);
-	}
+		    this.defn.setSelection(id, offset, line, column, span);
+		} else if (this.interactions.previousInteractionsTextContainers[id]) {
+		    this.interactions.previousInteractionsTextContainers[id].setSelection(id, offset, line, column, span);
+		}
     };
 
     WeSchemeEditor.prototype.unhighlightAll = function() {
     	var key;
-	for(key in this.interactions.previousInteractionsTextContainers) {
-	    if (this.interactions.previousInteractionsTextContainers.hasOwnProperty(key)) {
-		this.interactions.previousInteractionsTextContainers[key].unhighlightAll();
-	    }
-	}
-	this.defn.unhighlightAll();
+		for(key in this.interactions.previousInteractionsTextContainers) {
+		    if (this.interactions.previousInteractionsTextContainers.hasOwnProperty(key)) {
+			this.interactions.previousInteractionsTextContainers[key].unhighlightAll();
+		    }
+		}
+		this.defn.unhighlightAll();
     };
 
     WeSchemeEditor.prototype.moveCursor = function(id, offset) {
     	if (id === '<definitions>') {
-	    this.defn.moveCursor(offset);
-	} else if (this.interactions.previousInteractionsTextContainers[id]) {
-	    this.interactions.previousInteractionsTextContainers[id].moveCursor(offset);
-	}
+	    	this.defn.moveCursor(offset);
+		} else if (this.interactions.previousInteractionsTextContainers[id]) {
+		    this.interactions.previousInteractionsTextContainers[id].moveCursor(offset);
+		}
     };
 
     WeSchemeEditor.prototype.scrollIntoView = function(id, offset, margin) {
     	if (id === '<definitions>') {
-	    this.defn.scrollIntoView(offset, margin);
-	} else if (this.interactions.previousInteractionsTextContainers[id]) {
-	    this.interactions.previousInteractionsTextContainers[id].scrollIntoView(offset, margin);
-	}
+	    	this.defn.scrollIntoView(offset, margin);
+		} else if (this.interactions.previousInteractionsTextContainers[id]) {
+		    this.interactions.previousInteractionsTextContainers[id].scrollIntoView(offset, margin);
+		}
     };
 
     WeSchemeEditor.prototype.focus = function(id) {
-	if (id === '<definitions>') {
-	    this.defn.focus();
-	} else if (this.interactions.previousInteractionsTextContainers[id]) {
-	    this.interactions.previousInteractionsTextContainers[id].focus();
-	}
+		if (id === '<definitions>') {
+		    this.defn.focus();
+		} else if (this.interactions.previousInteractionsTextContainers[id]) {
+		    this.interactions.previousInteractionsTextContainers[id].focus();
+		}
     };
 
     // WeSchemeEditor._getIsLoggedIn: -> boolean
     // Returns true if the user has been logged in.
     WeSchemeEditor.prototype._getIsLoggedIn = function() {
-	return (this.userName && this.userName != 'null');
+		return (this.userName && this.userName != 'null');
     };
 
     // WeSchemeEditor._autosave: -> void
     WeSchemeEditor.prototype._autosave = function() {
-	plt.wescheme.WeSchemeIntentBus.notify("autosave", this);
-	this.save();
+		plt.wescheme.WeSchemeIntentBus.notify("autosave", this);
+		this.save();
     };
 
     WeSchemeEditor.prototype.save = function(success, fail, cancel) {
@@ -407,161 +389,155 @@ var WeSchemeEditor;
       };
 
     WeSchemeEditor.prototype._enforceNonemptyName = function(afterK, abortK, isFirstEntry) {
-	var that = this;
-	var title = plt.wescheme.helpers.trimWhitespace(that.filenameEntry.attr("value"));
-	if (title === "") {
-	    var dialogWindow = (jQuery("<div/>"));
+		var that = this;
+		var title = plt.wescheme.helpers.trimWhitespace(that.filenameEntry.attr("value"));
+		if (title === "") {
+		    var dialogWindow = (jQuery("<div/>"));
 
-            var buttonPressed = false;
+	            var buttonPressed = false;
 
-	    var onSaveButton = function() {
-		buttonPressed = true;
-		dialogWindow.dialog("close");
-		that.filenameEntry.attr("value",
-					plt.wescheme.helpers.trimWhitespace(
-									    inputField.attr("value")));
-		that._enforceNonemptyName(afterK, abortK, false);
-	    };
+		    var onSaveButton = function() {
+			buttonPressed = true;
+			dialogWindow.dialog("close");
+			that.filenameEntry.attr("value",
+						plt.wescheme.helpers.trimWhitespace(
+										    inputField.attr("value")));
+			that._enforceNonemptyName(afterK, abortK, false);
+		    };
 
-	    var onCancelButton = function() {
-                buttonPressed = true;
-		dialogWindow.dialog("close");
-		abortK();
-	    };
+		    var onCancelButton = function() {
+	                buttonPressed = true;
+			dialogWindow.dialog("close");
+			abortK();
+		    };
 
-	    var inputField = jQuery("<input type='text' style='border: solid'/>");
-	    dialogWindow.append(jQuery("<p/>").text(
-						    "Please provide a name for your program: "));
-	    dialogWindow.append(jQuery("<p/>").text(
-						    "(The name cannot be left blank.)"));
-	    dialogWindow.append(inputField);
+		    var inputField = jQuery("<input type='text' style='border: solid'/>");
+		    dialogWindow.append(jQuery("<p/>").text(
+							    "Please provide a name for your program: "));
+		    dialogWindow.append(jQuery("<p/>").text(
+							    "(The name cannot be left blank.)"));
+		    dialogWindow.append(inputField);
 
-	    dialogWindow.dialog({title: 'Saving your program',
-			bgiframe : true,
-			modal : true,
-			overlay : {opacity: 0.5,
-			    background: 'black'},
-			buttons : { "Save" : onSaveButton,
-			    "Don't Save" : onCancelButton }
-		});
+		    dialogWindow.dialog({title: 'Saving your program',
+				bgiframe : true,
+				modal : true,
+				overlay : {opacity: 0.5,
+				    background: 'black'},
+				buttons : { "Save" : onSaveButton,
+				    "Don't Save" : onCancelButton }
+			});
 
-            dialogWindow.bind("dialogclose",
-                              function(event, ui) {
-                                  if (! buttonPressed) {
-                                      abortK();
-                                  }
-                              });
+	        dialogWindow.bind("dialogclose",
+	                          function(event, ui) {
+	                              if (! buttonPressed) { abortK(); }
+	                          });
 
 
-	    // Really stupid hacky code.  I have no idea how to
-	    // cleanly grab at the buttons in a dialog constructed by
-	    // jQuery-UI, so the following code does it by manually
-	    // walking the dom tree.
-	    var saveButton;
-	    dialogWindow.dialog("widget").parent().find(":button")
-		.each(function(index) {
-			if (jQuery(this).text() === "Save") {
-			    saveButton = this;
-			}
-		    });
-	    var maintainSaveButtonStatus = function() {
-		// Disable the save button if its content doesn't validate.
-		setTimeout(
-			   function() {
-			       var name =
-			       plt.wescheme.helpers.trimWhitespace(inputField.val());
-			       if (name === "") {
-				   saveButton.disabled = true;
-				   jQuery(saveButton).hide('fast');
-			       } else {
-				   saveButton.disabled = false;
-				   jQuery(saveButton).show('fast');
-			       }
-			   },
-			   0);
-	    };
-	    maintainSaveButtonStatus();
-	    inputField.keydown(maintainSaveButtonStatus);
-	    inputField.change(maintainSaveButtonStatus);
-	} else {
-	    afterK();
-	}
+		    // Really stupid hacky code.  I have no idea how to
+		    // cleanly grab at the buttons in a dialog constructed by
+		    // jQuery-UI, so the following code does it by manually
+		    // walking the dom tree.
+		    var saveButton;
+		    dialogWindow.dialog("widget").parent().find(":button")
+				.each(function(index) {
+					if (jQuery(this).text() === "Save") {
+					    saveButton = this;
+					}
+			    });
+		    var maintainSaveButtonStatus = function() {
+			// Disable the save button if its content doesn't validate.
+			setTimeout(
+				   function() {
+				       var name =
+				       plt.wescheme.helpers.trimWhitespace(inputField.val());
+				       if (name === "") {
+					   saveButton.disabled = true;
+					   jQuery(saveButton).hide('fast');
+				       } else {
+					   saveButton.disabled = false;
+					   jQuery(saveButton).show('fast');
+				       }
+				   },
+				   0);
+		    };
+		    maintainSaveButtonStatus();
+		    inputField.keydown(maintainSaveButtonStatus);
+		    inputField.change(maintainSaveButtonStatus);
+		} else {
+		    afterK();
+		}
     };
 
     WeSchemeEditor.prototype.load = function(attrs, onSuccess, onFail) {
-	var that = this;
+		var that = this;
 
+		var whenLoadSucceeds = function(aProgram) {
+	 	    that.pid = aProgram.getId();
+	 	    var publicUrl = getAbsoluteUrl(
+						   "/openEditor?publicId=" +
+						   encodeURIComponent(aProgram.getPublicId()));
+	 	    that.filenameEntry.attr("value", aProgram.getTitle());
 
-	var whenLoadSucceeds = function(aProgram) {
- 	    that.pid = aProgram.getId();
- 	    var publicUrl = getAbsoluteUrl(
-					   "/openEditor?publicId=" +
-					   encodeURIComponent(aProgram.getPublicId()));
- 	    that.filenameEntry.attr("value", aProgram.getTitle());
+	        if (attrs.pid) {
+		        	that.defn.setCode(aProgram.getSourceCode());
+	        } else {
+	            if (attrs.publicId && aProgram.isSourcePublic()) {
+		            that.defn.setCode(aProgram.getSourceCode());
+	            } else {
+		            that.defn.setCode(";;  << Source code has not been shared >>");
+	            }
+	        }
 
-            if (attrs.pid) {
- 	        that.defn.setCode(aProgram.getSourceCode());
-            } else {
-                if (attrs.publicId && aProgram.isSourcePublic()) {
- 	            that.defn.setCode(aProgram.getSourceCode());
-                } else {
- 	            that.defn.setCode(";;  << Source code has not been shared >>");
-                }
-            }
+		    if (that.userName === aProgram.getOwner()) {
+				that._setIsOwner(true);
+		    } else {
+				that._setIsOwner(false);
+		    }
+		    that.loadedE.sendEvent(true);
+		    that.isPublishedE.sendEvent(aProgram.isPublished());
+		    plt.wescheme.WeSchemeIntentBus.notify("after-load", that);
+		    if (onSuccess) { onSuccess(aProgram.getSourceCode()); }
+		};
 
-	    if (that.userName === aProgram.getOwner()) {
-		that._setIsOwner(true);
-	    } else {
-		that._setIsOwner(false);
-	    }
-	    that.loadedE.sendEvent(true);
-	    that.isPublishedE.sendEvent(aProgram.isPublished());
-	    plt.wescheme.WeSchemeIntentBus.notify("after-load", that);
-	    if (onSuccess) { onSuccess(aProgram.getSourceCode()); }
-	};
+		var whenLoadFails = function() {
+		    // FIXME
+		    alert("The load failed.");
+		    if (onFail) { onFail(); }
+		};
 
-	var whenLoadFails = function() {
-	    // FIXME
-	    alert("The load failed.");
-	    if (onFail) { onFail(); }
-	};
-
-	if (attrs.pid) {
-	    plt.wescheme.WeSchemeIntentBus.notify("before-load", this);
-	    that.actions.loadProject(attrs.pid,
-				     undefined,
-				     whenLoadSucceeds,
-				     whenLoadFails);
-	} else if (attrs.publicId) {
-	    plt.wescheme.WeSchemeIntentBus.notify("before-load", this);
-	    that.actions.loadProject(undefined,
-				     attrs.publicId,
-				     whenLoadSucceeds,
-				     whenLoadFails);
-	} else {
-	    throw new Error("pid or publicId required");
-	}
+		if (attrs.pid) {
+		    plt.wescheme.WeSchemeIntentBus.notify("before-load", this);
+		    that.actions.loadProject(attrs.pid,
+					     undefined,
+					     whenLoadSucceeds,
+					     whenLoadFails);
+		} else if (attrs.publicId) {
+		    plt.wescheme.WeSchemeIntentBus.notify("before-load", this);
+		    that.actions.loadProject(undefined,
+					     attrs.publicId,
+					     whenLoadSucceeds,
+					     whenLoadFails);
+		} else {
+		    throw new Error("pid or publicId required");
+		}
     };
 
     function getAbsoluteUrl(relativeUrl) {
-	var anchor = document.createElement("a");
-	anchor.href = relativeUrl;
-	return anchor.href;
+		var anchor = document.createElement("a");
+		anchor.href = relativeUrl;
+		return anchor.href;
     }
 
-
     WeSchemeEditor.prototype.share = function() {
-	var dialog = new plt.wescheme.SharingDialog(this.pid, this.defn.getCode());
-	dialog.show();
+		var dialog = new plt.wescheme.SharingDialog(this.pid, this.defn.getCode());
+		dialog.show();
     };
 
 
     WeSchemeEditor.prototype.showNotesDialog = function() {
         var dialog = new plt.wescheme.NotesDialog(this.pid);
-        var onSuccess = function() {
-        };
-        var onFail = function() {
-        };
+        var onSuccess = function() {};
+        var onFail = function() {};
         dialog.show(onSuccess, onFail);
     };
 
@@ -733,16 +709,14 @@ var WeSchemeEditor;
     // makeShareUrl: string -> string
     // Produces the sharing url
     function makeShareUrl(publicId) {
-      // TODO: This does not always explicitly return a value.
-	if (publicId != "") {
-	    var a = document.createElement("a");
-	    a.href = "/view?publicId=" + encodeURIComponent(publicId);
-	    a.appendChild(document.createTextNode(a.href));
-	    return jQuery(a);
-	}
+      	// TODO: This does not always explicitly return a value.
+		if (publicId != "") {
+		    var a = document.createElement("a");
+		    a.href = "/view?publicId=" + encodeURIComponent(publicId);
+		    a.appendChild(document.createTextNode(a.href));
+		    return jQuery(a);
+		}
     }
-
-
 
     WeSchemeEditor.prototype.getTokenizer = function() {
         return plt.wescheme.tokenizer;
