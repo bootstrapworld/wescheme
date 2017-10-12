@@ -121,8 +121,8 @@ var WeSchemeTextContainer;
 					autoCloseBrackets: options.autoCloseBrackets || false,
 					value: options.content || "",
 					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
-      			 	inputStyle: "contenteditable"  /*  Force on for screen readers  */
+          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
+      			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
 				});
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
