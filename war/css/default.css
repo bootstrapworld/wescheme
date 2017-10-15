@@ -195,6 +195,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     background:		white url(images/blank.gif) no-repeat;
     overflow:       auto;
     margin-left:    4px;
+    padding-top:    2px;
 }
 
 #interactions:hover{

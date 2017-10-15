@@ -4394,7 +4394,8 @@ PRIMITIVES['empty-scene'] = new CasePrimitive('empty-scene',
 		 function(aState, width, height) {
 		 	check(aState, width, isNonNegativeReal, 'empty-scene', 'non-negative number', 1, arguments);
 			check(aState, height, isNonNegativeReal, 'empty-scene', 'non-negative number', 2, arguments);
-		        return world.Kernel.sceneImage(jsnums.toFixnum(width), jsnums.toFixnum(height), [], true, false);
+			var white = colorDb.get("white");
+	        return world.Kernel.sceneImage(jsnums.toFixnum(width), jsnums.toFixnum(height), [], true, white);
 		 }),
    new PrimProc('empty-scene',
 		 3,
