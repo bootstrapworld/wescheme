@@ -80,6 +80,7 @@
     <url-pattern>/logout</url-pattern>
   </servlet-mapping>
 
+	<!--
   <servlet>
     <servlet-name>myDropboxes</servlet-name>
     <jsp-file>myDropboxes.jsp</jsp-file>
@@ -97,8 +98,7 @@
     <servlet-name>dropbox</servlet-name>
     <url-pattern>/dropbox</url-pattern>
   </servlet-mapping>
-
-
+	-->
 
   <servlet>
     <servlet-name>openEditor</servlet-name>
@@ -159,18 +159,14 @@
   </servlet-mapping>
 
 
-
   <servlet>
     <servlet-name>listProjects</servlet-name>
     <servlet-class>org.wescheme.servlet.ListProjectsServlet</servlet-class>
   </servlet>
-
-
   <servlet-mapping>
     <servlet-name>listProjects</servlet-name>
     <url-pattern>/listProjects</url-pattern>
   </servlet-mapping>
-
 
 
   <servlet>
@@ -213,8 +209,6 @@
   </servlet-mapping>
 
 
-
-
   <servlet>
     <servlet-name>cloneProject</servlet-name>
     <servlet-class>org.wescheme.servlet.CloneProjectServlet</servlet-class>
@@ -223,7 +217,6 @@
     <servlet-name>cloneProject</servlet-name>
     <url-pattern>/cloneProject</url-pattern>
   </servlet-mapping>
-
 
 
   <servlet>
@@ -235,6 +228,7 @@
     <url-pattern>/administrate</url-pattern>
   </servlet-mapping>
 
+
   <servlet>
     <servlet-name>imageProxy</servlet-name>
     <servlet-class>org.wescheme.servlet.ImageProxy</servlet-class>
@@ -243,6 +237,7 @@
     <servlet-name>imageProxy</servlet-name>
     <url-pattern>/imageProxy</url-pattern>
   </servlet-mapping>
+
 
   <servlet>
     <servlet-name>letsencrypt</servlet-name>
