@@ -18,66 +18,32 @@ advantage of some Racket features to do compilation for us.
 
 @section{Architecture}
 
-WeScheme consists of two major components, (1) the front-facing
-AppEngine web server, and (2) the backend compilation servers.  It
+WeScheme consists of two major components, (1) the back-end
+AppEngine web server, and (2) the browser js-vm. (1) 
 provides the service for the static resources, user authentication and
 program storage through Google AppEngine services.
 
 
 @verbatim|{
 
-    AppEngine   <-------- Client web browser
-  program storage          /  client-side evaluation
-  static resources        /
-        ^                /
-        |               /
-        |              /
-        |             /
-        V            V
- EC2 Compiler server
-server-side compilation
-
+    AppEngine   <--------> Client web browser
+  program storage          client-side evaluation
+  static resources         client-side compilation
 }|
-
-There's a simplification on this diagram with regards to the EC2
-compiler server.  There are actually two separate EC2 subsystems to
-serve both the east and west coast of the US,
-
-@itemlist[
-@item{@url{http://balanced-wescheme-compilers-1567676416.us-west-2.elb.amazonaws.com}}
-@item{@url{http://LoadBalancerEast-1672652775.us-east-1.elb.amazonaws.com}}
-]
-
-Both are EC2 load balancers that spread load across a few EC2
-instances.  A separate document
-(@link["https://github.com/dyoo/WeScheme/blob/master/doc/ec2-auto-scaling-notes.txt"]{ec2-auto-scaling-notes.txt})
-describes the details of the setup.
-
-
-Both the AppEngine and EC2 sides are intended to scale: on heavy load,
-both AppEngine and EC2 should, in principle, automatically turn on
-additional servers to continue to provide service.
 
 Once a user visits wescheme.org, they are presented with an editing
 environment, and their web browser runs an evaluator that can
 interpret compiled code from the compiler servers.  Within the
 environment, whenever the user enters an expression or presses Run, a
-compilation request is sent from the browser client directly to the
-EC2 compilation server.  This is to reduce the amount of network
-latency between interactions.
+compilation is performed and executed on the client.
 
 When a program is shared publically, WeScheme on the AppEngine side
-generates a unique "publicId", and initiates a compilation of the
-program between AppEngine and EC2.  This is different from the
-client-initiated compilation!  We add this extra level of indirection
-because we do not trust the client to produce compiled code that can
-be run by other folks.
+generates a unique "publicId".
 
-The arrow from the EC2 side back to AppEngine is deliberate: sometimes
-the compilation servers need to process programs that themselves
+The arrow from the client side back to AppEngine is deliberate: sometimes
+a compilation needs to process programs that themselves
 require other wescheme modules.  This means that the compiler
-@link["https://github.com/bootstrapworld/wescheme-compiler2012/blob/master/wescheme-module-provider.rkt"]{needs
-to ask WeScheme.org} what symbols are provided by that module.
+needs to ask WeScheme.org what symbols are provided by that module.
 
 
 On the software end of things, we use a combination of Java servlets
@@ -95,26 +61,6 @@ writing) Java 1.7 is not compatible with AppEngine.
 
 The source to WeScheme can be found at github:
 @url{https://github.com/dyoo/WeScheme}
-
-
-As soon as you check the project out, look at wescheme.properties.  It
-defines the network endpoints of both the appengine and ec2 side of things.
-
-@filebox["wescheme.properties"]{
-@verbatim|{
-WESCHEME_SERVER_BASE = http://www.wescheme.org
-## Main server to depend on for server-side compilation:
-COMPILATION_SERVER_URL = http://balanced-wescheme-compilers-1567676416.us-west-2.elb.amazonaws.com/servlets/standalone.ss
-## Round-robin compilation servers.
-COMPILATION_SERVERS = http://balanced-wescheme-compilers-1567676416.us-west-2.elb.amazonaws.com/rpc.html http://LoadBalancerEast-1672652775.us-east-1.elb.amazonaws.com/rpc.html
-}|}
-
-Usually, you do not need to touch this file unless you're making
-modifications to the compilation servers and therefore need to test
-your local appengine instance against it.  @tt{COMPILATION_SERVER_URL}
-is the URL used by AppEngine when it contacts the EC2 servers during a
-Sharing.  @tt{COMPILATION_SERVERS} are the web services that the
-browser client will use during interactive development.
 
 
 To build the Java side of things, execute: @tt{ant compile}
@@ -250,23 +196,8 @@ errors uniformily through this mechanism.
 
 @section{Known issues}
 
-The EC2 load balancers should not be treated as reliable resources.
-Unfortunately, we've found that EC2 elastic load balancing fails on
-high load by producing HTTP 503 errors.  We're working around this on
-the client side by just having the software repeat a request that's
-denied due to 503.
-
-We've been hitting persistent out-of-memory issues with the
-compilation servers running on EC2.  We're working around the issue by
-having
-@link["https://github.com/bootstrapworld/wescheme-compiler2012/tree/master/keep-alive-scripts"]{keep-alive
-scripts} running in crontab.  I believe this is due to a bug in
-Racket, and by the time a release rolls out with a
-@link["http://lists.racket-lang.org/users/archive/2013-April/057450.html"]{fix
-to a specific memory leak}, this problem should hopefully be subdued.
-
-
-
+The client-side JS compiler is not 100% stack-safe. Parsing very-deeply-nested programs can result in a 
+'maximum stack size limit' error.
 
 
 @section{Miscellaneous}
