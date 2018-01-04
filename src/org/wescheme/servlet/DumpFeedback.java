@@ -51,7 +51,7 @@ public class DumpFeedback extends HttpServlet {
 		}
 	
 		// Side effect: force loading of the classes.
-		DAO dao = new DAO();
+		new DAO();
 		
 		
 		// Next, start dumping content till we hit CPU limit

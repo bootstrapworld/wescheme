@@ -7,5 +7,10 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/json_simple-1.1.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/objectify-3.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/appengine-api-1.0-sdk-1.9.60.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/geronimo-jpa_3.0_spec-1.1.1.jar"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/jdo2-api-2.3-eb.jar"/>
+	<classpathentry kind="lib" path="externals/appengine-java-sdk-1.9.60.zip"/>
+	<classpathentry kind="lib" path="lib/appengine-java-sdk-1.9.60/jetty93/jetty-distribution/lib/servlet-api-3.1.jar"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>
