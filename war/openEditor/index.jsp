@@ -28,7 +28,7 @@
     <script src="https://apis.google.com/js/client.js?onload=handleClientLoad" type="text/javascript"></script>
 
    <!-- The standard Google Loader script; use your own key. -->
-    <script src="http://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
+    <script src="https://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
     <script type="text/javascript">
       google.load('picker', '1');
 
