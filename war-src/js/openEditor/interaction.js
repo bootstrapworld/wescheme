@@ -134,6 +134,12 @@ WeSchemeInteractions = (function () {
         this.say(msg, true);
     }
 
+    WeSchemeInteractions.prototype.speakChar = function(cm) {
+        var pos = cm.getCursor(), ln = pos.line, ch = pos.ch;
+        var c = cm.getRange({line: ln, ch: ch}, {line: ln, ch: ch+1});
+        this.sayAndForget(c);
+    }
+
     // speak the nth interaction and result (0=10)
     WeSchemeInteractions.prototype.speakHistory = function(n) {
         if(n===0) { n = 10; }// use 0 as 10
@@ -184,12 +190,13 @@ WeSchemeInteractions = (function () {
                   "PageUp":function (ed) {
                       that.onHistoryPrevious();
                   },
-                  // TODO: LEGACY KEYS - REMOVE AFTER 7/1/17
-                  "Ctrl-N":function (ed) {
-                      that.onHistoryNext();
+                  // speak characters for screenreaders that don't know how
+                  // based on https://github.com/ds26gte/code.pyret.org/commit/9e39b1109218331e60079b4853fa83cd007fa3b5
+                  'Left': function(cm) { 
+                      cm.moveH(-1, 'char'); interactions.speakChar(cm); 
                   },
-                  "Ctrl-P":function (ed) {
-                      that.onHistoryPrevious();
+                  'Right': function(cm) { 
+                      cm.moveH(1, 'char'); interactions.speakChar(cm); 
                   },
                   // Speak history keys
                   "Alt-1":function (ed) {
