@@ -1,4 +1,12 @@
-#!/bin/sh
+#!/bin/bash
+
+git remote update > /dev/null
+
+if [[ "$(git status -uno)" != *"Your branch is up-to-date"* ]]; then
+  echo "Error: The git repo is not up-to-date. Please run `git pull` first." >&2
+  exit 1
+fi
+
 echo "BEFORE DEPLOYING, make sure the version number in appengine-web.xml is correct. Press CTRL+C to cancel, or Enter to continue: "
 read input
 
