@@ -1,10 +1,21 @@
-#!/bin/bash
+#!/bin/sh
+
+# Adapted from https://stackoverflow.com/a/3278427/718349
 
 git remote update > /dev/null
 
-if [[ "$(git status -uno)" != *"Your branch is up-to-date"* ]]; then
-  echo "Error: The git repo is not up-to-date. Please run `git pull` first." >&2
-  exit 1
+UPSTREAM=${1:-'@{u}'}
+LOCAL=$(git rev-parse @)
+REMOTE=$(git rev-parse "$UPSTREAM")
+BASE=$(git merge-base @ "$UPSTREAM")
+
+if [ $LOCAL = $REMOTE ]; then
+    :
+elif [ $REMOTE = $BASE ]; then
+    :
+else
+    echo "Error: The git repo is not up-to-date. Please run git pull first." >&2
+    exit 1
 fi
 
 echo "BEFORE DEPLOYING, make sure the version number in appengine-web.xml is correct. Press CTRL+C to cancel, or Enter to continue: "
