@@ -17,6 +17,8 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
+import java.util.Map;
 
 
 /** The ImageProxy servlet's specialized to
@@ -82,6 +84,16 @@ public class ImageProxy extends HttpServlet {
 			contentType = conn.getContentType();
 		} catch (Exception e) {
 			throw new ImageProxyException("url could not be read: " + e.getMessage());
+		}
+
+		if (conn.getHeaderFields().containsKey("Location")) {
+			try {
+				url = new URL(conn.getHeaderField("Location"));
+				conn = url.openConnection();
+				contentType = conn.getContentType();
+			} catch (Exception e) {
+				throw new ImageProxyException("url could not be read: " + e.getMessage());
+			}
 		}
 
 		// The content type must be of type 'image', or we also error out here.
