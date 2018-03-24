@@ -13,27 +13,33 @@
 
 
 <%
-    Program aProgram;
+    Program aProgram = null;
     String publicId = request.getParameter("publicId");
-    if (publicId == null) {
-        response.sendError(400, "publicId parameter missing");
-        return;
-    }
-    String encodedId = java.net.URLEncoder.encode(publicId, "utf-8");
-    PersistenceManager pm = PMF.get().getPersistenceManager();
+    String encodedId = "";
+    PersistenceManager pm = null;
     boolean isPublic = false;
     String title = "";
     String notes = "";
-    try {
-        aProgram = Queries.getProgramByPublicId(pm, publicId);
-        title = aProgram.getTitle();
-        notes = aProgram.getNotes();
-        isPublic = aProgram.getIsSourcePublic();
-    } catch (RuntimeException e) {
-        aProgram = null;
-    } finally {
-        pm.close();
+
+    if (publicId != null) {
+        encodedId = java.net.URLEncoder.encode(publicId, "utf-8");
+        pm = PMF.get().getPersistenceManager();
+        try {
+            aProgram = Queries.getProgramByPublicId(pm, publicId);
+            title = aProgram.getTitle();
+            notes = aProgram.getNotes();
+            isPublic = aProgram.getIsSourcePublic();
+        } catch (RuntimeException e) {
+            aProgram = null;
+        } finally {
+            pm.close();
+        }
     }
+
+    if (publicId == null || aProgram == null) {
+      response.setStatus(400);
+    }
+
 
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -59,14 +65,13 @@
   </div>
 
   <% if (aProgram == null) { %>
-    <script type="text/javascript">
+    <%-- <script type="text/javascript">
     alert("Unable to load program");
-    </script>
+    </script> --%>
     <div>
-      <% if (publicId.length()==0) { %>
-        The <i>publicId</i> provided was blank.All shared WeScheme addresses must be of the form <br/><tt>www.WeScheme.org/view?publicID=<i>public-program-id</i></tt>
-      <% } %>
-      <% if (publicId.length()>0) { %>
+      <% if (publicId == null) { %>
+        The <i>publicId</i> provided was blank. All shared WeScheme addresses must be of the form <br/><tt>www.wescheme.org/view?publicID=<i>public-program-id</i></tt>
+      <% } else { %>
         WeScheme is unable to find the program with <i>publicId=<%= publicId %></i>.
         <br/>Please check the address to make sure the publicId is correct.
       <% } %>
