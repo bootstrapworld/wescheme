@@ -87,21 +87,20 @@
          href="/openEditor?publicId=<%= encodedId %>">Edit
           <span class="tooltip" id="runDescription">Open the code in a new editor</span>
       </a>
-    <% } %>
 
-    <% if (false) { %>
-      <a id="androidApk"  class="linkbutton"
-         style="display: none">Download Android APK</a>
+      <div id="notes">
+        <c:out escapeXml="true" value="<%= notes %>" />
+      </div>
     <% } %>
-
-    <div id="notes">
-      <c:out escapeXml="true" value="<%= notes %>" />
-    </div>
 
     <h2 id="bottomMessage" style="display: none" aria-hidden="true">
       Sometimes YouTube. Perhaps iPhone. Together, WeScheme!
     </h2>
-    <div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
+
+    <% if (aProgram != null && isPublic) { %>
+      <div id="socialBookmarks"><h2 class="screenreader-only">Share</h2></div>
+    <% } %>
+
   </main>
 
   <jsp:include page="/footer.jsp"/>
