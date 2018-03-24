@@ -18,7 +18,17 @@ else
     exit 1
 fi
 
-echo "BEFORE DEPLOYING, make sure the version number in appengine-web.xml is correct. Press CTRL+C to cancel, or Enter to continue: "
+versions="$(./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh list_versions war 2>/dev/null | grep -Pzo '(?ms)(?<=^default: ).*?]')"
+
+echo "Following is all versions: $versions"
+echo
+current_version="$(cat war/WEB-INF/appengine-web.xml | grep -Po '(?<=version>)\d+')"
+
+echo "The current version number in war/WEB-INF/appengine-web.xml is: $current_version"
+
+
+echo
+echo -n "BEFORE DEPLOYING, make sure the version number is correct. Press CTRL+C to cancel, or Enter to continue: "
 read input
 
 set -e

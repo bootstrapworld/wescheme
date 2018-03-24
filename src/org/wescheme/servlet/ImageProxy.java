@@ -86,7 +86,7 @@ public class ImageProxy extends HttpServlet {
 			throw new ImageProxyException("url could not be read: " + e.getMessage());
 		}
 
-		if (conn.getHeaderFields().containsKey("Location")) {
+		while (conn.getHeaderFields().containsKey("Location")) {
 			try {
 				url = new URL(conn.getHeaderField("Location"));
 				conn = url.openConnection();
