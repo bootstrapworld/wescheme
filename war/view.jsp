@@ -58,13 +58,18 @@
     <c:out escapeXml="true" value="<%= publicId %>" />
   </div>
 
-
   <% if (aProgram == null) { %>
     <script type="text/javascript">
     alert("Unable to load program");
     </script>
     <div>
-    WeScheme is unable to find your program.
+      <% if (publicId.length()==0) { %>
+        The <i>publicId</i> provided was blank.All shared WeScheme addresses must be of the form <br/><tt>www.WeScheme.org/view?publicID=<i>public-program-id</i></tt>
+      <% } %>
+      <% if (publicId.length()>0) { %>
+        WeScheme is unable to find the program with <i>publicId=<%= publicId %></i>.
+        <br/>Please check the address to make sure the publicId is correct.
+      <% } %>
     </div>
   <% } %>
   <main>
