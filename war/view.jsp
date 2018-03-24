@@ -15,6 +15,10 @@
 <%
     Program aProgram;
     String publicId = request.getParameter("publicId");
+    if (publicId == null) {
+        response.sendError(400, "publicId parameter missing");
+        return;
+    }
     String encodedId = java.net.URLEncoder.encode(publicId, "utf-8");
     PersistenceManager pm = PMF.get().getPersistenceManager();
     boolean isPublic = false;
