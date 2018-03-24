@@ -18,11 +18,15 @@ else
     exit 1
 fi
 
-versions="$(./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh list_versions war 2>/dev/null | grep -Pzo '(?ms)(?<=^default: ).*?]')"
+python_grep() {
+  echo "python -c \"import sys, re; print(re.search('$1', sys.stdin.read()).group(0))\""
+}
 
-echo "Following is all versions: $versions"
+versions="$(./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh list_versions war 2>/dev/null | eval $(python_grep '(?ms)(?<=^default: ).*?]') )"
+
+echo "Following are all versions: $versions"
 echo
-current_version="$(cat war/WEB-INF/appengine-web.xml | grep -Po '(?<=version>)\d+')"
+current_version="$(cat war/WEB-INF/appengine-web.xml | eval $(python_grep '(?<=version>)\d+'))"
 
 echo "The current version number in war/WEB-INF/appengine-web.xml is: $current_version"
 
