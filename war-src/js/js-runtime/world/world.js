@@ -539,8 +539,10 @@ if (typeof(world) === 'undefined') {
         var self = this;
         ctx.drawImage(self.animationHackImg, x, y);
         setTimeout(function(){
+            console.log('updating DOM label with'+imageCache[self.originalURI].ariaText);
             this.ariaText = imageCache[self.originalURI].ariaText;
             ctx.canvas.setAttribute('aria-label', self.ariaText);
+            ctx.canvas.ariaText = self.ariaText;
         }, 5000);
     };
 

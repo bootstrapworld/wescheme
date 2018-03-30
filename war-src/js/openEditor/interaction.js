@@ -120,6 +120,7 @@ WeSchemeInteractions = (function () {
     // announce a msg by prepending it to the log, then (optionally) forget it by deleting
     WeSchemeInteractions.prototype.say = function(msg, forget) {
         if(msg==='') return;
+        console.log(msg);
         var announcements = document.getElementById("announcementlist");
         var li = document.createElement("LI");
         li.appendChild(document.createTextNode(msg));
@@ -146,8 +147,9 @@ WeSchemeInteractions = (function () {
         var historySize = this.prompt.historyArray.length-1; // the last elt is always ""
         if(n > historySize) { return false; } // don't speak a history that doesn't exist!
         var history = this.prompt.historyArray[historySize - n];
-        this.sayAndForget(history.code + (history.output? " evaluates to " + history.output
-                                                        : " did not produce any value"));
+        this.sayAndForget(history.code + (history.output? 
+            " evaluates to " + (history.output.ariaText || history.output.textContent)
+          : " did not produce any value"));
         return true;
     }
 
@@ -362,10 +364,10 @@ WeSchemeInteractions = (function () {
         this.historyIndex = lastIndex;
     };
 
-    // setRecentOutput : String -> Void
-    Prompt.prototype.setRecentOutput = function(str) {;
+    // setRecentOutput : DOM -> Void
+    Prompt.prototype.setRecentOutput = function(dom) {;
         if((this.historyIndex > 0) && (this.historyIndex < this.historyArray.length)) {
-            this.historyArray[this.historyIndex - 1].output = str;
+            this.historyArray[this.historyIndex - 1].output = dom;
         }
     }
 
@@ -515,7 +517,7 @@ WeSchemeInteractions = (function () {
                 thing.setAttribute("aria-label", ariaText);
                 that.addToInteractions(thing);
                 that.sayAndForget(ariaText);
-                if(ariaText!=="") that.prompt.setRecentOutput(ariaText);
+                if(ariaText !=="") that.prompt.setRecentOutput(thing);
                 rewrapOutput(thing);
             },
             transformDom : function(dom) {
@@ -806,7 +808,7 @@ WeSchemeInteractions = (function () {
         var dom = renderErrorAsDomNode(this, err);
         this.addToInteractions(dom);
         this.say(dom.textContent);
-        this.prompt.setRecentOutput(dom.textContent);
+        this.prompt.setRecentOutput(dom);
         this.addToInteractions("\n");
     };
 
