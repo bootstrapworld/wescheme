@@ -2,8 +2,7 @@
 
 // Page Parameters ------------------------------------------------------------
 
-var page_query_string =
-  (location.href.search(/\?([^#]+)(?:#|$)/) >= 0) && RegExp.$1;
+var page_query_string = location.search.substring(1);
 
 var page_args =
   ((function(){
@@ -20,7 +19,7 @@ var page_args =
 
 function GetPageArg(key, def) {
   for (var i=0; i<page_args.length; i++)
-    if (page_args[i][0] == key) return unescape(page_args[i][1]);
+    if (page_args[i][0] == key) return decodeURIComponent(page_args[i][1]);
   return def;
 }
 
@@ -28,13 +27,20 @@ function MergePageArgsIntoLink(a) {
   if (page_args.length == 0 ||
       (!a.attributes["data-pltdoc"]) || (a.attributes["data-pltdoc"].value == ""))
     return;
-  a.href.search(/^([^?#]*)(?:\?([^#]*))?(#.*)?$/);
-  if (RegExp.$2.length == 0) {
-    a.href = RegExp.$1 + "?" + page_query_string + RegExp.$3;
-  } else {
+  a.href = MergePageArgsIntoUrl(a.href);
+}
+
+function MergePageArgsIntoUrl(href) {
+    var mtch = href.match(/^([^?#]*)(?:\?([^#]*))?(#.*)?$/);
+    if (mtch == undefined) { // I think this never happens
+        return "?" + page_query_string;
+    }
+    if (!mtch[2]) {
+        return mtch[1] + "?" + page_query_string + (mtch[3] || "");
+    }
     // need to merge here, precedence to arguments that exist in `a'
     var i, j;
-    var prefix = RegExp.$1, str = RegExp.$2, suffix = RegExp.$3;
+    var prefix = mtch[1], str = mtch[2] || "", suffix = mtch[3] || "";
     var args = str.split(/[&;]/);
     for (i=0; i<args.length; i++) {
       j = args[i].indexOf('=');
@@ -47,34 +53,45 @@ function MergePageArgsIntoLink(a) {
         if (args[j] == page_args[i][0]) { exists = true; break; }
       if (!exists) str += "&" + page_args[i][0] + "=" + page_args[i][1];
     }
-    a.href = prefix + "?" + str + suffix;
-  }
+    return prefix + "?" + str + suffix;
 }
 
 // Cookies --------------------------------------------------------------------
 
+// Actually, try localStorage (a la HTML 5), first.
+
 function GetCookie(key, def) {
-  var i, cookiestrs;
   try {
-    if (document.cookie.length <= 0) return def;
-    cookiestrs = document.cookie.split(/; */);
-  } catch (e) { return def; }
-  for (i = 0; i < cookiestrs.length; i++) {
-    var cur = cookiestrs[i];
-    var eql = cur.indexOf('=');
-    if (eql >= 0 && cur.substring(0,eql) == key)
-      return unescape(cur.substring(eql+1));
+    var v = localStorage[key];
+    if (!v) v = def;
+    return v;
+  } catch (e) {
+    var i, cookiestrs;
+    try {
+      if (document.cookie.length <= 0) return def;
+      cookiestrs = document.cookie.split(/; */);
+    } catch (e) { return def; }
+    for (i = 0; i < cookiestrs.length; i++) {
+      var cur = cookiestrs[i];
+      var eql = cur.indexOf('=');
+      if (eql >= 0 && cur.substring(0,eql) == key)
+        return unescape(cur.substring(eql+1));
+    }
+    return def;
   }
-  return def;
 }
 
 function SetCookie(key, val) {
-  var d = new Date();
-  d.setTime(d.getTime()+(365*24*60*60*1000));
   try {
-    document.cookie =
-      key + "=" + escape(val) + "; expires="+ d.toGMTString() + "; path=/";
-  } catch (e) {}
+    localStorage[key] = val;
+  } catch(e) {
+    var d = new Date();
+    d.setTime(d.getTime()+(365*24*60*60*1000));
+    try {
+      document.cookie =
+        key + "=" + escape(val) + "; expires="+ d.toGMTString() + "; path=/";
+    } catch (e) {}
+  }
 }
 
 // note that this always stores a directory name, ending with a "/"
@@ -115,8 +132,8 @@ function DoSearchKey(event, field, ver, top_path) {
   if (event && event.keyCode == 13) {
     var u = GetCookie("PLT_Root."+ver, null);
     if (u == null) u = top_path; // default: go to the top path
-    u += "search/index.html?q=" + escape(val);
-    if (page_query_string) u += "&" + page_query_string;
+    u += "search/index.html?q=" + encodeURIComponent(val);
+    u = MergePageArgsIntoUrl(u);
     location = u;
     return false;
   }

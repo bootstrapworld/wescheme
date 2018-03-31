@@ -74,7 +74,6 @@
 
 .RktKw {
   color: black;
-  /* font-weight: bold; */
 }
 
 .RktErr {
@@ -91,9 +90,15 @@
   color: #262680;
 }
 
+.RktSymDef { /* used with RktSym at def site */
+}
+
 .RktValLink {
   text-decoration: none;
   color: blue;
+}
+
+.RktValDef { /* used with RktValLink at def site */
 }
 
 .RktModLink {
@@ -104,7 +109,9 @@
 .RktStxLink {
   text-decoration: none;
   color: black;
-  /* font-weight: bold; */
+}
+
+.RktStxDef { /* used with RktStxLink at def site */
 }
 
 .RktRes {
@@ -136,9 +143,6 @@
 
 .prototype td {
   vertical-align: text-top;
-}
-.longprototype td {
-  vertical-align: bottom;
 }
 
 .RktBlk {
@@ -206,6 +210,10 @@
   margin: 0em 0em 0em 0em;
 }
 
+.RpackageSpec {
+  padding-right: 0.5em;
+}
+
 /* ---------------------------------------- */
 /* For background labels */
 
@@ -231,4 +239,11 @@
    left: 0px;
    top: 0px;
    z-index: 1;
+}
+
+/* ---------------------------------------- */
+/* History */
+
+.SHistory {
+  font-size: 82%;
 }
