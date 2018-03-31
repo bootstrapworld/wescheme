@@ -608,6 +608,7 @@ and suggesting improvements.
    "Robby Findler"
    "Matthew Flatt"
    "Sorawee Porncharoenwase"
+   "Sina Bahram"       ;; a11y
 
    ;; The members of the Mongolian Horde working on the colored error messages:
    "Michael Rowland"
