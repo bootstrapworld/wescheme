@@ -5,7 +5,7 @@
          racket/path
          racket/promise
          racket/runtime-path
-         (planet neil/html-parsing:1:2)
+         xml
          "tree-cursor.rkt")
 
 
@@ -56,6 +56,13 @@
 
   (extract-doc-sexp/tag a-tag #:xref xref))
 
+(define (xexpr->xexp e)
+  (match e
+    [`(,tag () ,content ...) `(,tag ,@(map xexpr->xexp content))]
+    [`(,tag (,attrs ...) ,content ...) `(,tag (@ ,@attrs) ,@(map xexpr->xexp content))]
+    [(or `nbsp) `(& ,e)]
+    [(? number? n) (integer->char n)]
+    [e e]))
 
 (define (extract-doc-sexp/tag a-tag #:xref (xref (force XREF-promise)))  
   (define-values (path anchor)
@@ -74,7 +81,8 @@
   ;; alternative at this time.
   
   (define sxml (hash-ref! cache path (lambda ()
-                                       (call-with-input-file path html->xexp))))
+    (xexpr->xexp (xml->xexpr (document-element
+      (call-with-input-file path read-xml)))))))
   (define my-cursor (sexp->cursor sxml))
   (define cursor-at-anchor
     (navigate-to-anchor my-cursor anchor))
@@ -166,27 +174,17 @@
              [else
               #f])])))
 
-
-
 (define (normalize-image-srcs sexp base-path)
+  (define (calc-src src)
+    (cond
+      [(regexp-match? #px"(http:|https:)" src) src]
+      [else (path->string (lift-image (simple-form-path
+              (build-path base-path src))))]))
   (let loop ([sexp sexp])
     (match sexp
-      [(list 'img (list '@ attrs ...) rest ...)
-       (cons 'img (cons (cons '@ (map (lambda (attr)
-                                        (match attr
-                                          [(list 'src src)
-                                           (cond [(regexp-match? #px"(http:|https:)" src)
-                                                  attr]
-                                                 [else
-                                                  (list 'src
-                                                        (path->string
-                                                         (lift-image
-                                                          (simple-form-path
-                                                           (build-path base-path src)))))])]
-                                          [else
-                                           attr]))
-                                      attrs))
-                        (map loop rest)))]
+      [(or `(,(and name 'object) (@ ,pre ... (,(and field 'data) ,src) ,post ...) ,rest ...)
+           `(,(and name 'img)    (@ ,pre ... (,(and field 'src)  ,src) ,post ...) ,rest ...))
+       `(,name (@ ,@pre (,field ,(calc-src src)) ,@post) ,@(map loop rest))]
       [(list tag rest ...)
        (cons tag (map loop rest))]
       [(? string?)
