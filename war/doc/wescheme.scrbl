@@ -562,7 +562,7 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
 The following keyboard shortcuts are available in WeScheme:
 @itemlist[
      @item{@emph{Tab} - Will auto-indent the active line, based on the previous line's indentation.}
-     @item{@emph{Ctrl-I} - Will auto-indent the entire definitions window. (Cmd-I on Apple)}
+     @item{@emph{Ctrl-I} - Will auto-indent the entire definitions window (Cmd-I on Apple).}
      @item{@emph{F7} - Shortcut for the "Run" button.}
      @item{@emph{F8} - Shortcut for the "Stop" button.}
      @item{@emph{F9} - Shortcut for the "Share" button".}
@@ -588,7 +588,7 @@ WeScheme uses code and utilities from the following external projects:
 ]
 
 The following folks have helped tremendously in the implementation of
-WeScheme by implementing libraries, giving guidence, reporting bugs,
+WeScheme by implementing libraries, giving guidance, reporting bugs,
 and suggesting improvements.
 
 @;;;;
