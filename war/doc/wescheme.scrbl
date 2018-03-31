@@ -164,10 +164,10 @@
 
 @title{WeScheme}
 
-@hyperlink["http://www.wescheme.org"]{WeScheme} is an web-based
+@hyperlink["http://www.wescheme.org"]{WeScheme} is a web-based
 programming environment that allows us to write, run, and share
 programs on the web.  Programs written in WeScheme should be available
-from any computer with a capable Javascript-enabled web browser.  The
+from any computer with a capable JavaScript-enabled web browser.  The
 editing environment, the compiler, and the associated runtime
 libraries are all hosted on WeScheme, eliminating installation
 hassles.  WeScheme allows us to easily share programs by creating
@@ -557,7 +557,7 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
 The following keyboard shortcuts are available in WeScheme:
 @itemlist[
      @item{@emph{Tab} - Will auto-indent the active line, based on the previous line's indentation.}
-     @item{@emph{Ctrl-I} - Will auto-indent the entire definitions window. (Cmd-I on Apple)}
+     @item{@emph{Ctrl-I} - Will auto-indent the entire definitions window (Cmd-I on Apple).}
      @item{@emph{F7} - Shortcut for the "Run" button.}
      @item{@emph{F8} - Shortcut for the "Stop" button.}
      @item{@emph{F9} - Shortcut for the "Share" button".}
@@ -583,7 +583,7 @@ WeScheme uses code and utilities from the following external projects:
 ]
 
 The following folks have helped tremendously in the implementation of
-WeScheme by implementing libraries, giving guidence, reporting bugs,
+WeScheme by implementing libraries, giving guidance, reporting bugs,
 and suggesting improvements.
 
 @;;;;
