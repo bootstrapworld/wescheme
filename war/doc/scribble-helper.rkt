@@ -5,7 +5,7 @@
          scriblib/render-cond
          racket/match
          "extract-docstring.rkt"
-         "replace-pen-references.rkt")
+         "transform-scribble.rkt")
 
 (provide racket-inject-docs
          racket-inject-doc
@@ -56,7 +56,7 @@
 
 (define (racket-inject-doc* stx)
   (define an-sxml (extract-doc-sexp/id stx))
-  (define munged-sexp (replace-pen-references an-sxml))
+  (define munged-sexp (transform-scribble an-sxml))
   (sxml->element munged-sexp))
 
 

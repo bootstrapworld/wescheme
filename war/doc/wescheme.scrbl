@@ -164,10 +164,10 @@
 
 @title{WeScheme}
 
-@hyperlink["http://www.wescheme.org"]{WeScheme} is an web-based
+@hyperlink["http://www.wescheme.org"]{WeScheme} is a web-based
 programming environment that allows us to write, run, and share
 programs on the web.  Programs written in WeScheme should be available
-from any computer with a capable Javascript-enabled web browser.  The
+from any computer with a capable JavaScript-enabled web browser.  The
 editing environment, the compiler, and the associated runtime
 libraries are all hosted on WeScheme, eliminating installation
 hassles.  WeScheme allows us to easily share programs by creating
