@@ -13,7 +13,7 @@
                               check-expect
                               * + - / < <= = =~
                               > >= abs acos add1
-                              andmap angle append
+                              and andmap angle append
                               asin atan boolean=?
                               boolean? build-list
                               caaar caadr caar cadar cadddr
@@ -102,6 +102,8 @@
                               number?
                               numerator
                               odd?
+                              or
+                              ormap
                               pi
                               positive?
                               posn-x
@@ -343,7 +345,6 @@ Here is a listing of the functions you can use to make images.
                     scene+line
                     place-image
                     place-image/align
-                    ;put-pinhole
                     circle
                     star
                     radial-star
@@ -409,10 +410,9 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
 
 
 @racket-inject-docs[
-*
-+ - / < <= = =~
+                              * + - / < <= = =~
                               > >= abs acos add1
-                              andmap angle append
+                              and andmap angle append
                               asin atan boolean=?
                               boolean? build-list
                               caaar caadr caar cadar cadddr
@@ -502,6 +502,8 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
                               number?
                               numerator
                               odd?
+                              or
+                              ormap
                               pi
                               positive?
                               posn-x
@@ -555,6 +557,22 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
                               zero?
 ]
 
+@section{Keyboard shortcuts}
+
+The following keyboard shortcuts are available in WeScheme:
+@itemlist[
+     @item{@emph{Tab} - Will auto-indent the active line, based on the previous line's indentation.}
+     @item{@emph{Ctrl-I} - Will auto-indent the entire definitions window. (Cmd-I on Apple)}
+     @item{@emph{F7} - Shortcut for the "Run" button.}
+     @item{@emph{F8} - Shortcut for the "Stop" button.}
+     @item{@emph{F9} - Shortcut for the "Share" button".}
+     @item{@emph{Ctrl-S} - If logged in, will save the current file (Cmd-S on Apple).}
+     @item{@emph{Alt-Up} - In the Interactions Area, insert the previous entry.}
+     @item{@emph{Alt-Down} - In the Interactions Area, insert the next entry.}
+
+]
+
+
 @section{Acknowledgements}
 
 
@@ -589,6 +607,7 @@ and suggesting improvements.
    "Emmanuel Schanzer"      ;; runtime library, local compilation
    "Robby Findler"
    "Matthew Flatt"
+   "Sorawee Porncharoenwase"
 
    ;; The members of the Mongolian Horde working on the colored error messages:
    "Michael Rowland"
