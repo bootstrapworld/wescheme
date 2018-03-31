@@ -349,7 +349,6 @@ Here is a listing of the functions you can use to make images.
                     star
                     radial-star
                     star-polygon
-                    overlay
                     polygon
                     rectangle
                     regular-polygon
@@ -404,7 +403,7 @@ Here is a listing of the functions you can use to make images.
 As a convenience, the name @racket[EXAMPLE] is an alias for
 @racket[check-expect].
 @racketblock[
-(check-expect (+ 1 2) 3)
+(EXAMPLE (+ 1 2) 3)
 ]
 
 
@@ -415,10 +414,6 @@ As a convenience, the name @racket[EXAMPLE] is an alias for
                               and andmap angle append
                               asin atan boolean=?
                               boolean? build-list
-                              caaar caadr caar cadar cadddr
-                              caddr cadr car cdaar cdadr
-                              cdar cddar cdddr
-                              cddr cdr
                               ceiling char->integer
                               char-alphabetic?
                               char-ci<=?
@@ -596,11 +591,13 @@ and suggesting improvements.
 @;;;;
 @(apply itemlist
    (map item (sort (list
+   "Danny Yoo"         ;; the godfather
    "Ethan Cecchetti"   ;; runtime library work
    "Scott Newman"      ;; runtime library work 
    "Will Zimrin"       ;; CodeMirror 2 stuff
    "Brendan Hickley"   ;; AppEngine, security stuff
    "Zhe Zhang"         ;; runtime library
+   "Alex Laurent"
    "Guillaume Marceau"      ;; general help, upcoming error messages
    "Shriram Krishnamurthi"  ;; of course... :)
    "Kathi Fisler"           ;; ditto!
@@ -618,4 +615,4 @@ and suggesting improvements.
 )
 
 
-Please send any bug reports to Danny Yoo (@tt["dyoo@hashcollision.org"]).
+Please send any bug reports to Emmanuel Schanzer (@tt["contact@bootstrapworld.org"]).
