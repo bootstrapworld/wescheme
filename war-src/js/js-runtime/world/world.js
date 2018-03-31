@@ -434,7 +434,6 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
-    var MAX_BYTES = 1048576 * 4; // Google Vision wants <4MB
     function describeImagesInCache() {
         // collect all undescribed fileImages in an array
         var undescribedImages = [];
@@ -449,22 +448,8 @@ if (typeof(world) === 'undefined') {
         // do some work! create a batch request for all undescribed images
         var requests = [];
         undescribedImages.forEach(function(img) {
-            var canvas = document.createElement("canvas");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            canvas.getContext("2d").drawImage(img.animationHackImg, 0, 0);
-            var base64Data = canvas.toDataURL();
-            var imgFileSize = Math.round(base64Data.length * 3/4);
-            // if it's too big, give up and use a generic label
-            if(imgFileSize > MAX_BYTES) {
-                imageCache[img.src].labeled = true;
-                imageCache[img.src].ariaText = "a large image";
-                return requests;
-            // Otherwise, strip out the file prefix in the base64 data, ask for up to 10 labels
-            } else {
-                requests.push({image: {content: base64Data.replace("data:image/png;base64,", "") }, 
-                                features: [{type: "LABEL_DETECTION", maxResults: 10}]});
-            }
+          requests.push(  { image: { source: { imageUri: img.originalURI } }, 
+                            features: [{type: "LABEL_DETECTION", maxResults: 10}]});
         });
         var CONFIDENCE_THRESHOLD = 0.75;
         var jsonString = JSON.stringify({requests: requests});
@@ -472,7 +457,7 @@ if (typeof(world) === 'undefined') {
             var xhr = new XMLHttpRequest();
             xhr.onload = function() { 
                 var data = JSON.parse(this.responseText);
-                console.log(data.responses);
+                if(!data.responses) throw "No response from Google Vision API";
                 data.responses.forEach(function(response, i){
                     // sort labels by *descending* confidence (in-place!), then grab the
                     // label with the highest confidence
@@ -481,8 +466,8 @@ if (typeof(world) === 'undefined') {
                     });
                     var bestLabel = response.labelAnnotations[0].description;
                     // update the FileImage in the imageCache
-                    imageCache[undescribedImages[i].src].labeled = true;
-                    imageCache[undescribedImages[i].src].ariaText = " a picture of a "+bestLabel;
+                    imageCache[undescribedImages[i].originalURI].labeled = true;
+                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
                 });
             }
             xhr.onerror = function () { console.log("failure"); }
@@ -501,7 +486,8 @@ if (typeof(world) === 'undefined') {
         var self = this;
         this.src = src;
         this.isLoaded = false;
-        this.ariaText = " image file from "+decodeURIComponent(src).slice(16);
+        this.originalURI = decodeURIComponent(src).slice(16);
+        this.ariaText = " image file from "+this.originalURI;
         this.labeled = false;
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
@@ -538,23 +524,25 @@ if (typeof(world) === 'undefined') {
     var visionAPITimer = setInterval(describeImagesInCache, 5000);
 
     FileImage.makeInstance = function(path, rawImage, afterInit) {
-        if (! (path in imageCache)) {
-            imageCache[path] = new FileImage(path, rawImage, afterInit);
-            return imageCache[path];
+        var uri = decodeURIComponent(path).slice(16); // get the original URI
+        if (! (uri in imageCache)) {
+            imageCache[uri] = new FileImage(path, rawImage, afterInit);
+            return imageCache[uri];
         } else {
-            afterInit(imageCache[path]);
-            console.log("returning from cache", imageCache[path]);
-            return imageCache[path];
+            afterInit(imageCache[uri]);
+            console.log("returning from cache", imageCache[uri]);
+            return imageCache[uri];
         }
     };
 
-    FileImage.installBrokenImage = function(path) {
-        imageCache[path] = new TextImage("Unable to load " + path, 10, colorDb.get("red"),
-                                         "normal", "Arial","","",false);
-    };
-
     FileImage.prototype.render = function(ctx, x, y) {
-        ctx.drawImage(this.animationHackImg, x, y);
+        var self = this;
+        ctx.drawImage(self.animationHackImg, x, y);
+        setTimeout(function(){
+            this.ariaText = imageCache[self.originalURI].ariaText;
+            ctx.canvas.setAttribute('aria-label', self.ariaText);
+            ctx.canvas.ariaText = self.ariaText;
+        }, 5000);
     };
 
     // The following is a hack that we use to allow animated gifs to show
