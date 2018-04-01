@@ -8,6 +8,8 @@
     (replace-pen-references
       (sexp-normalize an-sexp))))
 
+; the order is important! #t must come after #true to prevent incomplete
+; string replace
 (define replacements
         '(("#true" "true")
           ("#false" "false")
