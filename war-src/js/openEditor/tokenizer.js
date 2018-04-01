@@ -17,23 +17,23 @@ boundaries.
 
     //////////////////////////////////////////////////////////////////////
     function normalizeString(string) {
-	var tab = "";
-	var indentUnit = 4;
-	for (var i = 0; i < indentUnit; i++) tab += " ";
+		var tab = "";
+		var indentUnit = 4;
+		for (var i = 0; i < indentUnit; i++) tab += " ";
 
-	string = string.replace(/\t/g, tab).replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n");
-	var pos = 0, parts = [], lines = string.split("\n");
-	for (var line = 0; line < lines.length; line++) {
-	    if (line != 0) parts.push("\n");
-	    parts.push(lines[line]);
-	}
+		string = string.replace(/\t/g, tab).replace(/\u00a0/g, " ").replace(/\r\n?/g, "\n");
+		var pos = 0, parts = [], lines = string.split("\n");
+		for (var line = 0; line < lines.length; line++) {
+		    if (line != 0) parts.push("\n");
+		    parts.push(lines[line]);
+		}
 
-	return {
-	    next: function() {
-		if (pos < parts.length) return parts[pos++];
-		else throw StopIteration;
-	    }
-	};
+		return {
+		    next: function() {
+				if (pos < parts.length) return parts[pos++];
+				else throw StopIteration;
+		    }
+		};
     }
 
 
@@ -71,104 +71,104 @@ boundaries.
 	    // peek: -> character
 	    // Return the next character in the stream.
 	    peek: function() {
-		if (!ensureChars()) return null;
-		return current.charAt(pos);
+			if (!ensureChars()) return null;
+			return current.charAt(pos);
 	    },
 	    // next: -> character
 	    // Get the next character, throw StopIteration if at end, check
 	    // for unused content.
 	    next: function() {
-		if (!ensureChars()) {
-		    if (accum.length > 0)
-			throw "End of stringstream reached without emptying buffer ('" + accum + "').";
-		    else
-			throw StopIteration;
-		}
-		return current.charAt(pos++);
+			if (!ensureChars()) {
+			    if (accum.length > 0)
+				throw "End of stringstream reached without emptying buffer ('" + accum + "').";
+			    else
+				throw StopIteration;
+			}
+			return current.charAt(pos++);
 	    },
 	    // get(): -> string
 	    // Return the characters iterated over since the last call to
 	    // .get().
 	    get: function() {
-		var temp = accum;
-		accum = "";
-		if (pos > 0){
-		    temp += current.slice(0, pos);
-		    current = current.slice(pos);
-		    pos = 0;
-		}
-		return temp;
+			var temp = accum;
+			accum = "";
+			if (pos > 0){
+			    temp += current.slice(0, pos);
+			    current = current.slice(pos);
+			    pos = 0;
+			}
+			return temp;
 	    },
 	    // Push a string back into the stream.
 	    push: function(str) {
-		current = current.slice(0, pos) + str + current.slice(pos);
+			current = current.slice(0, pos) + str + current.slice(pos);
 	    },
 	    lookAhead: function(str, consume, skipSpaces, caseInsensitive) {
-		function cased(str) {return caseInsensitive ? str.toLowerCase() : str;}
-		str = cased(str);
-		var found = false;
+			function cased(str) {return caseInsensitive ? str.toLowerCase() : str;}
+			str = cased(str);
+			var found = false;
 
-		var _accum = accum, _pos = pos;
-		if (skipSpaces) this.nextWhileMatches(/[\s\u00a0]/);
+			var _accum = accum, _pos = pos;
+			if (skipSpaces) this.nextWhileMatches(/[\s\u00a0]/);
 
-		while (true) {
-		    var end = pos + str.length, left = current.length - pos;
-		    if (end <= current.length) {
-			found = str == cased(current.slice(pos, end));
-			pos = end;
-			break;
-		    }
-		    else if (str.slice(0, left) == cased(current.slice(pos))) {
-			accum += current; current = "";
-			try {current = source.next();}
-			catch (e) {break;}
-			pos = 0;
-			str = str.slice(left);
-		    }
-		    else {
-			break;
-		    }
-		}
+			while (true) {
+			    var end = pos + str.length, left = current.length - pos;
+			    if (end <= current.length) {
+				found = str == cased(current.slice(pos, end));
+				pos = end;
+				break;
+			    }
+			    else if (str.slice(0, left) == cased(current.slice(pos))) {
+				accum += current; current = "";
+				try {current = source.next();}
+				catch (e) {break;}
+				pos = 0;
+				str = str.slice(left);
+			    }
+			    else {
+				break;
+			    }
+			}
 
-		if (!(found && consume)) {
-		    current = accum.slice(_accum.length) + current;
-		    pos = _pos;
-		    accum = _accum;
-		}
+			if (!(found && consume)) {
+			    current = accum.slice(_accum.length) + current;
+			    pos = _pos;
+			    accum = _accum;
+			}
 
-		return found;
+			return found;
 	    },
 
 	    // Utils built on top of the above
 	    // more: -> boolean
 	    // Produce true if the stream isn't empty.
 	    more: function() {
-		return this.peek() !== null;
+			return this.peek() !== null;
 	    },
 	    applies: function(test) {
-		var next = this.peek();
-		return (next !== null && test(next));
+			var next = this.peek();
+			return (next !== null && test(next));
 	    },
 	    nextWhile: function(test) {
-		var next;
-		while ((next = this.peek()) !== null && test(next))
-		    this.next();
+			var next;
+			while ((next = this.peek()) !== null && test(next))
+			    this.next();
 	    },
 	    matches: function(re) {
-		var next = this.peek();
-		return (next !== null && re.test(next));
+			var next = this.peek();
+			return (next !== null && re.test(next));
 	    },
 	    nextWhileMatches: function(re) {
-		var next;
-		while ((next = this.peek()) !== null && re.test(next))
-		    this.next();
+			var next;
+			while ((next = this.peek()) !== null && re.test(next))
+			    this.next();
 	    },
 	    equals: function(ch) {
-		return ch === this.peek();
+			return ch === this.peek();
 	    },
 	    endOfLine: function() {
-		var next = this.peek();
-		return next == null || next == "\n";
+			var next = this.peek();
+			return next == null || next == "\n";
 	    }
 	};
     };
@@ -328,7 +328,14 @@ boundaries.
 		if (source.equals(";")) {
 		    source.next();
 		    text = source.get();
-		    return {type: text, 
+		    return {type: "comment", 
+			    style:"scheme-symbol",
+			    content: text};
+	    } else if (source.equals("\\")) {
+		    source.next();
+		    source.next();
+		    text = source.get();
+		    return {type: "char", 
 			    style:"scheme-symbol",
 			    content: text};
 		} else {
