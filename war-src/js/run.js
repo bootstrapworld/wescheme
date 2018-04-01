@@ -74,6 +74,7 @@ goog.require('plt.compiler.compile');
       }
       if (isDomNode(interactionVal)) {
         interactionVal.style.display="inline-block";
+        interactionVal.classList.add("replOutput");      // simulate the editor REPL, so CSS spacing will kick in
         this.interactionsDiv.append(interactionVal);
       } else {
         var newArea = jQuery("<div style='width: 100%'></div>");
