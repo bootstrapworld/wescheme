@@ -86,13 +86,20 @@
 
       var readPound = function() {
         var text;
-        // FIXME: handle special things here
+        // FIXME: we mark everything on the line as an SExp comment,
+        // when it *should* just be the next SExp
         if (source.peek() === ";") {
           source.next();
+		  eatUntilUnescaped(source); // <--- this is the hack
           text = source.current();
-          return {type: text, 
-            style:"scheme-symbol",
-            content: text};
+          return {type: "comment", style:"scheme-comment", content: text};
+        // FIXME: right now, we read the next char as part of a character literal
+        // when it *should* support a wider range of character literals
+        } else if (source.peek() === "\\") {
+		    source.next();
+		    source.next();
+		    text = source.current();
+		    return {type: "char", style:"scheme-character", content: text};
         } else {
           source.eatWhile(isNotDelimiterChar);
           text = source.current();
