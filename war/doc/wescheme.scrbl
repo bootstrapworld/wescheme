@@ -188,7 +188,7 @@ of things you can do in WeScheme.  You can:
 
 @item{@link["http://www.wescheme.org/view?publicId=LBXSQ2aKKG"]{... make shapes and pictures,}}
 
-@item{@link["http://www.wescheme.org/view?publicId=5bhqZiqdQ5s"]{... or a meme generator,}}
+@item{@link["http://www.wescheme.org/view?publicId=5bhqZiqdQ5"]{... or a meme generator,}}
 
 @item{@link["http://www.wescheme.org/view?publicId=GgAAxozEtt"]{... animate a ballooning circle,}}
 
