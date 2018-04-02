@@ -1052,8 +1052,8 @@ if (typeof(world) === 'undefined') {
     // RectangleImage: Number Number Mode Color -> Image
     var RectangleImage = function(width, height, style, color) {
         BaseImage.call(this);
-        this.width  = Math.max(1, width);   // to match DrRacket's behavior, we
-        this.height = Math.max(1, height);  // ensure a minimum 1-px dimension
+        this.width  = width;
+        this.height = height;
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
@@ -1363,8 +1363,8 @@ if (typeof(world) === 'undefined') {
             else        { vertices = [{x: -x, y: -y}, {x: 0, y: 0}]; }
         }
         
-        this.width  = Math.max(1, Math.abs(x));
-        this.height = Math.max(1, Math.abs(y));
+        this.width  = Math.abs(x);
+        this.height = Math.abs(y);
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
