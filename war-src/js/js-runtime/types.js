@@ -1188,15 +1188,18 @@ var rationalToDomNode = function(n) {
     var firstPart = document.createElement("span");
     firstPart.appendChild(document.createTextNode(chunks[0] + '.' + chunks[1]));
     repeatingDecimalNode.appendChild(firstPart);
+    repeatingDecimalNode.ariaText = chunks[0] + ' point ' + chunks[1];
     if (chunks[2] === '...') {
       firstPart.appendChild(document.createTextNode(chunks[2]));
+      repeatingDecimalNode.ariaText += " , (truncated)";
     } else if (chunks[2] !== '0') {
       var overlineSpan = document.createElement("span");
       overlineSpan.style.textDecoration = 'overline';
       overlineSpan.appendChild(document.createTextNode(chunks[2]));
       repeatingDecimalNode.appendChild(overlineSpan);
+      repeatingDecimalNode.ariaText += (chunks[1]? " with repeating "+chunks[2] : chunks[2]+" repeating");
     }
-
+    repeatingDecimalNode.setAttribute('aria-hidden', true);
 
     var fractionalNode = document.createElement("span");
     var numeratorNode = document.createElement("sup");
@@ -1209,23 +1212,27 @@ var rationalToDomNode = function(n) {
     fractionalNode.appendChild(numeratorNode);
     fractionalNode.appendChild(barNode);
     fractionalNode.appendChild(denominatorNode);
+    fractionalNode.ariaText = String(jsnums.numerator(n))+" over "+String(jsnums.denominator(n));
 
     
     var numberNode = document.createElement("span");
     numberNode.appendChild(repeatingDecimalNode);
     numberNode.appendChild(fractionalNode);
     fractionalNode.style['display'] = 'none';
+    fractionalNode.setAttribute('aria-hidden', true);
 
     var showingRepeating = true;
 
     numberNode.onclick = function(e) {
 		showingRepeating = !showingRepeating;
-		repeatingDecimalNode.style['display'] = (showingRepeating ? 'inline' : 'none')
-		fractionalNode.style['display'] = (!showingRepeating ? 'inline' : 'none')
+		repeatingDecimalNode.style['display'] = (showingRepeating ? 'inline' : 'none');
+		fractionalNode.style['display'] = (!showingRepeating ? 'inline' : 'none');
+		numberNode.setAttribute('aria-label', (showingRepeating? repeatingDecimalNode : fractionalNode).ariaText);
     };
+    numberNode.ariaText = repeatingDecimalNode.ariaText;
     numberNode.style['cursor'] = 'pointer';
     numberNode.className = "wescheme-number Rational";
-    numberNode.ariaText = String(jsnums.numerator(n))+" over "+String(jsnums.denominator(n));
+    
     return numberNode;
 };
 
