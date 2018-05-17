@@ -180,7 +180,7 @@ if (typeof(world) === 'undefined') {
                 thing !== undefined &&
                 thing instanceof BaseImage);
     };
- /*
+    /*
     // almost certainly dead code
     BaseImage.prototype.updatePinhole = function(x, y) {
         var aCopy = clone(this);
@@ -188,7 +188,7 @@ if (typeof(world) === 'undefined') {
         aCopy.pinholeY = y;
         return aCopy;
     };
-*/
+    */
     // return Integer-only height for the getter methods
     BaseImage.prototype.getHeight = function(){
         return Math.round(this.height);
@@ -435,6 +435,7 @@ if (typeof(world) === 'undefined') {
     };
 
     function describeImagesInCache() {
+        if(!myEditor.getScreenreader()) return;
         // collect all undescribed fileImages in an array
         var undescribedImages = [];
         for (var src in imageCache) {

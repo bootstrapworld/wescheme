@@ -40,6 +40,9 @@ WeSchemeInteractions = (function () {
         
         this.withColoredErrorMessages = true;
 
+        setTimeout(function() {
+            that.sayAndForget("Press F4 to toggle extra accessibility features");
+        }, 1000);
 
         new Prompt(
             this,

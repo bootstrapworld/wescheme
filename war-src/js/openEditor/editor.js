@@ -63,6 +63,9 @@ var WeSchemeEditor;
 		this.defn = attrs.defn;  // TextAreaContainer
 		this.isOwner = false;
 
+		// special screenreader features enabled? (default to false)
+		this.screenreader = false;
+
 
 	    this.suppressWarningBeforeUnloadE = receiverE();
 	    // suppressWarningBeforeUnloadB: Behavior boolean
@@ -648,6 +651,14 @@ var WeSchemeEditor;
       // Primary function call for creating picker
       if (oauthToken) { createPicker(); }
       else { authenticatePicker(); }
+    }
+
+    WeSchemeEditor.prototype.toggleScreenreader = function() {
+    	this.screenreader = !this.screenreader;
+    	this.interactions.say("screenreader features " + (this.screenreader? "on" : "off"), true);
+    }
+    WeSchemeEditor.prototype.getScreenreader = function() {
+    	return this.screenreader;
     }
     
     WeSchemeEditor.prototype.cycleFocus = function(goBackwards) {
