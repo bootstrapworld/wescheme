@@ -46,20 +46,13 @@ var initializeEditor;
 
 
     var maybeWarnOnExit = function(warnOnExit) {
-	var doubleCheck = function(){
-	    return "Are you sure you want to leave the Editor? (all unsaved changes will be lost)";
-	};
+		var doubleCheck = function(){
+		    return "Are you sure you want to leave the Editor? (all unsaved changes will be lost)";
+		};
 
-	if (warnOnExit) {
-	    window.onbeforeunload = doubleCheck;
-            myEditor.suppressWarningBeforeUnloadB.changes().mapE(function(v) {
-	        if (v) {
-                    window.onbeforeunload = undefined;
-                } else { 
-	            window.onbeforeunload = doubleCheck;
-                }
-            });
-	}
+		if (warnOnExit) {
+		    window.onbeforeunload = myEditor.suppressWarningBeforeUnload? undefined : doubleCheck;
+		}
     };
 
 
