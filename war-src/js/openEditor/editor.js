@@ -27,28 +27,6 @@ var WeSchemeEditor;
     // the timer to show the error message
     var delayedErrorTimer;
 
-    //
-    // These are the dependencies we're trying to maintain.
-    //
-
-    // isDirty: true if the file has been changed
-    //          false when the file becomes saved.
-
-    // saveButton: enabled only when the definitions area is dirty
-    //             and the file hasn't been published
-    //             and you own the file
-    //             and you are logged in (non-"null" name)
-
-    //
-    // cloneButton: enabled when you are logged in (non-"null" name)
-    //              and the file isn't dirty
-
-    //
-    // runButton: enabled all the time
-
-    // the definitions and filename areas: readonly if you don't own the file,
-
-
     //////////////////////////////////////////////////////////////////////
 
     WeSchemeEditor = function(attrs, afterInit) {
@@ -124,6 +102,13 @@ var WeSchemeEditor;
 								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
 								that.interactions.prompt.div[0],
 								document.getElementById('announcements')];
+
+		// Every 30 seconds, autosave IF:
+		// * file or title is has changed (isDirty)
+		// * there's a program loaded
+		// * the program is not a published (read-only) copy
+		// * the user is the owner of the program
+		// * the user is logged in
 		setInterval(function(){
 	    	console.log(
 	    		'Considering autosave. Dirty is ', myEditor.isDirty, 
@@ -283,7 +268,7 @@ var WeSchemeEditor;
       };
 
       var doPageReload = function(pid) {
-            that.suppressWarningBeforeUnload = true;
+            myEditor.suppressWarningBeforeUnload = true;
             plt.wescheme.WeSchemeIntentBus.notify("before-editor-reload-on-save", that)
         window.location = "/openEditor?pid=" + encodeURIComponent(pid);
         };
