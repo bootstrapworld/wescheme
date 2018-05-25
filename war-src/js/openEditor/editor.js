@@ -75,7 +75,7 @@ var WeSchemeEditor;
 			  that.filenameElt = attrs.filenameInput.get(0);
 			  // Any time the filenameEntry changes, adjust the
 			  // document's title to match it, and mark content as dirty
-			  that.filenameElt.onchange = function(e) {
+			  that.filenameElt.onchange = that.filenameElt.onkeyup = function(e) {
 			  	var v = that.filenameElt.value;
 			  	document.title = (plt.wescheme.helpers.trimWhitespace(v) || "<< Unnamed Program >>");
 				plt.wescheme.WeSchemeIntentBus.notify("filename-changed", that);
