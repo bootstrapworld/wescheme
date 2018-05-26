@@ -103,28 +103,18 @@ var WeSchemeEditor;
 								that.interactions.prompt.div[0],
 								document.getElementById('announcements')];
 
-		// Every 30 seconds, autosave IF:
-		// * file or title is has changed (isDirty)
-		// * there's a program loaded
-		// * the program is not a published (read-only) copy
-		// * the user is the owner of the program
-		// * the user is logged in
-		setInterval(function(){
-	    	console.log(
-	    		'Considering autosave. Dirty is ', myEditor.isDirty, 
-	    		'loaded is', myEditor.loaded,
-	    		'saved is', myEditor.saved,
-	    		'isPublished is', myEditor.isPublished,
-	    		'isOwner is', myEditor.isOwner,
-	    		'isLoggedIn is', myEditor.isLoggedIn);
-	    	if(!myEditor.isDirty || 
-	    		myEditor.isPublished || 
-	    		!myEditor.isOwner ||
-	    		!myEditor.loaded || 
-	    		!myEditor.isLoggedIn) return;
+		// Every AUTOSAVE_TIMEOUT, see if we should save
+		setInterval(function() {
+			// Bail if....
+	    	if(!myEditor.isDirty 		|| // the file isn't dirty
+	    		myEditor.isPublished 	|| // this is a published (read-only) file
+	    		!myEditor.isOwner 		|| // we're not the owner
+	    		!myEditor.loaded 		|| // no file was loaded
+	    		!myEditor.isLoggedIn) 	   // we're not logged in
+	    		return;
 	    	plt.wescheme.WeSchemeIntentBus.notify("autosave", this);
 			that.save();
-		  }, 10*1000);
+		  }, AUTOSAVE_TIMEOUT);
     };
 
     WeSchemeEditor.prototype.setOnResize = function(onResize) {
