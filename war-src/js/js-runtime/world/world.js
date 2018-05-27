@@ -434,51 +434,6 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
-    function describeImagesInCache() {
-        if(!myEditor.getScreenreader()) return;
-        // collect all undescribed fileImages in an array
-        var undescribedImages = [];
-        for (var src in imageCache) {
-            if (imageCache.hasOwnProperty(src) && !imageCache[src].labeled) {
-                undescribedImages.push(imageCache[src]);
-            }
-        }
-        // bail if there's no work to be done
-        if(undescribedImages.length === 0) return;
-
-        // do some work! create a batch request for all undescribed images
-        var requests = [];
-        undescribedImages.forEach(function(img) {
-          requests.push(  { image: { source: { imageUri: img.originalURI } }, 
-                            features: [{type: "LABEL_DETECTION", maxResults: 10}]});
-        });
-        var CONFIDENCE_THRESHOLD = 0.75;
-        var jsonString = JSON.stringify({requests: requests});
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.onload = function() { 
-                var data = JSON.parse(this.responseText);
-                if(!data.responses) throw "No response from Google Vision API";
-                data.responses.forEach(function(response, i){
-                    // sort labels by *descending* confidence (in-place!), then grab the
-                    // label with the highest confidence
-                    response.labelAnnotations.sort(function(label1, label2){
-                        return (label1.confidence < label2.confidence)? 1 : -1; // descending order!
-                    });
-                    var bestLabel = response.labelAnnotations[0].description;
-                    // update the FileImage in the imageCache
-                    imageCache[undescribedImages[i].originalURI].labeled = true;
-                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
-                });
-            }
-            xhr.onerror = function () { console.log("failure"); }
-            xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
-            xhr.setRequestHeader("content-type", "application/json");
-            xhr.send(jsonString);
-        } catch (e) {
-            console.log('Google Vision API lookup failed', e);
-        }
-    }
 
     //////////////////////////////////////////////////////////////////////
     // FileImage: string node -> Image
@@ -522,7 +477,65 @@ if (typeof(world) === 'undefined') {
 
     // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
-    var visionAPITimer = setInterval(describeImagesInCache, 5000);
+    var VISION_API_TIMEOUT = 5000;
+    var visionAPITimer = setTimeout(describeImagesInCache, VISION_API_TIMEOUT);
+
+    function describeImagesInCache() {
+        visionAPITimer = setTimeout(describeImagesInCache, VISION_API_TIMEOUT);
+
+        if(!myEditor.getScreenreader()) return;
+        // collect all undescribed fileImages in an array
+        var undescribedImages = [];
+        for (var src in imageCache) {
+            if (imageCache.hasOwnProperty(src) && !imageCache[src].labeled) {
+                undescribedImages.push(imageCache[src]);
+            }
+        }
+        // bail if there's no work to be done
+        if(undescribedImages.length === 0) return;
+
+        // do some work! create a batch request for all undescribed images
+        var requests = [];
+        undescribedImages.forEach(function(img) {
+          requests.push(  { image: { source: { imageUri: img.originalURI } }, 
+                            features: [{type: "LABEL_DETECTION", maxResults: 10}]});
+        });
+        var CONFIDENCE_THRESHOLD = 0.75;
+        var jsonString = JSON.stringify({requests: requests});
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() { 
+                var data = JSON.parse(this.responseText);
+                if(!data.responses) {
+                    VISION_API_TIMEOUT *= 2; // Decay
+                    console.log('no response from VisionAPI. set timeout to ', VISION_API_TIMEOUT, 'ms');
+                    throw "No response from Google Vision API";
+                } else {
+                    console.log('successful load from VisionAPI. set timeout to ', VISION_API_TIMEOUT, 'ms');
+                    VISION_API_TIMEOUT = 5000; //reset time to default 5sec
+                }
+                data.responses.forEach(function(response, i) {
+                    // sort labels by *descending* confidence (in-place!), then grab the
+                    // label with the highest confidence
+                    response.labelAnnotations.sort(function(label1, label2){
+                        return (label1.confidence < label2.confidence)? 1 : -1; // descending order!
+                    });
+                    var bestLabel = response.labelAnnotations[0].description;
+                    // update the FileImage in the imageCache
+                    imageCache[undescribedImages[i].originalURI].labeled = true;
+                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
+                });
+                console.log('after load(), timeout is', VISION_API_TIMEOUT);
+            }
+            xhr.onerror = function () { console.log("Google VisionAPI post() failure"); }
+            xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
+            xhr.setRequestHeader("content-type", "application/json");
+            xhr.send(jsonString);
+        } catch (e) {
+            console.log('Setting up XHR for Google Vision API failed', e);
+            VISION_API_TIMEOUT *= 2; // Decay
+        }
+    }
 
     FileImage.makeInstance = function(path, rawImage, afterInit) {
         var uri = decodeURIComponent(path).slice(16); // get the original URI
@@ -531,7 +544,6 @@ if (typeof(world) === 'undefined') {
             return imageCache[uri];
         } else {
             afterInit(imageCache[uri]);
-            console.log("returning from cache", imageCache[uri]);
             return imageCache[uri];
         }
     };
