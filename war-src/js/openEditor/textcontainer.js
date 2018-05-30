@@ -121,7 +121,7 @@ var WeSchemeTextContainer;
 
 		var block_options = {
 	      willInsertNode : function(sourceNodeText, sourceNode, destination) {
-	        var line = this.editor.getLine(destination.line);
+	        var line = that.editor.getLine(destination.line);
 	        var prev = line[destination.ch - 1] || '\n';
 	        var next = line[destination.ch] || '\n';
 	        sourceNodeText = sourceNodeText.trim();
@@ -144,7 +144,7 @@ var WeSchemeTextContainer;
 			myEditor.isDirty = true;
 			plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
        	});
-       	this.editor.getInputField().setAttribute("role", "input");
+       	
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
         // (using bold/italic to emphasize parts), and then pastes it into WeScheme
