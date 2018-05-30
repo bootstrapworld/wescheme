@@ -121,7 +121,7 @@ var WeSchemeTextContainer;
 
 		var block_options = {
 	      willInsertNode : function(sourceNodeText, sourceNode, destination) {
-	        var line = cm.getLine(destination.line);
+	        var line = this.editor.getLine(destination.line);
 	        var prev = line[destination.ch - 1] || '\n';
 	        var next = line[destination.ch] || '\n';
 	        sourceNodeText = sourceNodeText.trim();
