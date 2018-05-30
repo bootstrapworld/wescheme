@@ -343,6 +343,9 @@
           <a role="button" href="javascript: void(0)" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
           <a role="button" href="javascript: void(0)" aria-label="Help" id="help" class="clickableAnchor" style="float: right;">
             <img src="/images/small-help.png"></a>
+          <a role="button" href="javascript: void(0)" aria-label="Blocks" id="blocks" class="clickableAnchor" style="float: right;">
+          <img src="/images/blocks.png"></a>
+
           <div id="statusbar" role="marquee" aria-relevant="text"></div>
       	</div>
       </div> 

@@ -39,6 +39,7 @@ var WeSchemeEditor;
 		// defn is assumed to be Containers.
 		// The only container we've got so far are TextContainers.
 		this.defn = attrs.defn;  // TextAreaContainer
+		this.blocksMode = false;
 
 		// special screenreader features enabled? (default to false)
 		this.screenreader = false;
@@ -437,6 +438,11 @@ var WeSchemeEditor;
 			showHelp();
 		}
 		help.onclick = hideHelp;
+    }
+
+    WeSchemeEditor.prototype.toggleBlocks = function() {
+    	this.blocksMode = !this.blocksMode;
+		this.defn.impl.blocks.setBlockMode(this.blocksMode);
     }
     
     // Shows an Image Picker enabling choosing an image from Google Drive to the 

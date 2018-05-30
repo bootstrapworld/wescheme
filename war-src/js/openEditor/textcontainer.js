@@ -136,7 +136,6 @@ var WeSchemeTextContainer;
 	    };
 
 		this.blocks = new CodeMirrorBlocks(this.editor, 'wescheme', block_options);
-		this.blocks.setBlockMode(true);
 
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { 

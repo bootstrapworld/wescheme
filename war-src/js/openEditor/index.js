@@ -112,6 +112,7 @@ var initializeEditor;
             jQuery("#redo").click(function()  { myEditor.defn.impl.editor.redo(); });
             jQuery("#images").click(function() { myEditor.showPicker(plt.wescheme.WeSchemeEditor.defnInFocus); });
             jQuery("#help").click(function()  { myEditor.toggleHelp(); });
+            jQuery("#blocks").click(function()  { myEditor.toggleBlocks(); });
             jQuery("#logout").click(function() { 
                                   if(confirm("You will be logged out of WeScheme and other Google services.")) {
                                       submitPost("/logout");
