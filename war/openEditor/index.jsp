@@ -51,23 +51,22 @@
 
     <script src="/safeSubmit-min.js" type="text/javascript"></script>
 
-    <script src="/js/flapjax-2.0.1.compressed-min.js" type="text/javascript"></script>
-    <script src="/js/flapjax-helpers-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.createdomnodes-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.center-in-client-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery.blockUI-min.js" type="text/javascript"></script>
-
+    <!-- CodeMirror and Block Editor -->
     <script src="/js/codemirror/lib/codemirror-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/edit/matchbrackets.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/edit/closebrackets-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
+    <script src="/js/CodeMirrorBlocks-all-min.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/codemirror.css" />
     <link rel="stylesheet" type="text/css" href="/js/codemirror/lib/codemirror.css"></link>
     <link rel="stylesheet" type="text/css" href="/js/codemirror-contrib/scheme2/schemecolors.css"></link>
-
     <link rel="stylesheet" type="text/css" href="/css/definitions.css"></link>
+
 
     <!-- Design recipe widget stuff -->
     <script src="/widget/js/DRwidget.js" type="text/javascript"></script>

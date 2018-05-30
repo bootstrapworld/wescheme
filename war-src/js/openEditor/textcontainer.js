@@ -118,6 +118,26 @@ var WeSchemeTextContainer;
           			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
       			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
 				});
+
+		var block_options = {
+	      willInsertNode : function(sourceNodeText, sourceNode, destination) {
+	        var line = cm.getLine(destination.line);
+	        var prev = line[destination.ch - 1] || '\n';
+	        var next = line[destination.ch] || '\n';
+	        sourceNodeText = sourceNodeText.trim();
+	        if (!/\s|[\(\[\{]/.test(prev)) {
+	          sourceNodeText = ' ' + sourceNodeText;
+	        }
+	        if (!/\s|[\)\]\}]/.test(next)) {
+	          sourceNodeText += ' ';
+	        }
+	        return sourceNodeText;
+	      }
+	    };
+
+		this.blocks = new CodeMirrorBlocks(this.editor, 'wescheme', block_options);
+		this.blocks.setBlockMode(true);
+
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { 
 			that.unhighlightAll();
