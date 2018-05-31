@@ -1,0 +1,69 @@
+.CodeMirror-lines.fadein,
+.fadein .blocks-node {
+  animation-name: fadein;
+  animation-duration: 1.5s;
+}
+.fadeout {
+  animation-name: fadeout;
+  animation-duration: 1.5s;
+}
+#clones * {
+  display: inline-block;
+  position: absolute;
+  will-change: transform;
+  transform-origin: top left;
+}
+#clones .box {
+  border: dashed 1px gray;
+  border-radius: 15px;
+  color: transparent;
+}
+#clones.animate * {
+  transition: transform 1.0s linear;
+  transform: none !important;
+}
+#clones.animate.blocks .literal {
+  margin-left: 4px;
+}
+@keyframes fadein {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes fadeout {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* locked and collapsed nodes should not be editable */
+.blocks-node[aria-expanded="false"] *,
+.blocks-locked * {
+  pointer-events: none;
+  cursor: hand;
+}
+.screenreader-only {
+  position: absolute !important;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px 1px 1px 1px);
+  clip: rect(1px, 1px, 1px, 1px);
+}

@@ -441,8 +441,10 @@ var WeSchemeEditor;
     }
 
     WeSchemeEditor.prototype.toggleBlocks = function() {
+		var button = document.getElementById("blocks");
     	this.blocksMode = !this.blocksMode;
 		this.defn.impl.blocks.setBlockMode(this.blocksMode);
+		button.style.border = this.blocksMode? "1px inset" : "none";
     }
     
     // Shows an Image Picker enabling choosing an image from Google Drive to the 
