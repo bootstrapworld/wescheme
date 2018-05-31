@@ -73,8 +73,7 @@ plt.wescheme.topKeymap = function(e) {
       cancelEvent(e);
       return false;
     }
-    if (e.keyCode === F7_KEYCODE || 
-        (e.keyCode === ENTER_KEYCODE && e.ctrlKey)) {
+    if (e.keyCode === F7_KEYCODE) {
       myEditor.run();
       cancelEvent(e);
       return false;
