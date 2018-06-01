@@ -228,16 +228,12 @@ var WeSchemeTextContainer;
 		var stylesheet = document.querySelectorAll('[href="/css/default.css"]')[0].sheet,
         name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 		currentHighlightNumber++;
-            
-	    if (stylesheet.insertRule) {
-	      stylesheet.insertRule("." + name + " { background-color: " + color + ";}", 0);
-	    } else { // IE8 compatibility
-	      stylesheet.addRule("." + name, "background-color: " + color + "", 0);
-	    }
+        stylesheet.insertRule("." + name + " { background-color: " + color + " !important;}", 0);
 
 		var start = this.editor.posFromIndex(parseInt(offset)),
         	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
-        	highlightedArea = this.editor.markText(start, end, {className: name});
+        	editor= myEditor.blocksMode? this.blocks : this.editor;
+        	highlightedArea = editor.markText(start, end, {className: name});
  		this.highlightedAreas.push(highlightedArea);
  		this.scrollIntoView(offset, span);
  		//return highlightedArea;
@@ -275,7 +271,7 @@ var WeSchemeTextContainer;
 	};
   	// clear all textMarkers, and reset the highlightedAreas array
 	CodeMirrorImplementation.prototype.unhighlightAll = function () {
-    this.highlightedAreas.forEach(function(ha){ ha.clear(); });
+    	this.highlightedAreas.forEach(function(ha){ ha.clear(); });
 		this.highlightedAreas = [];
 	};
 

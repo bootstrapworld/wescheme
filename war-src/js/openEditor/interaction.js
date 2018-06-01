@@ -1122,7 +1122,7 @@ WeSchemeInteractions = (function () {
             jQuery("." + styleName).css("opacity", opacity);
             opacity = opacity + 0.02;                
             if (opacity >= 1) { clearInterval(intervalId); }
-        }, 15);
+        }, 30);
     };
 
 
