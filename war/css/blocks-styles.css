@@ -1,3 +1,6 @@
+.blocks-node * {
+  box-sizing: border-box;
+}
 .CodeMirror-lines.fadein,
 .fadein .blocks-node {
   animation-name: fadein;
