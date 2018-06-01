@@ -61,7 +61,7 @@
     <script src="/js/codemirror/addon/edit/closebrackets-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
-    <script src="/js/CodeMirrorBlocks-wescheme.js" type="text/javascript"></script>
+    <script src="/js/CodeMirrorBlocks-wescheme-min.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/codemirror.css" />
     <link rel="stylesheet" type="text/css" href="/js/codemirror/lib/codemirror.css"></link>
@@ -101,7 +101,8 @@
               hideHeader, hideToolbar,
               hideProjectName,
               hideFooter, hideDefinitions, hideInteractions,
-              warnOnExit, interactionsText, definitionsText, autorunDefinitions, isEmbedded, noColorError;
+              warnOnExit, interactionsText, definitionsText, autorunDefinitions, isEmbedded, noColorError,
+              blocksMode;
           userName = pid = publicId = interactionsText = definitionsText = null;
           hideDefinitions = false;
           hideInteractions = false;
@@ -113,6 +114,7 @@
           warnOnExit = true;
           isEmbedded = false;
           noColorError = false;
+          blocksMode = false;
 
 
           userName = "<%= userSession != null? userSession.getName() : null %>";
@@ -169,6 +171,11 @@
 					 request.getParameter("definitionsText"), "utf-8").replaceAll("\\+", "%20") %>");
           <% } %>
 
+          <% if (request.getParameter("blocksMode") != null &&
+                 request.getParameter("blocksMode").equals("true")) { %>
+       blocksMode = true;
+          <% } %>
+
 
           <% if (request.getParameter("pid") != null) { %>
 	      pid = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("pid"), "utf-8") %>');
@@ -208,7 +215,8 @@
 	                    initialInteractionsText: interactionsText,
 	                    initialDefinitionsText: definitionsText,
 	                    autorunDefinitions: autorunDefinitions,
-                            noColorError: noColorError });
+                      noColorError: noColorError,
+                      blocksMode: blocksMode });
       });
 
       jQuery(function() {

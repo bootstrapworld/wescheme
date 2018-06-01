@@ -130,6 +130,9 @@ var initializeEditor;
                 if (attrs.initialDefinitionsText) {
                   myEditor.defn.setCode(attrs.initialDefinitionsText + '');
                 }
+                if (attrs.blocksMode) {
+                  myEditor.toggleBlocks();
+                }
                 // Set up interactions afterwards.
                 jQuery("#interactions").click(function(e) {
                   plt.wescheme.WeSchemeEditor.defnInFocus = false;
