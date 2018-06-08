@@ -12,7 +12,7 @@ html {
 
 body {text-align: left; position: fixed;}
 
-h1, h2, #Navigation, #FileControls, #ProgramControls *, #defn, #inter, input{
+h1, h2, #Navigation, #FileControls, #FileControls input, #ProgramControls *, #defn, #inter{
     padding:	0px;
     margin:		0px;
     border:     0px;
@@ -264,6 +264,12 @@ div.moby-error {
     margin: 0px 5px;
     cursor: pointer;
     white-space: pre;
+    animation-duration: 1s;
+}
+@keyframes blinkingText {
+    0%{     opacity: 1; }
+    50%{    opacity: 0; }
+    100%{   opacity: 1; }
 }
 
 /* Break errors will not show up in red, to avoid scaring students away */

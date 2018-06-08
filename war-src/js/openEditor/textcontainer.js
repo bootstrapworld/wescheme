@@ -103,39 +103,43 @@ var WeSchemeTextContainer;
 			ed.setSelection(start,end);
 		}
 
-		this.editor = CodeMirror(
-				parent.getDiv(), 
-				{ 
-					theme: (options.theme || "scheme"),
-					mode: "scheme2",
-					extraKeys: km,
-					lineNumbers: (typeof (options.lineNumbers) !== undefined? options.lineNumbers :  true),
-					lineWrapping: true,
-					matchBrackets: options.matchBrackets || true,
-					autoCloseBrackets: options.autoCloseBrackets || false,
-					value: options.content || "",
-					readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
-          			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350)
-      			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
-				});
+		var cm_options = { 
+			theme: (options.theme || "scheme"),
+			mode: "scheme2",
+			extraKeys: km,
+			lineNumbers: (typeof (options.lineNumbers) !== undefined? options.lineNumbers :  true),
+			lineWrapping: true,
+			matchBrackets: options.matchBrackets || true,
+			autoCloseBrackets: options.autoCloseBrackets || false,
+			value: options.content || "",
+			readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
+  			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
+  			viewportMargin: 10
+			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
+		}
+		
+		if(parent.getDiv().id == "definitions") {
+			var block_options = {
+		      willInsertNode : function(sourceNodeText, sourceNode, destination) {
+		        var line = that.editor.getLine(destination.line);
+		        var prev = line[destination.ch - 1] || '\n';
+		        var next = line[destination.ch] || '\n';
+		        sourceNodeText = sourceNodeText.trim();
+		        if (!/\s|[\(\[\{]/.test(prev)) {
+		          sourceNodeText = ' ' + sourceNodeText;
+		        }
+		        if (!/\s|[\)\]\}]/.test(next)) {
+		          sourceNodeText += ' ';
+		        }
+		        return sourceNodeText;
+		      }
+		    };
 
-		var block_options = {
-	      willInsertNode : function(sourceNodeText, sourceNode, destination) {
-	        var line = that.editor.getLine(destination.line);
-	        var prev = line[destination.ch - 1] || '\n';
-	        var next = line[destination.ch] || '\n';
-	        sourceNodeText = sourceNodeText.trim();
-	        if (!/\s|[\(\[\{]/.test(prev)) {
-	          sourceNodeText = ' ' + sourceNodeText;
-	        }
-	        if (!/\s|[\)\]\}]/.test(next)) {
-	          sourceNodeText += ' ';
-	        }
-	        return sourceNodeText;
-	      }
-	    };
-
-		this.blocks = new CodeMirrorBlocks(this.editor, 'wescheme', block_options);
+			this.blocksEditor = CodeMirrorBlocks.renderEditorInto(parent.getDiv(), 'wescheme', block_options, cm_options);
+			this.editor = this.blocksEditor.getCodeMirror();
+		} else {
+			this.editor = CodeMirror(parent.getDiv(), cm_options);
+		}
 
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { 
@@ -232,9 +236,11 @@ var WeSchemeTextContainer;
 
 		var start = this.editor.posFromIndex(parseInt(offset)),
         	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
-        	editor= myEditor.blocksMode? this.blocks : this.editor;
-        	highlightedArea = editor.markText(start, end, {className: name});
- 		this.highlightedAreas.push(highlightedArea);
+        	editor= this.blocksEditor.blocks.blockMode? this.blocksEditor.blocks : this.editor;
+    	highlightedArea = editor.markText(start, end, {className: name});
+    	// block highlighting can return *multiple* nodes, so look for arrays of markers, too
+    	if(!Array.isArray(highlightedArea)) this.highlightedAreas.push(highlightedArea);
+ 		else this.highlightedAreas = this.highlightedAreas.concat(highlightedArea);
  		this.scrollIntoView(offset, span);
  		//return highlightedArea;
  		return {clear: function() { return highlightedArea.clear(); },

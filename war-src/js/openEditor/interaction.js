@@ -1116,13 +1116,9 @@ WeSchemeInteractions = (function () {
 
     //takes in style name, then for all elements with that style name,
     //fades them out and back in
-    var catchAttention = function(styleName){
-        var opacity = 0;
-        var intervalId = setInterval(function() {
-            jQuery("." + styleName).css("opacity", opacity);
-            opacity = opacity + 0.02;                
-            if (opacity >= 1) { clearInterval(intervalId); }
-        }, 30);
+    var catchAttention = function(styleName) {
+        jQuery("." + styleName).css("animation", "blinkingText infinite 1s");
+        setTimeout(function(){ jQuery("." + styleName).css("animation", "none"); }, 1000);
     };
 
 

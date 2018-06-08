@@ -41,7 +41,7 @@
     <link rel="stylesheet" type="text/css" href="/css/common.css" />
     <link rel="stylesheet" type="text/css" href="/css/default.css" />
     <link rel="stylesheet" type="text/css" href="/css/pretty-printing.css" />
-    <link rel="stylesheet" type="text/css" href="/css/blocks-styles.css" />
+    <link rel="stylesheet" type="text/css" href="/css/blocks.css" />
 
     <!-- EasyXDM and json -->
     <script src="/js/easyXDM/easyXDM-min.js" type="text/javascript"></script>
@@ -61,7 +61,7 @@
     <script src="/js/codemirror/addon/edit/closebrackets-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
-    <script src="/js/CodeMirrorBlocks-wescheme-min.js" type="text/javascript"></script>
+    <script src="/js/Editor-min.js" type="text/javascript"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/codemirror.css" />
     <link rel="stylesheet" type="text/css" href="/js/codemirror/lib/codemirror.css"></link>
@@ -352,9 +352,6 @@
           <a role="button" href="javascript: void(0)" aria-label="Redo" id="redo" class="clickableAnchor"><img src="/images/redo.png"></a>
           <a role="button" href="javascript: void(0)" aria-label="Help" id="help" class="clickableAnchor" style="float: right;">
             <img src="/images/small-help.png"></a>
-          <a role="button" href="javascript: void(0)" aria-label="Blocks" id="blocks" class="clickableAnchor" style="float: right;">
-          <img src="/images/blocks.png"></a>
-
           <div id="statusbar" role="marquee" aria-relevant="text"></div>
       	</div>
       </div> 
