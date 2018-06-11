@@ -577,8 +577,8 @@ WeSchemeInteractions = (function () {
                                              
                         // If there's a unique canvas, highlight that one.
                         // Otherwise, just highlight the whole toplevel node.
-                        elem = (innerArea.find("canvas").length === 1)? innerArea.find("canvas").get(0)
-                                             : innerArea.get(0);
+                        elem = innerArea.get(0);//(innerArea.find("canvas").length === 1)? innerArea.find("canvas").get(0)
+                                             //: innerArea.get(0);
                                        
                         // assign fullscreen functions to be be native, or the vendor-prefixed function
                         elem.requestFullscreen = elem.requestFullscreen
@@ -589,22 +589,22 @@ WeSchemeInteractions = (function () {
                                               || document.webkitExitFullscreen
                                               || document.msExitFullscreen
                                               || document.mozCancelFullScreen;  // firefox is weird
-                                             
-                        var fullscreenElement = document.fullscreenElement
-                                              || document.mozFullScreenElement // firefox capitalizes the 'S'
-                                              || document.webkitFullscreenElement
-                                              || document.msFullscreenElement;
-                                             
+
+                        function getFullscreenElement(){
+                            return   document.fullscreenElement
+                                  || document.mozFullScreenElement // firefox capitalizes the 'S'
+                                  || document.webkitFullscreenElement
+                                  || document.msFullscreenElement;
+                        }
                         // If there's no fullscreen element, we know that there WILL be one, so disable closeOnEsc
-                        var closeOnEscape = fullscreenElement;
+                        var closeOnEscape = getFullscreenElement();
                         dialog.dialog( "option", "closeOnEscape", closeOnEscape );
 
+                        console.log('trying to give fullscreen to ', elem);
+
                        // get fullscreen access
-                       if(!fullscreenElement){
-                         elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
-                       } else {
-                         document.exitFullscreen();
-                       }
+                       if(!getFullscreenElement()) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
+                       else document.exitFullscreen();
                     };
 
                     // if fullscreen is supported, add the 'maximize' icon and listen for double-clicks

@@ -304,15 +304,41 @@ span.top-aligned-inline-block {
 .highlight2 { background-color: blue; }
 .highlight3 { background-color: yellow; }
 
-
-*:fullscreen, *:-webkit-full-screen, *:ms-fullscreen{
-  min-width: 100%;
-  min-height: 100%;
+*:-webkit-full-screen *:first-child {
   width: 100% !important;
   height: 100% !important;
-  position: fixed;
+  position: absolute;
   top:      0px;
   left:     0px;
+  right:    0px;
+  bottom:   0px;
+}
+*:fullscreen *:first-child {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top:      0px;
+  left:     0px;
+  right:    0px;
+  bottom:   0px;
+}
+*:-ms-fullscreen *:first-child {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top:      0px;
+  left:     0px;
+  right:    0px;
+  bottom:   0px;
+}
+*:-moz-full-screen *:first-child {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top:      0px;
+  left:     0px;
+  right:    0px;
+  bottom:   0px;
 }
 
 

@@ -478,7 +478,7 @@ if (typeof(world) === 'undefined') {
     // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
     var VISION_API_TIMEOUT = 5000;
-    var visionAPITimer = setTimeout(describeImagesInCache, VISION_API_TIMEOUT);
+    var visionAPITimer = window.myEditor? setTimeout(describeImagesInCache, VISION_API_TIMEOUT) : null;
 
     function describeImagesInCache() {
         visionAPITimer = setTimeout(describeImagesInCache, VISION_API_TIMEOUT);
