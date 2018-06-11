@@ -21,7 +21,7 @@ goog.require('plt.compiler.desugar');
 goog.require('plt.compiler.analyze');
 goog.require('plt.compiler.compile');
 
-var myEditor = myEditor || {getScreenreader:function(){return false;};
+var myEditor = myEditor || {getScreenreader:function(){return false;}};
 
 (function() {
 
