@@ -479,6 +479,8 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 
 		                   setTimeout(
 		                 function() {			
+		                 	reusableCanvas.width = width;
+		                 	reusableCanvas.height = height;
 		                     var ctx = reusableCanvas.getContext("2d");
 		                     aScene.render(ctx, 0, 0);
 		                     var log = document.createElement("span");
@@ -559,7 +561,9 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
           }
         };
         lastPictureCss = function(w, k) {
-          k([[reusableCanvas]]);
+          k([[reusableCanvas,
+          	["width", reusableCanvas.width + "px"],
+          	["height", reusableCanvas.height + "px"]]]);
         };
         return _js.on_draw(nextFrame, lastPictureCss)();
       };
