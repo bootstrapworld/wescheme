@@ -600,8 +600,6 @@ WeSchemeInteractions = (function () {
                         var closeOnEscape = getFullscreenElement();
                         dialog.dialog( "option", "closeOnEscape", closeOnEscape );
 
-                        console.log('trying to give fullscreen to ', elem);
-
                        // get fullscreen access
                        if(!getFullscreenElement()) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
                        else document.exitFullscreen();
