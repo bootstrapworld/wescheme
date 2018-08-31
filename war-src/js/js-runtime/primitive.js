@@ -4685,6 +4685,33 @@ new PrimProc('regular-polygon',
 											  c);
 			 });
 
+PRIMITIVES['add-polygon'] =
+new PrimProc('add-polygon',
+			 4,
+			 false, false,
+			 function(aState, bg, points, s, c) {
+       function isPosnList(lst){ return isListOf(lst, types.isPosn); }
+       checkListOfLength(aState, points, 3, 	'add-polygon', 1);
+			 check(aState, bg,		isImage,	"add-polygon", "image", 1, arguments);
+			 check(aState, points,	isPosnList,	"add-polygon", "list of posns", 2, arguments);
+			 check(aState, s,		isMode, 	"add-polygon", 'style ("solid" / "outline") or an opacity value [0-255])', 3, arguments);
+			 check(aState, c,		isColor, 	"add-polygon", "color", 4, arguments);
+			 
+			 if (colorDb.get(c)) { c = colorDb.get(c); }
+			 var posnArray = helpers.flattenSchemeListToArray(points);
+			 var xs = posnArray.map(function(p){ return p._fields[0]; });
+			 var ys = posnArray.map(function(p){ return p._fields[1]; });
+			 var deltaX = Math.min.apply(null, xs);
+			 var deltaY = Math.min.apply(null, ys);
+			 var polygon = world.Kernel.posnImage(helpers.flattenSchemeListToArray(points),
+											  s.toString(),
+											  c);
+			 return world.Kernel.overlayImage(polygon,
+                                          bg,
+                                          -jsnums.toFixnum(deltaX),
+                                          -jsnums.toFixnum(deltaY));
+			 });
+
 PRIMITIVES['star-polygon'] =
 new PrimProc('star-polygon',
 			 5,
