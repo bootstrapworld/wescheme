@@ -120,19 +120,20 @@ var WeSchemeTextContainer;
 		
 		if(parent.getDiv().id == "definitions") {
 			var block_options = {
-		      willInsertNode : function(sourceNodeText, sourceNode, destination) {
-		        var line = that.editor.getLine(destination.line);
-		        var prev = line[destination.ch - 1] || '\n';
-		        var next = line[destination.ch] || '\n';
-		        sourceNodeText = sourceNodeText.trim();
-		        if (!/\s|[\(\[\{]/.test(prev)) {
-		          sourceNodeText = ' ' + sourceNodeText;
+		      willInsertNode: function(cm, sourceNodeText, sourceNode, destination) {
+		          var line = cm.getLine(destination.line);
+		          console.log('line is', line);
+		          var prev = line[destination.ch - 1] || '\n';
+		          var next = line[destination.ch] || '\n';
+		          sourceNodeText = sourceNodeText.trim();
+		          if (!/\s|[([{]/.test(prev)) {
+		            sourceNodeText = ' ' + sourceNodeText;
+		          }
+		          if (!/\s|[)\]}]/.test(next)) {
+		            sourceNodeText += ' ';
+		          }
+		          return sourceNodeText;
 		        }
-		        if (!/\s|[\)\]\}]/.test(next)) {
-		          sourceNodeText += ' ';
-		        }
-		        return sourceNodeText;
-		      }
 		    };
 
 			this.blocksEditor = CodeMirrorBlocks.renderEditorInto(parent.getDiv(), 'wescheme', block_options, cm_options);

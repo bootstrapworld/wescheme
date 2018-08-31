@@ -60,6 +60,7 @@
     <script src="/js/codemirror/addon/edit/matchbrackets.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/edit/closebrackets-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
+    <script src="/js/codemirror/addon/search/searchcursor-min.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
     <script src="/js/Editor-min.js" type="text/javascript"></script>
 
