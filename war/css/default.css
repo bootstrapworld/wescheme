@@ -16,6 +16,7 @@ h1, h2, #Navigation, #FileControls, #FileControls input, #ProgramControls *, #de
     padding:	0px;
     margin:		0px;
     border:     0px;
+    box-sizing: content-box;
 }
 
 #editor, #top, #middle, #splitpane, #bottom {
@@ -71,10 +72,10 @@ h1, h2, #Navigation, #FileControls, #FileControls input, #ProgramControls *, #de
 }
 #Navigation * {display: inline-block; vertical-align: baseline;}
 
-a.h1{ font-weight: bold; padding-left: 65px;}
-a.h2{ font-size: 20px; font-weight: lighter; padding-left: 4px;}
+a.h1{ font-weight: bold; padding-left: 65px; margin: 0px; }
+a.h2{ font-size: 20px; font-weight: lighter; padding-left: 4px; margin: 0px; }
 a.h2, a.h2:visited {color: lightgray; margin-right: 15px; text-decoration: none;}
-a.h2:hover{text-decoration: underline;}
+a.h2:hover{text-decoration: underline; color: lightgray;}
 
 /* 30px: FILENAME & URL */
 #FileControls{

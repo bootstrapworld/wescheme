@@ -7,7 +7,7 @@ body{
     border:     0px;
     background: white;
     text-align: center;
-    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
+    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif !important;
 }
 
 #footer{
