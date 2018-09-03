@@ -226,6 +226,7 @@ plt.compiler = plt.compiler || {};
                                             ,"ellipse"
                                             ,"line"
                                             ,"add-line"
+                                            ,"add-polygon"
                                             ,"overlay"
                                             ,"overlay/xy"
                                             ,"overlay/align"

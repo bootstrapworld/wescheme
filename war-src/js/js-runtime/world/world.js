@@ -797,7 +797,7 @@ if (typeof(world) === 'undefined') {
         }
         this.width  = findWidth(this._vertices);
         this.height = findHeight(this._vertices);
-        this.ariaText = " an overlay: first image is" + img1.ariaText + positionText + img2.ariaText;
+        this.ariaText = " an overlay: top image is" + img1.ariaText + positionText + " on top of " + img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -1107,6 +1107,7 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
+        this.ariaText = " a"+colorToSpokenString(color,style) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
 
