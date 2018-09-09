@@ -1099,8 +1099,9 @@ if (typeof(world) === 'undefined') {
     var PosnImage = function(vertices, style, color) {
         BaseImage.call(this);
         var vertices = vertices.map(function(v){
-            return { x: types.posnX(v), y: types.posnY(v) }
+            return { x: jsnums.toFixnum(types.posnX(v)), y: jsnums.toFixnum(types.posnY(v)) };
         });
+        console.log('vertices are', vertices);
 
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
