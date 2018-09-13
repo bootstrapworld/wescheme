@@ -4702,10 +4702,12 @@ new PrimProc('add-polygon',
 			 var xs = posnArray.map(function(p){ return p._fields[0]; });
 			 var ys = posnArray.map(function(p){ return p._fields[1]; });
 			 xs = xs.map(function(x){ return jsnums.toFixnum(x); }); // convert xs to fixnums
-			 ys = xs.map(function(y){ return jsnums.toFixnum(y); }); // convert ys to fixnums
+			 ys = ys.map(function(y){ return jsnums.toFixnum(y); }); // convert ys to fixnums
 			 var deltaX = -Math.round(Math.min.apply(null, xs));
 			 var deltaY = -Math.round(Math.min.apply(null, ys));
-			 var polygon = world.Kernel.posnImage(helpers.flattenSchemeListToArray(points), s.toString(), c);
+			 console.log('deltaX', deltaX, 'deltaY', deltaY);
+			 var polygon = world.Kernel.posnImage(posnArray, s.toString(), c);
+			 console.log('primitve is passing posns', posnArray);
 			 return world.Kernel.overlayImage(polygon, bg, deltaX, deltaY);
 			 });
 

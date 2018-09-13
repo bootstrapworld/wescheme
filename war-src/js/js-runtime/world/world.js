@@ -1108,6 +1108,7 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
+        console.log('translated verticies are',this.vertices);
         this.ariaText = " a"+colorToSpokenString(color,style) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
