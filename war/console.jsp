@@ -78,7 +78,7 @@
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="http://goo.gl/mxC2Vx">NinjaCat</a></li>
         <li><a target="_blank" href="http://goo.gl/1Zv95D">Defining Values</a></li>
-        <li><a target="_blank" href="http://goo.gl/SHMqcF">Game Template</a></li>
+        <li><a target="_blank" href="http://goo.gl/g6MNHb">Game Template</a></li>
         <li><a target="_blank" href="http://goo.gl/DdvPUc">Rocket-Height</a></li>
         <li><a target="_blank" href="http://goo.gl/WnLnKb">Bug Hunting</a></li>
         <li><a target="_blank" href="http://goo.gl/PsG7MG">Sam the Butterfly</a></li>
