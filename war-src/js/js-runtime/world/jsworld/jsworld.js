@@ -875,10 +875,13 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
     // for printable keydowns!!!
     function on_key(press) {
       return function() {
+      	// throttle keydown handling by limiting it to every 50ms
+      	var throttleKey = false;
+      	setInterval(function(){ throttleKey = !throttleKey; }, 50);
+      	// track whether the key is still pressed, and provide a function to clear the tracking
         var stillPressing = false;
-        var clearPressing = function() {
-            stillPressing = false;
-        };
+        var clearPressing = function() { stillPressing = false; };
+
         var e;
         var f = function(w, k) { press(w, e, k); };
         var wrappedPress = function(e_) {
@@ -897,7 +900,8 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
             stopPropagation(e);
             // get around keydown press events blocking keypress events by
             // making sure the stillPressing flag was set by the appropriate event type
-            if (stillPressing !== e.type) {
+            if (stillPressing !== e.type && throttleKey) {
+            	console.log('still pressing, and throttleKey is true, so calling changeWorld');
                 stillPressing = e.type;
                 change_world(f, clearPressing);
             }
