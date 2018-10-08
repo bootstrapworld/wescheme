@@ -877,7 +877,7 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
       return function() {
       	// throttle keydown handling by limiting it to every 50ms
       	var throttleKey = false;
-      	setInterval(function(){ throttleKey = !throttleKey; }, 50);
+      	setInterval(function(){ throttleKey = !throttleKey; }, 25);
       	// track whether the key is still pressed, and provide a function to clear the tracking
         var stillPressing = false;
         var clearPressing = function() { stillPressing = false; };
