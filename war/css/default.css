@@ -233,6 +233,7 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 #statusbar {
     clear:          both;
     width:          100%;
+    line-height:    16px;
     height:         16px;
     padding:        5px 10px;
     border-top:     solid 1px black;
