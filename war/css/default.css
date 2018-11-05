@@ -166,6 +166,13 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
     border-top:	solid 1px black;
 }
 
+/* work around weird google synchronize() code in war-src/js/openEditor/index.js */
+#definitions .CodeMirror {
+  width: auto !important; 
+  left: 0px;
+  right: 0px;
+}
+
 #inter .CodeMirror, #definitions>.CodeMirror {background: none;}
 #inter .CodeMirror-lines, #definitions .CodeMirror-lines {
   background: white; /* fall back to white on old browsers */
