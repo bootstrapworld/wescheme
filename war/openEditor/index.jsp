@@ -408,31 +408,81 @@
       <p>
       <div class="shortcutGroup" tabindex="-1">
         <h2>Everywhere</h2>
-        <ul class="shortcuts">
-          <li>Run - <kbd>F7</kbd></li>
-          <li>Stop - <kbd>F8</kbd></li>
-          <li>Share - <kbd>F9</kbd></li>
-          <li>Help - <kbd aria-label="Control question mark">Ctr-?</kbd></li>
-          <li>Switch Focus - <kbd>F6</kbd></li>
-        </ul>
+        <table class="shortcuts">
+          <tr><td>Run</td>                    <td><kbd>F7</kbd></td></tr>
+          <tr><td>Stop</td>                   <td><kbd>F8</kbd></td></tr>
+          <tr><td>Share</td>                  <td><kbd>F9</kbd></td></tr>
+          <tr><td>Help</td>                   <td><kbd aria-label="Control question mark">Ctr-?</kbd></td></tr>
+          <tr><td>Switch Focus</td>           <td><kbd>F6</kbd></td></tr>
+      </table>
       </div>
 
       <div class="shortcutGroup" tabindex="-1">
         <h2>Definitions Only</h2>
-        <ul class="shortcuts">
-          <li>Indent Line - <kbd>Tab</kbd></li>
-          <li>Indent All - <kbd aria-label="Control Tab">Ctrl-Tab</kbd></li>
-        </ul>
+        <table class="shortcuts">
+          <tr><td>Indent Line</td>             <td><kbd>Tab</kbd></td></tr>
+          <tr><td>Indent All</td>              <td><kbd aria-label="Control Tab">Ctrl-Tab</kbd></td></tr>
+      </table>
       </div>
 
       <div class="shortcutGroup" tabindex="-1">
         <h2>Interactions Only</h2>
-        <ul class="shortcuts">
-          <li>Previous Entry - <kbd>Alt-Up</kbd></li>
-          <li>Next Entry - <kbd>Alt-Down</kbd></li>
-          <li>Speak History - <kbd>Alt-1</kbd>, <kbd>Alt-2</kbd>, etc</li>
-        </ul>
+        <table class="shortcuts">
+          <tr><td>Previous Entry</td>          <td><kbd>Alt-Up</kbd></td></tr>
+          <tr><td>Next Entry</td>              <td><kbd>Alt-Down</kbd></td></tr>
+          <tr><td>Speak History</td>           <td><kbd>Alt-1</kbd>, <kbd>Alt-2</kbd>, etc</td></tr>
+      </table>
       </div>
+<br/>
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Navigation</h2>
+        <table class="shortcuts">
+          <tr><td>Previous Block</td>           <td><kbd>Up</kbd></td></tr>
+          <tr><td>Next Block</td>               <td><kbd>Down</kbd></td></tr>
+          <tr><td>Collapse Block</td>           <td><kbd>Left</kbd></td></tr>
+          <tr><td>Expand Block</td>             <td><kbd>Right</kbd></td></tr>
+          <tr><td>Expand All</td>               <td><kbd>Shift-Right</kbd></td></tr>
+          <tr><td>Collapse All</td>             <td><kbd>Shift-Left</kbd></td></tr>
+          <tr><td>First Visible Block</td>      <td><kbd>Home</kbd></td></tr>
+          <tr><td>Last Visible Block</td>       <td><kbd>End</kbd></td></tr>
+          <tr><td>Read Ancestors</td>           <td><kbd aria-label="backslash">\</kbd></td></tr>
+          <tr><td>Read Block and Children</td>  <td><kbd aria-label="shift-backslash">Shift-\</kbd></td></tr>
+        </table>
+      </div>
+
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Editing</h2>
+        <table class="shortcuts">
+          <tr><td>Edit a Literal</td>           <td><kbd>Enter</kbd> or <kbd>Return</kbd></td></tr>
+          <tr><td>Edit any Block</td>           <td><kbd>Ctrl-Enter</kbd></td></tr>
+          <tr><td>Cancel Editing</td>           <td><kbd>ESC</kbd> or <kbd>Shift-ESC</kbd></td></tr>
+          <tr><td>Insert Before</td>            <td><kbd>Ctrl-[</kbd></td></tr>
+          <tr><td>Insert After</td>             <td><kbd>Ctrl-]</kbd></td></tr>
+          <tr><td>Start New Expression</td>     <td><kbd>(</kbd></td></tr>
+          <tr><td>Delete Selected Blocks</td>   <td><kbd>Delete</kbd></td></tr>
+        </table>
+      </div>
+
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Selection and Cut/Copy/Paste</h2>
+        <table class="shortcuts">
+          <tr><td>Toggle selection</td>         <td><kbd>Space</kbd></td></tr>
+          <tr><td>Navigate and keep selection</td><td><kbd>Ctrl</kbd>+Navigate</kbd> (<kbd>Cmd</kbd> on Mac)</td></tr>
+          <tr><td>Cut / Copy / Paste</td>       <td><kbd>Ctrl-X</kbd> / <kbd>Ctrl-C</kbd> / <kbd>Ctrl-V</kbd></td></tr>
+          <tr><td>Paste before active node</td> <td><kbd>Shift-Ctrl-V</kbd></td></tr>
+        </table>
+      </div>
+
+      <div class="shortcutGroup" tabindex="-1">
+        <h2>Search</h2>
+        <table class="shortcuts">
+          <tr><td>Enter Search Mode</td>        <td><kbd>/</kbd> (forward slash)</td></tr>
+          <tr><td>Exit Search Mode</td>         <td><kbd>ESC</kbd> or <kbd>Shift-ESC</kbd></td></tr>
+          <tr><td>Find next</td>                <td><kbd>Enter</kbd></td></tr>
+          <tr><td>Find previous</td>            <td><kbd>Shift-Enter</kbd></td></tr>
+        </table>
+      </div>
+    </div>
     </div>
 
     <!-- invisible form for error logging from the local processor -->

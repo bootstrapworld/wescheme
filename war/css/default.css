@@ -377,7 +377,7 @@ span.top-aligned-inline-block {
     padding: 10px;
 }
 
-#helpDialog h2{font-size: 1em;}
+#helpDialog h2{font-size: 1em; font-weight: bold;}
 #helpDialog .shortcuts {list-style-type: none; display: inline-block; padding: 0px;}
 #helpDialog .shortcutGroup {width: 200px; display: inline-block; text-align: left; vertical-align: top; }
 #helpDialog .shortcutGroup:last-child{width: 250px;}
