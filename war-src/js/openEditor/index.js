@@ -119,6 +119,7 @@ var initializeEditor;
                               });
             jQuery("#definitions").click(function() { plt.wescheme.WeSchemeEditor.defnInFocus = true;});
             var afterLoad1 = function() {
+            	myEditor.defn.clearHistory(); // make sure user can't undo the *load* itself
                if (attrs.autorunDefinitions) { myEditor.run(afterLoad2); }
                else { afterLoad2(); }
             };
