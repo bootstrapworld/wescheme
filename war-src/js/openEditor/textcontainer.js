@@ -51,6 +51,10 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.setCode = function(code) {
 		return this.impl.setCode(normalizeString(code));
 	};
+	// clearHistory: void -> void
+	WeSchemeTextContainer.prototype.clearHistory = function() {
+		return this.impl.clearHistory();
+	};
 	WeSchemeTextContainer.prototype.highlight = function(id, offset, line, column, span, color) {
 		return this.impl.highlight(id, offset, line, column, span, color);
 	};
@@ -207,6 +211,11 @@ var WeSchemeTextContainer;
 	CodeMirrorImplementation.prototype.setCode = function(code) {
 		this.editor.setValue(code);
 		this.behaviorE.sendEvent(code);
+		this.editor.refresh();
+	};
+
+	CodeMirrorImplementation.prototype.clearHistory = function() {
+		this.editor.clearHistory();
 		this.editor.refresh();
 	};
  
