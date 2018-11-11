@@ -241,6 +241,15 @@ plt.compiler = plt.compiler || {};
                                       + "(in parentheses), after define, but nothing's there"])
                      , sexp.location);
       }
+      // (define a b c ...) -- too many parts?
+      if(sexp.length > 3){
+          var extraLocs = sexp.slice(1).map(function(sexp){ return sexp.location; }),
+              wording = extraLocs.length + " parts";
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                        , ": expected exactly two parts, but found"
+                                        , new types.MultiPart(wording, extraLocs, false)])
+                     , sexp.location);
+      }
       // If it's (define (...)...)
       if(sexp[1] instanceof Array){
           // is there at least one element?
@@ -272,16 +281,6 @@ plt.compiler = plt.compiler || {};
                                             , ": expected an expression for the function body, but nothing's there"])
                          , sexp.location);
           }
-          // too many parts?
-          if(sexp.length > 3){
-              var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
-                  wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
-              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                            , ": expected only one expression for the function body"
-                                            + ", but found "
-                                            , new types.MultiPart(wording, extraLocs, false)])
-                         , sexp.location);
-          }
           var args = rest(sexp[1]).map(parseIdExpr);
           args.location = sexp[1].location;
           return new defFunc(parseIdExpr(sexp[1][0]), args, parseExpr(sexp[2]), sexp);
@@ -294,17 +293,6 @@ plt.compiler = plt.compiler || {};
                                             , ": expected an expression after the variable "
                                             , new types.ColoredPart(sexp[1].val, sexp[1].location)
                                             , " but nothing's there"])
-                         , sexp.location);
-          }
-          // too many parts?
-          if(sexp.length > 3){
-              var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
-                  wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
-              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
-                                            , ": expected only one expression after the variable "
-                                            , new types.ColoredPart(sexp[1].val, sexp[1].location)
-                                            , ", but found "
-                                            , new types.MultiPart(wording, extraLocs, false)])
                          , sexp.location);
           }
           return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]), sexp);
