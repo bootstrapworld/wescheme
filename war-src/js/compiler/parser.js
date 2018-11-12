@@ -132,8 +132,16 @@ plt.compiler = plt.compiler || {};
     return ((isCons(sexp)) && (isSymbol(sexp[0])) && (isSymbolEqualTo("define-struct", sexp[0])));
   }
   // (define ...)
-  function isValueDefinition(sexp) {
+  function isOldDefinition(sexp) {
     return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define", sexp[0]));
+  }
+  // (define x ...)
+  function isValueDefinition(sexp) {
+    return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-val", sexp[0]));
+  }
+  // (define x ...)
+  function isFunDefinition(sexp) {
+    return (isCons(sexp) && isSymbol(sexp[0]) && isSymbolEqualTo("define-fun", sexp[0]));
   }
   // (define-values ...)
   function isMultiValueDefinition(sexp) {
@@ -141,7 +149,8 @@ plt.compiler = plt.compiler || {};
   }
   // is it any kind of definition?
   function isDefinition(sexp) {
-    return isStructDefinition(sexp) || isValueDefinition(sexp) || isMultiValueDefinition(sexp);
+    return isStructDefinition(sexp) || isOldDefinition(sexp) || isMultiValueDefinition(sexp)
+      || isValueDefinition(sexp) || isFunDefinition(sexp);
   }
  
   // : parseDefinition : SExp -> AST (definition)
@@ -233,7 +242,7 @@ plt.compiler = plt.compiler || {};
       }
       return new defVars(sexp[1].map(parseIdExpr), parseExpr(sexp[2]), sexp);
     }
-    function parseDef(sexp) {
+    function parseOldDef(sexp) {
       // is it just (define)?
       if(sexp.length < 2){
           throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
@@ -303,9 +312,107 @@ plt.compiler = plt.compiler || {};
                                     , new types.ColoredPart("something else", sexp[1].location)])
                          , sexp.location);
     }
-    var def = isStructDefinition(sexp) ? parseDefStruct(sexp) :
-              isValueDefinition(sexp)  ? parseDef(sexp) :
-              isMultiValueDefinition   ? parseMultiDef(sexp) :
+    function parseValueDef(sexp) {
+      // is it just (define-val)?
+      if(sexp.length < 2){
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a name and an expression"])
+                     , sexp.location);
+      }
+      // If it's (define-val x ...)
+      if(sexp[1] instanceof symbolExpr){
+          // is it just (define-val x)?
+          if(sexp.length < 3){
+              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                            , ": expected an expression after the name "
+                                            , new types.ColoredPart(sexp[1].val, sexp[1].location)
+                                            , " but nothing's there"])
+                         , sexp.location);
+          }
+          // too many parts?
+          if(sexp.length > 3){
+              var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
+                  wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
+              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                            , ": expected only one expression after the name "
+                                            , new types.ColoredPart(sexp[1].val, sexp[1].location)
+                                            , ", but found "
+                                            , new types.MultiPart(wording, extraLocs, false)])
+                         , sexp.location);
+          }
+          return new defVar(parseIdExpr(sexp[1]), parseExpr(sexp[2]), sexp);
+      }
+      // If it's (define-val <invalid> ...)
+      throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                    , ": expected a name but found "
+                                    , new types.ColoredPart("something else", sexp[1].location)])
+                         , sexp.location);
+    }
+    function parseFunDef(sexp) {
+      // is it just (define-fun)?
+      if(sexp.length < 2){
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected exactly two parts for the function: a header "
+                                      + "(function name and variables, in parentheses) and a "
+                                      + "body (any expression)"])
+                     , sexp.location);
+      }
+      // If it's (define-fun (...)...)
+      if(sexp[1] instanceof Array){
+          // is there at least one element?
+          if(sexp[1].length === 0){
+            throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a function name (and possibly variables) within "
+                                      , new types.ColoredPart("the parentheses", sexp[1].location)])
+                       , sexp.location);
+          }
+          // is the first element in the list a symbol?
+          if(!(sexp[1][0] instanceof symbolExpr)){
+            throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a function name after the open parenthesis but found "
+                                      , new types.ColoredPart("something else", sexp[1][0].location)])
+                       , sexp.location);
+          }
+          // is the next element a list of not-all-symbols?
+          sexp[1].forEach(function(arg){
+            if (!(arg instanceof symbolExpr)){
+              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a variable name, but found "
+                                      , new types.ColoredPart("something else", arg.location)])
+                         , sexp.location);
+            }
+          });
+          // is it just (define (<name> <args>))?
+          if(sexp.length < 3){
+              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                            , ": expected an expression for the function body, but nothing's there"])
+                         , sexp.location);
+          }
+          // too many parts?
+          if(sexp.length > 3){
+              var extraLocs = sexp.slice(3).map(function(sexp){ return sexp.location; }),
+                  wording = extraLocs.length+" extra "+((extraLocs.length === 1)? "part" : "parts");
+              throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                            , ": expected only one expression for the function body"
+                                            + ", but found "
+                                            , new types.MultiPart(wording, extraLocs, false)])
+                         , sexp.location);
+          }
+          var args = rest(sexp[1]).map(parseIdExpr);
+          args.location = sexp[1].location;
+          return new defFunc(parseIdExpr(sexp[1][0]), args, parseExpr(sexp[2]), sexp);
+      }
+      // If it's (define-fun <invalid> ...)
+      throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                      , ": expected a header (function name and variables, in parentheses)"
+                                      + " and a body for the function"])
+                     , sexp.location);
+    }
+    var def = isStructDefinition(sexp)    ? parseDefStruct(sexp) :
+              isOldDefinition(sexp)       ? parseDef(sexp) :
+              isMultiValueDefinition(sexp)? parseMultiDef(sexp) :
+              isValueDefinition(sexp)     ? parseValueDef(sexp) :
+              isFunDefinition(sexp)       ? parseFunDef(sexp) :
               throwError(new types.Message([": expected to find a definition, but found: "+ sexp]),
                          sexp.location);
     def.location = sexp.location;
