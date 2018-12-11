@@ -8,6 +8,9 @@
 <html>
 <head><title>WeScheme :: Privacy</title>
 
+<!-- Do the right thing for mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
 <link rel="stylesheet" type="text/css" href="/css/common.css" id="style" />
 <style type="text/css">	
