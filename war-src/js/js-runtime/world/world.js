@@ -1437,7 +1437,7 @@ if (typeof(world) === 'undefined') {
     colorDb.put("ORANGERED", types.color(255, 69, 0, 255));
     colorDb.put("TOMATO", types.color(255, 99, 71, 255));
     colorDb.put("RED", types.color(255, 0, 0, 255));
-    colorDb.put("LIGHTRED", types.color(255, 51, 51, 255));
+    colorDb.put("LIGHTRED", types.color(255, 102, 102, 255));
     colorDb.put("MEDIUMRED", types.color(255, 0, 0, 255));
     colorDb.put("DARKRED", types.color(139, 0, 0, 255));
     colorDb.put("FIREBRICK", types.color(178, 34, 34, 255));
@@ -1471,7 +1471,7 @@ if (typeof(world) === 'undefined') {
     colorDb.put("SALMON", types.color(250, 128, 114, 255));
     colorDb.put("PERU", types.color(205, 133, 63, 255));
     colorDb.put("GOLDENROD", types.color(218, 165, 32, 255));
-    colorDb.put("LIGHTGOLDENROD", types.color(255,255,254, 255));
+    colorDb.put("LIGHTGOLDENROD", types.color(255, 216, 83, 255));
     colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
     colorDb.put("SANDYBROWN", types.color(244, 164, 96, 255));
     colorDb.put("LIGHTSALMON", types.color(255, 160, 122, 255));
