@@ -1424,8 +1424,11 @@ if (typeof(world) === 'undefined') {
     };
 
     ColorDb.prototype.get = function(name) {
-        name = name.toUpperCase().replace(/\s/g, ""); // normalize
-        return this.colors[name.toString().toUpperCase()];
+        if(typeof name == "string") { // normalize if it's a string
+            return this.colors[name.replace(/\s/g, "").toUpperCase()];
+        } else {
+            return false;
+        }
     };
 
 
