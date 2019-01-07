@@ -1423,11 +1423,11 @@ if (typeof(world) === 'undefined') {
         this.colors[name] = color;
     };
 
+    // can be called with three types of value: (1) a string (colorname), (2) a color struct
+    // or (3) a runtime string object with a hash and a toString method
     ColorDb.prototype.get = function(name) {
-        if(typeof name == "string") { // normalize if it's a string
-            return this.colors[name.replace(/\s/g, "").toUpperCase()];
-        } else {
-            return false;
+        if(name.toString) { // normalize if it's a string, or can be made into one
+            return this.colors[name.toString().replace(/\s/g, "").toUpperCase()];
         }
     };
 
