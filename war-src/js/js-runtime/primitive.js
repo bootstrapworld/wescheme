@@ -452,11 +452,12 @@ var getMakeStructTypeReturns = function(aStructType) {
 //////////////////////////////////////////////////////////////////////
 
 
-var isNumber = jsnums.isSchemeNumber;
-var isReal = jsnums.isReal;
-var isRational = jsnums.isRational;
-var isComplex = isNumber;
-var isInteger = jsnums.isInteger;
+var isNumber 	= jsnums.isSchemeNumber;
+var isReal 		= jsnums.isReal;
+var isRational 	= jsnums.isRational;
+// TODO(Emmanuel): ugly hack - this should be exported properly by js-numbers
+var isComplex 	= function(x) { return x.i? types.TRUE : types.FALSE; }
+var isInteger 	= jsnums.isInteger;
 
 var isNatural = function(x) {
 	return jsnums.isExact(x) && isInteger(x) && jsnums.greaterThanOrEqual(x, 0);
@@ -3086,7 +3087,7 @@ PRIMITIVES['build-list'] =
 					});
 			}
 			return buildListHelp(0, types.EMPTY);
-		 });
+		 }); 
 
 
 /**********************
