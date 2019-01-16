@@ -78,9 +78,10 @@
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="http://goo.gl/mxC2Vx">NinjaCat</a></li>
         <li><a target="_blank" href="http://goo.gl/TwwrZ4">Defining Values</a></li>
-        <li><a target="_blank" href="http://goo.gl/EWUqcc">Game Template</a></li>
-        <li><a target="_blank" href="http://goo.gl/DdvPUc">Rocket-Height</a></li>
-        <li><a target="_blank" href="http://goo.gl/WnLnKb">Bug Hunting</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game Template</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket-Height</a></li>
+        <l
+        i><a target="_blank" href="http://goo.gl/WnLnKb">Bug Hunting</a></li>
         <li><a target="_blank" href="http://goo.gl/PsG7MG">Sam the Butterfly</a></li>
         <li><a target="_blank" href="http://goo.gl/ftS9dm">Luigi's Pizza</a></li>
       </ul>
