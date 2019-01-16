@@ -3991,7 +3991,8 @@ PRIMITIVES['build-vector'] =
 
 				return CALL(f, [n],
 					function (result) {
-						return buildVectorHelp(n+1, acc.push(result));
+						acc.push(result);
+						return buildVectorHelp(n+1, acc);
 					});
 			}
 			return buildVectorHelp(0, []);
