@@ -1595,6 +1595,7 @@ if (typeof(world) === 'undefined') {
     colorDb.put("LIGHTGRAY", types.color(211, 211, 211, 255));
     colorDb.put("SILVER", types.color(192, 192, 192, 255));
     colorDb.put("GRAY", types.color(190, 190, 190, 255));
+    colorDb.put("GREY", types.color(190, 190, 190, 255));
     colorDb.put("MEDIUMGRAY", types.color(190, 190, 190, 255));
     colorDb.put("DARKGRAY", types.color(169, 169, 169, 255));
     colorDb.put("DIMGRAY", types.color(105, 105, 105, 255));

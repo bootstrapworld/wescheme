@@ -456,7 +456,7 @@ var isNumber 	= jsnums.isSchemeNumber;
 var isReal 		= jsnums.isReal;
 var isRational 	= jsnums.isRational;
 // TODO(Emmanuel): ugly hack - this should be exported properly by js-numbers
-var isComplex 	= function(x) { return x.i? types.TRUE : types.FALSE; }
+var isComplex 	= function(x) { return (x.i !== undefined)? types.TRUE : types.FALSE; }
 var isInteger 	= jsnums.isInteger;
 
 var isNatural = function(x) {
