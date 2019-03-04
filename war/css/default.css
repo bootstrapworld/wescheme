@@ -168,9 +168,13 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 /* work around weird google synchronize() code in war-src/js/openEditor/index.js */
 #definitions .CodeMirror {
-  width: auto !important; 
-  left: 0px;
-  right: 0px;
+  width:      auto !important;
+  position:   absolute;
+  left:       0px;
+  right:      0px;
+  top:        0px;
+  bottom:     0px;
+  background: none;
 }
 
 #inter .CodeMirror, #definitions>.CodeMirror {background: none;}

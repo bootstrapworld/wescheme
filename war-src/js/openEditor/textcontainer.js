@@ -126,7 +126,6 @@ var WeSchemeTextContainer;
 			var block_options = {
 		      willInsertNode: function(cm, sourceNodeText, sourceNode, destination) {
 		          var line = cm.getLine(destination.line);
-		          console.log('line is', line);
 		          var prev = line[destination.ch - 1] || '\n';
 		          var next = line[destination.ch] || '\n';
 		          sourceNodeText = sourceNodeText.trim();
@@ -140,8 +139,7 @@ var WeSchemeTextContainer;
 		        }
 		    };
 
-			this.blocksEditor = CodeMirrorBlocks.renderEditorInto(parent.getDiv(), 'wescheme', block_options, cm_options);
-			this.editor = this.blocksEditor.getCodeMirror();
+			this.editor = new CodeMirrorBlocks(parent.getDiv(), undefined, '', {collapseAll: false});
 		} else {
 			this.editor = CodeMirror(parent.getDiv(), cm_options);
 		}
@@ -245,9 +243,8 @@ var WeSchemeTextContainer;
         stylesheet.insertRule("." + name + " { background-color: " + color + " !important;}", 0);
 
 		var start = this.editor.posFromIndex(parseInt(offset)),
-        	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span)),
-        	editor= this.blocksEditor.blocks.blockMode? this.blocksEditor.blocks : this.editor;
-    	highlightedArea = editor.markText(start, end, {className: name});
+        	end   = this.editor.posFromIndex(parseInt(offset)+parseInt(span));
+    	highlightedArea = this.editor.markText(start, end, {className: name});
     	// block highlighting can return *multiple* nodes, so look for arrays of markers, too
     	if(!Array.isArray(highlightedArea)) this.highlightedAreas.push(highlightedArea);
  		else this.highlightedAreas = this.highlightedAreas.concat(highlightedArea);
