@@ -47,6 +47,7 @@
 <head><title><c:out escapeXml="true" value="<%= title %>" /></title>
 <link rel="stylesheet" type="text/css" href="css/common.css" />
 <link rel="stylesheet" type="text/css" href="css/view.css" id="style" />
+<meta name="viewport" content="width=device-width, user-scalable=no" />
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
