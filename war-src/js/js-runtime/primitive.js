@@ -5396,6 +5396,25 @@ new PrimProc('flip-horizontal',
 			 return world.Kernel.flipImage(img, "horizontal");
 			 });
 
+PRIMITIVES['reflect-x'] =
+new PrimProc('reflect-x',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-x", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "vertical");
+			 });
+
+
+PRIMITIVES['reflect-y'] =
+new PrimProc('reflect-y',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-y", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "horizontal");
+			 });
+
 
 PRIMITIVES['text'] =
     new PrimProc('text',

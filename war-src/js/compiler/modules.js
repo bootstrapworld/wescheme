@@ -244,6 +244,8 @@ plt.compiler = plt.compiler || {};
                                             ,"frame"
                                             ,"flip-horizontal"
                                             ,"flip-vertical"
+                                            ,"reflect-x"
+                                            ,"reflect-y"
                                             ,"text"
                                             ,"text/font"
                                             ,"video/url"       // needs network
