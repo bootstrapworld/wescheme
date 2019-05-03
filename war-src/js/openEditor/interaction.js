@@ -1087,9 +1087,11 @@ WeSchemeInteractions = (function () {
             var aChunk = jQuery("<span/>").css("background-color", errorColor+'')
                                           .addClass("colored-link")
                                           .click(clickFunction);
+            var isWhiteBox = text[0].textContent == "\u2b1c";
             var aLink = jQuery("<a/>").append(text)
                                       .attr("href", "#")
                                       .click(clickFunction);
+            if(isWhiteBox) aLink.attr("tabIndex", "-1")
             jQuery(aChunk).append(aLink);
             jQuery(msgDom).append(aChunk);
         }
