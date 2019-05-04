@@ -127,7 +127,7 @@ WeSchemeInteractions = (function () {
         var announcements = document.getElementById("announcementlist");
         var li = document.createElement("LI");
         li.appendChild(document.createTextNode(msg));
-        announcements.insertBefore(li, announcements.firstChild);
+        announcements.appendChild(li, announcements.firstChild);
         if(forget) { 
             setTimeout(function(){
                 announcements.removeChild(li);

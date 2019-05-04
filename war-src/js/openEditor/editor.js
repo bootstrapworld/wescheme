@@ -99,10 +99,14 @@ var WeSchemeEditor;
 
 			  if (afterInit) { afterInit(that); }
         });
-		this.focusCarousel = [	document.getElementById('Tools'), 
-								that.defn.div.getElementsByClassName("CodeMirror-scroll")[0], 
-								that.interactions.prompt.div[0],
-								document.getElementById('announcements')];
+
+        // F6 / Shift-F6 will rotate focus between Tools, Definitions, & Interactions
+        // NOTE(Emmanuel): do we care about the hidden announcement history?
+        var tools 			= document.getElementById('Tools');
+        var definitions 	= that.defn.div;
+        var interactions 	= that.interactions.interactionsDiv[0];
+        //var announcements 	= document.getElementById('announcements');
+		this.focusCarousel 	= [tools, definitions, interactions];
 
 		// Every AUTOSAVE_TIMEOUT, see if we should save
 		setInterval(function() {
