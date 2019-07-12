@@ -119,30 +119,23 @@ var WeSchemeTextContainer;
 			readOnly: (typeof (options.readOnly) !== undefined? options.readOnly : false),
   			cursorBlinkRate: (typeof (options.cursorBlinkRate) !== undefined? options.cursorBlinkRate : 350),
   			viewportMargin: 10
-			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
 		}
-		
-		if(parent.getDiv().id == "definitions") {
-			var block_options = {
-		      willInsertNode: function(cm, sourceNodeText, sourceNode, destination) {
-		          var line = cm.getLine(destination.line);
-		          var prev = line[destination.ch - 1] || '\n';
-		          var next = line[destination.ch] || '\n';
-		          sourceNodeText = sourceNodeText.trim();
-		          if (!/\s|[([{]/.test(prev)) {
-		            sourceNodeText = ' ' + sourceNodeText;
-		          }
-		          if (!/\s|[)\]}]/.test(next)) {
-		            sourceNodeText += ' ';
-		          }
-		          return sourceNodeText;
-		        }
-		    };
-
-			this.editor = new CodeMirrorBlocks(parent.getDiv(), undefined, '', {collapseAll: false});
+		var container = parent.getDiv();
+		if(container.id == "definitions") {
+			this.editor = CodeMirrorBlocks(container, {collapseAll: false, value: ''});
 		} else {
-			this.editor = CodeMirror(parent.getDiv(), cm_options);
+			this.editor = CodeMirror(container, cm_options);
 		}
+
+		var mediaQueryList = window.matchMedia('print'), savedViewportMargin;
+	    mediaQueryList.addListener(function(mql) {
+    		if (mql.matches) {
+	    		savedViewportMargin = that.editor.getOption('viewportMargin')
+	    		that.editor.setOption('viewportMargin', Infinity);
+	    	} else {
+	    		that.editor.setOption('viewportMargin', savedViewportMargin);
+	    	}
+	    });
 
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { 
@@ -187,6 +180,7 @@ var WeSchemeTextContainer;
         }
 	
 	    this.editor.refresh();
+/*
       // if the 'clone' option is set, we create a linked doc that is updated as the definitions window changes
       // this doc is added to the 'middle' element, which likely ****BREAKS ABSTRACTION****
       // CSS is then used to hide everything except the clone
@@ -200,6 +194,7 @@ var WeSchemeTextContainer;
             cloneDOM = clone.getWrapperElement();
         cloneDOM.id  = "printedCM";
       }
+*/
 	  onSuccess.call(that, that);
 	};
 

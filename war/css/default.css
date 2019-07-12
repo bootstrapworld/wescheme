@@ -398,8 +398,6 @@ kbd{
     box-shadow:inset 0 -1px 0 black;
 }
 
-#printedCM{visibility: hidden; height: 0px;}
-
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
     #ProgramControls li {min-width: 50px;}
     #ProgramControls li a{
@@ -418,8 +416,23 @@ kbd{
 
 /* When printing, hide everything except the FileControls and definitions areas */
 @media print{
-  #Navigation, #ProgramControls, #footer, #splitpane, #help{display: none;}
-  #printedCM{visibility: visible; display: block; height: auto;}
-  #FileControls{border-style: solid; border-color: black; border-width: 3px 0px;}
-  #FileControls img{display: none;}
+  @page  {
+    size: 8.5in 11in;         /* normal letter size paper */
+    margin: .5in;             /* this affects the margin in the printer settings */
+    orphans: 0; widows: 0;    /* break a paragraph when you can have 3+ lines on each page */
+  }
+  
+  html, body { overflow: unset; height: unset; position: unset; }
+  #Navigation, #ProgramControls, #footer, #helpDialog, #interactions, .goog-splitpane-handle{display: none;}
+  #definitions, #middle, #splitpane { width: 100% !important; height: auto !important; position: unset !important;}
+  #definitions .CodeMirror { 
+    width: auto !important; height: auto !important; min-height: 20px;
+    position: unset;
+  }
+  .react-codemirror2 { height: unset; overflow: auto; display: block; }
+  .Editor { height: auto !important; position: unset !important; }
+  .Editor > * {position: unset !important; display: none !important; }
+  .Editor > .codemirror-pane { float: unset; height: auto; display: block !important;}
+  #FileControls{ border-style: solid; border-color: black; border-width: 3px 0px; }
+  #FileControls img{ display: none; }
 }
