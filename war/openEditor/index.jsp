@@ -252,7 +252,7 @@
         </div>
         <div class="section" id="design-recipe-examples">
           <div id="design-recipe-example1_wrapper">
-            <span class="spacer">(EXAMPLE </span>
+            <span class="spacer notranslate">(EXAMPLE </span>
             <div class="indent-wrapper">
               <textarea id="design-recipe-example1_header"></textarea>
               <textarea id="design-recipe-example1_body"></textarea>
@@ -262,7 +262,7 @@
           <span class="error" id="design-recipe-example1_error"></span>
           <hr/>
           <div id="design-recipe-example2_wrapper">
-            <span class="spacer">(EXAMPLE </span>
+            <span class="spacer notranslate">(EXAMPLE </span>
             <div class="indent-wrapper">
                <textarea id="design-recipe-example2_header"></textarea>
              <textarea id="design-recipe-example2_body"></textarea>
@@ -273,7 +273,7 @@
         </div>
         <div class="section" id="design-recipe-definition">
           <div id="design-recipe-definition_wrapper">
-            <span class="spacer">(define </span>
+            <span class="spacer notranslate">(define </span>
             <div class="indent-wrapper">
               <textarea id="design-recipe-definition_header"></textarea>
               <textarea id="design-recipe-definition_body"></textarea>
@@ -351,7 +351,7 @@
       </div>
       <!--  End top -->
 
-      <div id="middle" class="middle">
+      <div id="middle" class="middle notranslate">
       	<div id="splitpane" class="goog-splitpane">
           <div  id="definitions" tabindex="-1" 
                 class="goog-splitpane-first-container" 
