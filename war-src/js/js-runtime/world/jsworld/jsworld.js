@@ -1064,29 +1064,9 @@ function do_redraw(world, oldWorld, toplevelNode, redraw_func, redraw_css_func, 
                 };
 
 	        return {
-	        // iOS 13 requires us to request permission before registering an orientation
-	        // handler. See
-	       	// medium.com/flawless-app-stories/how-to-request-device-motion-and-orientation-permission-in-ios-13-74fc9d6cd140
 		    onRegister: function(top) { 
-		    	if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-		    	  // iOS 13+
-		    	  DeviceOrientationEvent.requestPermission()
-		    	  .then(response => {
-		    	    if (response == 'granted') {
-		    	      window.addEventListener('deviceorientation', (e) => {
-		    	        attachEvent(window, 'deviceorientation', wrappedTilt);
-		    	        reschedule();
-		    	      })
-		    	    }
-		    	  })
-		    	  .catch(console.error)
-		    	} else {
-		    	  // non iOS 13+
-		    	  attachEvent(window, 'deviceorientation', wrappedTilt);
-		    	  reschedule();
-		    	}
-                        
-                        
+                        attachEvent(window, 'deviceorientation', wrappedTilt); 
+                        reschedule();
                     },
 		    onUnregister: function(top) { 
                         if(tickId) { clearTimeout(tickId); }

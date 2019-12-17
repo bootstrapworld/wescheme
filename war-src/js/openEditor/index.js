@@ -111,7 +111,13 @@ var initializeEditor;
             if (attrs.noColorError) {
                 myEditor.disableColoredErrorMessages();
             }
-            jQuery("#run").click(function()  { myEditor.run(); });
+            jQuery("#run").click(function()  { 
+            	// if we're on iOS13, we need to request permission
+            	if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            		DeviceOrientationEvent.requestPermission();
+            	}
+            	myEditor.run(); 
+            });
             jQuery("#stop").click(function()  { myEditor.requestBreak(); });
             jQuery("#save").click(function() { myEditor.save(); });
             jQuery("#share").click(function()  { myEditor.share(); });
