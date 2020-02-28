@@ -110,14 +110,9 @@ var initializeEditor;
             jQuery("#run").click(function()  {
             	// if we're on iOS13, we need to request permission
             	if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            		DeviceOrientationEvent.requestPermission()
-		    		  .then(function(permissionState) {
-				          if (permissionState === 'granted') {
-				            alert('permission granted!');
-				          } else {
-				          	alert(permissionState);
-				          }
-				        })["catch"](function(msg){console.error(msg); });
+            		DeviceOrientationEvent.requestPermission()["catch"](function(msg){
+            			console.error(msg); 
+            		});
             	}
             	myEditor.run(); 
             });
