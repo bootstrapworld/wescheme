@@ -14,14 +14,14 @@ goog.provide('plt.wescheme.BrowserDetect');
 
 plt.wescheme.BrowserDetect = {
     init: function () {
-	this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
-	this.version = this.searchVersionFloat(navigator.userAgent)
-	    || this.searchVersionFloat(navigator.appVersion)
-	    || undefined;
-	this.versionString = this.searchVersionString(navigator.userAgent)
-	    || this.searchVersionString(navigator.appVersion)
-	    || undefined;
-	this.OS = this.searchString(this.dataOS) || "an unknown OS";
+		this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
+		this.version = this.searchVersionFloat(navigator.userAgent)
+		    || this.searchVersionFloat(navigator.appVersion)
+		    || undefined;
+		this.versionString = this.searchVersionString(navigator.userAgent)
+		    || this.searchVersionString(navigator.appVersion)
+		    || "unknown";
+		this.OS = this.searchString(this.dataOS) || "an unknown OS";
     },
     searchString: function (data) {
 	for (var i=0;i<data.length;i++)	{
