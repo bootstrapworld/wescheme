@@ -76,13 +76,14 @@
         Bootstrap Starter Files &#9660;
       </span>
       <ul id="bootstrapFileList">
-        <li><a target="_blank" href="http://goo.gl/mxC2Vx">NinjaCat</a></li>
-        <li><a target="_blank" href="http://goo.gl/1Zv95D">Defining Values</a></li>
-        <li><a target="_blank" href="http://goo.gl/SHMqcF">Game Template</a></li>
-        <li><a target="_blank" href="http://goo.gl/DdvPUc">Rocket-Height</a></li>
-        <li><a target="_blank" href="http://goo.gl/WnLnKb">Bug Hunting</a></li>
-        <li><a target="_blank" href="http://goo.gl/PsG7MG">Sam the Butterfly</a></li>
-        <li><a target="_blank" href="http://goo.gl/ftS9dm">Luigi's Pizza</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=HjTyPbbvSH">Defining Values</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game Template</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket-Height</a></li>
+        <l
+        i><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=0elP8WrmfM">Sam the Butterfly</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=5jBc52gFTV">Luigi's Pizza</a></li>
       </ul>
     </li>
 

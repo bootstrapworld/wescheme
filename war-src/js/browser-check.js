@@ -46,41 +46,26 @@ goog.require('plt.wescheme.cookies');
     // If not, bring up a warning dialog saying that we haven't tested
     // on the other platforms.
     plt.wescheme.browserCheck = function() {
-	var browser = BrowserDetect.browser;
-	var versionString = BrowserDetect.versionString;
-
-	if (isFullySupported(browser, versionString)) {
-	    return;
-	}
-        
-        if (isOldIE(browser, versionString)) {
-	    warnOldIE();
-            return;
-        }
-
-        if (isUnsupported(browser, versionString)) {
-	    warnBrowserUnsupported();
-            return;
-	} 
-
+		var browser = BrowserDetect.browser;
+		var versionString = BrowserDetect.versionString;
+		if (isFullySupported(browser, versionString)) { return; }
+	    if (isOldIE(browser, versionString)) { warnOldIE(); return; }
+	    if (isUnsupported(browser, versionString)) { warnBrowserUnsupported(); return; } 
         if (isPartiallySupported(browser, versionString)) {
-	    if (browserAlreadyChecked()) {
-		return;
-	    }
-	    var greaterThanOrEqual = 9;
-	    for (var i = 0 ; i < fullySupportedVersions.length; i++) {
- 		if (browser === fullySupportedVersions[i].browser) {
-		    greaterThanOrEqual  = fullySupportedVersions[i].greaterThanOrEqual;
-		}
-	    }
-	    markBrowserChecked();
-	    warnBrowserPartiallySupported(browser, 9);
+	    	if (browserAlreadyChecked()) { return; }
+		    var greaterThanOrEqual = 9;
+		    for (var i = 0 ; i < fullySupportedVersions.length; i++) {
+		 		if (browser === fullySupportedVersions[i].browser) {
+				    greaterThanOrEqual  = fullySupportedVersions[i].greaterThanOrEqual;
+				}
+		    }
+		    markBrowserChecked();
+		    warnBrowserPartiallySupported(browser, 9);
             return;
-	} 
-
+		}
         // If we get to this point, we don't know what's going to happen,
         // so give a general warning.
-	warnBrowserMightNotWork();
+		warnBrowserMightNotWork();
     };
 
 
@@ -101,10 +86,10 @@ goog.require('plt.wescheme.cookies');
     var isFullySupported = function(browser, versionString) {
     	for (var i = 0; i < fullySupportedVersions.length; i++) {
     	    if (browser === fullySupportedVersions[i].browser) {
-    		if (versionGreaterThanOrEqual(versionString,
-					      fullySupportedVersions[i].greaterThanOrEqual)) {
-    		    return true;
-    		}
+	    		if (versionGreaterThanOrEqual(versionString,
+						fullySupportedVersions[i].greaterThanOrEqual)) {
+	    		    return true;
+	    		}
     	    }
     	}
     	return false;

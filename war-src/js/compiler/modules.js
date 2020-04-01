@@ -226,6 +226,7 @@ plt.compiler = plt.compiler || {};
                                             ,"ellipse"
                                             ,"line"
                                             ,"add-line"
+                                            ,"add-polygon"
                                             ,"overlay"
                                             ,"overlay/xy"
                                             ,"overlay/align"
@@ -243,6 +244,8 @@ plt.compiler = plt.compiler || {};
                                             ,"frame"
                                             ,"flip-horizontal"
                                             ,"flip-vertical"
+                                            ,"reflect-x"
+                                            ,"reflect-y"
                                             ,"text"
                                             ,"text/font"
                                             ,"video/url"       // needs network

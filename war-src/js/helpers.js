@@ -87,11 +87,6 @@ goog.provide("plt.wescheme.helpers");
 			       "/images/icon_twitter.png",
 			       "http://twitter.com/home?" +
 			       encodeKeyPairs({status: url}));
-		
-		addBookmarklet("Google+",
-			       "/images/icon_gplus.png",
-			       "https://plus.google.com/share?" +
-			       encodeKeyPairs({url: url}));
 
 		addBookmarklet("Pinterest",
 	                 "/images/icon_pinterest.png",

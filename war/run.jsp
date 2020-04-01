@@ -19,6 +19,8 @@
 
 <title>WeScheme</title>
 
+<!-- Do the right thing for mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>

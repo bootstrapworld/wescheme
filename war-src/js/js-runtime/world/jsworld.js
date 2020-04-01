@@ -406,7 +406,7 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 	var wrappedHandlers = [];
 	var wrappedRedraw;
 	var wrappedRedrawCss;
-  	var lastThreeFrameDraws = []; // for FPS calculation
+  	var last3frames = []; // for FPS calculation
 
   	// on-draw may define separate DOM and CSS handlers
 	if (config.lookup('onDraw')) {
@@ -450,10 +450,10 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 	    var reusableCanvasNode = undefined;
 	    wrappedRedraw = function(w, k) {
         var nextFrame = function(t) {
-          lastThreeFrameDraws = [t/1000].concat(lastThreeFrameDraws); // save the # ms
-          lastThreeFrameDraws = lastThreeFrameDraws.slice(0,3); // only keep the last 3 saves
-          if(lastThreeFrameDraws.length===3)
-            console.log(Math.round(3 / (lastThreeFrameDraws[0] - lastThreeFrameDraws[2]))+"fps");
+          last3frames = [t/1000].concat(last3frames); // save the # ms
+          last3frames = last3frames.slice(0,3); // only keep the last 3 saves
+          // report running FPS avg
+          //if(last3frames.length===3) console.log(Math.round(3 / (last3frames[0] - last3frames[2]))+"fps");
           try {
             // By the time we get here, the current world may have changed
             // already, so we need to reacquire the value of the
@@ -478,9 +478,9 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 		                   }
 
 		                   setTimeout(
-		                 function() {
-		                     reusableCanvas.width = width;
-		                     reusableCanvas.height = height;			
+		                 function() {			
+		                 	reusableCanvas.width = width;
+		                 	reusableCanvas.height = height;
 		                     var ctx = reusableCanvas.getContext("2d");
 		                     aScene.render(ctx, 0, 0);
 		                     var log = document.createElement("span");
@@ -562,8 +562,8 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
         };
         lastPictureCss = function(w, k) {
           k([[reusableCanvas,
-              ["width", reusableCanvas.width + "px"],
-              ["height", reusableCanvas.height + "px"]]]);
+          	["width", reusableCanvas.width + "px"],
+          	["height", reusableCanvas.height + "px"]]]);
         };
         return _js.on_draw(nextFrame, lastPictureCss)();
       };

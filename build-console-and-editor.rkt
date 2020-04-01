@@ -12,7 +12,6 @@
 
 (define-runtime-path closure-dir (build-path "war-src" "closure"))
 (define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
-(define-runtime-path compiler-jar-path (build-path "bin" "compiler.jar"))
 
 (define-runtime-path codemirror-src-dir (build-path "war-src" "js" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))

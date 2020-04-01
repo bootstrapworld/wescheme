@@ -452,11 +452,12 @@ var getMakeStructTypeReturns = function(aStructType) {
 //////////////////////////////////////////////////////////////////////
 
 
-var isNumber = jsnums.isSchemeNumber;
-var isReal = jsnums.isReal;
-var isRational = jsnums.isRational;
-var isComplex = isNumber;
-var isInteger = jsnums.isInteger;
+var isNumber 	= jsnums.isSchemeNumber;
+var isReal 		= jsnums.isReal;
+var isRational 	= jsnums.isRational;
+// TODO(Emmanuel): ugly hack - this should be exported properly by js-numbers
+var isComplex 	= function(x) { return (x.i !== undefined)? types.TRUE : types.FALSE; }
+var isInteger 	= jsnums.isInteger;
 
 var isNatural = function(x) {
 	return jsnums.isExact(x) && isInteger(x) && jsnums.greaterThanOrEqual(x, 0);
@@ -3086,7 +3087,7 @@ PRIMITIVES['build-list'] =
 					});
 			}
 			return buildListHelp(0, types.EMPTY);
-		 });
+		 }); 
 
 
 /**********************
@@ -3991,7 +3992,8 @@ PRIMITIVES['build-vector'] =
 
 				return CALL(f, [n],
 					function (result) {
-						return buildVectorHelp(n+1, acc.push(result));
+						acc.push(result);
+						return buildVectorHelp(n+1, acc);
 					});
 			}
 			return buildVectorHelp(0, []);
@@ -4685,6 +4687,32 @@ new PrimProc('regular-polygon',
 											  c);
 			 });
 
+PRIMITIVES['add-polygon'] =
+new PrimProc('add-polygon',
+			 4,
+			 false, false,
+			 function(aState, bg, points, s, c) {
+       function isPosnList(lst){ return isListOf(lst, types.isPosn); }
+       checkListOfLength(aState, points, 3, 	'add-polygon', 1);
+			 check(aState, bg,		isImage,	"add-polygon", "image", 1, arguments);
+			 check(aState, points,	isPosnList,	"add-polygon", "list of posns", 2, arguments);
+			 check(aState, s,		isMode, 	"add-polygon", 'style ("solid" / "outline") or an opacity value [0-255])', 3, arguments);
+			 check(aState, c,		isColor, 	"add-polygon", "color", 4, arguments);
+			 
+			 if (colorDb.get(c)) { c = colorDb.get(c); }
+			 var posnArray = helpers.flattenSchemeListToArray(points);
+			 var xs = posnArray.map(function(p){ return p._fields[0]; });
+			 var ys = posnArray.map(function(p){ return p._fields[1]; });
+			 xs = xs.map(function(x){ return jsnums.toFixnum(x); }); // convert xs to fixnums
+			 ys = ys.map(function(y){ return jsnums.toFixnum(y); }); // convert ys to fixnums
+			 var deltaX = -Math.round(Math.min.apply(null, xs));
+			 var deltaY = -Math.round(Math.min.apply(null, ys));
+			 console.log('deltaX', deltaX, 'deltaY', deltaY);
+			 var polygon = world.Kernel.posnImage(posnArray, s.toString(), c);
+			 console.log('primitve is passing posns', posnArray);
+			 return world.Kernel.overlayImage(polygon, bg, deltaX, deltaY);
+			 });
+
 PRIMITIVES['star-polygon'] =
 new PrimProc('star-polygon',
 			 5,
@@ -5365,6 +5393,25 @@ new PrimProc('flip-horizontal',
 			 false, false,
 			 function(aState, img) {
 			 check(aState, img, isImage, "flip-horizontal", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "horizontal");
+			 });
+
+PRIMITIVES['reflect-x'] =
+new PrimProc('reflect-x',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-x", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "vertical");
+			 });
+
+
+PRIMITIVES['reflect-y'] =
+new PrimProc('reflect-y',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-y", "image", 1, arguments);
 			 return world.Kernel.flipImage(img, "horizontal");
 			 });
 

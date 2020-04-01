@@ -21,9 +21,9 @@ goog.require('plt.compiler.desugar');
 goog.require('plt.compiler.analyze');
 goog.require('plt.compiler.compile');
 
+var myEditor = myEditor || {getScreenreader:function(){return false;}};
 
 (function() {
-
 
     var Runner = function(compilationServerUrl, interactionsDiv) {
         var that = this;
@@ -123,7 +123,7 @@ goog.require('plt.compiler.compile');
                     plt.wescheme.RoundRobin.roundRobinCompiler);
                 after();
             },
-            function() {
+            () => {
                 // Under this situation, all compilation servers are inaccessible.
                 evaluator.setCompileProgram(plt.wescheme.RoundRobin.roundRobinCompiler);
                 alert("WeScheme appears to be busy or unavailable at this time." +

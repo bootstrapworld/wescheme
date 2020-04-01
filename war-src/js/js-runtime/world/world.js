@@ -434,51 +434,6 @@ if (typeof(world) === 'undefined') {
             || BaseImage.prototype.isEqual.call(this, other, aUnionFind);
     };
 
-    function describeImagesInCache() {
-        if(!myEditor.getScreenreader()) return;
-        // collect all undescribed fileImages in an array
-        var undescribedImages = [];
-        for (var src in imageCache) {
-            if (imageCache.hasOwnProperty(src) && !imageCache[src].labeled) {
-                undescribedImages.push(imageCache[src]);
-            }
-        }
-        // bail if there's no work to be done
-        if(undescribedImages.length === 0) return;
-
-        // do some work! create a batch request for all undescribed images
-        var requests = [];
-        undescribedImages.forEach(function(img) {
-          requests.push(  { image: { source: { imageUri: img.originalURI } }, 
-                            features: [{type: "LABEL_DETECTION", maxResults: 10}]});
-        });
-        var CONFIDENCE_THRESHOLD = 0.75;
-        var jsonString = JSON.stringify({requests: requests});
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.onload = function() { 
-                var data = JSON.parse(this.responseText);
-                if(!data.responses) throw "No response from Google Vision API";
-                data.responses.forEach(function(response, i){
-                    // sort labels by *descending* confidence (in-place!), then grab the
-                    // label with the highest confidence
-                    response.labelAnnotations.sort(function(label1, label2){
-                        return (label1.confidence < label2.confidence)? 1 : -1; // descending order!
-                    });
-                    var bestLabel = response.labelAnnotations[0].description;
-                    // update the FileImage in the imageCache
-                    imageCache[undescribedImages[i].originalURI].labeled = true;
-                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
-                });
-            }
-            xhr.onerror = function () { console.log("failure"); }
-            xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
-            xhr.setRequestHeader("content-type", "application/json");
-            xhr.send(jsonString);
-        } catch (e) {
-            console.log('Google Vision API lookup failed', e);
-        }
-    }
 
     //////////////////////////////////////////////////////////////////////
     // FileImage: string node -> Image
@@ -522,7 +477,65 @@ if (typeof(world) === 'undefined') {
 
     // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
-    var visionAPITimer = setInterval(describeImagesInCache, 5000);
+    var VISION_API_TIMEOUT = 5000;
+    var visionAPITimer = window.myEditor? setTimeout(describeImagesInCache, VISION_API_TIMEOUT) : null;
+
+    function describeImagesInCache() {
+        visionAPITimer = setTimeout(describeImagesInCache, VISION_API_TIMEOUT);
+
+        if(!myEditor.getScreenreader()) return;
+        // collect all undescribed fileImages in an array
+        var undescribedImages = [];
+        for (var src in imageCache) {
+            if (imageCache.hasOwnProperty(src) && !imageCache[src].labeled) {
+                undescribedImages.push(imageCache[src]);
+            }
+        }
+        // bail if there's no work to be done
+        if(undescribedImages.length === 0) return;
+
+        // do some work! create a batch request for all undescribed images
+        var requests = [];
+        undescribedImages.forEach(function(img) {
+          requests.push(  { image: { source: { imageUri: img.originalURI } }, 
+                            features: [{type: "LABEL_DETECTION", maxResults: 10}]});
+        });
+        var CONFIDENCE_THRESHOLD = 0.75;
+        var jsonString = JSON.stringify({requests: requests});
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.onload = function() { 
+                var data = JSON.parse(this.responseText);
+                if(!data.responses) {
+                    VISION_API_TIMEOUT *= 2; // Decay
+                    console.log('no response from VisionAPI. set timeout to ', VISION_API_TIMEOUT, 'ms');
+                    throw "No response from Google Vision API";
+                } else {
+                    console.log('successful load from VisionAPI. set timeout to ', VISION_API_TIMEOUT, 'ms');
+                    VISION_API_TIMEOUT = 5000; //reset time to default 5sec
+                }
+                data.responses.forEach(function(response, i) {
+                    // sort labels by *descending* confidence (in-place!), then grab the
+                    // label with the highest confidence
+                    response.labelAnnotations.sort(function(label1, label2){
+                        return (label1.confidence < label2.confidence)? 1 : -1; // descending order!
+                    });
+                    var bestLabel = response.labelAnnotations[0].description;
+                    // update the FileImage in the imageCache
+                    imageCache[undescribedImages[i].originalURI].labeled = true;
+                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
+                });
+                console.log('after load(), timeout is', VISION_API_TIMEOUT);
+            }
+            xhr.onerror = function () { console.log("Google VisionAPI post() failure"); }
+            xhr.open('POST', "https://vision.googleapis.com/v1/images:annotate?key="+plt.config.API_KEY);
+            xhr.setRequestHeader("content-type", "application/json");
+            xhr.send(jsonString);
+        } catch (e) {
+            console.log('Setting up XHR for Google Vision API failed', e);
+            VISION_API_TIMEOUT *= 2; // Decay
+        }
+    }
 
     FileImage.makeInstance = function(path, rawImage, afterInit) {
         var uri = decodeURIComponent(path).slice(16); // get the original URI
@@ -531,7 +544,6 @@ if (typeof(world) === 'undefined') {
             return imageCache[uri];
         } else {
             afterInit(imageCache[uri]);
-            console.log("returning from cache", imageCache[uri]);
             return imageCache[uri];
         }
     };
@@ -785,7 +797,7 @@ if (typeof(world) === 'undefined') {
         }
         this.width  = findWidth(this._vertices);
         this.height = findHeight(this._vertices);
-        this.ariaText = " an overlay: first image is" + img1.ariaText + positionText + img2.ariaText;
+        this.ariaText = " an overlay: top image is" + img1.ariaText + positionText + " on top of " + img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -1087,14 +1099,17 @@ if (typeof(world) === 'undefined') {
     var PosnImage = function(vertices, style, color) {
         BaseImage.call(this);
         var vertices = vertices.map(function(v){
-            return { x: types.posnX(v), y: types.posnY(v) }
+            return { x: jsnums.toFixnum(types.posnX(v)), y: jsnums.toFixnum(types.posnY(v)) };
         });
+        console.log('vertices are', vertices);
 
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
+        console.log('translated verticies are',this.vertices);
+        this.ariaText = " a"+colorToSpokenString(color,style) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
 
@@ -1408,28 +1423,32 @@ if (typeof(world) === 'undefined') {
         this.colors[name] = color;
     };
 
+    // can be called with three types of value: (1) a string (colorname), (2) a color struct
+    // or (3) a runtime string object with a hash and a toString method
     ColorDb.prototype.get = function(name) {
-        return this.colors[name.toString().toUpperCase()];
+        if(name.toString) { // normalize if it's a string, or can be made into one
+            return this.colors[name.toString().replace(/\s/g, "").toUpperCase()];
+        }
     };
 
 
     // FIXME: update toString to handle the primitive field values.
     var colorDb = new ColorDb();
     colorDb.put("ORANGE", types.color(255, 165, 0, 255));
-    colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("LIGHTORANGE", types.color(255, 216, 51, 255));
+    colorDb.put("MEDIUMORANGE", types.color(255, 165, 0, 255));
     colorDb.put("ORANGERED", types.color(255, 69, 0, 255));
     colorDb.put("TOMATO", types.color(255, 99, 71, 255));
-    colorDb.put("DARKRED", types.color(139, 0, 0, 255));
     colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("LIGHTRED", types.color(255, 102, 102, 255));
+    colorDb.put("MEDIUMRED", types.color(255, 0, 0, 255));
+    colorDb.put("DARKRED", types.color(139, 0, 0, 255));
     colorDb.put("FIREBRICK", types.color(178, 34, 34, 255));
     colorDb.put("CRIMSON", types.color(220, 20, 60, 255));
     colorDb.put("DEEPPINK", types.color(255, 20, 147, 255));
     colorDb.put("MAROON", types.color(176, 48, 96, 255));
-    colorDb.put("INDIAN RED", types.color(205, 92, 92, 255));
     colorDb.put("INDIANRED", types.color(205, 92, 92, 255));
-    colorDb.put("MEDIUM VIOLET RED", types.color(199, 21, 133, 255));
     colorDb.put("MEDIUMVIOLETRED", types.color(199, 21, 133, 255));
-    colorDb.put("VIOLET RED", types.color(208, 32, 144, 255));
     colorDb.put("VIOLETRED", types.color(208, 32, 144, 255));
     colorDb.put("LIGHTCORAL", types.color(240, 128, 128, 255));
     colorDb.put("HOTPINK", types.color(255, 105, 180, 255));
@@ -1437,25 +1456,34 @@ if (typeof(world) === 'undefined') {
     colorDb.put("LIGHTPINK", types.color(255, 182, 193, 255));
     colorDb.put("ROSYBROWN", types.color(188, 143, 143, 255));
     colorDb.put("PINK", types.color(255, 192, 203, 255));
+    colorDb.put("MEDIUMPINK", types.color(255, 192, 203, 255));
+    colorDb.put("DARKPINK", types.color(204, 141, 152, 255));
     colorDb.put("ORCHID", types.color(218, 112, 214, 255));
     colorDb.put("LAVENDERBLUSH", types.color(255, 240, 245, 255));
     colorDb.put("SNOW", types.color(255, 250, 250, 255));
     colorDb.put("CHOCOLATE", types.color(210, 105, 30, 255));
     colorDb.put("SADDLEBROWN", types.color(139, 69, 19, 255));
     colorDb.put("BROWN", types.color(132, 60, 36, 255));
+    colorDb.put("LIGHTBROWN", types.color(183, 111, 87, 255));
+    colorDb.put("MEDIUMBROWN", types.color(132, 60, 36, 255));
+    colorDb.put("DARKBROWN", types.color(81, 9, 0, 255));
     colorDb.put("DARKORANGE", types.color(255, 140, 0, 255));
     colorDb.put("CORAL", types.color(255, 127, 80, 255));
     colorDb.put("SIENNA", types.color(160, 82, 45, 255));
     colorDb.put("ORANGE", types.color(255, 165, 0, 255));
     colorDb.put("SALMON", types.color(250, 128, 114, 255));
     colorDb.put("PERU", types.color(205, 133, 63, 255));
-    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
     colorDb.put("GOLDENROD", types.color(218, 165, 32, 255));
+    colorDb.put("LIGHTGOLDENROD", types.color(255, 216, 83, 255));
+    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
     colorDb.put("SANDYBROWN", types.color(244, 164, 96, 255));
     colorDb.put("LIGHTSALMON", types.color(255, 160, 122, 255));
     colorDb.put("DARKSALMON", types.color(233, 150, 122, 255));
     colorDb.put("GOLD", types.color(255, 215, 0, 255));
     colorDb.put("YELLOW", types.color(255, 255, 0, 255));
+    colorDb.put("LIGHTYELLOW", types.color(255, 255, 51, 255));
+    colorDb.put("MEDIUMYELLOW", types.color(255, 255, 0, 255));
+    colorDb.put("DARKYELLOW", types.color(204, 204, 0, 255));
     colorDb.put("OLIVE", types.color(128, 128, 0, 255));
     colorDb.put("BURLYWOOD", types.color(222, 184, 135, 255));
     colorDb.put("TAN", types.color(210, 180, 140, 255));
@@ -1468,7 +1496,6 @@ if (typeof(world) === 'undefined') {
     colorDb.put("BISQUE", types.color(255, 228, 196, 255));
     colorDb.put("PALEGOLDENROD", types.color(238, 232, 170, 255));
     colorDb.put("BLANCHEDALMOND", types.color(255, 235, 205, 255));
-    colorDb.put("MEDIUM GOLDENROD", types.color(234, 234, 173, 255));
     colorDb.put("MEDIUMGOLDENROD", types.color(234, 234, 173, 255));
     colorDb.put("PAPAYAWHIP", types.color(255, 239, 213, 255));
     colorDb.put("MISTYROSE", types.color(255, 228, 225, 255));
@@ -1484,98 +1511,75 @@ if (typeof(world) === 'undefined') {
     colorDb.put("FLORALWHITE", types.color(255, 250, 240, 255));
     colorDb.put("IVORY", types.color(255, 255, 240, 255));
     colorDb.put("GREEN", types.color(0, 255, 0, 255));
+    colorDb.put("MEDIUMGREEN", types.color(0, 255, 0, 255));
     colorDb.put("LAWNGREEN", types.color(124, 252, 0, 255));
     colorDb.put("CHARTREUSE", types.color(127, 255, 0, 255));
-    colorDb.put("GREEN YELLOW", types.color(173, 255, 47, 255));
     colorDb.put("GREENYELLOW", types.color(173, 255, 47, 255));
-    colorDb.put("YELLOW GREEN", types.color(154, 205, 50, 255));
     colorDb.put("YELLOWGREEN", types.color(154, 205, 50, 255));
-    colorDb.put("MEDIUM FOREST GREEN", types.color(107, 142, 35, 255));
     colorDb.put("OLIVEDRAB", types.color(107, 142, 35, 255));
     colorDb.put("MEDIUMFORESTGREEN", types.color(107, 142, 35, 255));
-    colorDb.put("DARK OLIVE GREEN", types.color(85, 107, 47, 255));
     colorDb.put("DARKOLIVEGREEN", types.color(85, 107, 47, 255));
     colorDb.put("DARKSEAGREEN", types.color(143, 188, 139, 255));
     colorDb.put("LIME", types.color(0, 255, 0, 255));
-    colorDb.put("DARK GREEN", types.color(0, 100, 0, 255));
     colorDb.put("DARKGREEN", types.color(0, 100, 0, 255));
-    colorDb.put("LIME GREEN", types.color(50, 205, 50, 255));
     colorDb.put("LIMEGREEN", types.color(50, 205, 50, 255));
-    colorDb.put("FOREST GREEN", types.color(34, 139, 34, 255));
     colorDb.put("FORESTGREEN", types.color(34, 139, 34, 255));
     colorDb.put("SPRING GREEN", types.color(0, 255, 127, 255));
     colorDb.put("SPRINGGREEN", types.color(0, 255, 127, 255));
-    colorDb.put("MEDIUM SPRING GREEN", types.color(0, 250, 154, 255));
     colorDb.put("MEDIUMSPRINGGREEN", types.color(0, 250, 154, 255));
-    colorDb.put("SEA GREEN", types.color(46, 139, 87, 255));
     colorDb.put("SEAGREEN", types.color(46, 139, 87, 255));
-    colorDb.put("MEDIUM SEA GREEN", types.color(60, 179, 113, 255));
     colorDb.put("MEDIUMSEAGREEN", types.color(60, 179, 113, 255));
     colorDb.put("AQUAMARINE", types.color(112, 216, 144, 255));
     colorDb.put("LIGHTGREEN", types.color(144, 238, 144, 255));
-    colorDb.put("PALE GREEN", types.color(152, 251, 152, 255));
     colorDb.put("PALEGREEN", types.color(152, 251, 152, 255));
     colorDb.put("MEDIUM AQUAMARINE", types.color(102, 205, 170, 255));
     colorDb.put("MEDIUMAQUAMARINE", types.color(102, 205, 170, 255));
     colorDb.put("TURQUOISE", types.color(64, 224, 208, 255));
-    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170, 255));
-    colorDb.put("MEDIUM TURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("LIGHTTURQUOISE", types.color(155, 255, 255, 255));
     colorDb.put("MEDIUMTURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170, 255));
     colorDb.put("HONEYDEW", types.color(240, 255, 240, 255));
     colorDb.put("MINTCREAM", types.color(245, 255, 250, 255));
     colorDb.put("ROYALBLUE", types.color(65, 105, 225, 255));
     colorDb.put("DODGERBLUE", types.color(30, 144, 255, 255));
     colorDb.put("DEEPSKYBLUE", types.color(0, 191, 255, 255));
     colorDb.put("CORNFLOWERBLUE", types.color(100, 149, 237, 255));
-    colorDb.put("STEEL BLUE", types.color(70, 130, 180, 255));
     colorDb.put("STEELBLUE", types.color(70, 130, 180, 255));
     colorDb.put("LIGHTSKYBLUE", types.color(135, 206, 250, 255));
-    colorDb.put("DARK TURQUOISE", types.color(0, 206, 209, 255));
     colorDb.put("DARKTURQUOISE", types.color(0, 206, 209, 255));
     colorDb.put("CYAN", types.color(0, 255, 255, 255));
-    colorDb.put("AQUA", types.color(0, 255, 255, 255));
+    colorDb.put("LIGHTCYAN", types.color(224, 255, 255, 255));
+    colorDb.put("MEDIUMCYAN", types.color(0, 255, 255, 255));
     colorDb.put("DARKCYAN", types.color(0, 139, 139, 255));
+    colorDb.put("AQUA", types.color(0, 255, 255, 255));
     colorDb.put("TEAL", types.color(0, 128, 128, 255));
-    colorDb.put("SKY BLUE", types.color(135, 206, 235, 255));
     colorDb.put("SKYBLUE", types.color(135, 206, 235, 255));
-    colorDb.put("CADET BLUE", types.color(96, 160, 160, 255));
     colorDb.put("CADETBLUE", types.color(95, 158, 160, 255));
-    colorDb.put("DARK SLATE GRAY", types.color(47, 79, 79, 255));
     colorDb.put("DARKSLATEGRAY", types.color(47, 79, 79, 255));
     colorDb.put("LIGHTSLATEGRAY", types.color(119, 136, 153, 255));
     colorDb.put("SLATEGRAY", types.color(112, 128, 144, 255));
-    colorDb.put("LIGHT STEEL BLUE", types.color(176, 196, 222, 255));
     colorDb.put("LIGHTSTEELBLUE", types.color(176, 196, 222, 255));
-    colorDb.put("LIGHT BLUE", types.color(173, 216, 230, 255));
     colorDb.put("LIGHTBLUE", types.color(173, 216, 230, 255));
     colorDb.put("POWDERBLUE", types.color(176, 224, 230, 255));
     colorDb.put("PALETURQUOISE", types.color(175, 238, 238, 255));
-    colorDb.put("LIGHTCYAN", types.color(224, 255, 255, 255));
     colorDb.put("ALICEBLUE", types.color(240, 248, 255, 255));
     colorDb.put("AZURE", types.color(240, 255, 255, 255));
-    colorDb.put("MEDIUM BLUE", types.color(0, 0, 205, 255));
     colorDb.put("MEDIUMBLUE", types.color(0, 0, 205, 255));
     colorDb.put("DARKBLUE", types.color(0, 0, 139, 255));
-    colorDb.put("MIDNIGHT BLUE", types.color(25, 25, 112, 255));
     colorDb.put("MIDNIGHTBLUE", types.color(25, 25, 112, 255));
     colorDb.put("NAVY", types.color(36, 36, 140, 255));
     colorDb.put("BLUE", types.color(0, 0, 255, 255));
     colorDb.put("INDIGO", types.color(75, 0, 130, 255));
-    colorDb.put("BLUE VIOLET", types.color(138, 43, 226, 255));
     colorDb.put("BLUEVIOLET", types.color(138, 43, 226, 255));
-    colorDb.put("MEDIUM SLATE BLUE", types.color(123, 104, 238, 255));
     colorDb.put("MEDIUMSLATEBLUE", types.color(123, 104, 238, 255));
-    colorDb.put("SLATE BLUE", types.color(106, 90, 205, 255));
     colorDb.put("SLATEBLUE", types.color(106, 90, 205, 255));
     colorDb.put("PURPLE", types.color(160, 32, 240, 255));
-    colorDb.put("DARK SLATE BLUE", types.color(72, 61, 139, 255));
+    colorDb.put("LIGHTPURPLE", types.color(211, 83, 255, 255));
+    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219, 255));
+    colorDb.put("DARKPURPLE", types.color(109, 0, 189, 255));
     colorDb.put("DARKSLATEBLUE", types.color(72, 61, 139, 255));
     colorDb.put("DARKVIOLET", types.color(148, 0, 211, 255));
-    colorDb.put("DARK ORCHID", types.color(153, 50, 204, 255));
     colorDb.put("DARKORCHID", types.color(153, 50, 204, 255));
-    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219, 255));
-    colorDb.put("CORNFLOWER BLUE", types.color(68, 64, 108, 255));
-    colorDb.put("MEDIUM ORCHID", types.color(186, 85, 211, 255));
     colorDb.put("MEDIUMORCHID", types.color(186, 85, 211, 255));
     colorDb.put("MAGENTA", types.color(255, 0, 255, 255));
     colorDb.put("FUCHSIA", types.color(255, 0, 255, 255));
@@ -1588,19 +1592,18 @@ if (typeof(world) === 'undefined') {
     colorDb.put("WHITE", types.color(255, 255, 255, 255));
     colorDb.put("WHITESMOKE", types.color(245, 245, 245, 255));
     colorDb.put("GAINSBORO", types.color(220, 220, 220, 255));
-    colorDb.put("LIGHT GRAY", types.color(211, 211, 211, 255));
     colorDb.put("LIGHTGRAY", types.color(211, 211, 211, 255));
     colorDb.put("SILVER", types.color(192, 192, 192, 255));
     colorDb.put("GRAY", types.color(190, 190, 190, 255));
-    colorDb.put("DARK GRAY", types.color(169, 169, 169, 255));
+    colorDb.put("GREY", types.color(190, 190, 190, 255));
+    colorDb.put("MEDIUMGRAY", types.color(190, 190, 190, 255));
     colorDb.put("DARKGRAY", types.color(169, 169, 169, 255));
-    colorDb.put("DIM GRAY", types.color(105, 105, 105, 255));
     colorDb.put("DIMGRAY", types.color(105, 105, 105, 255));
     colorDb.put("BLACK", types.color(0, 0, 0, 255));
     colorDb.put("TRANSPARENT", types.color(0, 0, 0, 0));
 
     var nameToColor = function(s) {
-        return colorDb.get('' + s);
+         return colorDb.get('' + s);
     };
  
     // based on answer provided at
