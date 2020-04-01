@@ -123,7 +123,7 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
                     plt.wescheme.RoundRobin.roundRobinCompiler);
                 after();
             },
-            function() {
+            () => {
                 // Under this situation, all compilation servers are inaccessible.
                 evaluator.setCompileProgram(plt.wescheme.RoundRobin.roundRobinCompiler);
                 alert("WeScheme appears to be busy or unavailable at this time." +
