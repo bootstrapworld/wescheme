@@ -1,1 +1,0 @@
-("7.6" racket ("2cfcc95f54fa60876abc199c9abdc56735145db2" . "33491199e302fa67db99ff15f2c7bffe257d7605") (collects #"setup" #"infotab" #"lang" #"reader.rkt") (collects #"setup" #"infotab.rkt"))
