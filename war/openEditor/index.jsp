@@ -210,7 +210,7 @@
 
               var widget = initializeWidget(myEditor.defn.impl.editor,
                                         myEditor.getTokenizer());
-              document.getElementById("recipe").onClick = function(e) {
+              document.getElementById("recipe").addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 var codeUpToCursor = myEditor.defn.getCode(0, myEditor.defn.getCursorStartPosition());
@@ -221,7 +221,7 @@
                   alert("You cannot start the Design Recipe widget when your cursor is inside another expression.");
                   myEditor.defn.focus();
                 }
-            }
+            });
         }
 
       jQuery(function() {
