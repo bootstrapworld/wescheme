@@ -203,13 +203,13 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 #inter {
     width:         100%;
-    height:		   100%;
-    padding:	   0px;
-    margin:		   0px;
-    overflow:       auto;
-    font-family:	Monaco, sans-serif;
-    background:     none;
-    position:       absolute;
+    height:		     90%;
+    padding:	     0px;
+    margin:		     0px;
+    overflow:      auto;
+    font-family:	 Monaco, sans-serif;
+    background:    none;
+    position:      absolute;
 }
 
 /* everything in the interactions window should have a small
