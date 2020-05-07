@@ -188,7 +188,6 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
               // get fullscreen access
               if(!fullscreenElement) elem.requestFullscreen( Element.ALLOW_KEYBOARD_INPUT );
               else document.exitFullscreen();
- 
             };
             if(supportsFullScreen()) {
                 jQuery("<input type='button' value='Run Fullscreen'>")
@@ -199,6 +198,16 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
                     .click(toggleFullscreen)
                     .appendTo(b);
             }
+
+            var appendFinishedMsg = function() {
+                var inter = document.getElementById('interactions');
+                var finished = document.createElement('span');
+                finished.id = "finished";
+                finished.innerHTML = "The program has finished running, but only included definitions (which do not produce any output).";
+                if(inter.children.length == 0){
+                    inter.appendChild(finished);
+                }
+            };
  
             b.insertBefore(titlespan, b.firstChild);
             desc.appendChild(notesspan);
@@ -208,15 +217,14 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
             document.title = title;
             if (programCode) {
               runner.runCompiledCode(programCode, permissions);
+              appendFinishedMsg();
             } else  {
-                ///
-                // FIXME: add call to queue/retrieve a server-side compilation here.
-                ///
                 // Only do this if we have no other choice.
                 initializeRoundRobinCompilation(runner.evaluator,
                                                 function() {
                                                   runner.runSourceCode(title, sourceCode, permissions);
                                                 });
+                appendFinishedMsg();
             }
         };
         new plt.wescheme.AjaxActions().loadProject(
