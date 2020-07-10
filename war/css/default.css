@@ -282,6 +282,8 @@ p.location-paragraph {
     margin-bottom: 0px;
 }
 
+span.compileTimeError {color: gray; font-style: italic; font-size: 11px;}
+
 /* To make spans as top-aligned inlined blocks, as used in the REPL */
 span.top-aligned-inline-block {
     display: inline-block;
