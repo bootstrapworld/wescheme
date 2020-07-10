@@ -567,49 +567,75 @@ var WeSchemeEditor;
     // Definitions console. The image chosen will be translated into a function
     // call in the form (bitmap/url <image_url>).
     WeSchemeEditor.prototype.showPicker = function(defnInFocus) {
-
-    	// Create and render a Picker object for searching images.
-    	var APP_ID = plt.config.APP_ID;
-    	var oauthToken;
-
+    	// where is the focus?
     	var editor = defnInFocus ? this.defn : this.interactions.prompt.textContainer;
-     	var data;
- 
-    	// Get the OAuth token for authenticating the picker
-    	function authenticatePicker() {
-	        var SCOPES = [
-              'https://www.googleapis.com/auth/drive.file',
-              'https://www.googleapis.com/auth/drive'
-          	];
-	        gapi.auth.authorize({
-	          'client_id': plt.config.CLIENT_ID,
-	          'scope': SCOPES.join(' '),
-	          'immediate': false
-	        }, function(authResult) {
-	          if (authResult && !authResult.error) {
-	            oauthToken = authResult.access_token;
-	            createPicker();
-	          } else {
-	            alert("There was an error authenticating.  Please make sure you're still logged in to Google.");
-	          }
-	        });
-      	}
 
-      	// Create the picker window itself and display it.
-      	function createPicker() {
-          var view = new google.picker.View(google.picker.ViewId.DOCS);
-          view.setMimeTypes("image/png,image/jpeg,image/jpg,image/gif");
-          var picker = new google.picker.PickerBuilder()
-	        .setAppId(APP_ID)
-	        .addView(view)
-	        .addView(new google.picker.DocsUploadView())
-	        .setCallback(pickerCallback)
-	        .setOAuthToken(oauthToken)
-	        .build();
-	      picker.setVisible(true);
-      	}
+    	// login keys
+    	var developerKey = 'AIzaSyCP00M0rthRxOPCcaVHS54iO5WfNmNA2PU';
+	    var clientId = plt.config.CLIENT_ID;
 
-	      
+	    // Replace with your own project number from console.developers.google.com.
+	    // See "Project number" under "IAM & Admin" > "Settings"
+	    var appId = plt.config.APP_ID;
+
+	    // Scope to use to access user's Drive items.
+	    var scope = [
+	    	'https://www.googleapis.com/auth/drive.file',
+	    	'https://www.googleapis.com/auth/drive.file'
+	    ];
+
+	    var pickerApiLoaded = false;
+	    var oauthToken;
+
+	    // Use the Google API Loader script to load the google.picker script.
+	    function loadPicker() {
+	      gapi.load('auth', {'callback': onAuthApiLoad});
+	      gapi.load('picker', {'callback': onPickerApiLoad});
+	    }
+
+	    function onAuthApiLoad() {
+	      	window.gapi.auth.authorize(
+	          {
+	            'client_id': clientId,
+	            'scope': scope,
+	            'immediate': false
+	          },
+	          handleAuthResult);
+	    }
+
+	    function onPickerApiLoad() {
+	      pickerApiLoaded = true;
+	      createPicker();
+	    }
+
+	    function handleAuthResult(authResult) {
+	      if (authResult && !authResult.error) {
+	        oauthToken = authResult.access_token;
+	        createPicker();
+	      } else {
+	      	alert("There was an error authenticating.  Please make sure you're still logged in to Google.");
+	      }
+	    }
+
+	    // Create and render a Picker object for searching images.
+	    function createPicker() {
+	      if (pickerApiLoaded && oauthToken) {
+	        var view = new google.picker.View(google.picker.ViewId.DOCS);
+	        view.setMimeTypes("image/png,image/jpeg,image/jpg");
+	        var picker = new google.picker.PickerBuilder()
+	            .enableFeature(google.picker.Feature.NAV_HIDDEN)
+	            .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+	            .setAppId(appId)
+	            .setOAuthToken(oauthToken)
+	            .addView(view)
+	            .addView(new google.picker.DocsUploadView())
+	            .setDeveloperKey(developerKey)
+	            .setCallback(pickerCallback)
+	            .build();
+	         picker.setVisible(true);
+	      }
+	    }
+
       	// A simple callback implementation.
       	function pickerCallback(data) {
           if (data.action == google.picker.Action.PICKED) {
@@ -647,9 +673,9 @@ var WeSchemeEditor;
 	        editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
       	}
 
-      // Primary function call for creating picker
-      if (oauthToken) { createPicker(); }
-      else { authenticatePicker(); }
+      	// Primary function call for creating picker
+      	if (oauthToken) { createPicker(); }
+      	else { loadPicker(); }
     }
 
     WeSchemeEditor.prototype.toggleScreenreader = function() {
