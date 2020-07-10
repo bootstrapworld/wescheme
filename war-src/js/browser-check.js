@@ -53,7 +53,6 @@ goog.require('plt.wescheme.cookies');
  		if (isFullySupported(browser, versionString)) { return; }
 	    if (isOldIE(browser, versionString)) { warnOldIE(); return; }
 	    if (isUnsupported(browser, versionString)) { warnBrowserUnsupported(); return; } 
-	    if(isAndroidFirefox) alert("android FF detected");
         if (isPartiallySupported(browser, versionString) || isAndroidFirefox) {
 	    	if (browserAlreadyChecked()) { return; }
 		    var greaterThanOrEqual = 9;
