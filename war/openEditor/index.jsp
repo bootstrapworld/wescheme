@@ -27,12 +27,12 @@
     <!-- Google JavaScript API -->
     <script src="https://apis.google.com/js/client.js?onload=handleClientLoad" type="text/javascript"></script>
 
-   <!-- The standard Google Loader script; use your own key. -->
-    <script src="https://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
-    <script type="text/javascript">
-      google.load('picker', '1');
+  <!-- The standard Google Loader script; use your own key.
+    <script src="https://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744?onload=loadPicker"></script>
+  -->
 
-    </script>
+    <!-- Load the Google API. LoadPicker is defined in editor.js -->
+    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
 
     <!-- JQuery UI style sheet -->
     <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>

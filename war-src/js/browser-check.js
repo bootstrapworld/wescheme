@@ -48,10 +48,12 @@ goog.require('plt.wescheme.cookies');
     plt.wescheme.browserCheck = function() {
 		var browser = BrowserDetect.browser;
 		var versionString = BrowserDetect.versionString;
-		if (isFullySupported(browser, versionString)) { return; }
+		var isAndroidFirefox = BrowserDetect.browser == "Firefox" && BrowserDetect.OS == "Android";
+		//alert("is android? " + (BrowserDetect.OS=="Android") + " is FF? " + (BrowserDetect.browser=="Firefox"));
+ 		if (isFullySupported(browser, versionString)) { return; }
 	    if (isOldIE(browser, versionString)) { warnOldIE(); return; }
 	    if (isUnsupported(browser, versionString)) { warnBrowserUnsupported(); return; } 
-        if (isPartiallySupported(browser, versionString)) {
+        if (isPartiallySupported(browser, versionString) || isAndroidFirefox) {
 	    	if (browserAlreadyChecked()) { return; }
 		    var greaterThanOrEqual = 9;
 		    for (var i = 0 ; i < fullySupportedVersions.length; i++) {

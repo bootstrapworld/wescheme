@@ -137,6 +137,11 @@ plt.wescheme.BrowserDetect = {
 	    string: navigator.platform,
 	    subString: "Linux",
 	    identity: "Linux"
+	},
+	{
+	    string: navigator.platform,
+	    subString: "android",
+	    identity: "Android"
 	}
     ]
 
