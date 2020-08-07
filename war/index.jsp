@@ -82,6 +82,10 @@ UserService us = UserServiceFactory.getUserService();
     </a>
 <% } %> 
 
+<div id="links">
+    <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
+</div>
 </main>
 
+<jsp:include page="/footer.jsp"/>
 </body></html>
