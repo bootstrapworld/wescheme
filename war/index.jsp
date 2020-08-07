@@ -89,9 +89,9 @@ UserService us = UserServiceFactory.getUserService();
          <span class="tooltip" id="loginDescription">...of all Google services</span>
     </a>
 <% } %>	
-    <div id="links">
-        <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
-    </div>
+<div id="links">
+    <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
+</div>
 </main>
 
 <jsp:include page="/footer.jsp"/>
