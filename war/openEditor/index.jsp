@@ -74,12 +74,9 @@
     <script src="/js/mzscheme-vm/support-min.js" type="text/javascript"></script>
     <script src="/js/mzscheme-vm/evaluator-min.js" type="text/javascript"></script>
 
-
     <!-- Local compiler files -->
     <script src="/js/compiler/compiler-calc-min.js" type="text/javascript"></script>
-
-    <script src="/js/openEditor/openEditor-calc-min.js" type="text/javascript"></script>
-
+    
     <!-- CodeMirror and Block Editor -->
     <script src="/js/codemirror/lib/codemirror-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/edit/matchbrackets.js" type="text/javascript"></script>
@@ -89,6 +86,8 @@
     <script src="/js/codemirror/addon/search/searchcursor-min.js" type="text/javascript"></script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
     <script src="/js/CodeMirrorBlocks-min.js" type="text/javascript"></script>
+
+    <script src="/js/openEditor/openEditor-calc-min.js" type="text/javascript"></script>
 
     <%
        org.wescheme.user.Session userSession =
