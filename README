@@ -171,4 +171,4 @@ Upload process:
 
 Run `rebuild-and-upload.sh`. This will create a new version (or replace an existing one, if you supply the name of an existing one as an argument), but WILL NOT promote all traffic to that version by default. Promoting traffic must be done from the Google Console: https://console.cloud.google.com/appengine/versions?project=wescheme-hrd-2&serviceId=default&versionssize=50 
 
-To create or replace a specific version, use `rebuild-and-upload.sh <your-version>`
+To create or replace a specific version, use `rebuild-and-upload.sh <your-version>`.
