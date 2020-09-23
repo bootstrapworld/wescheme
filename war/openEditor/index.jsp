@@ -84,6 +84,8 @@
     <script src="/js/codemirror/addon/runmode/runmode.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/search/search-min.js" type="text/javascript"></script>
     <script src="/js/codemirror/addon/search/searchcursor-min.js" type="text/javascript"></script>
+    <!-- HACK: webpack expects CodeMirror to appear as the symbol 'CodeMirror' -->
+    <script>var codemirror = CodeMirror;</script>
     <script src="/js/codemirror-contrib/scheme2/scheme2-min.js" type="text/javascript"></script>
     <script src="/js/CodeMirrorBlocks-min.js" type="text/javascript"></script>
 
