@@ -21,7 +21,8 @@ In order to build the server, the following tools are needed:
  - Git
  - Java Development Kit
  - Racket
- - Apache Ant.
+ - Apache Ant
+ - gcloud
 
 All these should be accessible from $PATH. The tools assume a
 Unix-like environment to run shell commands, including 'unzip'. See
@@ -41,7 +42,7 @@ Installing WeScheme for local development
 
 1.  First, check out the WeScheme repository from Github.
 
-   $ git clone git://github.com/bootstrapworld/wescheme2012
+   $ git clone git://github.com/bootstrapworld/wescheme
 
 Don't forget: we're using git submodules, so also make sure to:
 
@@ -168,4 +169,6 @@ Eclipse:
 
 Upload process:
 
-Bump version in `war/WEB-INF/appengine-web.xml` up. Then, run `rebuild-and-upload.sh`.
+Run `rebuild-and-upload.sh`. This will create a new version (or replace an existing one, if you supply the name of an existing one as an argument), but WILL NOT promote all traffic to that version by default. Promoting traffic must be done from the Google Console: https://console.cloud.google.com/appengine/versions?project=wescheme-hrd-2&serviceId=default&versionssize=50 
+
+To create or replace a specific version, use `rebuild-and-upload.sh <your-version>`

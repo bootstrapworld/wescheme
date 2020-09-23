@@ -2,9 +2,10 @@
 
 # Adapted from https://stackoverflow.com/a/3278427/718349
 
+echo "deploying version" $1
 git remote update > /dev/null
 
-UPSTREAM=${1:-'@{u}'}
+UPSTREAM='@{u}'
 LOCAL=$(git rev-parse @)
 REMOTE=$(git rev-parse "$UPSTREAM")
 BASE=$(git merge-base @ "$UPSTREAM")
@@ -26,7 +27,7 @@ versions="$(./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh list_versions war 2>/d
 
 echo "Following are all versions: $versions"
 echo
-current_version="$(cat war/WEB-INF/appengine-web.xml | eval $(python_grep '(?<=version>)\d+'))"
+current_version="$(cat war/WEB-INF/appengine-web.xml | eval $(python_grep '(?<=version>)'))"
 
 echo "The current version number in war/WEB-INF/appengine-web.xml is: $current_version"
 
@@ -50,4 +51,5 @@ rm war/js/mzscheme-vm/*-min.js
 ant compile
 
 # Now upload
-./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh update war
+#./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh update war
+gcloud app deploy war/WEB-INF/appengine-web.xml --version $1 --no-promote
