@@ -372,7 +372,7 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
-        this.ariaText = " scene that is "+width+" by "+height+". children are: ";
+        this.ariaText = " a Scene that is "+width+" by "+height+". children are: ";
         this.ariaText += children.map(function(c,i){
           return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
         }).join(". ");
@@ -443,7 +443,7 @@ if (typeof(world) === 'undefined') {
         this.src = src;
         this.isLoaded = false;
         this.originalURI = decodeURIComponent(src).slice(16);
-        this.ariaText = " image file from "+this.originalURI;
+        this.ariaText = " an image file from "+this.originalURI;
         this.labeled = false;
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
@@ -596,7 +596,7 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var self = this;
         this.src = src;
-        this.ariaText = " video file from "+decodeURIComponent(src).slice(16);
+        this.ariaText = " a video file from "+decodeURIComponent(src).slice(16);
         if (rawVideo) {
             this.video                  = rawVideo;
             this.width                  = self.video.videoWidth;
@@ -776,7 +776,7 @@ if (typeof(world) === 'undefined') {
         this.img2 = img2;
         var positionText;
         if((["middle","center"].indexOf(placeX)>-1) && (["middle","center"].indexOf(placeY)>-1)){
-          positionText = " centered above ";
+          positionText = " centered ";
         } else if(placeX==="left"){
           positionText = " left-aligned ";
         } else if(placeX==="right"){
@@ -797,7 +797,7 @@ if (typeof(world) === 'undefined') {
         }
         this.width  = findWidth(this._vertices);
         this.height = findHeight(this._vertices);
-        this.ariaText = " an overlay: top image is" + img1.ariaText + positionText + " on top of " + img2.ariaText;
+        this.ariaText = " an overlay: " + img1.ariaText + positionText + " above " + img2.ariaText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
@@ -854,7 +854,7 @@ if (typeof(world) === 'undefined') {
         this.angle      = Math.round(angle);
         this.translateX = -Math.min.apply( Math, vs.xs );
         this.translateY = -Math.min.apply( Math, vs.ys );
-        this.ariaText   = "Rotated image, "+angle+" degrees: "+img.ariaText;
+        this.ariaText   = "a rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
@@ -898,8 +898,8 @@ if (typeof(world) === 'undefined') {
         this.height   = img.height * yFactor;
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
-        this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
-          : "horizontally by "+xFactor+" and vertically by "+yFactor)+". "+img.ariaText;
+        this.ariaText = " a scaled Image, "+ (xFactor===yFactor? "by "+xFactor
+          : "horizontally by "+xFactor+" and vertically by "+yFactor)+": "+img.ariaText;
     };
 
     ScaleImage.prototype = heir(BaseImage.prototype);
@@ -934,7 +934,7 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
-        this.ariaText   = "Cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
+        this.ariaText   = " a cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
@@ -967,7 +967,7 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = img.width;
         this.height     = img.height;
-        this.ariaText = " Framed image: "+img.ariaText;
+        this.ariaText = " A framed image: "+img.ariaText;
     };
 
     FrameImage.prototype = heir(BaseImage.prototype);
@@ -998,7 +998,7 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
-        this.ariaText   = direction+"ly flipped image: " + img.ariaText;
+        this.ariaText   = indefiniteArticle(direction)+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
@@ -1042,6 +1042,16 @@ if (typeof(world) === 'undefined') {
     };
  
     //////////////////////////////////////////////////////////////////////
+    // indefiniteArticle : String -> String
+    // Prepend "a" or "an" to the given string, depending on whether it
+    // starts with a vowel
+    function indefiniteArticle(str) {
+        str = str.replace(/^\s*/, ""); // strip any leading whitespace
+        return (str.match(/^[aeiouAEIOU]/)? " an " : " a ") + str;
+    }
+    
+
+    //////////////////////////////////////////////////////////////////////
     // colorToSpokenString : hexColor Style -> String
     // Describes the color using the nearest HTML color name
     // Style can be "solid" (1.0), "outline" (1.0), a number (0-1.0) or null (1.0)
@@ -1070,7 +1080,7 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
-        this.ariaText = " a" + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ((width===height)? " square of size "+width
           : " rectangle of width "+width+" and height "+height);
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
@@ -1089,7 +1099,7 @@ if (typeof(world) === 'undefined') {
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-        this.ariaText = " a"+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
 
@@ -1109,7 +1119,7 @@ if (typeof(world) === 'undefined') {
         this.color      = color;
         this.vertices   = translateVertices(vertices);
         console.log('translated verticies are',this.vertices);
-        this.ariaText = " a"+colorToSpokenString(color,style) + ", " + vertices.length + "-pointed polygon ";
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
 
@@ -1139,7 +1149,7 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        this.ariaText   = " a"+colorToSpokenString(color,style) + 
+        this.ariaText   = indefiniteArticle(colorToSpokenString(color,style)) + 
             (ariaOverride? " " + ariaOverride + " of size "+length
                 : ", " + count+" sided polygon with each side of length " + length);
     };
@@ -1192,7 +1202,7 @@ if (typeof(world) === 'undefined') {
         this.height      = parent.offsetHeight;
         document.body.removeChild(container);       // clean up after ourselves
  
-        this.ariaText = " the string "+this.str+", colored "+colorToSpokenString(color,'solid')+" of size "+ size;
+        this.ariaText = " a string "+this.str+", colored "+colorToSpokenString(color,'solid')+" of size "+ size;
     };
     TextImage.prototype = heir(BaseImage.prototype);
 
@@ -1261,7 +1271,7 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   =   translateVertices(vertices);
-        this.ariaText   = " a" + colorToSpokenString(color,style) + ", " + points +
+        this.ariaText   = indefiniteArticle(colorToSpokenString(color,style)) + ", " + points +
                           "pointed star with inner radius "+inner+" and outer radius "+outer;
     };
     StarImage.prototype = heir(BaseImage.prototype);
@@ -1294,7 +1304,7 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
         this.vertices = vertices;
-        this.ariaText = " a"+colorToSpokenString(color,style);
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style));
         if(angleA === 270) {
             this.ariaText += " right triangle whose base is of length "+sideC+" and height of "+sideB;
         } else if(angleA === 300 && sideC === sideB) {
@@ -1314,8 +1324,8 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style = style;
         this.color = color;
-        this.ariaText = " a"+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
-              : " ellipse of width "+width+" and height "+height);
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ((width===height)? 
+            " circle of radius "+(width/2) : " ellipse of width "+width+" and height "+height);
     };
 
     EllipseImage.prototype = heir(BaseImage.prototype);
@@ -1384,7 +1394,8 @@ if (typeof(world) === 'undefined') {
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
-        this.ariaText = " a" + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + 
+            " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);
