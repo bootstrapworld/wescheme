@@ -1067,7 +1067,7 @@ if (typeof(world) === 'undefined') {
                                    +Math.pow(lab1.b-lab2.b,2))}});
       var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
       var match = distances[0].name;
-      var style = isNaN(aStyle)? (aStyle === "solid"? " solid " : " outline ") : " translucent ";
+      var style = (aStyle == "" || isNaN(aStyle))? (aStyle = " " + aStyle) : " translucent ";
       return style + match.toLowerCase();
     }
 
@@ -1394,7 +1394,7 @@ if (typeof(world) === 'undefined') {
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + 
+        this.ariaText = indefiniteArticle(colorToSpokenString(color,"")) + 
             " line of width "+x+" and height "+y;
     };
 
