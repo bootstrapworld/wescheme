@@ -82,7 +82,7 @@
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket-Height</a></li>
         <l
         i><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=0elP8WrmfM">Sam the Butterfly</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jvWT8h7pLc">Sam the Butterfly</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=5jBc52gFTV">Luigi's Pizza</a></li>
       </ul>
     </li>
