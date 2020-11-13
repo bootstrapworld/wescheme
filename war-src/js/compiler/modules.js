@@ -116,6 +116,7 @@ plt.compiler = plt.compiler || {};
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2015/cage-teachpack"')));
   
   // boolean-teachpack (includes cage techpack code!!)
+  var booleanTeachpackFunctions = [["start", 1, false], ["continent?", 1, false], ["primary-color?", 1, false], ["less-than-one?", 1, false]]
   var booleanTeachpack2020 = new moduleBinding("bootstrap2020/boolean-teachpack",
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2020/boolean-teachpack"')));
  

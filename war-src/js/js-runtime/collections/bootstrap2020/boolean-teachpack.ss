@@ -9,7 +9,7 @@
 ;;(provide-higher-order-primitive start (onscreen?))
 
 
-(provide start)
+(provide start continent? primary-color? less-than-one?)
 
 (define WIDTH  640)
 (define HEIGHT 480)
@@ -334,15 +334,6 @@
 (define (continent? x)
   (let ((continents (list "AFRICA" "ANTARCTICA" "ASIA" "EUROPE" "AUSTRALIA" "NORTH AMERICA" "SOUTH AMERICA")))
     (member? (stringToUpper x) continents)))
-
-(define (primary-color? x)
-  (cond
-    [(string=? "blue"   x )     true]
-    [(string=? "red" x)    true]
-    [(string=? "yellow"  x)    true]
-    [else false]))
-
-(define (less-than-one? x) (< x 1))
 
 ; defining the procedure char_toupper to convert a lower case character to upper case
 (define (charToUpper myChar)
