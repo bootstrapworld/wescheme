@@ -1447,6 +1447,18 @@ PRIMITIVES['='] =
 		 });
 
 
+PRIMITIVES['<>'] = 
+    new PrimProc("<>",
+		 2,
+		 true, false,
+		 function(aState, x, y, args) {
+		 	args.unshift(y);
+		 	args.unshift(x);
+		 	arrayEach(args, function(z, i) {check(aState, z, isNumber, '<>', 'number', i+1, args);});
+
+		 	return !compare(args, jsnums.equals);
+		 });
+
 PRIMITIVES['=~'] =
     new PrimProc('=~',
 		 3,
@@ -3364,6 +3376,18 @@ PRIMITIVES['string=?'] =
 			return compare(strs, function(strA, strB) {return strA.toString() === strB.toString();});
 		 });
 
+PRIMITIVES['string<>?'] =
+    new PrimProc('string<>?',
+		 2,
+		 true, false,
+		 function(aState, str1, str2, strs) {
+		 	strs.unshift(str2);
+		 	strs.unshift(str1);
+		 	arrayEach(strs, function(str, i) {check(aState, str, isString, 'string<>?', 'string', i+1, strs);});
+		 	
+			return !compare(strs, function(strA, strB) {return strA.toString() === strB.toString();});
+		 });
+
 
 PRIMITIVES['string-ci=?'] =
     new PrimProc('string-ci=?',
@@ -3382,6 +3406,23 @@ PRIMITIVES['string-ci=?'] =
 			return compare(strs, function(strA, strB) {return strA === strB;});
 		 });
 
+
+PRIMITIVES['string-ci<>?'] =
+    new PrimProc('string-ci<>?',
+		 2,
+		 true, false,
+		 function(aState, str1, str2, strs) {
+		 	strs.unshift(str2);
+			strs.unshift(str1);
+
+			var i;
+			for(i = 0; i < strs.length; i++) {
+				check(aState, strs[i], isString, 'string-ci<>?', 'string', i+1, strs);
+				strs[i] = strs[i].toString().toLowerCase();
+			}
+
+			return !compare(strs, function(strA, strB) {return strA === strB;});
+		 });
 
 PRIMITIVES['string<?'] =
     new PrimProc('string<?',

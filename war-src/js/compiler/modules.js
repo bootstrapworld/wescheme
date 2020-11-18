@@ -293,7 +293,8 @@ plt.compiler = plt.compiler || {};
                                          ,["=", 2, true]
                                          ,[">", 2, true]
                                          ,[">=", 2, true]
-                                         
+                                         ,["<>", 2, true]
+
                                          ,["=~", 3]
                                          ,["number->string", 1]
                                          ,["even?", 1]
@@ -478,6 +479,7 @@ plt.compiler = plt.compiler || {};
                                          ,["string-ci<=?", 2, true]
                                          ,["string-ci<?", 2, true]
                                          ,["string-ci=?", 2, true]
+                                         ,["string-ci<>?", 2, true]
                                          ,["string-ci>=?", 2, true]
                                          ,["string-ci>?", 2, true]
                                          ,["string-copy", 1]
@@ -490,6 +492,7 @@ plt.compiler = plt.compiler || {};
                                          ,["string<=?", 2, true]
                                          ,["string<?", 2, true]
                                          ,["string=?", 2, true]
+                                         ,["string<>?", 2, true]
                                          ,["string>=?", 2, true]
                                          ,["string>?", 2, true]
                                          ,["string?", 1]
