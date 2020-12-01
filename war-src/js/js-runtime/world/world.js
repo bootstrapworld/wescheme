@@ -854,7 +854,8 @@ if (typeof(world) === 'undefined') {
         this.angle      = Math.round(angle);
         this.translateX = -Math.min.apply( Math, vs.xs );
         this.translateY = -Math.min.apply( Math, vs.ys );
-        this.ariaText   = "a rotated image, "+angle+" degrees: "+img.ariaText;
+        // negate the angle for ARIA, to match the argument 
+        this.ariaText   = "a rotated image, "+(-1 * angle)+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
