@@ -31,7 +31,7 @@ goog.require('plt.wescheme.cookies');
                                   {browser: 'Chrome', greaterThanOrEqual: '5'},
                                   {browser: 'Firefox', greaterThanOrEqual: '4'},
                                   {browser: 'Mozilla', greaterThanOrEqual: '10'},
-                                  {browser: 'Explorer', greaterThanOrEqual: '9'}];
+                                  {browser: 'Explorer', greaterThanOrEqual: '11'}];
 
     var knownBadBrowsers = [{browser: 'Explorer', lessThan: '8'},
                             {browser: 'Safari', lessThan: '5'},

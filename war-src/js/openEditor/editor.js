@@ -621,7 +621,7 @@ var WeSchemeEditor;
 	    function createPicker() {
 	      if (pickerApiLoaded && oauthToken) {
 	        var view = new google.picker.View(google.picker.ViewId.DOCS);
-	        view.setMimeTypes("image/png,image/jpeg,image/jpg");
+	        view.setMimeTypes("image/png,image/jpeg,image/jpg,image/webp");
 	        var picker = new google.picker.PickerBuilder()
 	            .enableFeature(google.picker.Feature.NAV_HIDDEN)
 	            .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
