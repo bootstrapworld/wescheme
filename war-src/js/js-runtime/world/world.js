@@ -290,11 +290,15 @@ if (typeof(world) === 'undefined') {
         };
         // ARIA: use "image" as default text.
         canvas.ariaText = this.ariaText || "image";
+        canvas.ariaText = this.getAriaText(BaseImage.ariaNestingDepth);
         return canvas;
     };
+    // don't bother reading descriptions of images nested deeper than 6
+    BaseImage.ariaNestingDepth = 6;
 
     BaseImage.prototype.toWrittenString = function(cache) { return "<image>"; };
     BaseImage.prototype.toDisplayedString = this.toWrittenString;
+    BaseImage.prototype.getAriaText = function(depth) { return "image"; }
 
     // Best-Guess equivalence for images. If they're vertex-based we're in luck,
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
@@ -372,10 +376,6 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
-        this.ariaText = " a Scene that is "+width+" by "+height+". children are: ";
-        this.ariaText += children.map(function(c,i){
-          return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
-        }).join(". ");
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -389,6 +389,15 @@ if (typeof(world) === 'undefined') {
                               this.withBorder,
                               this.color);
     };
+
+    SceneImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "scene image";
+        var ariaText = " a Scene that is "+this.width+" by "+this.height+". children are: ";
+        ariaText += this.children.map(function(c,i){
+          return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
+        }).join(". ");
+        return ariaText;
+    }
 
     // render: 2d-context primitive-number primitive-number -> void
     SceneImage.prototype.render = function(ctx, x, y) {
@@ -443,7 +452,6 @@ if (typeof(world) === 'undefined') {
         this.src = src;
         this.isLoaded = false;
         this.originalURI = decodeURIComponent(src).slice(16);
-        this.ariaText = " an image file from "+this.originalURI;
         this.labeled = false;
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
@@ -474,6 +482,10 @@ if (typeof(world) === 'undefined') {
         this.installHackToSupportAnimatedGifs(afterInit);
     };
     FileImage.prototype = heir(BaseImage.prototype);
+
+    FileImage.prototype.getAriaText = function(depth) {
+        return " an image file from "+this.originalURI;
+    }
 
     // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
@@ -596,7 +608,6 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var self = this;
         this.src = src;
-        this.ariaText = " a video file from "+decodeURIComponent(src).slice(16);
         if (rawVideo) {
             this.video                  = rawVideo;
             this.width                  = self.video.videoWidth;
@@ -630,6 +641,10 @@ if (typeof(world) === 'undefined') {
         }
     };
     FileVideo.prototype = heir(BaseImage.prototype);
+
+    FileVideo.prototype.getAriaText = function(depth) {
+        return " a video file from "+decodeURIComponent(this.src).slice(16);
+    }
 
     var videoCache = {};
     FileVideo.makeInstance = function(path, rawVideo) {
@@ -797,11 +812,17 @@ if (typeof(world) === 'undefined') {
         }
         this.width  = findWidth(this._vertices);
         this.height = findHeight(this._vertices);
-        this.ariaText = " an overlay: " + img1.ariaText + positionText + " above " + img2.ariaText;
+        this.positionText = positionText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
  
+    OverlayImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "overlay image";
+        return " an overlay: " + this.img1.getAriaText(depth - 1) 
+            + this.positionText + " above " + this.img2.getAriaText(depth - 1);
+    };
+
     OverlayImage.prototype.getVertices = function() { return this._vertices; };
  
     OverlayImage.prototype.render = function(ctx, x, y) {
@@ -860,6 +881,11 @@ if (typeof(world) === 'undefined') {
 
     RotateImage.prototype = heir(BaseImage.prototype);
 
+    RotateImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "rotated image";
+        return "Rotated image, "+(-1 * this.angle)+" degrees: "+this.img.getAriaText(depth - 1);
+    };
+
     RotateImage.prototype.getVertices = function() { return this._vertices; };
 
     // translate the canvas using the calculated values, then draw at the rotated (x,y) offset.
@@ -905,6 +931,16 @@ if (typeof(world) === 'undefined') {
 
     ScaleImage.prototype = heir(BaseImage.prototype);
 
+
+    ScaleImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "scaled image";
+        return "Scaled Image, "+
+            (this.xFactor===this.yFactor
+            ? "by "+this.xFactor
+            : "horizontally by "+this.xFactor+" and vertically by "+this.yFactor)+". " +
+        this.img.getAriaText(depth - 1);
+    };
+
     ScaleImage.prototype.getVertices = function() { return this._vertices; };
 
     // scale the context, and pass it to the image's render function
@@ -935,10 +971,15 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
-        this.ariaText   = " a cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
+
+
+    CropImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "cropped image";
+        return "Cropped image, from "+this.x+", "+this.y+" to "+(this.x+this.width)+", "+(this.y+this.height)+": "+this.img.getAriaText(depth - 1);
+    };
 
     CropImage.prototype.render = function(ctx, x, y) {
         ctx.save();
@@ -968,10 +1009,15 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = img.width;
         this.height     = img.height;
-        this.ariaText = " A framed image: "+img.ariaText;
     };
 
     FrameImage.prototype = heir(BaseImage.prototype);
+
+
+    FrameImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "framed image";
+        return " Framed image: "+this.img.getAriaText(depth - 1);
+    };
 
     // scale the context, and pass it to the image's render function
     FrameImage.prototype.render = function(ctx, x, y) {
@@ -999,10 +1045,16 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
-        this.ariaText   = indefiniteArticle(direction)+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
+
+
+    FlipImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "flipped image";
+        return indefiniteArticle(this.direction)+"ly flipped image: " 
+            + this.img.getAriaText(depth - 1);
+    };
 
     FlipImage.prototype.render = function(ctx, x, y) {
         // when flipping an image of dimension M and offset by N across an axis, 
@@ -1069,7 +1121,7 @@ if (typeof(world) === 'undefined') {
       var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
       var match = distances[0].name;
       var style = (aStyle == "" || isNaN(aStyle))? (aStyle = " " + aStyle) : " translucent ";
-      return style + match.toLowerCase();
+      return style + " " + match.toLowerCase();
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -1081,10 +1133,16 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ((width===height)? " square of size "+width
-          : " rectangle of width "+width+" and height "+height);
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
+
+
+    RectangleImage.prototype.getAriaText = function(depth) {
+      return indefiniteArticle(colorToSpokenString(this.color,this.style)) +
+        ((this.width===this.height)
+         ? " square of size "+this.width
+         : " rectangle of width "+this.width+" and height "+this.height);
+    };
 
     //////////////////////////////////////////////////////////////////////
     // RhombusImage: Number Number Mode Color -> Image
@@ -1096,13 +1154,18 @@ if (typeof(world) === 'undefined') {
         this.height = Math.abs(Math.cos(angle/2 * Math.PI / 180)) * side * 2;
         this.style  = style;
         this.color  = color;
+        this.side   = side;
+        this.angle  = angle;
         this.vertices = [{x:this.width/2, y:0},
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
+
+    RhombusImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + " rhombus of size "+this.side+" and angle "+this.angle;
+    };
 
     //////////////////////////////////////////////////////////////////////
     // PosnImage: Vertices Mode Color -> Image
@@ -1119,10 +1182,12 @@ if (typeof(world) === 'undefined') {
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        console.log('translated verticies are',this.vertices);
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
+
+    PosnImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + ", " + this.vertices.length + "-pointed polygon ";
+    };
 
     //////////////////////////////////////////////////////////////////////
     // PolygonImage: Number Count Step Mode Color -> Image
@@ -1147,16 +1212,21 @@ if (typeof(world) === 'undefined') {
         
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
+        this.length     = length;
+        this.count      = count;
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        this.ariaText   = indefiniteArticle(colorToSpokenString(color,style)) + 
-            (ariaOverride? " " + ariaOverride + " of size "+length
-                : ", " + count+" sided polygon with each side of length " + length);
+        this.ariaOverride = ariaOverride;
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
 
+    PolygonImage.prototype.getAriaText = function(depth) {
+      return indefiniteArticle(colorToSpokenString(this.color, this.style)) + 
+            (this.ariaOverride? " " + this.ariaOverride + " of size " + this.length
+                : ", " + this.count + " sided polygon with each side of length " + this.length);
+    };
     
     //////////////////////////////////////////////////////////////////////
     // TextImage: String Number Color String String String String any/c Boolean -> Image
@@ -1202,10 +1272,13 @@ if (typeof(world) === 'undefined') {
         this.width       = parent.offsetWidth;
         this.height      = parent.offsetHeight;
         document.body.removeChild(container);       // clean up after ourselves
- 
-        this.ariaText = " a string "+this.str+", colored "+colorToSpokenString(color,'solid')+" of size "+ size;
     };
+    
     TextImage.prototype = heir(BaseImage.prototype);
+
+    TextImage.prototype.getAriaText = function(depth) {
+      return " a string "+this.str+", colored "+colorToSpokenString(this.color,'solid')+" of size "+ this.size;
+    };
 
     TextImage.prototype.render = function(ctx, x, y) {
         ctx.save();
@@ -1271,11 +1344,17 @@ if (typeof(world) === 'undefined') {
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
+        this.points     = points;
+        this.inner      = inner;
+        this.outer      = outer;
         this.vertices   =   translateVertices(vertices);
-        this.ariaText   = indefiniteArticle(colorToSpokenString(color,style)) + ", " + points +
-                          "pointed star with inner radius "+inner+" and outer radius "+outer;
     };
     StarImage.prototype = heir(BaseImage.prototype);
+
+    StarImage.prototype.getAriaText = function(depth) {
+         return indefiniteArticle(colorToSpokenString(this.color,this.style)) + ", " + this.points +
+           "-pointed star with inner radius "+this.inner+" and outer radius "+this.outer;
+       };
 
      /////////////////////////////////////////////////////////////////////
      //TriangleImage: Number Number Number Mode Color -> Image
@@ -1284,6 +1363,9 @@ if (typeof(world) === 'undefined') {
      // See http://docs.racket-lang.org/teachpack/2htdpimage.html#(def._((lib._2htdp/image..rkt)._triangle))
     var TriangleImage = function(sideC, angleA, sideB, style, color) {
         BaseImage.call(this);
+        this.sideC = sideC;
+        this.sideB = sideB;
+        this.angleA = angleA;
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
         var thirdY = sideB * Math.sin(angleA * Math.PI/180);
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
@@ -1305,17 +1387,21 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
         this.vertices = vertices;
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style));
-        if(angleA === 270) {
-            this.ariaText += " right triangle whose base is of length "+sideC+" and height of "+sideB;
-        } else if(angleA === 300 && sideC === sideB) {
-            this.ariaText += " equilateral triangle with sides of length "+sideC;
-        } else {
-            this.ariaText += " triangle whose base is of length "+sideC + ", with an angle of "
-             + (angleA%180) + " degrees between it and a side of length "+sideB;
-        }
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
+
+    TriangleImage.prototype.getAriaText = function(depth) {
+        var ariaText = indefiniteArticle(colorToSpokenString(this.color,this.style));
+        if(this.angleA === 270) {
+            ariaText += " right triangle whose base is of length "+this.sideC+" and height of "+this.sideB;
+        } else if(this.angleA === 300 && this.sideC === this.sideB) {
+            ariaText += " equilateral triangle with sides of length "+this.sideC;
+        } else {
+            ariaText += " triangle whose base is of length "+this.sideC + ", with an angle of "
+             + (this.angleA%180) + " degrees between it and a side of length "+this.sideB;
+        }
+        return ariaText;
+    }
 
     //////////////////////////////////////////////////////////////////////
     //Ellipse : Number Number Mode Color -> Image
@@ -1325,11 +1411,16 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style = style;
         this.color = color;
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,style)) + ((width===height)? 
-            " circle of radius "+(width/2) : " ellipse of width "+width+" and height "+height);
     };
 
     EllipseImage.prototype = heir(BaseImage.prototype);
+
+    EllipseImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + 
+            ((this.width===this.height)? " circle of radius "+(this.width/2) 
+            : " ellipse of width "+this.width+" and height "+this.height);
+
+    }
 
     EllipseImage.prototype.render = function(ctx, aX, aY) {
         ctx.save();
@@ -1389,17 +1480,21 @@ if (typeof(world) === 'undefined') {
             if (y >= 0) { vertices = [{x: -x, y:  0}, {x: 0, y: y}]; }
             else        { vertices = [{x: -x, y: -y}, {x: 0, y: 0}]; }
         }
-        
+        this.x = x;
+        this.y = y;
         this.width  = Math.abs(x);
         this.height = Math.abs(y);
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
-        this.ariaText = indefiniteArticle(colorToSpokenString(color,"")) + 
-            " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);
+
+    LineImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,"")) + 
+            " line of width "+this.x+" and height "+this.y;
+    }
 
     //////////////////////////////////////////////////////////////////////
     // Effects
