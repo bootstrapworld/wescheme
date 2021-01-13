@@ -288,8 +288,6 @@ if (typeof(world) === 'undefined') {
             ctx = canvas.getContext("2d");
             that.render(ctx, 0, 0);
         };
-        // ARIA: use "image" as default text.
-        canvas.ariaText = this.ariaText || "image";
         canvas.ariaText = this.getAriaText(BaseImage.ariaNestingDepth);
         return canvas;
     };
@@ -394,7 +392,7 @@ if (typeof(world) === 'undefined') {
         if (depth <= 0) return "scene image";
         var ariaText = " a Scene that is "+this.width+" by "+this.height+". children are: ";
         ariaText += this.children.map(function(c,i){
-          return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
+          return "child "+(i+1)+": "+c[0].getAriaText(depth - 1)+", positioned at "+c[1]+","+c[2]+" ";
         }).join(". ");
         return ariaText;
     }
@@ -484,7 +482,8 @@ if (typeof(world) === 'undefined') {
     FileImage.prototype = heir(BaseImage.prototype);
 
     FileImage.prototype.getAriaText = function(depth) {
-        return " an image file from "+this.originalURI;
+        return imageCache[originalURI]? imageCache[originalURI].getAriaText()
+            : " an image file from "+this.originalURI;
     }
 
     // set up the cache, and look for images that need describing every 5 sec
@@ -535,7 +534,9 @@ if (typeof(world) === 'undefined') {
                     var bestLabel = response.labelAnnotations[0].description;
                     // update the FileImage in the imageCache
                     imageCache[undescribedImages[i].originalURI].labeled = true;
-                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
+                    imageCache[undescribedImages[i].originalURI].getAriaText = function() { 
+                        " a picture of a "+bestLabel;
+                    };
                 });
                 console.log('after load(), timeout is', VISION_API_TIMEOUT);
             }
@@ -564,9 +565,8 @@ if (typeof(world) === 'undefined') {
         var self = this;
         ctx.drawImage(self.animationHackImg, x, y);
         setTimeout(function(){
-            this.ariaText = imageCache[self.originalURI].ariaText;
-            ctx.canvas.setAttribute('aria-label', self.ariaText);
-            ctx.canvas.ariaText = self.ariaText;
+            ctx.canvas.setAttribute('aria-label', self.getAriaText());
+            ctx.canvas.ariaText = self.getAriaText();
         }, 5000);
     };
 
@@ -875,8 +875,6 @@ if (typeof(world) === 'undefined') {
         this.angle      = Math.round(angle);
         this.translateX = -Math.min.apply( Math, vs.xs );
         this.translateY = -Math.min.apply( Math, vs.ys );
-        // negate the angle for ARIA, to match the argument 
-        this.ariaText   = "a rotated image, "+(-1 * angle)+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
@@ -925,8 +923,6 @@ if (typeof(world) === 'undefined') {
         this.height   = img.height * yFactor;
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
-        this.ariaText = " a scaled Image, "+ (xFactor===yFactor? "by "+xFactor
-          : "horizontally by "+xFactor+" and vertically by "+yFactor)+": "+img.ariaText;
     };
 
     ScaleImage.prototype = heir(BaseImage.prototype);
