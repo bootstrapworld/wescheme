@@ -482,7 +482,8 @@ if (typeof(world) === 'undefined') {
     FileImage.prototype = heir(BaseImage.prototype);
 
     FileImage.prototype.getAriaText = function(depth) {
-        return imageCache[originalURI]? imageCache[originalURI].getAriaText()
+        console.log(imageCache[this.originalURI], imageCache[this.originalURI].getAriaText);
+        return imageCache[this.originalURI.labeled]? imageCache[this.originalURI].getAriaText()
             : " an image file from "+this.originalURI;
     }
 
