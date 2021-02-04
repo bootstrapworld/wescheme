@@ -670,7 +670,7 @@ var WeSchemeEditor;
 	        var preCursorCode = code.slice(0, curPos);
 	        var postCursorCode = code.slice(curPos, code.length);
 	        var pathToImg = "\"https://drive.google.com/uc?export=download&id=" + fileId + "\"";
-	        editor.setCode(preCursorCode + "(bitmap/url "+ pathToImg +")"+postCursorCode);
+	        editor.setCode(preCursorCode + "(image-url "+ pathToImg +")"+postCursorCode);
       	}
 
       	// Primary function call for creating picker
