@@ -358,6 +358,7 @@ plt.compiler = plt.compiler || {};
                                          //,["sq", 1]
                                          ,["sqr", 1]
                                          ,["sqrt", 1]
+                                         ,["nth-root", 2]
                                          ,["sub1", 1]
                                          ,["tan", 1]
                                          ,["zero?", 1]

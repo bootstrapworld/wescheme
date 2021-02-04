@@ -1884,6 +1884,20 @@ PRIMITIVES['sqrt'] =
 			return jsnums.sqrt(x);
 		 });
 
+PRIMITIVES['nth-root'] =
+    new PrimProc('nth-root',
+		 2,
+		 false, false,
+		 function(aState, x, r) {
+		 	check(aState, x, isNumber, 'nth-root', 'number', 1, arguments);
+		 	check(aState, r, isNumber, 'nth-root', 'number', 2, arguments);
+			var result = jsnums.expt(x, jsnums.divide(1, r));
+			if (jsnums.equals(result, jsnums.toExact(result))) {
+				return jsnums.toExact(result);
+			} else {
+				result;
+			}
+		 });
 
 PRIMITIVES['integer-sqrt'] =
     new PrimProc('integer-sqrt',
