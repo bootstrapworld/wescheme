@@ -1655,7 +1655,6 @@ if (typeof(exports) !== 'undefined') {
 	return new FloatPoint(n);
     };
 
-
     FloatPoint.prototype.isExact = function() {
 	return false;
     };

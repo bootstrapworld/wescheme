@@ -1892,11 +1892,10 @@ PRIMITIVES['nth-root'] =
 		 	check(aState, x, isNumber, 'nth-root', 'number', 1, arguments);
 		 	check(aState, r, isNumber, 'nth-root', 'number', 2, arguments);
 			var result = jsnums.expt(x, jsnums.divide(1, r));
-			if (jsnums.equals(result, jsnums.toExact(result))) {
-				return jsnums.toExact(result);
-			} else {
-				result;
-			}
+			var rounded = jsnums.round(result);
+			var diffFromRounded = jsnums.subtract(result, rounded);
+			return jsnums.lessThan(diffFromRounded, 0.00000000001)?
+				jsnums.toExact(rounded) : result;
 		 });
 
 PRIMITIVES['integer-sqrt'] =
