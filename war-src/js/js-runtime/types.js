@@ -1904,4 +1904,3 @@ types.isGradientPart = isGradientPart;
 types.MultiPart = MultiPart;
 types.isMultiPart = isMultiPart;
 })();
-

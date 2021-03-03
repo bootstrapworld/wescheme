@@ -776,6 +776,8 @@ WeSchemeInteractions = (function () {
             if(defInFocus) jQuery("#definitions").click();
             else that.focusOnPrompt();
         }
+        // reset state tracking the presence of a compile-time error
+        if(sourceName == "<definitions>") that.compileTimeError = false;
         setTimeout(
             withCancellingOnReset(
                 that,
@@ -798,6 +800,8 @@ WeSchemeInteractions = (function () {
                             function(err) {
                                 that.handleError(err); 
                                 that.enableInput();
+                                // uh oh! Compile-time error! Log for any subsequent errors
+                                if(sourceName == "<definitions>") that.compileTimeError = true;
                                 putFocus();
                                 contK();
                             }));
@@ -1175,6 +1179,19 @@ WeSchemeInteractions = (function () {
         if(!(types.isSchemeError(err) && types.isExnBreak(err.val))){
           dom.appendChild(stacktraceDiv);
         }
+        // if there's been a compile-time error, warn the user
+        if(that.compileTimeError) {
+            var msg = "An error occured the last time Run was clicked. ";
+            msg += "This may be causing the error you see here. "
+            msg += "Make sure you fix the first error you see in the Interactions Area!"
+            var span = document.createElement('span');
+            span.className = "compileTimeError";
+            console.log(msg);
+            span.appendChild(document.createTextNode(msg));
+            console.log(span);
+            dom.appendChild(span);
+        }
+        console.log(dom);
         return dom;
     };
 

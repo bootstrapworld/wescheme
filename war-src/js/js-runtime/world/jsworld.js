@@ -485,7 +485,7 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 		                     aScene.render(ctx, 0, 0);
 		                     var log = document.createElement("span");
 		                     log.className = "screenreader-only";
-		                     log.appendChild(document.createTextNode(aScene.ariaText));
+		                     log.appendChild(document.createTextNode(aScene.getAriaText(6)));
 		                     toplevelNode.appendChild(log);
 		                 },
 		                 0);

@@ -49,6 +49,9 @@
 <link rel="stylesheet" type="text/css" href="css/view.css" id="style" />
 <meta name="viewport" content="width=device-width, user-scalable=no" />
 
+<!-- Do the right thing for mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
 

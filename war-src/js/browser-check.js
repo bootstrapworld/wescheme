@@ -31,7 +31,7 @@ goog.require('plt.wescheme.cookies');
                                   {browser: 'Chrome', greaterThanOrEqual: '5'},
                                   {browser: 'Firefox', greaterThanOrEqual: '4'},
                                   {browser: 'Mozilla', greaterThanOrEqual: '10'},
-                                  {browser: 'Explorer', greaterThanOrEqual: '9'}];
+                                  {browser: 'Explorer', greaterThanOrEqual: '11'}];
 
     var knownBadBrowsers = [{browser: 'Explorer', lessThan: '8'},
                             {browser: 'Safari', lessThan: '5'},
@@ -46,41 +46,28 @@ goog.require('plt.wescheme.cookies');
     // If not, bring up a warning dialog saying that we haven't tested
     // on the other platforms.
     plt.wescheme.browserCheck = function() {
-	var browser = BrowserDetect.browser;
-	var versionString = BrowserDetect.versionString;
-
-	if (isFullySupported(browser, versionString)) {
-	    return;
-	}
-        
-        if (isOldIE(browser, versionString)) {
-	    warnOldIE();
+		var browser = BrowserDetect.browser;
+		var versionString = BrowserDetect.versionString;
+		var isAndroidFirefox = BrowserDetect.browser == "Firefox" && BrowserDetect.OS == "Android";
+		//alert("is android? " + (BrowserDetect.OS=="Android") + " is FF? " + (BrowserDetect.browser=="Firefox"));
+ 		if (isFullySupported(browser, versionString)) { return; }
+	    if (isOldIE(browser, versionString)) { warnOldIE(); return; }
+	    if (isUnsupported(browser, versionString)) { warnBrowserUnsupported(); return; } 
+        if (isPartiallySupported(browser, versionString) || isAndroidFirefox) {
+	    	if (browserAlreadyChecked()) { return; }
+		    var greaterThanOrEqual = 9;
+		    for (var i = 0 ; i < fullySupportedVersions.length; i++) {
+		 		if (browser === fullySupportedVersions[i].browser) {
+				    greaterThanOrEqual  = fullySupportedVersions[i].greaterThanOrEqual;
+				}
+		    }
+		    markBrowserChecked();
+		    warnBrowserPartiallySupported(browser, 9);
             return;
-        }
-
-        if (isUnsupported(browser, versionString)) {
-	    warnBrowserUnsupported();
-            return;
-	} 
-
-        if (isPartiallySupported(browser, versionString)) {
-	    if (browserAlreadyChecked()) {
-		return;
-	    }
-	    var greaterThanOrEqual = 9;
-	    for (var i = 0 ; i < fullySupportedVersions.length; i++) {
- 		if (browser === fullySupportedVersions[i].browser) {
-		    greaterThanOrEqual  = fullySupportedVersions[i].greaterThanOrEqual;
 		}
-	    }
-	    markBrowserChecked();
-	    warnBrowserPartiallySupported(browser, 9);
-            return;
-	} 
-
         // If we get to this point, we don't know what's going to happen,
         // so give a general warning.
-	warnBrowserMightNotWork();
+		warnBrowserMightNotWork();
     };
 
 
@@ -101,10 +88,10 @@ goog.require('plt.wescheme.cookies');
     var isFullySupported = function(browser, versionString) {
     	for (var i = 0; i < fullySupportedVersions.length; i++) {
     	    if (browser === fullySupportedVersions[i].browser) {
-    		if (versionGreaterThanOrEqual(versionString,
-					      fullySupportedVersions[i].greaterThanOrEqual)) {
-    		    return true;
-    		}
+	    		if (versionGreaterThanOrEqual(versionString,
+						fullySupportedVersions[i].greaterThanOrEqual)) {
+	    		    return true;
+	    		}
     	    }
     	}
     	return false;

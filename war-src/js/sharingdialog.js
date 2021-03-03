@@ -59,6 +59,13 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
         };
 
         var showResultOfSharing = function(isPublic, newPid, errMessage) {
+
+            function copyShareLink() {
+              var copyText = document.getElementById("sharedLink");
+              copyText.select();
+              copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+              document.execCommand("copy");
+            }
             that.actions.share(newPid, isPublic,
                                function(sharedProgram) {
                                    var newDialog = jQuery("<div/>");
@@ -69,6 +76,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
                                         bgiframe : true,
                                         modal : true,
                                         beforeClose: handleClose,
+                                        width: 600,
                                         close : function() {
                                             if (onShareSuccess) {onShareSuccess(sharedProgram);}
                                         }
@@ -77,10 +85,19 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
                                    
                                    newDialog.append(jQuery("<p/>").text("Program has been shared: "));
                                    var publicId = sharedProgram.find("publicId").text();
-                                   anchor = plt.wescheme.helpers.urlToAnchor(plt.wescheme.helpers.makeShareUrl(publicId)),
+                                   url = plt.wescheme.helpers.makeShareUrl(publicId);
+                                   inpt = document.createElement("input");
+                                   inpt.id = "sharedLink";
+                                   inpt.style="width: 515px; padding: 0px 4px; line-height: 25px;";
+                                   inpt.value = url;
+                                   inpt.readOnly = true;
+                                   newDialog.append(inpt);
+                                   anchor = plt.wescheme.helpers.urlToAnchor(url),
                                    title = sharedProgram.find("title").text();
-                                   anchor.target = "_blank";
-                                   newDialog.append(jQuery(anchor));
+                                   copyBtn = document.createElement("button");
+                                   copyBtn.onclick=copyShareLink;
+                                   copyBtn.innerHTML = "&#10697;";
+                                   newDialog.append(copyBtn);
                                    newDialog.append(jQuery("<p/>"));
                                    newDialog.append(jQuery(plt.wescheme.helpers.generateSocialBookmarks(title, anchor.href)));
 

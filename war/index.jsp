@@ -17,14 +17,6 @@ UserService us = UserServiceFactory.getUserService();
 <head>
     <title>WeScheme</title>
 
-
-    <!-- Google analytics support -->
-    <jsp:include page="/google-analytics.jsp"/>
-
-
-    <!-- Add compatibility libraries for IE. -->
-    <jsp:include page="/js/compat/compat.jsp"/>
-
     <!-- JQuery -->
     <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
     <script src="/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
@@ -56,16 +48,16 @@ UserService us = UserServiceFactory.getUserService();
             }
         };
 
-        $(document).ready(function() {
+        function assignHandlers() {
             $("#startCoding").click(onOpenEditor);
             $("#loginButton").click(onLogin);
             $("#logoutButton").click(onLogout);
             $("#myPrograms").click(onMyPrograms);
-        });
+        }
     </script>
 </head>
 
-<body>
+<body onload="assignHandlers()">
 <header><h1>WeScheme</h1></header>
 <main>
 <% if (s == null) { %>
@@ -88,7 +80,8 @@ UserService us = UserServiceFactory.getUserService();
     <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
          <span class="tooltip" id="loginDescription">...of all Google services</span>
     </a>
-<% } %>	
+<% } %> 
+
 <div id="links">
     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
 </div>

@@ -254,6 +254,15 @@ plt.compiler = plt.compiler || {};
                                     , wording])
                    , sexp.location);
       }
+      // (define a b c ...) -- too many parts?
+      if(sexp.length > 3){
+          var extraLocs = sexp.slice(1).map(function(sexp){ return sexp.location; }),
+              wording = extraLocs.length + " parts";
+          throwError(new types.Message([new types.ColoredPart(sexp[0].val, sexp[0].location)
+                                        , ": expected exactly two parts, but found"
+                                        , new types.MultiPart(wording, extraLocs, false)])
+                     , sexp.location);
+      }
       // If it's (define (...)...)
       if(sexp[1] instanceof Array){
           // is there at least one element?

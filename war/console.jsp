@@ -77,11 +77,16 @@
       </span>
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game Template</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket-Height</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=HjTyPbbvSH">Defining Values</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=0elP8WrmfM">Sam the Butterfly</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=5jBc52gFTV">Luigi's Pizza</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=EA6R0E97nV">Booleans</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=eVMjb9omtP">Simple Inequalities</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=yFnDbsSnR7">Compound Inequalities</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jvWT8h7pLc">Sam the Butterfly</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=AcThgFgX9z">Alice's Restaurant</a>
       </ul>
     </li>
 

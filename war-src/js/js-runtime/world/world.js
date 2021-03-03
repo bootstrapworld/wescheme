@@ -288,13 +288,15 @@ if (typeof(world) === 'undefined') {
             ctx = canvas.getContext("2d");
             that.render(ctx, 0, 0);
         };
-        // ARIA: use "image" as default text.
-        canvas.ariaText = this.ariaText || "image";
+        canvas.ariaText = this.getAriaText(BaseImage.ariaNestingDepth);
         return canvas;
     };
+    // don't bother reading descriptions of images nested deeper than 6
+    BaseImage.ariaNestingDepth = 6;
 
     BaseImage.prototype.toWrittenString = function(cache) { return "<image>"; };
     BaseImage.prototype.toDisplayedString = this.toWrittenString;
+    BaseImage.prototype.getAriaText = function(depth) { return "image"; }
 
     // Best-Guess equivalence for images. If they're vertex-based we're in luck,
     // otherwise we go pixel-by-pixel. It's up to exotic image types to provide
@@ -372,10 +374,6 @@ if (typeof(world) === 'undefined') {
         this.children = children; // arrayof [image, number, number]
         this.withBorder = withBorder;
         this.color    = color;
-        this.ariaText = " scene that is "+width+" by "+height+". children are: ";
-        this.ariaText += children.map(function(c,i){
-          return "child "+(i+1)+": "+c[0].ariaText+", positioned at "+c[1]+","+c[2]+" ";
-        }).join(". ");
     };
     SceneImage.prototype = heir(BaseImage.prototype);
 
@@ -389,6 +387,15 @@ if (typeof(world) === 'undefined') {
                               this.withBorder,
                               this.color);
     };
+
+    SceneImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "scene image";
+        var ariaText = " a Scene that is "+this.width+" by "+this.height+". children are: ";
+        ariaText += this.children.map(function(c,i){
+          return "child "+(i+1)+": "+c[0].getAriaText(depth - 1)+", positioned at "+c[1]+","+c[2]+" ";
+        }).join(". ");
+        return ariaText;
+    }
 
     // render: 2d-context primitive-number primitive-number -> void
     SceneImage.prototype.render = function(ctx, x, y) {
@@ -443,7 +450,6 @@ if (typeof(world) === 'undefined') {
         this.src = src;
         this.isLoaded = false;
         this.originalURI = decodeURIComponent(src).slice(16);
-        this.ariaText = " image file from "+this.originalURI;
         this.labeled = false;
 
         // animationHack: see installHackToSupportAnimatedGifs() for details.
@@ -474,6 +480,12 @@ if (typeof(world) === 'undefined') {
         this.installHackToSupportAnimatedGifs(afterInit);
     };
     FileImage.prototype = heir(BaseImage.prototype);
+
+    FileImage.prototype.getAriaText = function(depth) {
+        console.log(imageCache[this.originalURI], imageCache[this.originalURI].getAriaText);
+        return imageCache[this.originalURI.labeled]? imageCache[this.originalURI].getAriaText()
+            : " an image file from "+this.originalURI;
+    }
 
     // set up the cache, and look for images that need describing every 5 sec
     var imageCache = {};
@@ -523,7 +535,9 @@ if (typeof(world) === 'undefined') {
                     var bestLabel = response.labelAnnotations[0].description;
                     // update the FileImage in the imageCache
                     imageCache[undescribedImages[i].originalURI].labeled = true;
-                    imageCache[undescribedImages[i].originalURI].ariaText = " a picture of a "+bestLabel;
+                    imageCache[undescribedImages[i].originalURI].getAriaText = function() { 
+                        " a picture of a "+bestLabel;
+                    };
                 });
                 console.log('after load(), timeout is', VISION_API_TIMEOUT);
             }
@@ -552,9 +566,8 @@ if (typeof(world) === 'undefined') {
         var self = this;
         ctx.drawImage(self.animationHackImg, x, y);
         setTimeout(function(){
-            this.ariaText = imageCache[self.originalURI].ariaText;
-            ctx.canvas.setAttribute('aria-label', self.ariaText);
-            ctx.canvas.ariaText = self.ariaText;
+            ctx.canvas.setAttribute('aria-label', self.getAriaText());
+            ctx.canvas.ariaText = self.getAriaText();
         }, 5000);
     };
 
@@ -596,7 +609,6 @@ if (typeof(world) === 'undefined') {
         BaseImage.call(this);
         var self = this;
         this.src = src;
-        this.ariaText = " video file from "+decodeURIComponent(src).slice(16);
         if (rawVideo) {
             this.video                  = rawVideo;
             this.width                  = self.video.videoWidth;
@@ -630,6 +642,10 @@ if (typeof(world) === 'undefined') {
         }
     };
     FileVideo.prototype = heir(BaseImage.prototype);
+
+    FileVideo.prototype.getAriaText = function(depth) {
+        return " a video file from "+decodeURIComponent(this.src).slice(16);
+    }
 
     var videoCache = {};
     FileVideo.makeInstance = function(path, rawVideo) {
@@ -776,7 +792,7 @@ if (typeof(world) === 'undefined') {
         this.img2 = img2;
         var positionText;
         if((["middle","center"].indexOf(placeX)>-1) && (["middle","center"].indexOf(placeY)>-1)){
-          positionText = " centered above ";
+          positionText = " centered ";
         } else if(placeX==="left"){
           positionText = " left-aligned ";
         } else if(placeX==="right"){
@@ -797,11 +813,17 @@ if (typeof(world) === 'undefined') {
         }
         this.width  = findWidth(this._vertices);
         this.height = findHeight(this._vertices);
-        this.ariaText = " an overlay: top image is" + img1.ariaText + positionText + " on top of " + img2.ariaText;
+        this.positionText = positionText;
     };
 
     OverlayImage.prototype = heir(BaseImage.prototype);
  
+    OverlayImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "overlay image";
+        return " an overlay: " + this.img1.getAriaText(depth - 1) 
+            + this.positionText + " above " + this.img2.getAriaText(depth - 1);
+    };
+
     OverlayImage.prototype.getVertices = function() { return this._vertices; };
  
     OverlayImage.prototype.render = function(ctx, x, y) {
@@ -854,10 +876,14 @@ if (typeof(world) === 'undefined') {
         this.angle      = Math.round(angle);
         this.translateX = -Math.min.apply( Math, vs.xs );
         this.translateY = -Math.min.apply( Math, vs.ys );
-        this.ariaText   = "Rotated image, "+angle+" degrees: "+img.ariaText;
     };
 
     RotateImage.prototype = heir(BaseImage.prototype);
+
+    RotateImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "rotated image";
+        return "Rotated image, "+(-1 * this.angle)+" degrees: "+this.img.getAriaText(depth - 1);
+    };
 
     RotateImage.prototype.getVertices = function() { return this._vertices; };
 
@@ -898,11 +924,19 @@ if (typeof(world) === 'undefined') {
         this.height   = img.height * yFactor;
         this.xFactor  = xFactor;
         this.yFactor  = yFactor;
-        this.ariaText = "Scaled Image, "+ (xFactor===yFactor? "by "+xFactor
-          : "horizontally by "+xFactor+" and vertically by "+yFactor)+". "+img.ariaText;
     };
 
     ScaleImage.prototype = heir(BaseImage.prototype);
+
+
+    ScaleImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "scaled image";
+        return "Scaled Image, "+
+            (this.xFactor===this.yFactor
+            ? "by "+this.xFactor
+            : "horizontally by "+this.xFactor+" and vertically by "+this.yFactor)+". " +
+        this.img.getAriaText(depth - 1);
+    };
 
     ScaleImage.prototype.getVertices = function() { return this._vertices; };
 
@@ -934,10 +968,15 @@ if (typeof(world) === 'undefined') {
         this.width      = width;
         this.height     = height;
         this.img        = img;
-        this.ariaText   = "Cropped image, from "+x+", "+y+" to "+(x+width)+", "+(y+height)+": "+img.ariaText;
     };
 
     CropImage.prototype = heir(BaseImage.prototype);
+
+
+    CropImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "cropped image";
+        return "Cropped image, from "+this.x+", "+this.y+" to "+(this.x+this.width)+", "+(this.y+this.height)+": "+this.img.getAriaText(depth - 1);
+    };
 
     CropImage.prototype.render = function(ctx, x, y) {
         ctx.save();
@@ -967,10 +1006,15 @@ if (typeof(world) === 'undefined') {
         this.img        = img;
         this.width      = img.width;
         this.height     = img.height;
-        this.ariaText = " Framed image: "+img.ariaText;
     };
 
     FrameImage.prototype = heir(BaseImage.prototype);
+
+
+    FrameImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "framed image";
+        return " Framed image: "+this.img.getAriaText(depth - 1);
+    };
 
     // scale the context, and pass it to the image's render function
     FrameImage.prototype.render = function(ctx, x, y) {
@@ -998,10 +1042,16 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
-        this.ariaText   = direction+"ly flipped image: " + img.ariaText;
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
+
+
+    FlipImage.prototype.getAriaText = function(depth) {
+        if (depth <= 0) return "flipped image";
+        return indefiniteArticle(this.direction)+"ly flipped image: " 
+            + this.img.getAriaText(depth - 1);
+    };
 
     FlipImage.prototype.render = function(ctx, x, y) {
         // when flipping an image of dimension M and offset by N across an axis, 
@@ -1042,6 +1092,16 @@ if (typeof(world) === 'undefined') {
     };
  
     //////////////////////////////////////////////////////////////////////
+    // indefiniteArticle : String -> String
+    // Prepend "a" or "an" to the given string, depending on whether it
+    // starts with a vowel
+    function indefiniteArticle(str) {
+        str = str.replace(/^\s*/, ""); // strip any leading whitespace
+        return (str.match(/^[aeiouAEIOU]/)? " an " : " a ") + str;
+    }
+    
+
+    //////////////////////////////////////////////////////////////////////
     // colorToSpokenString : hexColor Style -> String
     // Describes the color using the nearest HTML color name
     // Style can be "solid" (1.0), "outline" (1.0), a number (0-1.0) or null (1.0)
@@ -1057,8 +1117,8 @@ if (typeof(world) === 'undefined') {
                                    +Math.pow(lab1.b-lab2.b,2))}});
       var distances = distances.sort(function(a,b){return a.d<b.d? -1 : a.d>b.d? 1 : 0 ;});
       var match = distances[0].name;
-      var style = isNaN(aStyle)? (aStyle === "solid"? " solid " : " outline ") : " translucent ";
-      return style + match.toLowerCase();
+      var style = (aStyle == "" || isNaN(aStyle))? (aStyle = " " + aStyle) : " translucent ";
+      return style + " " + match.toLowerCase();
     }
 
     //////////////////////////////////////////////////////////////////////
@@ -1070,10 +1130,16 @@ if (typeof(world) === 'undefined') {
         this.style  = style;
         this.color  = color;
         this.vertices = [{x:0,y:height},{x:0,y:0},{x:width,y:0},{x:width,y:height}];
-        this.ariaText = " a" + colorToSpokenString(color,style) + ((width===height)? " square of size "+width
-          : " rectangle of width "+width+" and height "+height);
     };
     RectangleImage.prototype = heir(BaseImage.prototype);
+
+
+    RectangleImage.prototype.getAriaText = function(depth) {
+      return indefiniteArticle(colorToSpokenString(this.color,this.style)) +
+        ((this.width===this.height)
+         ? " square of size "+this.width
+         : " rectangle of width "+this.width+" and height "+this.height);
+    };
 
     //////////////////////////////////////////////////////////////////////
     // RhombusImage: Number Number Mode Color -> Image
@@ -1085,13 +1151,18 @@ if (typeof(world) === 'undefined') {
         this.height = Math.abs(Math.cos(angle/2 * Math.PI / 180)) * side * 2;
         this.style  = style;
         this.color  = color;
+        this.side   = side;
+        this.angle  = angle;
         this.vertices = [{x:this.width/2, y:0},
                          {x:this.width,   y:this.height/2},
                          {x:this.width/2, y:this.height},
                          {x:0,            y:this.height/2}];
-        this.ariaText = " a"+colorToSpokenString(color,style) + " rhombus of size "+side+" and angle "+angle;
     };
     RhombusImage.prototype = heir(BaseImage.prototype);
+
+    RhombusImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + " rhombus of size "+this.side+" and angle "+this.angle;
+    };
 
     //////////////////////////////////////////////////////////////////////
     // PosnImage: Vertices Mode Color -> Image
@@ -1099,17 +1170,21 @@ if (typeof(world) === 'undefined') {
     var PosnImage = function(vertices, style, color) {
         BaseImage.call(this);
         var vertices = vertices.map(function(v){
-            return { x: types.posnX(v), y: types.posnY(v) }
+            return { x: jsnums.toFixnum(types.posnX(v)), y: jsnums.toFixnum(types.posnY(v)) };
         });
+        console.log('vertices are', vertices);
 
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        this.ariaText = " a"+colorToSpokenString(color,style) + ", " + vertices.length + "-pointed polygon ";
     };
     PosnImage.prototype = heir(BaseImage.prototype);
+
+    PosnImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + ", " + this.vertices.length + "-pointed polygon ";
+    };
 
     //////////////////////////////////////////////////////////////////////
     // PolygonImage: Number Count Step Mode Color -> Image
@@ -1134,16 +1209,21 @@ if (typeof(world) === 'undefined') {
         
         this.width      = findWidth(vertices);
         this.height     = findHeight(vertices);
+        this.length     = length;
+        this.count      = count;
         this.style      = style;
         this.color      = color;
         this.vertices   = translateVertices(vertices);
-        this.ariaText   = " a"+colorToSpokenString(color,style) + 
-            (ariaOverride? " " + ariaOverride + " of size "+length
-                : ", " + count+" sided polygon with each side of length " + length);
+        this.ariaOverride = ariaOverride;
     };
  
     PolygonImage.prototype = heir(BaseImage.prototype);
 
+    PolygonImage.prototype.getAriaText = function(depth) {
+      return indefiniteArticle(colorToSpokenString(this.color, this.style)) + 
+            (this.ariaOverride? " " + this.ariaOverride + " of size " + this.length
+                : ", " + this.count + " sided polygon with each side of length " + this.length);
+    };
     
     //////////////////////////////////////////////////////////////////////
     // TextImage: String Number Color String String String String any/c Boolean -> Image
@@ -1189,10 +1269,13 @@ if (typeof(world) === 'undefined') {
         this.width       = parent.offsetWidth;
         this.height      = parent.offsetHeight;
         document.body.removeChild(container);       // clean up after ourselves
- 
-        this.ariaText = " the string "+this.str+", colored "+colorToSpokenString(color,'solid')+" of size "+ size;
     };
+    
     TextImage.prototype = heir(BaseImage.prototype);
+
+    TextImage.prototype.getAriaText = function(depth) {
+      return " a string "+this.str+", colored "+colorToSpokenString(this.color,'solid')+" of size "+ this.size;
+    };
 
     TextImage.prototype.render = function(ctx, x, y) {
         ctx.save();
@@ -1258,11 +1341,17 @@ if (typeof(world) === 'undefined') {
         this.height     = findHeight(vertices);
         this.style      = style;
         this.color      = color;
+        this.points     = points;
+        this.inner      = inner;
+        this.outer      = outer;
         this.vertices   =   translateVertices(vertices);
-        this.ariaText   = " a" + colorToSpokenString(color,style) + ", " + points +
-                          "pointed star with inner radius "+inner+" and outer radius "+outer;
     };
     StarImage.prototype = heir(BaseImage.prototype);
+
+    StarImage.prototype.getAriaText = function(depth) {
+         return indefiniteArticle(colorToSpokenString(this.color,this.style)) + ", " + this.points +
+           "-pointed star with inner radius "+this.inner+" and outer radius "+this.outer;
+       };
 
      /////////////////////////////////////////////////////////////////////
      //TriangleImage: Number Number Number Mode Color -> Image
@@ -1271,6 +1360,9 @@ if (typeof(world) === 'undefined') {
      // See http://docs.racket-lang.org/teachpack/2htdpimage.html#(def._((lib._2htdp/image..rkt)._triangle))
     var TriangleImage = function(sideC, angleA, sideB, style, color) {
         BaseImage.call(this);
+        this.sideC = sideC;
+        this.sideB = sideB;
+        this.angleA = angleA;
         var thirdX = sideB * Math.cos(angleA * Math.PI/180);
         var thirdY = sideB * Math.sin(angleA * Math.PI/180);
         var offsetX = 0 - Math.min(0, thirdX); // angleA could be obtuse
@@ -1292,17 +1384,21 @@ if (typeof(world) === 'undefined') {
         this.style = style;
         this.color = color;
         this.vertices = vertices;
-        this.ariaText = " a"+colorToSpokenString(color,style);
-        if(angleA === 270) {
-            this.ariaText += " right triangle whose base is of length "+sideC+" and height of "+sideB;
-        } else if(angleA === 300 && sideC === sideB) {
-            this.ariaText += " equilateral triangle with sides of length "+sideC;
-        } else {
-            this.ariaText += " triangle whose base is of length "+sideC + ", with an angle of "
-             + (angleA%180) + " degrees between it and a side of length "+sideB;
-        }
     };
     TriangleImage.prototype = heir(BaseImage.prototype);
+
+    TriangleImage.prototype.getAriaText = function(depth) {
+        var ariaText = indefiniteArticle(colorToSpokenString(this.color,this.style));
+        if(this.angleA === 270) {
+            ariaText += " right triangle whose base is of length "+this.sideC+" and height of "+this.sideB;
+        } else if(this.angleA === 300 && this.sideC === this.sideB) {
+            ariaText += " equilateral triangle with sides of length "+this.sideC;
+        } else {
+            ariaText += " triangle whose base is of length "+this.sideC + ", with an angle of "
+             + (this.angleA%180) + " degrees between it and a side of length "+this.sideB;
+        }
+        return ariaText;
+    }
 
     //////////////////////////////////////////////////////////////////////
     //Ellipse : Number Number Mode Color -> Image
@@ -1312,11 +1408,16 @@ if (typeof(world) === 'undefined') {
         this.height = height;
         this.style = style;
         this.color = color;
-        this.ariaText = " a"+colorToSpokenString(color,style) + ((width===height)? " circle of radius "+(width/2)
-              : " ellipse of width "+width+" and height "+height);
     };
 
     EllipseImage.prototype = heir(BaseImage.prototype);
+
+    EllipseImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,this.style)) + 
+            ((this.width===this.height)? " circle of radius "+(this.width/2) 
+            : " ellipse of width "+this.width+" and height "+this.height);
+
+    }
 
     EllipseImage.prototype.render = function(ctx, aX, aY) {
         ctx.save();
@@ -1376,16 +1477,21 @@ if (typeof(world) === 'undefined') {
             if (y >= 0) { vertices = [{x: -x, y:  0}, {x: 0, y: y}]; }
             else        { vertices = [{x: -x, y: -y}, {x: 0, y: 0}]; }
         }
-        
+        this.x = x;
+        this.y = y;
         this.width  = Math.abs(x);
         this.height = Math.abs(y);
         this.style  = "outline"; // all vertex-based images must have a style
         this.color  = color;
         this.vertices = vertices;
-        this.ariaText = " a" + colorToSpokenString(color,'solid') + " line of width "+x+" and height "+y;
     };
 
     LineImage.prototype = heir(BaseImage.prototype);
+
+    LineImage.prototype.getAriaText = function(depth) {
+        return indefiniteArticle(colorToSpokenString(this.color,"")) + 
+            " line of width "+this.x+" and height "+this.y;
+    }
 
     //////////////////////////////////////////////////////////////////////
     // Effects
@@ -1421,28 +1527,32 @@ if (typeof(world) === 'undefined') {
         this.colors[name] = color;
     };
 
+    // can be called with three types of value: (1) a string (colorname), (2) a color struct
+    // or (3) a runtime string object with a hash and a toString method
     ColorDb.prototype.get = function(name) {
-        return this.colors[name.toString().toUpperCase()];
+        if(name.toString) { // normalize if it's a string, or can be made into one
+            return this.colors[name.toString().replace(/\s/g, "").toUpperCase()];
+        }
     };
 
 
     // FIXME: update toString to handle the primitive field values.
     var colorDb = new ColorDb();
     colorDb.put("ORANGE", types.color(255, 165, 0, 255));
-    colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("LIGHTORANGE", types.color(255, 216, 51, 255));
+    colorDb.put("MEDIUMORANGE", types.color(255, 165, 0, 255));
     colorDb.put("ORANGERED", types.color(255, 69, 0, 255));
     colorDb.put("TOMATO", types.color(255, 99, 71, 255));
-    colorDb.put("DARKRED", types.color(139, 0, 0, 255));
     colorDb.put("RED", types.color(255, 0, 0, 255));
+    colorDb.put("LIGHTRED", types.color(255, 102, 102, 255));
+    colorDb.put("MEDIUMRED", types.color(255, 0, 0, 255));
+    colorDb.put("DARKRED", types.color(139, 0, 0, 255));
     colorDb.put("FIREBRICK", types.color(178, 34, 34, 255));
     colorDb.put("CRIMSON", types.color(220, 20, 60, 255));
     colorDb.put("DEEPPINK", types.color(255, 20, 147, 255));
     colorDb.put("MAROON", types.color(176, 48, 96, 255));
-    colorDb.put("INDIAN RED", types.color(205, 92, 92, 255));
     colorDb.put("INDIANRED", types.color(205, 92, 92, 255));
-    colorDb.put("MEDIUM VIOLET RED", types.color(199, 21, 133, 255));
     colorDb.put("MEDIUMVIOLETRED", types.color(199, 21, 133, 255));
-    colorDb.put("VIOLET RED", types.color(208, 32, 144, 255));
     colorDb.put("VIOLETRED", types.color(208, 32, 144, 255));
     colorDb.put("LIGHTCORAL", types.color(240, 128, 128, 255));
     colorDb.put("HOTPINK", types.color(255, 105, 180, 255));
@@ -1450,25 +1560,34 @@ if (typeof(world) === 'undefined') {
     colorDb.put("LIGHTPINK", types.color(255, 182, 193, 255));
     colorDb.put("ROSYBROWN", types.color(188, 143, 143, 255));
     colorDb.put("PINK", types.color(255, 192, 203, 255));
+    colorDb.put("MEDIUMPINK", types.color(255, 192, 203, 255));
+    colorDb.put("DARKPINK", types.color(204, 141, 152, 255));
     colorDb.put("ORCHID", types.color(218, 112, 214, 255));
     colorDb.put("LAVENDERBLUSH", types.color(255, 240, 245, 255));
     colorDb.put("SNOW", types.color(255, 250, 250, 255));
     colorDb.put("CHOCOLATE", types.color(210, 105, 30, 255));
     colorDb.put("SADDLEBROWN", types.color(139, 69, 19, 255));
     colorDb.put("BROWN", types.color(132, 60, 36, 255));
+    colorDb.put("LIGHTBROWN", types.color(183, 111, 87, 255));
+    colorDb.put("MEDIUMBROWN", types.color(132, 60, 36, 255));
+    colorDb.put("DARKBROWN", types.color(81, 9, 0, 255));
     colorDb.put("DARKORANGE", types.color(255, 140, 0, 255));
     colorDb.put("CORAL", types.color(255, 127, 80, 255));
     colorDb.put("SIENNA", types.color(160, 82, 45, 255));
     colorDb.put("ORANGE", types.color(255, 165, 0, 255));
     colorDb.put("SALMON", types.color(250, 128, 114, 255));
     colorDb.put("PERU", types.color(205, 133, 63, 255));
-    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
     colorDb.put("GOLDENROD", types.color(218, 165, 32, 255));
+    colorDb.put("LIGHTGOLDENROD", types.color(255, 216, 83, 255));
+    colorDb.put("DARKGOLDENROD", types.color(184, 134, 11, 255));
     colorDb.put("SANDYBROWN", types.color(244, 164, 96, 255));
     colorDb.put("LIGHTSALMON", types.color(255, 160, 122, 255));
     colorDb.put("DARKSALMON", types.color(233, 150, 122, 255));
     colorDb.put("GOLD", types.color(255, 215, 0, 255));
     colorDb.put("YELLOW", types.color(255, 255, 0, 255));
+    colorDb.put("LIGHTYELLOW", types.color(255, 255, 51, 255));
+    colorDb.put("MEDIUMYELLOW", types.color(255, 255, 0, 255));
+    colorDb.put("DARKYELLOW", types.color(204, 204, 0, 255));
     colorDb.put("OLIVE", types.color(128, 128, 0, 255));
     colorDb.put("BURLYWOOD", types.color(222, 184, 135, 255));
     colorDb.put("TAN", types.color(210, 180, 140, 255));
@@ -1481,7 +1600,6 @@ if (typeof(world) === 'undefined') {
     colorDb.put("BISQUE", types.color(255, 228, 196, 255));
     colorDb.put("PALEGOLDENROD", types.color(238, 232, 170, 255));
     colorDb.put("BLANCHEDALMOND", types.color(255, 235, 205, 255));
-    colorDb.put("MEDIUM GOLDENROD", types.color(234, 234, 173, 255));
     colorDb.put("MEDIUMGOLDENROD", types.color(234, 234, 173, 255));
     colorDb.put("PAPAYAWHIP", types.color(255, 239, 213, 255));
     colorDb.put("MISTYROSE", types.color(255, 228, 225, 255));
@@ -1497,98 +1615,75 @@ if (typeof(world) === 'undefined') {
     colorDb.put("FLORALWHITE", types.color(255, 250, 240, 255));
     colorDb.put("IVORY", types.color(255, 255, 240, 255));
     colorDb.put("GREEN", types.color(0, 255, 0, 255));
+    colorDb.put("MEDIUMGREEN", types.color(0, 255, 0, 255));
     colorDb.put("LAWNGREEN", types.color(124, 252, 0, 255));
     colorDb.put("CHARTREUSE", types.color(127, 255, 0, 255));
-    colorDb.put("GREEN YELLOW", types.color(173, 255, 47, 255));
     colorDb.put("GREENYELLOW", types.color(173, 255, 47, 255));
-    colorDb.put("YELLOW GREEN", types.color(154, 205, 50, 255));
     colorDb.put("YELLOWGREEN", types.color(154, 205, 50, 255));
-    colorDb.put("MEDIUM FOREST GREEN", types.color(107, 142, 35, 255));
     colorDb.put("OLIVEDRAB", types.color(107, 142, 35, 255));
     colorDb.put("MEDIUMFORESTGREEN", types.color(107, 142, 35, 255));
-    colorDb.put("DARK OLIVE GREEN", types.color(85, 107, 47, 255));
     colorDb.put("DARKOLIVEGREEN", types.color(85, 107, 47, 255));
     colorDb.put("DARKSEAGREEN", types.color(143, 188, 139, 255));
     colorDb.put("LIME", types.color(0, 255, 0, 255));
-    colorDb.put("DARK GREEN", types.color(0, 100, 0, 255));
     colorDb.put("DARKGREEN", types.color(0, 100, 0, 255));
-    colorDb.put("LIME GREEN", types.color(50, 205, 50, 255));
     colorDb.put("LIMEGREEN", types.color(50, 205, 50, 255));
-    colorDb.put("FOREST GREEN", types.color(34, 139, 34, 255));
     colorDb.put("FORESTGREEN", types.color(34, 139, 34, 255));
     colorDb.put("SPRING GREEN", types.color(0, 255, 127, 255));
     colorDb.put("SPRINGGREEN", types.color(0, 255, 127, 255));
-    colorDb.put("MEDIUM SPRING GREEN", types.color(0, 250, 154, 255));
     colorDb.put("MEDIUMSPRINGGREEN", types.color(0, 250, 154, 255));
-    colorDb.put("SEA GREEN", types.color(46, 139, 87, 255));
     colorDb.put("SEAGREEN", types.color(46, 139, 87, 255));
-    colorDb.put("MEDIUM SEA GREEN", types.color(60, 179, 113, 255));
     colorDb.put("MEDIUMSEAGREEN", types.color(60, 179, 113, 255));
     colorDb.put("AQUAMARINE", types.color(112, 216, 144, 255));
     colorDb.put("LIGHTGREEN", types.color(144, 238, 144, 255));
-    colorDb.put("PALE GREEN", types.color(152, 251, 152, 255));
     colorDb.put("PALEGREEN", types.color(152, 251, 152, 255));
     colorDb.put("MEDIUM AQUAMARINE", types.color(102, 205, 170, 255));
     colorDb.put("MEDIUMAQUAMARINE", types.color(102, 205, 170, 255));
     colorDb.put("TURQUOISE", types.color(64, 224, 208, 255));
-    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170, 255));
-    colorDb.put("MEDIUM TURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("LIGHTTURQUOISE", types.color(155, 255, 255, 255));
     colorDb.put("MEDIUMTURQUOISE", types.color(72, 209, 204, 255));
+    colorDb.put("LIGHTSEAGREEN", types.color(32, 178, 170, 255));
     colorDb.put("HONEYDEW", types.color(240, 255, 240, 255));
     colorDb.put("MINTCREAM", types.color(245, 255, 250, 255));
     colorDb.put("ROYALBLUE", types.color(65, 105, 225, 255));
     colorDb.put("DODGERBLUE", types.color(30, 144, 255, 255));
     colorDb.put("DEEPSKYBLUE", types.color(0, 191, 255, 255));
     colorDb.put("CORNFLOWERBLUE", types.color(100, 149, 237, 255));
-    colorDb.put("STEEL BLUE", types.color(70, 130, 180, 255));
     colorDb.put("STEELBLUE", types.color(70, 130, 180, 255));
     colorDb.put("LIGHTSKYBLUE", types.color(135, 206, 250, 255));
-    colorDb.put("DARK TURQUOISE", types.color(0, 206, 209, 255));
     colorDb.put("DARKTURQUOISE", types.color(0, 206, 209, 255));
     colorDb.put("CYAN", types.color(0, 255, 255, 255));
-    colorDb.put("AQUA", types.color(0, 255, 255, 255));
+    colorDb.put("LIGHTCYAN", types.color(224, 255, 255, 255));
+    colorDb.put("MEDIUMCYAN", types.color(0, 255, 255, 255));
     colorDb.put("DARKCYAN", types.color(0, 139, 139, 255));
+    colorDb.put("AQUA", types.color(0, 255, 255, 255));
     colorDb.put("TEAL", types.color(0, 128, 128, 255));
-    colorDb.put("SKY BLUE", types.color(135, 206, 235, 255));
     colorDb.put("SKYBLUE", types.color(135, 206, 235, 255));
-    colorDb.put("CADET BLUE", types.color(96, 160, 160, 255));
     colorDb.put("CADETBLUE", types.color(95, 158, 160, 255));
-    colorDb.put("DARK SLATE GRAY", types.color(47, 79, 79, 255));
     colorDb.put("DARKSLATEGRAY", types.color(47, 79, 79, 255));
     colorDb.put("LIGHTSLATEGRAY", types.color(119, 136, 153, 255));
     colorDb.put("SLATEGRAY", types.color(112, 128, 144, 255));
-    colorDb.put("LIGHT STEEL BLUE", types.color(176, 196, 222, 255));
     colorDb.put("LIGHTSTEELBLUE", types.color(176, 196, 222, 255));
-    colorDb.put("LIGHT BLUE", types.color(173, 216, 230, 255));
     colorDb.put("LIGHTBLUE", types.color(173, 216, 230, 255));
     colorDb.put("POWDERBLUE", types.color(176, 224, 230, 255));
     colorDb.put("PALETURQUOISE", types.color(175, 238, 238, 255));
-    colorDb.put("LIGHTCYAN", types.color(224, 255, 255, 255));
     colorDb.put("ALICEBLUE", types.color(240, 248, 255, 255));
     colorDb.put("AZURE", types.color(240, 255, 255, 255));
-    colorDb.put("MEDIUM BLUE", types.color(0, 0, 205, 255));
     colorDb.put("MEDIUMBLUE", types.color(0, 0, 205, 255));
     colorDb.put("DARKBLUE", types.color(0, 0, 139, 255));
-    colorDb.put("MIDNIGHT BLUE", types.color(25, 25, 112, 255));
     colorDb.put("MIDNIGHTBLUE", types.color(25, 25, 112, 255));
     colorDb.put("NAVY", types.color(36, 36, 140, 255));
     colorDb.put("BLUE", types.color(0, 0, 255, 255));
     colorDb.put("INDIGO", types.color(75, 0, 130, 255));
-    colorDb.put("BLUE VIOLET", types.color(138, 43, 226, 255));
     colorDb.put("BLUEVIOLET", types.color(138, 43, 226, 255));
-    colorDb.put("MEDIUM SLATE BLUE", types.color(123, 104, 238, 255));
     colorDb.put("MEDIUMSLATEBLUE", types.color(123, 104, 238, 255));
-    colorDb.put("SLATE BLUE", types.color(106, 90, 205, 255));
     colorDb.put("SLATEBLUE", types.color(106, 90, 205, 255));
     colorDb.put("PURPLE", types.color(160, 32, 240, 255));
-    colorDb.put("DARK SLATE BLUE", types.color(72, 61, 139, 255));
+    colorDb.put("LIGHTPURPLE", types.color(211, 83, 255, 255));
+    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219, 255));
+    colorDb.put("DARKPURPLE", types.color(109, 0, 189, 255));
     colorDb.put("DARKSLATEBLUE", types.color(72, 61, 139, 255));
     colorDb.put("DARKVIOLET", types.color(148, 0, 211, 255));
-    colorDb.put("DARK ORCHID", types.color(153, 50, 204, 255));
     colorDb.put("DARKORCHID", types.color(153, 50, 204, 255));
-    colorDb.put("MEDIUMPURPLE", types.color(147, 112, 219, 255));
-    colorDb.put("CORNFLOWER BLUE", types.color(68, 64, 108, 255));
-    colorDb.put("MEDIUM ORCHID", types.color(186, 85, 211, 255));
     colorDb.put("MEDIUMORCHID", types.color(186, 85, 211, 255));
     colorDb.put("MAGENTA", types.color(255, 0, 255, 255));
     colorDb.put("FUCHSIA", types.color(255, 0, 255, 255));
@@ -1601,19 +1696,22 @@ if (typeof(world) === 'undefined') {
     colorDb.put("WHITE", types.color(255, 255, 255, 255));
     colorDb.put("WHITESMOKE", types.color(245, 245, 245, 255));
     colorDb.put("GAINSBORO", types.color(220, 220, 220, 255));
-    colorDb.put("LIGHT GRAY", types.color(211, 211, 211, 255));
     colorDb.put("LIGHTGRAY", types.color(211, 211, 211, 255));
+    colorDb.put("LIGHTGREY", types.color(211, 211, 211, 255));
     colorDb.put("SILVER", types.color(192, 192, 192, 255));
     colorDb.put("GRAY", types.color(190, 190, 190, 255));
-    colorDb.put("DARK GRAY", types.color(169, 169, 169, 255));
+    colorDb.put("GREY", types.color(190, 190, 190, 255));
+    colorDb.put("MEDIUMGRAY", types.color(190, 190, 190, 255));
+    colorDb.put("MEDIUMGREY", types.color(190, 190, 190, 255));
     colorDb.put("DARKGRAY", types.color(169, 169, 169, 255));
-    colorDb.put("DIM GRAY", types.color(105, 105, 105, 255));
+    colorDb.put("DARKGREY", types.color(169, 169, 169, 255));
     colorDb.put("DIMGRAY", types.color(105, 105, 105, 255));
+    colorDb.put("DIMGREY", types.color(105, 105, 105, 255));
     colorDb.put("BLACK", types.color(0, 0, 0, 255));
     colorDb.put("TRANSPARENT", types.color(0, 0, 0, 0));
 
     var nameToColor = function(s) {
-        return colorDb.get('' + s);
+         return colorDb.get('' + s);
     };
  
     // based on answer provided at

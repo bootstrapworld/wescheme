@@ -21,3 +21,6 @@ war-src/alltests.js
 war-src/closure/
 war-src/deps.js
 war-src/third_party/
+
+# OSX's .DS_Store file
+.DS_Store

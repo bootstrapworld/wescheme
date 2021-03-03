@@ -104,7 +104,8 @@ plt.compiler = plt.compiler || {};
                                              bootstrapTeachpackFunctions.map(makeFunctionBinding('"bootstrap2015/bootstrap-tilt-teachpack"')));
  
   // cage-teachpack
-  var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",[["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
+  var cageTeachpack = new moduleBinding("bootstrap/cage-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap/cage-teachpack"'))),
       cageTeachpack2011 = new moduleBinding("bootstrap2011/cage-teachpack",
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2011/cage-teachpack"'))),
       cageTeachpack2012 = new moduleBinding("bootstrap2012/cage-teachpack",
@@ -113,6 +114,11 @@ plt.compiler = plt.compiler || {};
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2014/cage-teachpack"')));
       cageTeachpack2015 = new moduleBinding("bootstrap2015/cage-teachpack",
                                             [["start", 1, false]].map(makeFunctionBinding('"bootstrap2015/cage-teachpack"')));
+  
+  // boolean-teachpack (includes cage techpack code!!)
+  var booleanTeachpackFunctions = [["start", 1, false], ["continent?", 1, false], ["primary-color?", 1, false], ["less-than-one?", 1, false]]
+  var booleanTeachpack2020 = new moduleBinding("bootstrap2020/boolean-teachpack",
+                                            [["start", 1, false]].map(makeFunctionBinding('"bootstrap2020/boolean-teachpack"')));
  
   // function-teachpack
   var functionTeachpack = new moduleBinding("bootstrap/function-teachpack",
@@ -202,7 +208,7 @@ plt.compiler = plt.compiler || {};
                                             ,"put-image"
                                             ,"place-image"
                                             ,"place-image/align"
-                            //,"put-pinhole"
+                                            //,"put-pinhole"
                                             ,"circle"
                                             ,"star"
                                             ,"polygon"
@@ -244,6 +250,8 @@ plt.compiler = plt.compiler || {};
                                             ,"frame"
                                             ,"flip-horizontal"
                                             ,"flip-vertical"
+                                            ,"reflect-x"
+                                            ,"reflect-y"
                                             ,"text"
                                             ,"text/font"
                                             ,"video/url"       // needs network
@@ -285,7 +293,8 @@ plt.compiler = plt.compiler || {};
                                          ,["=", 2, true]
                                          ,[">", 2, true]
                                          ,[">=", 2, true]
-                                         
+                                         ,["<>", 2, true]
+
                                          ,["=~", 3]
                                          ,["number->string", 1]
                                          ,["even?", 1]
@@ -349,6 +358,7 @@ plt.compiler = plt.compiler || {};
                                          //,["sq", 1]
                                          ,["sqr", 1]
                                          ,["sqrt", 1]
+                                         ,["nth-root", 2]
                                          ,["sub1", 1]
                                          ,["tan", 1]
                                          ,["zero?", 1]
@@ -373,7 +383,7 @@ plt.compiler = plt.compiler || {};
                                          ,["append", 0, true]
                                          ,["assq", 2]                 // *
                                          ,["assv", 2]                 // *
-                                         ,["assoc", 2]                 // *
+                                         ,["assoc", 2]                // *
                                          ,["caaar", 1]
                                          ,["caadr", 1]
                                          ,["caar", 1]
@@ -470,6 +480,7 @@ plt.compiler = plt.compiler || {};
                                          ,["string-ci<=?", 2, true]
                                          ,["string-ci<?", 2, true]
                                          ,["string-ci=?", 2, true]
+                                         ,["string-ci<>?", 2, true]
                                          ,["string-ci>=?", 2, true]
                                          ,["string-ci>?", 2, true]
                                          ,["string-copy", 1]
@@ -482,6 +493,7 @@ plt.compiler = plt.compiler || {};
                                          ,["string<=?", 2, true]
                                          ,["string<?", 2, true]
                                          ,["string=?", 2, true]
+                                         ,["string<>?", 2, true]
                                          ,["string>=?", 2, true]
                                          ,["string>?", 2, true]
                                          ,["string?", 1]
@@ -509,19 +521,19 @@ plt.compiler = plt.compiler || {};
                                          
                                          // Higher-Order Functions
                                          ,["andmap", 1, true]
-                                         ,["apply", 2, true]           // *
+                                         ,["apply", 2, true]          // *
                                          ,["argmax", 2]               // *
                                          ,["argmin", 2]               // *
                                          ,["build-list", 2]
                                          ,["build-string", 2]         // *
-                                         ,["compose", 0, true]         // *
+                                         ,["compose", 0, true]        // *
                                          ,["filter", 2]               // *
                                          ,["foldl", 2, true]
-                                         ,["foldr", 2, true]                // *
+                                         ,["foldr", 2, true]          // *
                                          ,["map", 1, true]
                                          ,["for-each", 1, true]
                                          ,["memf", 2]                 // *
-                                         ,["ormap", 1, true]                // *
+                                         ,["ormap", 1, true]          // *
                                          ,["procedure?", 1]           // *
                                          ,["quicksort", 2]            // *
                                          ,["sort", 2]                 // *
@@ -639,7 +651,7 @@ plt.compiler = plt.compiler || {};
   // The core environment includes the baseConstants, the topLevel bindings, and the world bindings
   // NOTE: worldModule *includes* worldEffects and worldHandlers, according to Danny's modules.ss file
  plt.compiler.topLevelModules = [topLevelModule, kernelMiscModule, , jsWorldModule, worldModule];
- plt.compiler.knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014", "bootstrap2015"];
+ plt.compiler.knownCollections = ["bootstrap", "bootstrap2011", "bootstrap2012", "bootstrap2014", "bootstrap2015", "bootstrap2020"];
  
  
  plt.compiler.knownModules = [kernelMiscModule
@@ -659,6 +671,7 @@ plt.compiler = plt.compiler || {};
                               , cageTeachpack2012
                               , cageTeachpack2014
                               , cageTeachpack2015
+                              , booleanTeachpack2020
                               , functionTeachpack
                               , functionTeachpack2011
                               , functionTeachpack2012

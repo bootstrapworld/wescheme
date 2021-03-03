@@ -8,6 +8,9 @@
 <html>
 <head><title>WeScheme :: Privacy</title>
 
+<!-- Do the right thing for mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
 <link rel="stylesheet" type="text/css" href="/css/common.css" id="style" />
 <style type="text/css">	
@@ -112,10 +115,7 @@
 
 		<h2>Sharing your personal information</h2>
 		<p><b>We do not sell, trade, or rent Users personal identification
-		information to others</b>. We may share generic aggregated demographic
-		information not linked to any personal identification information
-		regarding visitors and users with our business partners, trusted
-		affiliates and advertisers for the purposes outlined above. </p>
+		information to others</b>. We may use third-party services like Google Analytics to help us analyze aggregate data about users of the site.</p>
 
 		<h2>Advertising</h2>
 		<p><b>Bootstrap does not use third-party advertising in any way</b>, and 

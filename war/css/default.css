@@ -215,13 +215,13 @@ a#images span:before{content: url(icon_images.gif); margin-right: 3px;}
 
 #inter {
     width:         100%;
-    height:		   100%;
-    padding:	   0px;
-    margin:		   0px;
-    overflow:       auto;
-    font-family:	Monaco, sans-serif;
-    background:     none;
-    position:       absolute;
+    height:		     90%;
+    padding:	     0px;
+    margin:		     0px;
+    overflow:      auto;
+    font-family:	 Monaco, sans-serif;
+    background:    none;
+    position:      absolute;
 }
 
 /* everything in the interactions window should have a small
@@ -300,6 +300,8 @@ p.location-paragraph {
     margin-top: 0px;
     margin-bottom: 0px;
 }
+
+span.compileTimeError {color: gray; font-style: italic; font-size: 11px;}
 
 /* To make spans as top-aligned inlined blocks, as used in the REPL */
 span.top-aligned-inline-block {

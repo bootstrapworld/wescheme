@@ -19,6 +19,8 @@
 
 <title>WeScheme</title>
 
+<!-- Do the right thing for mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
@@ -52,6 +54,7 @@
   }
   #interactions{ white-space: pre; font-family: monospace; display: inline-block;}
   #fullscreenButton{ margin-right: 20px; }
+  #finished {font-weight: bold; display: block;}
 
 </style>
 <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>

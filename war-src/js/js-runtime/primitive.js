@@ -452,11 +452,12 @@ var getMakeStructTypeReturns = function(aStructType) {
 //////////////////////////////////////////////////////////////////////
 
 
-var isNumber = jsnums.isSchemeNumber;
-var isReal = jsnums.isReal;
-var isRational = jsnums.isRational;
-var isComplex = isNumber;
-var isInteger = jsnums.isInteger;
+var isNumber 	= jsnums.isSchemeNumber;
+var isReal 		= jsnums.isReal;
+var isRational 	= jsnums.isRational;
+// TODO(Emmanuel): ugly hack - this should be exported properly by js-numbers
+var isComplex 	= function(x) { return (x.i !== undefined)? types.TRUE : types.FALSE; }
+var isInteger 	= jsnums.isInteger;
 
 var isNatural = function(x) {
 	return jsnums.isExact(x) && isInteger(x) && jsnums.greaterThanOrEqual(x, 0);
@@ -1446,6 +1447,18 @@ PRIMITIVES['='] =
 		 });
 
 
+PRIMITIVES['<>'] = 
+    new PrimProc("<>",
+		 2,
+		 true, false,
+		 function(aState, x, y, args) {
+		 	args.unshift(y);
+		 	args.unshift(x);
+		 	arrayEach(args, function(z, i) {check(aState, z, isNumber, '<>', 'number', i+1, args);});
+
+		 	return !compare(args, jsnums.equals);
+		 });
+
 PRIMITIVES['=~'] =
     new PrimProc('=~',
 		 3,
@@ -1871,6 +1884,19 @@ PRIMITIVES['sqrt'] =
 			return jsnums.sqrt(x);
 		 });
 
+PRIMITIVES['nth-root'] =
+    new PrimProc('nth-root',
+		 2,
+		 false, false,
+		 function(aState, x, r) {
+		 	check(aState, x, isNumber, 'nth-root', 'number', 1, arguments);
+		 	check(aState, r, isNumber, 'nth-root', 'number', 2, arguments);
+			var result = jsnums.expt(x, jsnums.divide(1, r));
+			var rounded = jsnums.round(result);
+			var diffFromRounded = jsnums.subtract(result, rounded);
+			return jsnums.lessThan(diffFromRounded, 0.00000000001)?
+				jsnums.toExact(rounded) : result;
+		 });
 
 PRIMITIVES['integer-sqrt'] =
     new PrimProc('integer-sqrt',
@@ -3086,7 +3112,7 @@ PRIMITIVES['build-list'] =
 					});
 			}
 			return buildListHelp(0, types.EMPTY);
-		 });
+		 }); 
 
 
 /**********************
@@ -3363,6 +3389,18 @@ PRIMITIVES['string=?'] =
 			return compare(strs, function(strA, strB) {return strA.toString() === strB.toString();});
 		 });
 
+PRIMITIVES['string<>?'] =
+    new PrimProc('string<>?',
+		 2,
+		 true, false,
+		 function(aState, str1, str2, strs) {
+		 	strs.unshift(str2);
+		 	strs.unshift(str1);
+		 	arrayEach(strs, function(str, i) {check(aState, str, isString, 'string<>?', 'string', i+1, strs);});
+		 	
+			return !compare(strs, function(strA, strB) {return strA.toString() === strB.toString();});
+		 });
+
 
 PRIMITIVES['string-ci=?'] =
     new PrimProc('string-ci=?',
@@ -3381,6 +3419,23 @@ PRIMITIVES['string-ci=?'] =
 			return compare(strs, function(strA, strB) {return strA === strB;});
 		 });
 
+
+PRIMITIVES['string-ci<>?'] =
+    new PrimProc('string-ci<>?',
+		 2,
+		 true, false,
+		 function(aState, str1, str2, strs) {
+		 	strs.unshift(str2);
+			strs.unshift(str1);
+
+			var i;
+			for(i = 0; i < strs.length; i++) {
+				check(aState, strs[i], isString, 'string-ci<>?', 'string', i+1, strs);
+				strs[i] = strs[i].toString().toLowerCase();
+			}
+
+			return !compare(strs, function(strA, strB) {return strA === strB;});
+		 });
 
 PRIMITIVES['string<?'] =
     new PrimProc('string<?',
@@ -3991,7 +4046,8 @@ PRIMITIVES['build-vector'] =
 
 				return CALL(f, [n],
 					function (result) {
-						return buildVectorHelp(n+1, acc.push(result));
+						acc.push(result);
+						return buildVectorHelp(n+1, acc);
 					});
 			}
 			return buildVectorHelp(0, []);
@@ -4701,15 +4757,14 @@ new PrimProc('add-polygon',
 			 var posnArray = helpers.flattenSchemeListToArray(points);
 			 var xs = posnArray.map(function(p){ return p._fields[0]; });
 			 var ys = posnArray.map(function(p){ return p._fields[1]; });
-			 var deltaX = Math.min.apply(null, xs);
-			 var deltaY = Math.min.apply(null, ys);
-			 var polygon = world.Kernel.posnImage(helpers.flattenSchemeListToArray(points),
-											  s.toString(),
-											  c);
-			 return world.Kernel.overlayImage(polygon,
-                                          bg,
-                                          -jsnums.toFixnum(deltaX),
-                                          -jsnums.toFixnum(deltaY));
+			 xs = xs.map(function(x){ return jsnums.toFixnum(x); }); // convert xs to fixnums
+			 ys = ys.map(function(y){ return jsnums.toFixnum(y); }); // convert ys to fixnums
+			 var deltaX = -Math.round(Math.min.apply(null, xs));
+			 var deltaY = -Math.round(Math.min.apply(null, ys));
+			 console.log('deltaX', deltaX, 'deltaY', deltaY);
+			 var polygon = world.Kernel.posnImage(posnArray, s.toString(), c);
+			 console.log('primitve is passing posns', posnArray);
+			 return world.Kernel.overlayImage(polygon, bg, deltaX, deltaY);
 			 });
 
 PRIMITIVES['star-polygon'] =
@@ -5392,6 +5447,25 @@ new PrimProc('flip-horizontal',
 			 false, false,
 			 function(aState, img) {
 			 check(aState, img, isImage, "flip-horizontal", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "horizontal");
+			 });
+
+PRIMITIVES['reflect-x'] =
+new PrimProc('reflect-x',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-x", "image", 1, arguments);
+			 return world.Kernel.flipImage(img, "vertical");
+			 });
+
+
+PRIMITIVES['reflect-y'] =
+new PrimProc('reflect-y',
+			 1,
+			 false, false,
+			 function(aState, img) {
+			 check(aState, img, isImage, "reflect-y", "image", 1, arguments);
 			 return world.Kernel.flipImage(img, "horizontal");
 			 });
 

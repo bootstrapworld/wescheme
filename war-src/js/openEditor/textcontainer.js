@@ -225,6 +225,11 @@ var WeSchemeTextContainer;
 		this.editor.clearHistory();
 		this.editor.refresh();
 	};
+
+	CodeMirrorImplementation.prototype.clearHistory = function() {
+		this.editor.clearHistory();
+		this.editor.refresh();
+	};
  
 	//name for the current highlight's css
   	var currentHighlightNumber = 0;

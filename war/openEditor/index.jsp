@@ -28,12 +28,8 @@
     <!-- Google JavaScript API -->
     <script src="https://apis.google.com/js/client.js?onload=handleClientLoad" type="text/javascript"></script>
 
-   <!-- The standard Google Loader script; use your own key. -->
-    <script src="https://www.google.com/jsapi?key=AIzaSyBV6MeANy_ZaLB2f2c-XKCMA7hIu2Fy744"></script>
-    <script type="text/javascript">
-      google.load('picker', '1');
-
-    </script>
+    <!-- Load the Google API. LoadPicker is defined in editor.js -->
+    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
 
     <!-- JQuery UI style sheet -->
     <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
@@ -100,7 +96,7 @@
 
 
     <script type="text/javascript">
-      jQuery(document).ready(function() {
+      function setup() {
           var userName, pid, publicId,
               hideHeader, hideToolbar,
               hideProjectName,
@@ -120,59 +116,58 @@
           noColorError = false;
           blocksMode = false;
 
-
           userName = "<%= userSession != null? userSession.getName() : null %>";
 
           <% if (request.getParameter("hideHeader") != null &&
                  request.getParameter("hideHeader").equals("true")) { %>
-	     hideHeader = true;
+	             hideHeader = true;
           <% } %>
 
           <% if (request.getParameter("hideToolbar") != null &&
                  request.getParameter("hideToolbar").equals("true")) { %>
-	     hideToolbar = true;
+	             hideToolbar = true;
           <% } %>
 
           <% if (request.getParameter("hideProjectName") != null &&
                  request.getParameter("hideProjectName").equals("true")) { %>
-	     hideProjectName = true;
+	             hideProjectName = true;
           <% } %>
 
           <% if (request.getParameter("hideFooter") != null &&
                  request.getParameter("hideFooter").equals("true")) { %>
-	     hideFooter = true;
+	             hideFooter = true;
           <% } %>
 
           <% if (request.getParameter("hideDefinitions") != null &&
                  request.getParameter("hideDefinitions").equals("true")) { %>
-	     hideDefinitions = true;
+	             hideDefinitions = true;
           <% } %>
 
           <% if (request.getParameter("hideInteractions") != null &&
                  request.getParameter("hideInteractions").equals("true")) { %>
-	     hideInteractions = true;
+	             hideInteractions = true;
           <% } %>
 
           <% if (request.getParameter("warnOnExit") != null &&
                  request.getParameter("warnOnExit").equals("false")) { %>
-	     warnOnExit = false;
+	             warnOnExit = false;
           <% } %>
 
           <% if (request.getParameter("autorun") != null &&
                  request.getParameter("autorun").equals("true")) { %>
-	     autorunDefinitions = true;
+	             autorunDefinitions = true;
           <% } %>
 
           <% if (request.getParameter("interactionsText") != null) { %>
-	     interactionsText =
-	         decodeURIComponent("<%= java.net.URLEncoder.encode(
-					 request.getParameter("interactionsText"), "utf-8").replaceAll("\\+", "%20") %>");
+	             interactionsText =
+	               decodeURIComponent("<%= java.net.URLEncoder.encode(
+					       request.getParameter("interactionsText"), "utf-8").replaceAll("\\+", "%20") %>");
           <% } %>
 
           <% if (request.getParameter("definitionsText") != null) { %>
-	     definitionsText =
-	         decodeURIComponent("<%= java.net.URLEncoder.encode(
-					 request.getParameter("definitionsText"), "utf-8").replaceAll("\\+", "%20") %>");
+	             definitionsText =
+	               decodeURIComponent("<%= java.net.URLEncoder.encode(
+					       request.getParameter("definitionsText"), "utf-8").replaceAll("\\+", "%20") %>");
           <% } %>
 
           <% if (request.getParameter("blocksMode") != null &&
@@ -182,7 +177,7 @@
 
 
           <% if (request.getParameter("pid") != null) { %>
-	      pid = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("pid"), "utf-8") %>');
+	             pid = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("pid"), "utf-8") %>');
       	  <% } else if (request.getParameter("publicId") != null){ %>
          	      publicId = decodeURIComponent('<%= java.net.URLEncoder.encode(request.getParameter("publicId"), "utf-8") %>');
       	  <% } else { %>
@@ -194,34 +189,48 @@
                  request.getParameter("embedded").equals("true") &&
                  // embedded mode is not allowed when pid has been provided.
                  request.getParameter("pid") == null) {
-	     isEmbedded = true;
+	                 isEmbedded = true;
              }
           %>
           isEmbedded = <%= isEmbedded %>; // expose it on the JavaScript side too.
 
 
           <% if (request.getParameter("noc") != null) { %>
-	     noColorError = true;
+	             noColorError = true;
           <% } %>
 
 
-
-          initializeEditor({userName: userName,
+              initializeEditor({userName: userName,
                             pid : pid,
                             publicId: publicId,
-	                    hideHeader: hideHeader,
-	                    hideToolbar: hideToolbar,
-	                    hideProjectName: hideProjectName,
-	                    hideFooter: hideFooter,
-	                    hideDefinitions: hideDefinitions,
-	                    hideInteractions: hideInteractions,
-	                    warnOnExit: warnOnExit,
-	                    initialInteractionsText: interactionsText,
-	                    initialDefinitionsText: definitionsText,
-	                    autorunDefinitions: autorunDefinitions,
-                      noColorError: noColorError,
-                      blocksMode: blocksMode });
-      });
+      	                    hideHeader: hideHeader,
+      	                    hideToolbar: hideToolbar,
+      	                    hideProjectName: hideProjectName,
+      	                    hideFooter: hideFooter,
+      	                    hideDefinitions: hideDefinitions,
+      	                    hideInteractions: hideInteractions,
+      	                    warnOnExit: warnOnExit,
+      	                    initialInteractionsText: interactionsText,
+      	                    initialDefinitionsText: definitionsText,
+      	                    autorunDefinitions: autorunDefinitions,
+                            noColorError: noColorError,
+                            blocksMode: blocksMode });
+
+              var widget = initializeWidget(myEditor.defn.impl.editor,
+                                        myEditor.getTokenizer());
+              document.getElementById("recipe").addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                var codeUpToCursor = myEditor.defn.getCode(0, myEditor.defn.getCursorStartPosition());
+                // don't let the user start the DR if the cursor is inside an expression
+                if(plt.wescheme.tokenizer.hasCompleteExpression(codeUpToCursor)){
+                  widget.showWidget();
+                } else {
+                  alert("You cannot start the Design Recipe widget when your cursor is inside another expression.");
+                  myEditor.defn.focus();
+                }
+            });
+        }
 
       jQuery(function() {
         var viewportWidth = jQuery(window).width();
@@ -242,7 +251,7 @@
     </script>
   </head>
 
-  <body>
+  <body onload="setup()">
     <div id="editor">
       <div class="top" id="top">
 
@@ -264,7 +273,11 @@
         </div>
         <div class="section" id="design-recipe-examples">
           <div id="design-recipe-example1_wrapper">
+<<<<<<< HEAD
             <span class="spacer" class="notranslate">(EXAMPLE </span>
+=======
+            <span class="spacer notranslate">(EXAMPLE </span>
+>>>>>>> master
             <div class="indent-wrapper">
               <textarea id="design-recipe-example1_header"></textarea>
               <textarea id="design-recipe-example1_body"></textarea>
@@ -274,7 +287,11 @@
           <span class="error" id="design-recipe-example1_error"></span>
           <hr/>
           <div id="design-recipe-example2_wrapper">
+<<<<<<< HEAD
             <span class="spacer" class="notranslate">(EXAMPLE </span>
+=======
+            <span class="spacer notranslate">(EXAMPLE </span>
+>>>>>>> master
             <div class="indent-wrapper">
                <textarea id="design-recipe-example2_header"></textarea>
              <textarea id="design-recipe-example2_body"></textarea>
@@ -285,7 +302,11 @@
         </div>
         <div class="section" id="design-recipe-definition">
           <div id="design-recipe-definition_wrapper">
+<<<<<<< HEAD
             <span class="spacer" class="notranslate">(define </span>
+=======
+            <span class="spacer notranslate">(define </span>
+>>>>>>> master
             <div class="indent-wrapper">
               <textarea id="design-recipe-definition_header"></textarea>
               <textarea id="design-recipe-definition_body"></textarea>
@@ -508,25 +529,6 @@
 
 
   <script type="text/javascript">
-    var widget;
-    jQuery(document).ready(function() {
-      widget = initializeWidget(myEditor.defn.impl.editor,
-                                myEditor.getTokenizer());
-
-      jQuery("#recipe").bind("click", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var codeUpToCursor = myEditor.defn.getCode(0, myEditor.defn.getCursorStartPosition());
-        // don't let the user start the DR if the cursor is inside an expression
-        if(plt.wescheme.tokenizer.hasCompleteExpression(codeUpToCursor)){
-          widget.showWidget();
-        } else {
-          alert("You cannot start the Design Recipe widget when your cursor is inside another expression.");
-          myEditor.defn.focus();
-        }
-      });
-    });
-
     <% if (isEmbedded) { %>
     // If we're in embedded mode, start up a socket for cross domain messaging support.
     var rpc = new easyXDM.Rpc({ local: "/js/easyXDM/name.html",

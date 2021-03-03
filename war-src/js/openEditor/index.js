@@ -29,18 +29,17 @@ var initializeEditor;
 (function() {
 
     initializeEditor = function(attrs) {
-	plt.wescheme.browserCheck();
 	maybeHideHeaderAndFooter(attrs.hideHeader, 
                                  attrs.hideToolbar,
                                  attrs.hideProjectName,
                                  attrs.hideFooter);
-	editorSetup(attrs, 
-		    function() { 
-                        // At this point, we know the editor has been
-                        // initialized.
-		        maybeWarnOnExit(attrs.warnOnExit);
-                        splitPaneSetup(attrs); 
-                    });
+	editorSetup(
+		attrs, 
+		function() { 
+			// At this point, we know the editor has been initialized.
+	        maybeWarnOnExit(attrs.warnOnExit);
+	        splitPaneSetup(attrs); 
+	    });
     };
 
 
@@ -82,11 +81,8 @@ var initializeEditor;
   
     plt.wescheme.WeSchemeEditor.defnInFocus = true;
 
-
 	// Fixme: trigger file load if the pid has been provided.
-
 	var statusBar = new plt.wescheme.WeSchemeStatusBar(jQuery("#statusbar"));
-
 	var textContainerOptions = { width: "100%", lineNumbers: true, clone: true, autoCloseBrackets: true};
 	new plt.wescheme.WeSchemeTextContainer(
 	    jQuery("#definitions").get(0),
@@ -103,7 +99,15 @@ var initializeEditor;
             if (attrs.noColorError) {
                 myEditor.disableColoredErrorMessages();
             }
-            jQuery("#run").click(function()  { myEditor.run(); });
+            jQuery("#run").click(function()  {
+            	// if we're on iOS13, we need to request permission
+            	if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            		DeviceOrientationEvent.requestPermission()["catch"](function(msg){
+            			console.error(msg); 
+            		});
+            	}
+            	myEditor.run(); 
+            });
             jQuery("#stop").click(function()  { myEditor.requestBreak(); });
             jQuery("#save").click(function() { myEditor.save(); });
             jQuery("#share").click(function()  { myEditor.share(); });
@@ -159,143 +163,142 @@ var initializeEditor;
     };
 
 
-
     var splitPaneSetup = function(attrs) {
-	if (attrs.hideDefinitions) {
-	    document.getElementById("interactions").style.height = "100%";
-	    document.getElementById("definitions").style.display = "none";
-	    return;
-	}
-	if (attrs.hideInteractions) {
-	    document.getElementById("interactions").style.display = "none";
-	    document.getElementById("definitions").style.height = "100%";
-	    return;
-	}
-
-
-	var getDefn = function() {
-	    return goog.dom.getElementsByTagNameAndClass(
-		'div', 'CodeMirror',
-		document.getElementById("definitions"))[0];
-	};
-
-
-
-	var top = document.getElementById("top");
-	var bottom = document.getElementById("bottom");
-	var middle = document.getElementById('middle');
-
-
-	var splitpaneDiv = document.getElementById('splitpane');
-	var definitions = document.getElementById("definitions");
-	var defn = getDefn();
-
-	var interactions = document.getElementById("interactions");
-
-
-	var splitpane1 = new goog.ui.SplitPane(
-	    new goog.ui.Component(),
-	    new goog.ui.Component(),
-	    goog.ui.SplitPane.Orientation.HORIZONTAL);
-
-	splitpane1.decorate(splitpaneDiv);
-
-	var vsm = new goog.dom.ViewportSizeMonitor();
-
-
-
-	var currentSize = undefined;
-
-	// The display should consist of the top, the middle, and the bottom.
-	// The middle should expand to the size of the viewport minus the top and bottom.
-	var onResize = function() {
-
-	    var viewportSize = vsm.getSize();
-	    var desiredWidth = viewportSize.width;
-	    var desiredHeight = (viewportSize.height - 
-				 goog.style.getBorderBoxSize(top).height - 
-				 goog.style.getBorderBoxSize(bottom).height);
-
-	    var newSize = new goog.math.Size(desiredWidth, desiredHeight);
-	    if ((! currentSize) ||
-		(! goog.math.Size.equals(currentSize, newSize))) {
-		currentSize = newSize;
-		splitpane1.setSize(newSize);
-		goog.style.setBorderBoxSize(middle, newSize);
-	    }
-
-	    goog.style.setBorderBoxSize(splitpaneDiv,
-					newSize);
-	    synchronize();
-	};
-
-	var synchronize = function() {
-	    synchronizeTopSize();
-	    synchronizeCodeMirror();
-	};
-
-	var synchronizeTopSize = function() {
-	    goog.style.setBorderBoxSize(
-		defn,
-		goog.style.getBorderBoxSize(definitions));
-	    //console.log(defn)
-	    //defn.refresh()
-	};
-
-
-	var synchronizeCodeMirror = function() {
-	    // HACK: get the width of the internal frame of the editor to match
-	    // the viewport, taking into account the width of the line numbers.
-	    var wrapping = goog.dom.getElementsByTagNameAndClass(
-		'div', 'CodeMirror', definitions);
-
-	    for (var i = 0 ; i < wrapping.length; i++) {
-		var wrappingSize = goog.style.getBorderBoxSize(wrapping[i]);
-		var lineNumberWidth;
-		var lineNumberDivs = 
-		    goog.dom.getElementsByTagNameAndClass('div', 
-							  'CodeMirror-gutter',
-							  wrapping[i]);
-		for (var j = 0; j < lineNumberDivs.length; j++) {
-		    lineNumberWidth = goog.style.getBorderBoxSize(lineNumberDivs[j]).width;
+		if (attrs.hideDefinitions) {
+		    document.getElementById("interactions").style.height = "100%";
+		    document.getElementById("definitions").style.display = "none";
+		    return;
+		}
+		if (attrs.hideInteractions) {
+		    document.getElementById("interactions").style.display = "none";
+		    document.getElementById("definitions").style.height = "100%";
+		    return;
 		}
 
-		if (typeof(lineNumberWidth) !== 'undefined') {
-		    var iframes = 
-			goog.dom.getElementsByTagNameAndClass(
-			    'iframe', undefined, wrapping[i]);
-		    for (var j = 0; j < iframes.length; j++) {
-			var iframe = iframes[j];
-			var iframeBox = goog.style.getBorderBoxSize(iframe);
 
-			iframe.style.width = (vsm.getSize().width - lineNumberWidth) + "px";
+		var getDefn = function() {
+		    return goog.dom.getElementsByTagNameAndClass(
+			'div', 'CodeMirror',
+			document.getElementById("definitions"))[0];
+		};
+
+
+
+		var top = document.getElementById("top");
+		var bottom = document.getElementById("bottom");
+		var middle = document.getElementById('middle');
+
+
+		var splitpaneDiv = document.getElementById('splitpane');
+		var definitions = document.getElementById("definitions");
+		var defn = getDefn();
+
+		var interactions = document.getElementById("interactions");
+
+
+		var splitpane1 = new goog.ui.SplitPane(
+		    new goog.ui.Component(),
+		    new goog.ui.Component(),
+		    goog.ui.SplitPane.Orientation.HORIZONTAL);
+
+		splitpane1.decorate(splitpaneDiv);
+
+		var vsm = new goog.dom.ViewportSizeMonitor();
+
+
+
+		var currentSize = undefined;
+
+		// The display should consist of the top, the middle, and the bottom.
+		// The middle should expand to the size of the viewport minus the top and bottom.
+		var onResize = function() {
+
+		    var viewportSize = vsm.getSize();
+		    var desiredWidth = viewportSize.width;
+		    var desiredHeight = (viewportSize.height - 
+					 goog.style.getBorderBoxSize(top).height - 
+					 goog.style.getBorderBoxSize(bottom).height);
+
+		    var newSize = new goog.math.Size(desiredWidth, desiredHeight);
+		    if ((! currentSize) ||
+			(! goog.math.Size.equals(currentSize, newSize))) {
+			currentSize = newSize;
+			splitpane1.setSize(newSize);
+			goog.style.setBorderBoxSize(middle, newSize);
 		    }
-		}
-	    };
-	    //fix the height of the definitions gutter
-	    myEditor.defn.refresh();
-	    
-	};
+
+		    goog.style.setBorderBoxSize(splitpaneDiv,
+						newSize);
+		    synchronize();
+		};
+
+		var synchronize = function() {
+		    synchronizeTopSize();
+		    synchronizeCodeMirror();
+		};
+
+		var synchronizeTopSize = function() {
+		    goog.style.setBorderBoxSize(
+			defn,
+			goog.style.getBorderBoxSize(definitions));
+		    //console.log(defn)
+		    //defn.refresh()
+		};
 
 
-	goog.events.listen(splitpane1,
-			   goog.events.EventType.CHANGE,
-			   synchronize);
+		var synchronizeCodeMirror = function() {
+		    // HACK: get the width of the internal frame of the editor to match
+		    // the viewport, taking into account the width of the line numbers.
+		    var wrapping = goog.dom.getElementsByTagNameAndClass(
+			'div', 'CodeMirror', definitions);
 
-	goog.events.listen(vsm,
-			   goog.events.EventType.RESIZE,
-			   onResize);
-        myEditor.setOnResize(onResize);
-        jQuery(window).bind("fullscreenchange", 
-                    function() { 
-                        onResize();
-                    });
+		    for (var i = 0 ; i < wrapping.length; i++) {
+			var wrappingSize = goog.style.getBorderBoxSize(wrapping[i]);
+			var lineNumberWidth;
+			var lineNumberDivs = 
+			    goog.dom.getElementsByTagNameAndClass('div', 
+								  'CodeMirror-gutter',
+								  wrapping[i]);
+			for (var j = 0; j < lineNumberDivs.length; j++) {
+			    lineNumberWidth = goog.style.getBorderBoxSize(lineNumberDivs[j]).width;
+			}
 
-	setTimeout(onResize, 0);
+			if (typeof(lineNumberWidth) !== 'undefined') {
+			    var iframes = 
+				goog.dom.getElementsByTagNameAndClass(
+				    'iframe', undefined, wrapping[i]);
+			    for (var j = 0; j < iframes.length; j++) {
+				var iframe = iframes[j];
+				var iframeBox = goog.style.getBorderBoxSize(iframe);
+
+				iframe.style.width = (vsm.getSize().width - lineNumberWidth) + "px";
+			    }
+			}
+		    };
+		    //fix the height of the definitions gutter
+		    myEditor.defn.refresh();
+		    
+		};
+
+
+		goog.events.listen(splitpane1,
+				   goog.events.EventType.CHANGE,
+				   synchronize);
+
+		goog.events.listen(vsm,
+				   goog.events.EventType.RESIZE,
+				   onResize);
+	        myEditor.setOnResize(onResize);
+	        jQuery(window).bind("fullscreenchange", 
+	                    function() { 
+	                        onResize();
+	                    });
+
+		setTimeout(onResize, 0);
     };
 
 
     var switchStyle = function(style){
-	document.getElementById('style').href = '/css/'+style;
+		document.getElementById('style').href = '/css/'+style;
     };
 })();
