@@ -3346,6 +3346,14 @@ PRIMITIVES['string-length'] =
 			return str.length;
 		 });
 
+PRIMITIVES['string-contains?'] =
+    new PrimProc('string-contains?', 2, false, false,
+		 function(aState, str, search) {
+		 	check(aState, str, isString, 'string-contains?', 'string', 1);
+		 	check(aState, search, isString, 'string-contains?', 'string', 2);
+			return str.toString().indexOf(search.toString()) > -1;
+		 });
+
 
 PRIMITIVES['string-ref'] =
     new PrimProc('string-ref',
@@ -5016,7 +5024,7 @@ PRIMITIVES['triangle/asa'] =
             angleA = jsnums.toFixnum(angleToProperRange(angleA));
             sideB = jsnums.toFixnum(sideB);
             angleC = jsnums.toFixnum(angleToProperRange(angleC));
-            var angleB = (180 - angleA - angleC);
+            var angleB = (180 - (angleA + angleC));
             if (less(angleB, 0)) {
               raise( types.incompleteExn(types.exnFailContract, "The given angle, side and angle will not form a triangle: "
                                          + angleA + ", " + sideB + ", " + angleC, []) );

@@ -477,6 +477,7 @@ plt.compiler = plt.compiler || {};
                                          ,["string->symbol", 1]
                                          ,["string-alphabetic?", 1]
                                          ,["string-append", 0, true]
+                                         ,["string-contains?", 2 ]
                                          ,["string-ci<=?", 2, true]
                                          ,["string-ci<?", 2, true]
                                          ,["string-ci=?", 2, true]
