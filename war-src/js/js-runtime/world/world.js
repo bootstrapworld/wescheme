@@ -482,8 +482,8 @@ if (typeof(world) === 'undefined') {
     FileImage.prototype = heir(BaseImage.prototype);
 
     FileImage.prototype.getAriaText = function(depth) {
-        console.log(imageCache[this.originalURI], imageCache[this.originalURI].getAriaText);
-        return imageCache[this.originalURI.labeled]? imageCache[this.originalURI].getAriaText()
+        return imageCache && imageCache[this.originalURI] && imageCache[this.originalURI].labeled? 
+            imageCache[this.originalURI].getAriaText()
             : " an image file from "+this.originalURI;
     }
 
@@ -566,8 +566,8 @@ if (typeof(world) === 'undefined') {
         var self = this;
         ctx.drawImage(self.animationHackImg, x, y);
         setTimeout(function(){
-            ctx.canvas.setAttribute('aria-label', self.getAriaText());
-            ctx.canvas.ariaText = self.getAriaText();
+            //ctx.canvas.setAttribute('aria-label', self.getAriaText());
+            //ctx.canvas.ariaText = self.getAriaText();
         }, 5000);
     };
 
