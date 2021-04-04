@@ -471,7 +471,7 @@ var isNonNegativeReal = function(x) {
 // from: http://docs.racket-lang.org/teachpack/2htdpimage.html?q=rotate#%28def._%28%28lib._2htdp%2Fimage..rkt%29._angle~3f%29%29
 var isAngle = function(x) {
 	return isReal(x) && !(jsnums.equals(x, jsnums.inf) || jsnums.equals(x, jsnums.negative_inf))
-		&& jsnums.lessThan(x, 180) && jsnums.greaterThan(x, -180);
+		&& jsnums.lessThan(x, 180) && jsnums.greaterThan(x, 0);
 };
 var isSideCount = function(x) {
 	return isInteger(x) && jsnums.greaterThanOrEqual(x, 3);
@@ -4849,7 +4849,7 @@ PRIMITIVES['triangle/sas'] =
       false, false,
       function(aState, sideA, angleB, sideC, style, color) {
        check(aState, sideA, isNonNegativeReal, "triangle/sas", "non-negative number", 1, arguments);
-       check(aState, angleB, isAngle, "triangle/sas", "angle less than 180 degrees and greater than -180 degrees", 2, arguments);
+       check(aState, angleB, isAngle, "triangle/sas", "angle less than 180 degrees and greater than 0 degrees", 2, arguments);
        check(aState, sideC, isNonNegativeReal, "triangle/sas", "non-negative number", 3, arguments);
        check(aState, style, isMode, "triangle/sas", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
        check(aState, color, isColor, "triangle/sas", "color", 5, arguments);
@@ -4916,7 +4916,7 @@ PRIMITIVES['triangle/ass'] =
       5,
       false, false,
       function(aState, angleA, sideB, sideC, style, color) {
-       check(aState, angleA, isAngle, "triangle/ass", "angle less than 180 degrees and greater than -180 degrees", 1, arguments);
+       check(aState, angleA, isAngle, "triangle/ass", "angle less than 180 degrees and greater than 0 degrees", 1, arguments);
        check(aState, sideB, isNonNegativeReal, "triangle/ass", "non-negative number", 2, arguments);
        check(aState, sideC, isNonNegativeReal, "triangle/ass", "non-negative number", 3, arguments);
        check(aState, style, isMode, "triangle/ass", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
@@ -4945,7 +4945,7 @@ PRIMITIVES['triangle/ssa'] =
       function(aState, sideA, sideB, angleC, style, color) {
          check(aState, sideA, isNonNegativeReal, "triangle/ssa", "non-negative number", 1, arguments);
          check(aState, sideB, isNonNegativeReal, "triangle/ssa", "non-negative number", 2, arguments);
-         check(aState, angleC, isAngle, "triangle/ssa", "angle less than 180 degrees and greater than -180 degrees", 3, arguments);
+         check(aState, angleC, isAngle, "triangle/ssa", "angle less than 180 degrees and greater than 0 degrees", 3, arguments);
          check(aState, style, isMode, "triangle/ssa", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/ssa", "color", 5, arguments);
          if (colorDb.get(color)) { color = colorDb.get(color); }
@@ -4985,8 +4985,8 @@ PRIMITIVES['triangle/aas'] =
         5,
         false, false,
         function(aState, angleA, angleB, sideC, style, color) {
-         check(aState, angleA, isAngle, "triangle/aas", "angle less than 180 degrees and greater than -180 degrees", 1, arguments);
-         check(aState, angleB, isAngle, "triangle/aas", "angle less than 180 degrees and greater than -180 degrees", 2, arguments);
+         check(aState, angleA, isAngle, "triangle/aas", "angle less than 180 degrees and greater than 0 degrees", 1, arguments);
+         check(aState, angleB, isAngle, "triangle/aas", "angle less than 180 degrees and greater than 0 degrees", 2, arguments);
          check(aState, sideC, isNonNegativeReal, "triangle/aas", "non-negative number", 3, arguments);
          check(aState, style, isMode, "triangle/aas", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
          check(aState, color, isColor, "triangle/aas", "color", 5, arguments);
@@ -5014,9 +5014,9 @@ PRIMITIVES['triangle/asa'] =
           5,
           false, false,
           function(aState, angleA, sideB, angleC, style, color) {
-            check(aState, angleA, isAngle, "triangle/asa", "angle less than 180 degrees and greater than -180 degrees", 1, arguments);
+            check(aState, angleA, isAngle, "triangle/asa", "angle less than 180 degrees and greater than 0 degrees", 1, arguments);
             check(aState, sideB, isNonNegativeReal, "triangle/asa", "non-negative number", 2, arguments);
-            check(aState, angleC, isAngle, "triangle/asa", "angle less than 180 degrees and greater than -180 degrees", 3, arguments);
+            check(aState, angleC, isAngle, "triangle/asa", "angle less than 180 degrees and greater than 0 degrees", 3, arguments);
             check(aState, style, isMode, "triangle/asa", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
             check(aState, color, isColor, "triangle/asa", "color", 5, arguments);
             if (colorDb.get(color)) { color = colorDb.get(color); }
@@ -5044,8 +5044,8 @@ PRIMITIVES['triangle/saa'] =
             false, false,
             function(aState, sideA, angleB, angleC, style, color) {
              check(aState, sideA, isNonNegativeReal, "triangle/saa", "non-negative number", 1, arguments);
-             check(aState, angleB, isAngle, "triangle/saa", "angle less than 180 degrees and greater than -180 degrees", 2, arguments);
-             check(aState, angleC, isAngle, "triangle/saa", "angle less than 180 degrees and greater than -180 degrees", 3, arguments);
+             check(aState, angleB, isAngle, "triangle/saa", "angle less than 180 degrees and greater than 0 degrees", 2, arguments);
+             check(aState, angleC, isAngle, "triangle/saa", "angle less than 180 degrees and greater than 0 degrees", 3, arguments);
              check(aState, style, isMode, "triangle/saa", 'style ("solid" / "outline") or an opacity value [0-255])', 4, arguments);
              check(aState, color, isColor, "triangle/saa", "color", 5, arguments);
              if (colorDb.get(color)) { color = colorDb.get(color); }
@@ -5088,7 +5088,7 @@ new PrimProc('isosceles-triangle',
 			 false, false,
 			 function(aState, side, angleC, s, c) {
 			 check(aState, side, isNonNegativeReal, "isosceles-triangle", "non-negative number", 1, arguments);
-			 check(aState, angleC, isAngle, "isosceles-triangle", "angle less than 180 degrees and greater than -180 degrees", 2, arguments);
+			 check(aState, angleC, isAngle, "isosceles-triangle", "angle less than 180 degrees and greater than 0 degrees", 2, arguments);
 			 check(aState, s, isMode, "isosceles-triangle", 'style ("solid" / "outline") or an opacity value [0-255])', 3, arguments);
 			 check(aState, c, isColor, "isosceles-triangle", "color", 4, arguments);
 			 if (colorDb.get(c)) { c = colorDb.get(c); }
