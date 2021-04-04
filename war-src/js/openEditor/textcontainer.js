@@ -123,6 +123,7 @@ var WeSchemeTextContainer;
 		var container = parent.getDiv();
 		if(container.id == "definitions") {
 			this.editor = CodeMirrorBlocks(container, {collapseAll: false, value: ''});
+			window.definitions = this.editor;
 		} else {
 			this.editor = CodeMirror(container, cm_options);
 		}
@@ -139,6 +140,7 @@ var WeSchemeTextContainer;
 
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
        	this.editor.on('change', function() { 
+       		console.log('change event called');
 			that.unhighlightAll();
 			myEditor.isDirty = true;
 			plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
@@ -284,7 +286,11 @@ var WeSchemeTextContainer;
 	};
   	// clear all textMarkers, and reset the highlightedAreas array
 	CodeMirrorImplementation.prototype.unhighlightAll = function () {
-    	this.highlightedAreas.forEach(function(ha){ ha.clear(); });
+		console.log('unhighlighting all');
+    	this.highlightedAreas.forEach(function(ha){ 
+    		console.log('clearing', ha);
+    		ha.clear(); 
+    	});
 		this.highlightedAreas = [];
 	};
 
