@@ -45,6 +45,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head><title><c:out escapeXml="true" value="<%= title %>" /></title>
+<meta name="robots" content="noindex">
 <link rel="stylesheet" type="text/css" href="css/common.css" />
 <link rel="stylesheet" type="text/css" href="css/view.css" id="style" />
 <meta name="viewport" content="width=device-width, user-scalable=no" />
