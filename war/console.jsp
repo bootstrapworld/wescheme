@@ -77,7 +77,7 @@
       </span>
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=HjTyPbbvSH">Defining Values</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Dus6Kaigy6">Defining Values</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket</a></li>
