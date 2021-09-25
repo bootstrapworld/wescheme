@@ -19,7 +19,7 @@ Build dependencies:
 In order to build the server, the following tools are needed:
  - Python 2.X
  - Git
- - Java Development Kit
+ - Java Development Kit **Version 8**. Newer versions do not work.
  - Racket
  - Apache Ant
  - gcloud
