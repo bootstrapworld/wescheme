@@ -39,7 +39,7 @@ body{
     text-decoration: none;
 }
 
-a.button{
+.button, .buttonText{
     text-align: center;
     vertical-align: middle;
     border:     solid 1px black;
