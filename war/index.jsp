@@ -48,7 +48,10 @@ UserService us = UserServiceFactory.getUserService();
 
         var onLogout = function() {
             if(confirm("You will be logged out of WeScheme and other Google services.")) {
-               window.location='/logout';
+                gapi.load('auth2', function() { 
+                    gapi.auth2.getAuthInstance().signOut();
+                    window.location='/logout';
+                });
             }
         };
 
@@ -80,31 +83,36 @@ UserService us = UserServiceFactory.getUserService();
     <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">Log In
         <span class="tooltip" id="loginDescription">...to access your programs</span>
     </a>
-    <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
-    <script>
-      function onSignIn(googleUser) {
-        // Useful data for your client-side scripts:
-        var profile = googleUser.getBasicProfile();
-        console.log("ID: " + profile.getId()); // Don't send this directly to your server!
-        console.log('Full Name: ' + profile.getName());
-        console.log('Given Name: ' + profile.getGivenName());
-        console.log('Family Name: ' + profile.getFamilyName());
-        console.log("Image URL: " + profile.getImageUrl());
-        console.log("Email: " + profile.getEmail());
-
-        // The ID token you need to pass to your backend:
-        var id_token = googleUser.getAuthResponse().id_token;
-        console.log("ID Token: " + id_token);
-
-        // open a new window
-        window.location= '/login.jsp?idtoken='+id_token;
-      }
-    </script>
 <%  } else { %>
     <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
          <span class="tooltip" id="loginDescription">...of all Google services</span>
     </a>
 <% } %> 
+
+<div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+<script>
+  function onSignIn(googleUser) {
+    // Useful data for your client-side scripts:
+    var profile = googleUser.getBasicProfile();
+    console.log("ID: " + profile.getId()); // Don't send this directly to your server!
+    console.log('Full Name: ' + profile.getName());
+    console.log('Given Name: ' + profile.getGivenName());
+    console.log('Family Name: ' + profile.getFamilyName());
+    console.log("Image URL: " + profile.getImageUrl());
+    console.log("Email: " + profile.getEmail());
+
+    // The ID token you need to pass to your backend:
+    var id_token = googleUser.getAuthResponse().id_token;
+    console.log("ID Token: " + id_token);
+
+    // TODO(Emmanuel): change "Log In" button to "Log Out"
+    // TODO(Emmanuel): change "Start Coding" button to "My Programs"
+
+    // for now
+    window.location= '/login.jsp?idtoken='+id_token;
+  }
+</script>
+
 
 <div id="links">
     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>

@@ -34,14 +34,7 @@
 			logger.info("I see the token! " + passedToken);
 			
 			s = sm.authOauth(passedToken);
-			logger.info("Created a session!!");
-      response.sendRedirect("/console"); 
-		} else {
-
-			// We aren't logged in, so let's try to authenticate against google.
-			UserService us = UserServiceFactory.getUserService();
-			s = sm.authGoogle(us);
-			if( s != null ){				// we've authenticated against google
+			if( s != null ){				// we've authenticated
 				sm.issueSession(s, response);	// issue the session
 			} else {
 				// Let's try to authenticate against WeScheme!

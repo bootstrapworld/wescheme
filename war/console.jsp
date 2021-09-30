@@ -24,11 +24,14 @@
 
 <!-- Refresh the page every 10min to preserve login credentials -->
 <meta http-equiv="refresh" content="600">
+<meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
 
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
 
+<!-- Needed for logout -->
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 
 <jsp:include page="/js/compat/compat.jsp"/>
 
@@ -92,7 +95,14 @@
 
 		<li id="logout">
 			<form id="logoutForm" method="POST" action="/logout">
-			<input name="logout" value="Logout" type="submit">
+			<input 
+        name="logout" 
+        value="Logout" 
+        type="submit" 
+        onclick="gapi.load('auth2', function() { 
+                    gapi.auth2.getAuthInstance().signOut();
+                    window.location='/logout';
+                });">
 			</form>
 		</li>
 
