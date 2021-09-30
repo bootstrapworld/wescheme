@@ -95,6 +95,9 @@ UserService us = UserServiceFactory.getUserService();
         // The ID token you need to pass to your backend:
         var id_token = googleUser.getAuthResponse().id_token;
         console.log("ID Token: " + id_token);
+
+        // open a new window
+        window.location= '/login.jsp?idtoken='+id_token;
       }
     </script>
 <%  } else { %>

@@ -36,14 +36,21 @@ public class Session implements Serializable {
 		_nickname = user.getName();
 		_admin = false; // WeSchemeUsers are not admin -- delegate this to app engine
 	}
+
+	// directly-constructed session
+	public Session(String name, String nickname) {
+		_name = name;
+		_nickname = nickname;
+		_admin = false; // WeSchemeUsers are not admin -- delegate this to app engine
+	}
 	
 
     /** Returns a name for the user.  Don't treat this name as a
 	way to identify the user, though!
      */
-    public String getNickname() {
-	return _nickname;
-    }
+   public String getNickname() {
+		return _nickname;
+   }
 
 
     /**
