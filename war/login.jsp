@@ -4,6 +4,8 @@
 <%@ page import="com.google.appengine.api.users.UserServiceFactory" %>
 <%@ page import="org.wescheme.user.SessionManager" %>
 <%@ page import="org.wescheme.user.Session" %>
+<%@ page import="java.util.logging.Logger" %>
+
 
 <html>
 <head><title>WeScheme</title>
@@ -18,18 +20,21 @@
 <h1 class="title">WeScheme Login</h1>
 
 <%
-		// Are we logged in?
+    Logger logger = Logger.getLogger("login");
+ 		// Are we logged in?
 		SessionManager sm = new SessionManager();
 		Session s = sm.authenticate(request, response);
+
+		String passedToken = request.getParameter("idtoken");
 		
 		if( s != null ) {
 			response.sendRedirect("/console");
-		} else {
 
-			// We aren't logged in, so let's try to authenticate against google.
-			UserService us = UserServiceFactory.getUserService();
-			s = sm.authGoogle(us);
-			if( s != null ){				// we've authenticated against google
+		} else if(passedToken != null){
+			logger.info("I see the token! " + passedToken);
+			
+			s = sm.authOauth(passedToken);
+			if( s != null ){				// we've authenticated
 				sm.issueSession(s, response);	// issue the session
 			} else {
 				// Let's try to authenticate against WeScheme!

@@ -4,6 +4,9 @@
 <%@ page import="com.google.appengine.api.users.UserServiceFactory" %>
 <%@ page import="com.google.appengine.api.users.UserService" %>
 <% 
+
+  String passedToken = request.getParameter("idtoken");
+
    // The Console page requires a login: if you come in without the right
    // credentials, let's bump them to the login page.
    SessionManager sm = new SessionManager(); 
@@ -11,7 +14,7 @@
    if( s == null ) {
        UserService us = UserServiceFactory.getUserService();
        // Not logged in: we should send them off to the login page.
-       response.sendRedirect(us.createLoginURL("/login.jsp"));
+       response.sendRedirect(us.createLoginURL("/login.jsp?idtoken="+passedToken));
    } else {
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -24,11 +27,14 @@
 
 <!-- Refresh the page every 10min to preserve login credentials -->
 <meta http-equiv="refresh" content="600">
+<meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
 
 
 <!-- Google analytics support -->
 <jsp:include page="/google-analytics.jsp"/>
 
+<!-- Needed for logout -->
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 
 <jsp:include page="/js/compat/compat.jsp"/>
 
@@ -45,11 +51,25 @@
 <script src="editor/jquery.createdomnodes-min.js" type="text/javascript"></script>
 <script src="safeSubmit-min.js" type="text/javascript"></script>
 <script src="/js/submitpost-min.js" type="text/javascript"></script>
-
-
-
 <script src="/js/console-calc-min.js" type="text/javascript"></script>
+<script>
+  var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
+  function logout() {
+    console.log('logout called');
+    gapi.load('auth2', function() { 
+      // Retrieve the singleton for the GoogleAuth library and set up the client.
+      auth2 = gapi.auth2.init({
+        client_id: WeSchemeClientId,
+        cookiepolicy: 'single_host_origin',
+      });
+      auth2.then(function(){
+        gapi.auth2.getAuthInstance().signOut();
+        window.location='/index.jsp';
+      });
+    });
+  }
 
+</script>
 
 </head>
 <body>
@@ -77,7 +97,7 @@
       </span>
       <ul id="bootstrapFileList">
         <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=HjTyPbbvSH">Defining Values</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Dus6Kaigy6">Defining Values</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket</a></li>
@@ -91,9 +111,10 @@
     </li>
 
 		<li id="logout">
-			<form id="logoutForm" method="POST" action="/logout">
-			<input name="logout" value="Logout" type="submit">
-			</form>
+			<input 
+        name="logout" 
+        value="Logout" 
+        onclick="logout()">
 		</li>
 
 	</ul>

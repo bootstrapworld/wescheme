@@ -36,14 +36,28 @@ public class Session implements Serializable {
 		_nickname = user.getName();
 		_admin = false; // WeSchemeUsers are not admin -- delegate this to app engine
 	}
+
+	// directly-constructed session
+	// We can derive everything we need from the email!
+	public Session(String email) {
+		// custom domains get "@gmail.com" appended
+		if(email.indexOf("@gmail.com") == -1) {
+			_name = email + "@gmail.com";
+		} else {
+			_name = email;
+		}
+		// nickname drops @gmail.com
+		_nickname = _name.substring(0, _name.length() - "@gmail.com".length());
+		_admin = false; // WeSchemeUsers are not admin -- delegate this to app engine
+	}
 	
 
     /** Returns a name for the user.  Don't treat this name as a
 	way to identify the user, though!
      */
-    public String getNickname() {
-	return _nickname;
-    }
+   public String getNickname() {
+		return _nickname;
+   }
 
 
     /**

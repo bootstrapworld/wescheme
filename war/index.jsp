@@ -22,29 +22,81 @@ UserService us = UserServiceFactory.getUserService();
     <script src="/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
 
-
     <!-- The splash screen JavaScript libraries. -->
     <script src="/js/splash-calc-min.js" type="text/javascript"></script>
 
 
     <link rel="stylesheet" type="text/css" href="/css/common.css" />
     <link rel="stylesheet" type="text/css" href="/css/splash.css" id="style" />
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <style>
+        #loggedInWrapper, #loggedInWrapper { display: none; }
+        #loginButton { margin:  -1px; }
+    </style>
+
     <script type="text/javascript">
+        var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
+        var auth2;
+        var startApp = function() {
+            gapi.load('auth2', function(){
+              // Retrieve the singleton for the GoogleAuth library and set up the client.
+              auth2 = gapi.auth2.init({
+                client_id: WeSchemeClientId,
+                cookiepolicy: 'single_host_origin',
+              });
+              auth2.then(function(){
+                authInstance = gapi.auth2.getAuthInstance();
+                if(authInstance.isSignedIn.get()) {
+                  console.log('user is logged in!');
+                  var id_token = authInstance.currentUser.get().getAuthResponse().id_token;
+                  document.getElementById("loggedInWrapper").style.display = "block";
+                  document.getElementById("loggedOutWrapper").style.display = "none";
+                } else {
+                  document.getElementById("loggedInWrapper").style.display = "none";
+                  document.getElementById("loggedOutWrapper").style.display = "block";
+                  attachSignin(document.getElementById('loginButton'));
+                }                
+              })
+          });
+        };
+
+        function attachSignin(element) {
+            auth2.attachClickHandler(element, {},
+                function(googleUser) {
+                  var id_token = googleUser.getAuthResponse().id_token;
+                  console.log("ID Token: " + id_token);
+
+                  document.getElementById("loggedInWrapper").style.display = "block";
+                  document.getElementById("loggedOutWrapper").style.display = "none";
+                  window.location= '/login.jsp?idtoken='+id_token+'&dest=index.jsp';
+
+                }, function(error) {
+                  alert(JSON.stringify(error, undefined, 2));
+                });
+          }
+
+
         var onOpenEditor = function() {
             window.location='/openEditor';
         };
 
         var onMyPrograms = function() {
-            window.location='/console';
+            window.location='/console.jsp';
         };
 
         var onLogin = function() {
-            window.location = '<%= us.createLoginURL("/login.jsp") %>';
+            //window.location = '<%= us.createLoginURL("/login.jsp") %>';
         };
 
         var onLogout = function() {
             if(confirm("You will be logged out of WeScheme and other Google services.")) {
-               window.location='/logout';
+                gapi.load('auth2', function() { 
+                    gapi.auth2.getAuthInstance().signOut();
+                    window.location='/logout';
+                });
             }
         };
 
@@ -57,30 +109,35 @@ UserService us = UserServiceFactory.getUserService();
     </script>
 </head>
 
-<body onload="assignHandlers()">
+<body onload="assignHandlers(); startApp(); ">
 <header><h1>WeScheme</h1></header>
 <main>
-<% if (s == null) { %>
-    <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding 
-        <span class="tooltip" id="startCodingDescription">...without being able to save</span>
-    </a>
-<% } else { %>
-    <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs
-        <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
-    </a>
-<% } %>
+    <div id="loggedOutWrapper">
+        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding 
+            <span class="tooltip" id="startCodingDescription">...without being able to save</span>
+        </a>
 
-<img src="css/images/BigLogo.png" alt="">
+        <img src="css/images/BigLogo.png" alt="">
 
-<% if( s == null ) { %>
-    <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">Log In
-        <span class="tooltip" id="loginDescription">...to access your programs</span>
-    </a>
-<%  } else { %>
-    <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
-         <span class="tooltip" id="loginDescription">...of all Google services</span>
-    </a>
-<% } %> 
+        <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">
+                <span class="tooltip" id="loginDescription">...to access your programs</span>
+            <div id="loginButton" class="customGPlusSignIn" data-onsuccess="onSignIn">
+                <span class="buttonText">Log In</span>
+            </div>
+        </a>
+    </div>
+
+    <div id="loggedInWrapper">
+        <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs
+            <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
+        </a>
+
+        <img src="css/images/BigLogo.png" alt="">
+
+        <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
+             <span class="tooltip" id="loginDescription">...of all Google services</span>
+        </a>
+    </div>
 
 <div id="links">
     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>

@@ -1,5 +1,6 @@
 <project default="compile">
   <property name="sdk.dir" location="lib/appengine-java-sdk-1.9.60" />
+  <property name="oauth.dir" location="lib/google-oauth-java-client" />
 
   <import file="${sdk.dir}/config/user/ant-macros.xml" />
 
@@ -19,6 +20,13 @@
         todir="war/WEB-INF/lib"
         flatten="true">
       <fileset dir="${sdk.dir}/lib/user">
+        <include name="**/*.jar" />
+      </fileset>
+    </copy>
+    <copy
+        todir="war/WEB-INF/lib"
+        flatten="true">
+      <fileset dir="${oauth.dir}/libs">
         <include name="**/*.jar" />
       </fileset>
     </copy>
