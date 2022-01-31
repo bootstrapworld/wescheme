@@ -30,7 +30,7 @@ UserService us = UserServiceFactory.getUserService();
     <link rel="stylesheet" type="text/css" href="/css/splash.css" id="style" />
     <meta name="google-signin-scope" content="profile email">
     <meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         #loggedInWrapper, #loggedInWrapper { display: none; }
@@ -38,57 +38,12 @@ UserService us = UserServiceFactory.getUserService();
     </style>
 
     <script type="text/javascript">
-        var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
-        var auth2;
-        var startApp = function() {
-            gapi.load('auth2', function(){
-              // Retrieve the singleton for the GoogleAuth library and set up the client.
-              auth2 = gapi.auth2.init({
-                client_id: WeSchemeClientId,
-                cookiepolicy: 'single_host_origin',
-              });
-              auth2.then(function(){
-                authInstance = gapi.auth2.getAuthInstance();
-                if(authInstance.isSignedIn.get()) {
-                  console.log('user is logged in!');
-                  var id_token = authInstance.currentUser.get().getAuthResponse().id_token;
-                  document.getElementById("loggedInWrapper").style.display = "block";
-                  document.getElementById("loggedOutWrapper").style.display = "none";
-                } else {
-                  document.getElementById("loggedInWrapper").style.display = "none";
-                  document.getElementById("loggedOutWrapper").style.display = "block";
-                  attachSignin(document.getElementById('loginButton'));
-                }                
-              })
-          });
-        };
-
-        function attachSignin(element) {
-            auth2.attachClickHandler(element, {},
-                function(googleUser) {
-                  var id_token = googleUser.getAuthResponse().id_token;
-                  console.log("ID Token: " + id_token);
-
-                  document.getElementById("loggedInWrapper").style.display = "block";
-                  document.getElementById("loggedOutWrapper").style.display = "none";
-                  window.location= '/login.jsp?idtoken='+id_token+'&dest=index.jsp';
-
-                }, function(error) {
-                  alert(JSON.stringify(error, undefined, 2));
-                });
-          }
-
-
         var onOpenEditor = function() {
             window.location='/openEditor';
         };
 
         var onMyPrograms = function() {
             window.location='/console.jsp';
-        };
-
-        var onLogin = function() {
-            //window.location = '<%= us.createLoginURL("/login.jsp") %>';
         };
 
         var onLogout = function() {
@@ -109,7 +64,7 @@ UserService us = UserServiceFactory.getUserService();
     </script>
 </head>
 
-<body onload="assignHandlers(); startApp(); ">
+<body onload="assignHandlers(); ">
 <header><h1>WeScheme</h1></header>
 <main>
     <div id="loggedOutWrapper">
@@ -121,9 +76,13 @@ UserService us = UserServiceFactory.getUserService();
 
         <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">
                 <span class="tooltip" id="loginDescription">...to access your programs</span>
-            <div id="loginButton" class="customGPlusSignIn" data-onsuccess="onSignIn">
-                <span class="buttonText">Log In</span>
-            </div>
+            <script src="https://accounts.google.com/gsi/client" async defer></script>
+                <div id="g_id_onload"
+                     data-client_id="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"
+                     data-ux_mode="redirect"
+                     data-login_uri="https://test-auth2-dot-wescheme-hrd-2.appspot.com/login.jsp">
+                </div>
+                <div class="g_id_signin" data-type="standard"></div>
         </a>
     </div>
 
@@ -133,7 +92,7 @@ UserService us = UserServiceFactory.getUserService();
         </a>
 
         <img src="css/images/BigLogo.png" alt="">
-
+<div class="g_id_signout">Sign Out</div>
         <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
              <span class="tooltip" id="loginDescription">...of all Google services</span>
         </a>

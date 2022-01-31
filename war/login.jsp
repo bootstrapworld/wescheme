@@ -26,11 +26,14 @@
 		Session s = sm.authenticate(request, response);
 
 		String passedToken = request.getParameter("idtoken");
-		
+		if (passedToken == null) {
+			passedToken = request.getParameter("credential");
+		}
+
 		if( s != null ) {
 			response.sendRedirect("/console");
 
-		} else if(passedToken != null){
+		} else if(passedToken != null) {
 			logger.info("I see the token! " + passedToken);
 			
 			s = sm.authOauth(passedToken);
@@ -39,16 +42,16 @@
 			} else {
 				// Let's try to authenticate against WeScheme!
 				s = sm.authWeScheme(request, response);
-        		if( s != null ){
-        			sm.issueSession(s, response);
-        		}
-        	}
-        }
-	if (request.getParameter("dest") != null) {
+      		if( s != null ){
+      			sm.issueSession(s, response);
+      		}
+      	}
+    }
+		if (request.getParameter("dest") != null) {
    	    response.sendRedirect(request.getParameter("dest"));
-        } else {
-            response.sendRedirect("/console"); 
-        }
+    } else {
+        response.sendRedirect("/console"); 
+    }
 %>
 
   </body>
