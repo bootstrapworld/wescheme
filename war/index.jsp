@@ -25,79 +25,63 @@ UserService us = UserServiceFactory.getUserService();
     <!-- The splash screen JavaScript libraries. -->
     <script src="/js/splash-calc-min.js" type="text/javascript"></script>
 
-
     <link rel="stylesheet" type="text/css" href="/css/common.css" />
     <link rel="stylesheet" type="text/css" href="/css/splash.css" id="style" />
-    <meta name="google-signin-scope" content="profile email">
-    <meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        /*
+        Dead code! Archived in case we can bring back the #loggedIn UI
 
-    <style>
-        #loggedInWrapper, #loggedInWrapper { display: none; }
-        #loginButton { margin:  -1px; }
-    </style>
-
-    <script type="text/javascript">
-        var onOpenEditor = function() {
-            window.location='/openEditor';
-        };
-
-        var onMyPrograms = function() {
-            window.location='/console.jsp';
-        };
-
-        var onLogout = function() {
-            if(confirm("You will be logged out of WeScheme and other Google services.")) {
+        function logout() {
+            if(confirm("You will be logged out of all Google services.")) {
                 gapi.load('auth2', function() { 
                     gapi.auth2.getAuthInstance().signOut();
                     window.location='/logout';
                 });
             }
         };
-
-        function assignHandlers() {
-            $("#startCoding").click(onOpenEditor);
-            $("#loginButton").click(onLogin);
-            $("#logoutButton").click(onLogout);
-            $("#myPrograms").click(onMyPrograms);
-        }
+        */
     </script>
+    <style>
+        #loggedInWrapper { display: none; }
+        #loginButton { margin:  -1px; }
+    </style>
+
 </head>
 
-<body onload="assignHandlers(); ">
+<body>
 <header><h1>WeScheme</h1></header>
 <main>
     <div id="loggedOutWrapper">
-        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding 
+        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="openEditor/">Start Coding 
             <span class="tooltip" id="startCodingDescription">...without being able to save</span>
         </a>
 
         <img src="css/images/BigLogo.png" alt="">
 
         <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">
-                <span class="tooltip" id="loginDescription">...to access your programs</span>
-            <script src="https://accounts.google.com/gsi/client" async defer></script>
-                <div id="g_id_onload"
-                     data-client_id="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"
-                     data-ux_mode="redirect"
-                     data-login_uri="https://test-auth2-dot-wescheme-hrd-2.appspot.com/login.jsp">
-                </div>
-                <div class="g_id_signin" data-type="standard"></div>
+            <span class="tooltip" id="loginDescription">...to access your programs</span>
+            <div id="g_id_onload"
+                 data-client_id="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"
+                 data-ux_mode="redirect"
+                 data-login_uri="https://test-auth2-dot-wescheme-hrd-2.appspot.com/login.jsp">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
         </a>
     </div>
-
+<!---
     <div id="loggedInWrapper">
-        <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs
+        <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="console/">My Programs
             <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
         </a>
 
         <img src="css/images/BigLogo.png" alt="">
 <div class="g_id_signout">Sign Out</div>
-        <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
+        <a class="button" id="logoutButton" href="javascript: logout()">Log Out
              <span class="tooltip" id="loginDescription">...of all Google services</span>
         </a>
     </div>
-
+--->
 <div id="links">
     <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
 </div>
