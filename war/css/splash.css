@@ -1,3 +1,4 @@
+@font-face{font-family:'Google Sans';font-style:normal;font-weight:400;src:url(//fonts.gstatic.com/s/googlesans/v14/4UaGrENHsxJlGDuGo1OIlL3Owps.ttf)format('truetype');}
 
 h1 {
 	text-align:	center;
@@ -14,5 +15,33 @@ img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
 }
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
-  a.button{font-size: 12px; width: 100px;}
+  a.button{font-size: 14px; width: 100px;}
 }
+
+.g_id_signin { width: 120px; }
+.g_id_signin > div:first-child > div:first-child > div:first-child { height: 22px; }
+
+#loginButton { border: none; }
+#startCoding { height: 22px; padding-top: 8px; margin-top: 12px; }
+.button, .buttonText {
+    text-align: center;
+    vertical-align: middle;
+    border:     solid 1px #dadce0;
+    border-radius:  4px;
+    background: white;
+    font-size:  14px;
+    font-family:'Google Sans',arial,sans-serif;
+    font-weight: 500;
+    letter-spacing:  0.25px;
+    width:      120px;
+    height:     22px;
+    cursor:     pointer;
+    display:    inline-block;
+    position:   relative;
+    text-decoration: none;
+    color:      #3c4043;
+}
+.button>span.tooltip{ position: absolute; top: 30px; left: 0px; font-size: 14px; opacity: 0; };
+.button:hover { background: gray; }
+.button:hover>span.tooltip{ opacity: 0.5; };
+
