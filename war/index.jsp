@@ -40,6 +40,7 @@ UserService us = UserServiceFactory.getUserService();
     <script type="text/javascript">
         var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
         var auth2;
+        var id_token;
         var startApp = function() {
             gapi.load('auth2', function(){
               // Retrieve the singleton for the GoogleAuth library and set up the client.
@@ -50,11 +51,12 @@ UserService us = UserServiceFactory.getUserService();
               auth2.then(function(){
                 authInstance = gapi.auth2.getAuthInstance();
                 if(authInstance.isSignedIn.get()) {
-                  console.log('user is logged in!');
-                  var id_token = authInstance.currentUser.get().getAuthResponse().id_token;
+                  id_token = authInstance.currentUser.get().getAuthResponse().id_token;
+                  console.log('user is logged in! id=', id_token);
                   document.getElementById("loggedInWrapper").style.display = "block";
                   document.getElementById("loggedOutWrapper").style.display = "none";
                 } else {
+                  console.log('user is NOT logged in!');
                   document.getElementById("loggedInWrapper").style.display = "none";
                   document.getElementById("loggedOutWrapper").style.display = "block";
                   attachSignin(document.getElementById('loginButton'));
@@ -66,7 +68,7 @@ UserService us = UserServiceFactory.getUserService();
         function attachSignin(element) {
             auth2.attachClickHandler(element, {},
                 function(googleUser) {
-                  var id_token = googleUser.getAuthResponse().id_token;
+                  id_token = googleUser.getAuthResponse().id_token;
                   console.log("ID Token: " + id_token);
 
                   document.getElementById("loggedInWrapper").style.display = "block";
@@ -84,7 +86,7 @@ UserService us = UserServiceFactory.getUserService();
         };
 
         var onMyPrograms = function() {
-            window.location='/console.jsp';
+            window.location='/console.jsp?idtoken='+id_token;
         };
 
         var onLogin = function() {

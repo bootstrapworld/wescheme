@@ -111,10 +111,7 @@
     </li>
 
 		<li id="logout">
-			<input 
-        name="logout" 
-        value="Logout" 
-        onclick="logout()">
+			<input name="logout" value="Logout"  onclick="logout()">
 		</li>
 
 	</ul>
