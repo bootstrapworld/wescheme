@@ -108,7 +108,7 @@ var initializeEditor;
                 myEditor.disableColoredErrorMessages();
             }
             jQuery("#run").click(function()  {
-            	// if we're on iOS13 or higher, we need to request permission
+            	// if we're on iOS13 or above, we need to request permission
             	if (typeof DeviceOrientationEvent !== "undefined" && 
             		typeof DeviceOrientationEvent.requestPermission === 'function') {
             		DeviceOrientationEvent.requestPermission()["catch"](function(msg){

@@ -18,11 +18,8 @@ img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
   a.button{font-size: 14px; width: 100px;}
 }
 
-.g_id_signin { width: 120px; }
-.g_id_signin > div:first-child > div:first-child > div:first-child { height: 22px; }
-
 #loginButton { border: none; }
-#startCoding { height: 22px; padding-top: 8px; margin-top: 12px; }
+#startCoding { height: 38px; line-height: 38px; margin-top: 18px; }
 .button, .buttonText {
     text-align: center;
     vertical-align: middle;
@@ -33,7 +30,7 @@ img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
     font-family:'Google Sans',arial,sans-serif;
     font-weight: 500;
     letter-spacing:  0.25px;
-    width:      120px;
+    min-width:  240px;
     height:     22px;
     cursor:     pointer;
     display:    inline-block;
@@ -41,7 +38,7 @@ img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
     text-decoration: none;
     color:      #3c4043;
 }
-.button>span.tooltip{ position: absolute; top: 30px; left: 0px; font-size: 14px; opacity: 0; };
+.button>span.tooltip{ position: absolute; top: 44px; left: 0px; font-size: 14px; opacity: 0; line-height: 16px;};
 .button:hover { background: gray; }
 .button:hover>span.tooltip{ opacity: 0.5; };
 

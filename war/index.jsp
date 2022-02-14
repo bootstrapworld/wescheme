@@ -53,7 +53,7 @@ UserService us = UserServiceFactory.getUserService();
 <header><h1>WeScheme</h1></header>
 <main>
     <div id="loggedOutWrapper">
-        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="openEditor/">Start Coding 
+        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="openEditor/">Start Writing Code! 
             <span class="tooltip" id="startCodingDescription">...without being able to save</span>
         </a>
 
@@ -64,6 +64,7 @@ UserService us = UserServiceFactory.getUserService();
             <div id="g_id_onload"
                  data-client_id="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"
                  data-ux_mode="redirect"
+                 data-auto_prompt="false"
                  data-login_uri="https://test-auth2-dot-wescheme-hrd-2.appspot.com/login.jsp">
             </div>
             <div class="g_id_signin" data-type="standard"></div>
