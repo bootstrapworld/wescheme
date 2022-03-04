@@ -34,7 +34,7 @@
 <jsp:include page="/google-analytics.jsp"/>
 
 <!-- Needed for logout -->
-<script src="https://apis.google.com/js/platform.js" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <jsp:include page="/js/compat/compat.jsp"/>
 
@@ -55,18 +55,9 @@
 <script>
   var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
   function logout() {
-    console.log('logout called');
-    gapi.load('auth2', function() { 
-      // Retrieve the singleton for the GoogleAuth library and set up the client.
-      auth2 = gapi.auth2.init({
-        client_id: WeSchemeClientId,
-        cookiepolicy: 'single_host_origin',
-      });
-      auth2.then(function(){
-        gapi.auth2.getAuthInstance().signOut();
-        window.location='/index.jsp';
-      });
-    });
+    if(confirm("You will be logged out of WeScheme and other Google services.")) {
+      submitPost("/logout");
+    }
   }
 
 </script>
@@ -99,7 +90,7 @@
         <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Dus6Kaigy6">Defining Values</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=bTq3FRpa2b">Game</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=EA6R0E97nV">Booleans</a></li>
@@ -112,9 +103,11 @@
 
 		<li id="logout">
 			<input 
+        type="button"
+        class="g_id_signout"
         name="logout" 
-        value="Logout" 
-        onclick="logout()">
+        value="Logout"
+        onclick="logout()" >
 		</li>
 
 	</ul>
