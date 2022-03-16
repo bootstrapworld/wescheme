@@ -80,7 +80,7 @@
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Dus6Kaigy6">Defining Values</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=LGTVNvzrax">Rocket</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Tl7bbvF9Kw">Rocket</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=JCTcwYc57r">Bug Hunting</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=EA6R0E97nV">Booleans</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=eVMjb9omtP">Simple Inequalities</a></li>
