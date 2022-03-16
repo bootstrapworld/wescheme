@@ -4,7 +4,6 @@
 war/js/mzscheme-vm/support.js
 
 # Directories that contain libraries/built code
-war/
 lib/
 
 # Downloaded on demand
