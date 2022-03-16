@@ -317,7 +317,7 @@
                   <li><a  class="h2" role="button"  id="account" 
                       href="/console" target="console"
                       aria-label="Go to program list">Programs</a></li>
-                  <li><a  class="h2" role="button"  id="logout" href="javascript: void(0)"
+                  <li><a  class="h2 g_id_signout" role="button"  id="logout" href="javascript: void(0)"
                       aria-label="Log out of WeScheme and other Google services">Logout</a></li>
       	    <% } %>
             </ul>
