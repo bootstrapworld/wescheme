@@ -182,15 +182,6 @@
     (update-codemirror-lib!))
   (printf "CodeMirror is up to date\n"))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;(printf "Building properties file for JS\n")
-;(copy-file "war/wescheme.properties" "war/wescheme.properties" #t)
-;(call-system "python" "bin/make-properties.py"
-;             #:pipe-input-from "wescheme.properties"
-;             #:pipe-output-to "war-src/js/wescheme-properties.js")
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (printf "Writing dependency file for Google Closure library\n")
 (parameterize ([current-directory "war-src"])
