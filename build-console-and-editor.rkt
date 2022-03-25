@@ -107,7 +107,8 @@
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
 
 (define (ensure-codemirror-installed!)
-  (unless (directory-exists? codemirror-src-dir)
+  (unless (and (directory-exists? codemirror-src-dir)
+               (file-exists? "./war-src/js/codemirror/lib/codemirror.js"))
     (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
     (call-system "git" "submodule" "init")
     (call-system "git" "submodule" "update")
