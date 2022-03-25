@@ -114,7 +114,13 @@
 
     (unless (directory-exists? codemirror-src-dir)
       (fprintf (current-error-port) "Codemirror could not be pulled successfully.  Exiting.\n")
-      (exit 0))))
+      (exit 0)))
+
+  (unless (file-exists? "./war-src/js/codemirror/lib/codemirror.js")
+    (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm run build now...\n")
+    (current-directory "war-src/js/codemirror/")
+    (call-system "npm" "install")
+    (current-directory "../../../")))
 
 
 (define (ensure-closure-library-installed!)
@@ -176,7 +182,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js"
-                    "./war/js/codemirror/lib/codemirror.js")
+                  "./war/js/codemirror/lib/codemirror.js")
   (begin
     (printf "Updating CodeMirror and copying lib\n")
     (update-codemirror-lib!))
