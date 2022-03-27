@@ -118,7 +118,7 @@
       (exit 0)))
 
   (unless (file-exists? "./war-src/js/codemirror/lib/codemirror.js")
-    (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm run build now...\n")
+    (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
     (current-directory "war-src/js/codemirror/")
     (call-system "npm" "install")
     (current-directory "../../../")))
