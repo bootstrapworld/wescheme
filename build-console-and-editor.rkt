@@ -97,7 +97,6 @@
 ;; cd into CM, build a fresh copy, then move it to war/js/codemirror/lib
 (define (update-codemirror-lib!)
   (current-directory "war-src/js/codemirror/")
-  (call-system "npm" "install")
   (current-directory "../../../")
   (unless (directory-exists? codemirror-dest-dir)
     (make-directory* codemirror-dest-dir))
@@ -107,8 +106,7 @@
   (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
 
 (define (ensure-codemirror-installed!)
-  (unless (and (directory-exists? codemirror-src-dir)
-               (file-exists? "./war-src/js/codemirror/lib/codemirror.js"))
+  (unless (directory-exists? codemirror-src-dir)
     (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
     (call-system "git" "submodule" "init")
     (call-system "git" "submodule" "update")
