@@ -90,7 +90,7 @@
         <li><a target="_blank" href="https://www.wescheme.org/run?publicId=sggzRzgU5T">NinjaCat</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Dus6Kaigy6">Defining Values</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=jH25JejavW">Flags</a></li>
-        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=bTq3FRpa2b">Game</a></li>
+        <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=ysj93ZPFsu">Game</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=Tl7bbvF9Kw">Rocket</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=nwVEttw9ZY">Bug Hunting</a></li>
         <li><a target="_blank" href="https://www.wescheme.org/openEditor?publicId=EA6R0E97nV">Booleans</a></li>
