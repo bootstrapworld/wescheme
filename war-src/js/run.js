@@ -5,7 +5,6 @@
 goog.provide("plt.wescheme.runner");
 
 goog.require("plt.wescheme.AjaxActions");
-goog.require("plt.wescheme.WeSchemeProperties");
 goog.require("plt.wescheme.makeDynamicModuleLoader");
 goog.require("plt.wescheme.RoundRobin");
 

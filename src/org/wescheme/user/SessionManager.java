@@ -24,6 +24,13 @@ import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
+
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+
 public class SessionManager {
     Logger logger = Logger.getLogger(SessionManager.class.getName());
 	
@@ -93,7 +100,36 @@ public class SessionManager {
         return null;
     }
 
+    public Session authOauth(String idTokenString) {
+        logger.info("Starting authOauth with: " + idTokenString);
 
+        try {
+
+          // from https://stackoverflow.com/a/63515005/12026982
+          GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
+            new NetHttpTransport(), new GsonFactory())
+            .setAudience(Collections.singletonList("981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"))
+            .build();
+        
+          if (idTokenString != null) {
+            logger.info("There's a real string");
+            GoogleIdToken idToken = verifier.verify(idTokenString);
+            logger.info("after verification:"+idToken);
+            Payload payload = idToken.getPayload();
+
+            String userId = payload.getSubject();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
+            logger.info(userId + email + name);
+            return new Session(email);
+          } else {
+            logger.warning("Invalid ID token.");
+          }
+        } catch (Throwable e) {
+          logger.warning("EXCEPTION:" + e);
+        }
+        return null;
+    }
 
     public Session authGoogle(UserService userService){
 

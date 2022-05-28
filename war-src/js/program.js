@@ -1,8 +1,5 @@
 goog.provide("plt.wescheme.Program");
-
-
 goog.require("plt.wescheme.SharedAs");
-goog.require("plt.wescheme.WeSchemeProperties");
 goog.require("plt.wescheme.base64");
 
 
@@ -13,8 +10,6 @@ goog.require("plt.wescheme.base64");
 //     this.plt.wescheme = {};
 // }
 // plt.wescheme.Program = {};
-
-
 
 
 // Abstraction around Program objects.
@@ -106,8 +101,8 @@ goog.require("plt.wescheme.base64");
     // getPublicEditingUrl: -> string
     // Returns a url that, when visited, opens up the editor.
     plt.wescheme.Program.prototype.getPublicEditingUrl = function() {
-        return (plt.wescheme.WeSchemeProperties.wescheme_server_base + 
-                "/openEditor?publicId="+ encodeURIComponent(this.getPublicId()));
+        return ("http://www.wescheme.org/openEditor?publicId=" +
+            encodeURIComponent(this.getPublicId()));
 
     };
 

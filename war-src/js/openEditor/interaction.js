@@ -12,7 +12,6 @@ goog.provide("plt.wescheme.WeSchemeInteractions");
 goog.require("plt.wescheme.topKeymap");
 goog.require("plt.wescheme.WeSchemeTextContainer");
 goog.require("plt.wescheme.tokenizer");
-goog.require("plt.wescheme.WeSchemeProperties");
 goog.require("plt.wescheme.RoundRobin");
 goog.require("plt.wescheme.makeDynamicModuleLoader");
 

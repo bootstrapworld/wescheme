@@ -1,4 +1,4 @@
-body{
+body {
     width:      100%;
     height:     100%;
     min-width:  300px;
@@ -10,7 +10,7 @@ body{
     font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
 }
 
-#footer{
+#footer {
     position:   fixed;
     width:      100%;
     bottom:     0px;
@@ -24,7 +24,7 @@ body{
 }
 #footer ul, #footer ul li {display: inline;}
 
-#footer a{
+#footer a {
     display:    inline-block; 
     width:      24%;
     margin:     0px;
@@ -34,34 +34,13 @@ body{
     text-decoration: none;
 }
 
-#footer a:hover{
+#footer a:hover {
     background: #546DAF;
     text-decoration: none;
 }
 
-a.button{
-    text-align: center;
-    vertical-align: middle;
-    border:     solid 1px black;
-    background: lightsteelblue;
-    font-size:  1em;
-    font-family:Lato, Century Gothic, Arial, Helvetica, sans-serif;
-    width:      120px;
-    height:     22px;
-    cursor:     pointer;
-    display:    inline-block;
-    position:   relative;
-    text-decoration: none;
-    color:      black;
-}
-a.button>span.tooltip{ position: absolute; top: 25px; left: 0px; font-size: 14px; opacity: 0; };
-a.button:hover{
-    background: gray;
-}
-a.button:hover>span.tooltip{ opacity: 0.5; };
-
-ul.socialBookmarks{  padding: 0px; }
-ul.socialBookmarks{
+ul.socialBookmarks {  padding: 0px; }
+ul.socialBookmarks {
   display:      block;
   padding-left: 0px;
   margin-left:  0px;
@@ -71,15 +50,12 @@ ul.socialBookmarks{
 }
 .socialBookmarks li { display: inline; margin: 0px 5px;}
 /* remove top-border from tooltip */
-.tooltip .socialBookmarks{border-top: none;}
+.tooltip .socialBookmarks { border-top: none; }
 
-a.socialBookmarklet {
-  border: 0px solid black;
-}
+.socialBookmarklet { border: 0px solid black; }
 
 img.socialBookmarklet {
-  border: 0px solid black;
-  padding: 5px;
+   padding: 5px;
   width:   24px;
 }
 

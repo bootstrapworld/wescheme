@@ -44,22 +44,7 @@ Installing WeScheme for local development
 
    $ git clone git://github.com/bootstrapworld/wescheme
 
-Don't forget: we're using git submodules, so also make sure to:
-
-   $ git submodule init
-   $ git submodule update
-
-to grab the external dependendies as well.  As of this writing, the
-external dependency is CodeMirror.
-
-
-2. You might also need to change wescheme.properties if you are
-doing any development on the android packager or compilation server.
-You probably don't need to touch this unless you really know what
-you're doing.
-
-
-3.  Run 'build-console-and-editor.rkt'.
+2.  Run 'build-console-and-editor.rkt'.
 
 THIS STEP IS IMPORTANT!
 
@@ -67,7 +52,7 @@ The script "build-console-and-editor.rkt" must be executed after any
 changes are made to the javascript source files in war-src/js.  The
 webapp itself uses files in war, which are built by
 build-console-and-editor.  Also, the builder also re-compresses
-JavaScript files (such as CodeMirror 2) with the Closure Compiler, so
+JavaScript files (such as CodeMirror) with the Closure Compiler, so
 you must run this every time you change the JavaScript files.
 
 
