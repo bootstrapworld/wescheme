@@ -11,7 +11,7 @@
 ;; Assumes closure-library is under externals/closure.
 
 (define-runtime-path closure-dir (build-path "war-src" "closure"))
-(define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
+;(define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
 
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
@@ -118,7 +118,7 @@
     (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
     (call-system "npm" "install")))
 
-
+#|
 (define (ensure-closure-library-installed!)
   (unless (directory-exists? closure-dir)
     (fprintf (current-error-port) "The Closure library has not been installed yet.\n")
@@ -129,7 +129,7 @@
     (unless (directory-exists? closure-dir)
       (fprintf (current-error-port) "The Closure library could not be installed; please check.\n")
       (exit 0))))
-
+|#
 (define (ensure-appengine-installed!)
   (unless (directory-exists? appengine-dir)
     (fprintf (current-error-port)
@@ -167,7 +167,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ensure-codemirror-installed!)
-(ensure-closure-library-installed!)
+;(ensure-closure-library-installed!)
 (ensure-appengine-installed!)
 
 

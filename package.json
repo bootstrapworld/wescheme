@@ -4,7 +4,8 @@
   },
   "dependencies": {
     "calcdeps": "^0.2.1",
-    "codemirror": "^5.65.4"
+    "codemirror": "^5.65.4",
+    "google-closure-library": "^20220502.0.0"
   },
   "name": "wescheme",
   "description": "WeScheme is an online programming environment based on DrRacket and Scheme. Like DrRacket, it provides an interactive evaluator and an interface for editing and running programs. In contrast to DrRacket, WeScheme evaluates on the browser with JavaScript. Its main audience is the Bootstrap curriculum, a middle-school curriculum for teaching algebra through programming.",
