@@ -81,8 +81,8 @@
 
 (define (build src dest)
   (make-directory* (path-only (string-append "war/" dest "-new.js")))
-  (call-system "python"
-               (build-path closure-dir "bin" "calcdeps.py")
+  (call-system "node"
+               "node_modules/calcdeps/bin/calcdeps"
                "-i" (string-append "war-src/js/" src)
                "-p" (path->string closure-dir)
                "-p" "war-src/js"
@@ -184,16 +184,17 @@
     (update-codemirror-lib!))
   (printf "CodeMirror is up to date\n"))
 
+#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (printf "Writing dependency file for Google Closure library\n")
 (parameterize ([current-directory "war-src"])
-  (call-system "python"
-               (build-path closure-dir "bin" "calcdeps.py")
+  (call-system "node"
+               "../node_modules/calcdeps/bin/calcdeps"
                "--dep" "closure"
                "--path" "js"
                "--output_mode" "deps"
                #:pipe-output-to "deps.js"))
-
+|#
 
 
 ;; ######################################################################
