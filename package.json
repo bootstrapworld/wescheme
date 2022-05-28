@@ -1,0 +1,39 @@
+{
+  "devDependencies": {
+    "google-closure-deps": "^20220301.0.0"
+  },
+  "dependencies": {
+    "calcdeps": "^0.2.1",
+    "codemirror": "^5.65.4"
+  },
+  "name": "wescheme",
+  "description": "WeScheme is an online programming environment based on DrRacket and Scheme. Like DrRacket, it provides an interactive evaluator and an interface for editing and running programs. In contrast to DrRacket, WeScheme evaluates on the browser with JavaScript. Its main audience is the Bootstrap curriculum, a middle-school curriculum for teaching algebra through programming.",
+  "version": "2.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bootstrapworld/wescheme.git"
+  },
+  "keywords": [
+    "bootstrap",
+    "wescheme",
+    "ide"
+  ],
+  "author": "Emmanuel Schanzer",
+  "contributors": [
+    "Danny Yoo",
+    "Adam Solove"
+  ],
+  "license": "CC-BY-NC-ND-2.5",
+  "bugs": {
+    "url": "https://github.com/bootstrapworld/wescheme/issues"
+  },
+  "homepage": "https://github.com/bootstrapworld/wescheme#readme"
+}

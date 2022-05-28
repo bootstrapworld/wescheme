@@ -580,6 +580,7 @@ var WeSchemeEditor;
 
 	    // Scope to use to access user's Drive items.
 	    var scope = [
+	    	'https://www.googleapis.com/auth/drive.readonly',
 	    	'https://www.googleapis.com/auth/drive.file',
 	    	'https://www.googleapis.com/auth/drive.file'
 	    ];

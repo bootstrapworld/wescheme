@@ -13,7 +13,7 @@
 (define-runtime-path closure-dir (build-path "war-src" "closure"))
 (define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
 
-(define-runtime-path codemirror-src-dir (build-path "war-src" "js" "codemirror"))
+(define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
 (define appengine-version "1.9.60")
@@ -100,26 +100,23 @@
   (current-directory "../../../")
   (unless (directory-exists? codemirror-dest-dir)
     (make-directory* codemirror-dest-dir))
-  (call-system "cp" "-r" "./war-src/js/codemirror/lib" "./war/js/codemirror/")
+  (call-system "cp" "-r" "./node_modules/codemirror/lib" "./war/js/codemirror/")
   (call-system "mkdir" "-p" "./war/js/codemirror/addon")
-  (call-system "cp" "-r" "./war-src/js/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
-  (call-system "cp" "-r" "./war-src/js/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
+  (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
+  (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
 
 (define (ensure-codemirror-installed!)
   (unless (directory-exists? codemirror-src-dir)
-    (fprintf (current-error-port) "Codemirror hasn't been pulled.\n  Trying to run: git submodule init/update now...\n")
-    (call-system "git" "submodule" "init")
-    (call-system "git" "submodule" "update")
+    (fprintf (current-error-port) "The node dependency 'Codemirror' hasn't been installed.\n  Trying to run: npm install...\n")
+    (call-system "npm" "install")
 
     (unless (directory-exists? codemirror-src-dir)
-      (fprintf (current-error-port) "Codemirror could not be pulled successfully.  Exiting.\n")
+      (fprintf (current-error-port) "Codemirror could not be installed.  Exiting.\n")
       (exit 0)))
 
-  (unless (file-exists? "./war-src/js/codemirror/lib/codemirror.js")
+  (unless (file-exists? "./node_modules/codemirror/lib/codemirror.js")
     (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
-    (current-directory "war-src/js/codemirror/")
-    (call-system "npm" "install")
-    (current-directory "../../../")))
+    (call-system "npm" "install")))
 
 
 (define (ensure-closure-library-installed!)
@@ -180,7 +177,7 @@
                         "war/js/mzscheme-vm/support.js")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(if (out-of-date? "./war-src/js/codemirror/lib/codemirror.js"
+(if (out-of-date? "./node_modules/codemirror/lib/codemirror.js"
                   "./war/js/codemirror/lib/codemirror.js")
   (begin
     (printf "Updating CodeMirror and copying lib\n")
