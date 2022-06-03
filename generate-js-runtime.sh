@@ -22,10 +22,24 @@ if [ -f $platform-platform.js ]; then
 fi
 
 echo '    Concatenating main source files';
-for i in `cat order`; do
-	echo '        adding' $i;
-	cat $i >> $target_new;
-done;
+cat json2.js >> $target_new;
+cat helpers.js >> $target_new;
+cat json2.js >> $target_new;
+cat helpers.js >> $target_new;
+cat world/jsworld/jsworld.js >> $target_new;
+cat js-numbers.js >> $target_new;
+cat jshashtable.js >> $target_new;
+cat types.js >> $target_new;
+cat state.js >> $target_new;
+cat md5.js >> $target_new;
+cat world/world-config.js >> $target_new;
+cat world/world-stimuli.js >> $target_new;
+cat world/world.js >> $target_new;
+cat world/jsworld.js >> $target_new;
+cat primitive.js >> $target_new;
+cat control.js >> $target_new;
+cat loader.js >> $target_new;
+cat interpret.js >> $target_new;
 
 if [ "$testing" = true ]; then
 	echo '    Adding exports for testing'
