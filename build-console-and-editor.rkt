@@ -168,7 +168,6 @@
 (ensure-closure-library-installed!)
 (ensure-appengine-installed!)
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (generate-js-runtime!)
 (update-compiled-libs!  "war/js/mzscheme-vm/support-new.js"
@@ -186,12 +185,11 @@
 (printf "Writing dependency file for Google Closure library\n")
 (parameterize ([current-directory "war-src"])
   (call-system "python"
-               (build-path closure-dir "bin" "calcdeps.py")
-               "--dep" "closure"
-               "--path" "js"
-               "--output_mode" "deps"
-               #:pipe-output-to "deps.js"))
-
+              (build-path closure-dir "bin" "calcdeps.py")
+              "--dep" "closure"
+              "--path" "js"
+              "--output_mode" "deps"
+              #:pipe-output-to "deps.js"))
 
 
 ;; ######################################################################
