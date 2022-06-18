@@ -81,12 +81,14 @@
 
 (define (build src dest)
   (make-directory* (path-only (string-append "war/" dest "-new.js")))
+  (fprintf (current-error-port) (string-append "about to call node calcdeps on " src "\n"))
   (call-system "node"
-               "node_modules/calcdeps/bin/calcdeps"
-               "-i" (string-append "war-src/js/" src)
-               "-p" "node_modules/google-closure-library/closure/goog/base.js"
-               "-p" "war-src/js"
-               "-o" "script"
+               (build-path "node_modules" "google-closure-deps" "bin" "closuremakedeps.js")
+               "-f" (string-append "war-src/js/" src)
+               "-r" "war-src/js"
+               "--validate" "false"
+               "--closure-path" (path->string closure-dir)
+               "--merge-deps" "true"
                #:pipe-output-to (string-append "war/js/" dest "-new.js"))
   (update-compiled-libs! (string-append "war/js/" dest "-new.js")
                         (string-append "war/js/" dest ".js")))
@@ -184,17 +186,14 @@
     (update-codemirror-lib!))
   (printf "CodeMirror is up to date\n"))
 
-#|
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (printf "Writing dependency file for Google Closure library\n")
-(parameterize ([current-directory "war-src"])
-  (call-system "node"
-               "../node_modules/calcdeps/bin/calcdeps"
-               "--dep" "closure"
-               "--path" "js"
-               "--output_mode" "deps"
-               #:pipe-output-to "deps.js"))
-|#
+(call-system "node"
+             (build-path "node_modules" "google-closure-deps" "bin" "closuremakedeps.js")
+             "-f" (build-path "node_modules" "google-closure-library" "closure" "goog" "deps.js")
+              "--closure-path" (path->string closure-dir)
+             #:pipe-output-to "deps.js")
 
 
 ;; ######################################################################

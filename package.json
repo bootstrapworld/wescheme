@@ -3,7 +3,6 @@
     "google-closure-deps": "^20220301.0.0"
   },
   "dependencies": {
-    "calcdeps": "^0.2.1",
     "codemirror": "^5.65.4",
     "google-closure-library": "^20220502.0.0"
   },
