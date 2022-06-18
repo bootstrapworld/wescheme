@@ -16,21 +16,8 @@
     <!-- Google analytics support -->
     <jsp:include page="/google-analytics.jsp"/>
 
-    <!-- Google Closure Library -->
-    <script>
-      require("google-closure-library");
-      goog.require('goog.dom');
-      goog.require('goog.events');
-      goog.require('goog.ui.Component');
-      goog.require('goog.ui.Ratings');
-      goog.require('goog.ui.ServerChart');
-      goog.require('goog.ui.SplitPane');
-      goog.require('goog.ui.SplitPane.Orientation');
-    </script>
-
     <!-- dynamic script loading -->
     <script src="/js/loadScript-min.js" type="text/javascript"></script>
-
 
     <!-- JQuery -->
     <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
