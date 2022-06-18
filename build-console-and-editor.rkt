@@ -10,7 +10,7 @@
 
 ;; Assumes closure-library is under externals/closure.
 
-(define-runtime-path closure-dir (build-path "war-src" "closure"))
+(define-runtime-path closure-dir (build-path "node_modules" "google-closure-library" "closure" "goog" ))
 ;(define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
 
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
@@ -84,7 +84,7 @@
   (call-system "node"
                "node_modules/calcdeps/bin/calcdeps"
                "-i" (string-append "war-src/js/" src)
-               "-p" (path->string closure-dir)
+               "-p" "node_modules/google-closure-library/closure/goog/base.js"
                "-p" "war-src/js"
                "-o" "script"
                #:pipe-output-to (string-append "war/js/" dest "-new.js"))
