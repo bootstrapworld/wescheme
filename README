@@ -17,7 +17,8 @@ The user-level documentation for the project is maintained in:
 Build dependencies:
 
 In order to build the server, the following tools are needed:
- - Python 2.X
+ - Node 16.15.* (or latest LTS version)
+   - npm 8.11.0 (should be included in Node download)
  - Git
  - Java Development Kit **Version 8**. Newer versions do not work.
  - Racket
@@ -28,8 +29,6 @@ All these should be accessible from $PATH. The tools assume a
 Unix-like environment to run shell commands, including 'unzip'. See
 the section below, if you're building the project on a Windows
 machine.
-
-Note: Do not use python 3.X: the build tools are only working on python 2.X.
 
 You will also need to make sure that the DEFAULT_ENCODING environment variable
 on your system is set to "UTF-8". On some systems, the build will fail if
