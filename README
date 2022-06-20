@@ -43,7 +43,9 @@ Installing WeScheme for local development
 
    $ git clone git://github.com/bootstrapworld/wescheme
 
-2.  Run 'build-console-and-editor.rkt'.
+2.  Run 'npm install'
+
+3.  Run 'build-console-and-editor.rkt'.
 
 THIS STEP IS IMPORTANT!
 
