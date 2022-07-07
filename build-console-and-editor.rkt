@@ -24,6 +24,18 @@
 (define appengine-dir
   (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
 
+(define googauth-version "1.34.1")
+;; We don't download a specific client, we download an assembly zip which has some double-versioning labeling convention
+(define googauth-assembly-version 
+  (format "~a-~a" googauth-version googauth-version))
+(define googauth-url
+;; ie:     https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client-assembly/1.34.1/google-oauth-client-assembly-1.34.1-1.34.1.zip
+  (format "https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client-assembly/~a/google-oauth-client-assembly-~a.zip" googauth-version googauth-assembly-version))
+(define googauth-assembly-zip-path
+  (build-path "externals" (format "google-oauth-client-assembly-~a.zip" googauth-assembly-version )))
+(define googauth-dir
+  (build-path "lib" "google-oauth-java-client"))
+
 ;; out-of-date?: path path -> boolean
 ;; Returns true if the target file looks at least as new as the source file.
 (define (out-of-date? source-file target-file)
@@ -142,6 +154,7 @@
            (fprintf (current-error-port)
                     "Trying to download it now... saving to ~s\n" appengine-zip-path)
            (fprintf (current-error-port)
+           ;; NOTE: I think it might be larger than 90 MB now... Might want to change this
                     "(This will take a while; the API download is about 90 MB.)\n")
            (call-with-output-file appengine-zip-path
              (lambda (op)
@@ -163,6 +176,39 @@
     (fprintf (current-error-port)
              "Google AppEngine API installed.\n")))
 
+;; Adopted from ensure-appengine-installed
+(define (ensure-googauth-installed!)
+  (unless (directory-exists? googauth-dir)
+    (fprintf (current-error-port)
+             "The Google OAuth Java Client hasn't been installed yet.\n")
+    (cond [(file-exists? googauth-assembly-zip-path)
+           (void)]
+          [else
+           (fprintf (current-error-port)
+                    "Trying to download it now... saving to ~s\n" googauth-assembly-zip-path)
+           (fprintf (current-error-port)
+                    "(This might take a while; the API download is about 10 MB.)\n")
+           (call-with-output-file googauth-assembly-zip-path
+             (lambda (op)
+               (define ip (get-pure-port (string->url googauth-url)))
+               (copy-port ip op)
+               (close-input-port ip)
+               (close-output-port op)))])
+    (fprintf (current-error-port)
+             "Google OAuth will be installed in: ~s" googauth-dir)
+    (sleep 5)
+    (unless (directory-exists? (build-path googauth-dir 'up))
+      (make-directory* (build-path googauth-dir 'up)))
+    (let ([zip-path (normalize-path googauth-assembly-zip-path)])
+      (parameterize ([current-directory (build-path googauth-dir 'up)])
+        (call-system "unzip" (path->string zip-path))))
+    (unless (directory-exists? googauth-dir)
+      (fprintf (current-error-port) "Google OAuth library could not be installed; please check.\n")
+      (exit 0))
+    (fprintf (current-error-port)
+             "Google OAuth library installed.\n")))
+
+
 
 (define (update-compiled-libs! new-path old-path)
   (call-system "bash" "./update-compiled-files.sh" new-path old-path))
@@ -171,7 +217,7 @@
 (ensure-codemirror-installed!)
 ;(ensure-closure-library-installed!)
 (ensure-appengine-installed!)
-
+(ensure-googauth-installed!)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (generate-js-runtime!)
