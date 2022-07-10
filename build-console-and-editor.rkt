@@ -96,12 +96,22 @@
   (fprintf (current-error-port) (string-append "about to call node calcdeps on " src "\n"))
   (call-system "node"
                (build-path "node_modules" "google-closure-deps" "bin" "closuremakedeps.js")
-               "-f" (string-append "war-src/js/" src)
+               "--root" (string-append "war-src/js/")
                "-r" "war-src/js"
+               "-f" "node_modules/google-closure-library/closure/goog/deps.js"
                "--validate" "false"
                "--closure-path" (path->string closure-dir)
                "--merge-deps" "true"
                #:pipe-output-to (string-append "war/js/" dest "-new.js"))
+               ;#:pipe-output-to "deps.js")
+    (fprintf (current-error-port) (string-append "about to call closure compiler on " src "\n"))
+  (call-system "node"
+             (build-path "node_modules" "google-closure-compiler" "cli.js")
+             "deps.js"
+             "--js" "war-src/js/**/*.js --js node_modules/google-closure-library/**/*.js"
+             "--strict_mode_input" "false"
+             #:pipe-output-to (string-append "war/js/" dest "-new.js"))
+
   (update-compiled-libs! (string-append "war/js/" dest "-new.js")
                         (string-append "war/js/" dest ".js")))
 
@@ -132,18 +142,7 @@
     (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
     (call-system "npm" "install")))
 
-#|
-(define (ensure-closure-library-installed!)
-  (unless (directory-exists? closure-dir)
-    (fprintf (current-error-port) "The Closure library has not been installed yet.\n")
-    (fprintf (current-error-port) "Trying to unpack it into 'war-src/closure'.\n")
-    (let ([zip-path (normalize-path closure-zip-path)])
-      (parameterize ([current-directory (build-path closure-dir 'up)])
-        (call-system "unzip" (path->string zip-path))))
-    (unless (directory-exists? closure-dir)
-      (fprintf (current-error-port) "The Closure library could not be installed; please check.\n")
-      (exit 0))))
-|#
+
 (define (ensure-appengine-installed!)
   (unless (directory-exists? appengine-dir)
     (fprintf (current-error-port)
@@ -240,7 +239,6 @@
              "-f" (build-path "node_modules" "google-closure-library" "closure" "goog" "deps.js")
               "--closure-path" (path->string closure-dir)
              #:pipe-output-to "deps.js")
-
 
 ;; ######################################################################
 (printf "Building splash\n")
