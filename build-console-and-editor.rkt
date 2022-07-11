@@ -7,12 +7,7 @@
          net/url
          (for-syntax racket/base))
 
-
-;; Assumes closure-library is under externals/closure.
-
 (define-runtime-path closure-dir (build-path "node_modules" "google-closure-library" "closure" "goog" ))
-;(define-runtime-path closure-zip-path (build-path "externals" "closure-library-20111110-r1376.zip"))
-
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
@@ -46,6 +41,7 @@
     (>= (file-or-directory-modify-seconds source-file)
         (file-or-directory-modify-seconds target-file))]))
 
+;; an abstraction over making system calls
 (define (call-system #:pipe-input-from (pipe-input-from #f)
                      #:pipe-output-to (pipe-output-to #f)
                      cmd . args)
@@ -91,26 +87,20 @@
     (close-output-port stdout)))
 
 
+;; run the closure compiler with all of war-src and the closure library as possible dependencies,
+;; using the passed src file as the entry point. Prune dependencies and quiet warnings about strict mode
 (define (build src dest)
   (make-directory* (path-only (string-append "war/" dest "-new.js")))
-  (fprintf (current-error-port) (string-append "about to call node calcdeps on " src "\n"))
-  (call-system "node"
-               (build-path "node_modules" "google-closure-deps" "bin" "closuremakedeps.js")
-               "--root" (string-append "war-src/js/")
-               "-r" "war-src/js"
-               "-f" "node_modules/google-closure-library/closure/goog/deps.js"
-               "--validate" "false"
-               "--closure-path" (path->string closure-dir)
-               "--merge-deps" "true"
-               #:pipe-output-to (string-append "war/js/" dest "-new.js"))
-               ;#:pipe-output-to "deps.js")
-    (fprintf (current-error-port) (string-append "about to call closure compiler on " src "\n"))
-  (call-system "node"
-             (build-path "node_modules" "google-closure-compiler" "cli.js")
-             "deps.js"
-             "--js" "war-src/js/**/*.js --js node_modules/google-closure-library/**/*.js"
-             "--strict_mode_input" "false"
-             #:pipe-output-to (string-append "war/js/" dest "-new.js"))
+  (fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/js/" src "\n"))
+  (call-system "zsh" "-c"
+    (string-append "node ./node_modules/google-closure-compiler/cli.js \
+      --js war-src/js/**/*.js \
+      --js node_modules/google-closure-library/**/*.js  \
+      --dependency_mode PRUNE \
+      --strict_mode_input false \
+      --warning_level QUIET \
+      --entry_point ./war-src/js/" src)
+    #:pipe-output-to (string-append "war/js/" dest "-new.js"))
 
   (update-compiled-libs! (string-append "war/js/" dest "-new.js")
                         (string-append "war/js/" dest ".js")))
@@ -141,7 +131,6 @@
   (unless (file-exists? "./node_modules/codemirror/lib/codemirror.js")
     (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
     (call-system "npm" "install")))
-
 
 (define (ensure-appengine-installed!)
   (unless (directory-exists? appengine-dir)
@@ -175,7 +164,6 @@
     (fprintf (current-error-port)
              "Google AppEngine API installed.\n")))
 
-;; Adopted from ensure-appengine-installed
 (define (ensure-googauth-installed!)
   (unless (directory-exists? googauth-dir)
     (fprintf (current-error-port)
@@ -207,14 +195,11 @@
     (fprintf (current-error-port)
              "Google OAuth library installed.\n")))
 
-
-
 (define (update-compiled-libs! new-path old-path)
   (call-system "bash" "./update-compiled-files.sh" new-path old-path))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ensure-codemirror-installed!)
-;(ensure-closure-library-installed!)
 (ensure-appengine-installed!)
 (ensure-googauth-installed!)
 
@@ -230,15 +215,6 @@
     (printf "Updating CodeMirror and copying lib\n")
     (update-codemirror-lib!))
   (printf "CodeMirror is up to date\n"))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(printf "Writing dependency file for Google Closure library\n")
-(call-system "node"
-             (build-path "node_modules" "google-closure-deps" "bin" "closuremakedeps.js")
-             "-f" (build-path "node_modules" "google-closure-library" "closure" "goog" "deps.js")
-              "--closure-path" (path->string closure-dir)
-             #:pipe-output-to "deps.js")
 
 ;; ######################################################################
 (printf "Building splash\n")
