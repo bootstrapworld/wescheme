@@ -89,9 +89,10 @@
 
 ;; run the closure compiler with all of war-src and the closure library as possible dependencies,
 ;; using the passed src file as the entry point. Prune dependencies and quiet warnings about strict mode
+;; NOTE: there are some [JSC_UNREACHABLE_CODE] warnings that we are silencing
 (define (build src dest)
   (make-directory* (path-only (string-append "war/" dest "-new.js")))
-  (fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/js/" src "\n"))
+  ;(fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/js/" src "\n"))
   (call-system "zsh" "-c"
     (string-append "node ./node_modules/google-closure-compiler/cli.js \
       --js war-src/js/**/*.js \
