@@ -247,4 +247,7 @@
 					<transport-guarantee>CONFIDENTIAL</transport-guarantee>
 			</user-data-constraint>
 	</security-constraint>
+
+  <app-engine-apis>true</app-engine-apis>
+  
 </web-app>
