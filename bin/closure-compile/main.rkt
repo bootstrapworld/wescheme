@@ -9,7 +9,7 @@
                               'simple
                               'advanced)) . ->* . string?)])
 
-(define (closure-compile code [compilation-level 'simple])
+(define (closure-compile code [compilation-level "simple"])
   (let ([marks (current-continuation-marks)]
         [compiled-code-port (open-output-string)]
         [error-port (open-output-string)])
@@ -34,7 +34,7 @@
   (string=? result ""))
 
 (define (raw-compile-js ip op err
-                        #:compilation-level (compilation-level 'SIMPLE))
+                        #:compilation-level (compilation-level "simple"))
   (let-values
       ([(subp inp outp errp)
     (subprocess #f #f #f
