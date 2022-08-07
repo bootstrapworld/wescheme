@@ -2,8 +2,7 @@
 //
 //
 // Evaluator(options)
-//     options: { write: dom -> void,
-//                compilationServletUrl: string }
+//     options: { write: dom -> void }
 
 //
 // Constructs a new evaluator.
@@ -39,9 +38,6 @@
 
 var Evaluator = (function() {
 
-    var DEFAULT_COMPILATION_SERVLET_URL = "/servlets/standalone.ss";
-
-
     var Evaluator = function(options) {
     	var that = this;
 
@@ -50,12 +46,6 @@ var Evaluator = (function() {
     	} else {
     	    this.write = function(dom) {
     	    };
-    	}
-
-    	if (options.compilationServletUrl) {
-    	    this.compilationServletUrl = options.compilationServletUrl;
-    	} else {
-    	    this.compilationServletUrl = DEFAULT_COMPILATION_SERVLET_URL;
     	}
 
     	if (options.transformDom) {
@@ -196,34 +186,6 @@ var Evaluator = (function() {
     Evaluator.prototype.setCompileProgram = function(compileProgram) {
         this.compileProgram = compileProgram;
     };
-
-
-    // The default value for it is:
-    // compileProgram: string string (string -> any) (string -> any) -> void
-    // Runs the compiler on the given program.
-    Evaluator.prototype.compileProgram = function(programName, code, onDone, onDoneError) {
-    	var that = this;
-    	var params = encodeUrlParameters({'name': programName,
-    					  'program': code,
-                                              'format': 'json',
-    					  'compiler-version' : '1'});
-    	var xhr = new XMLHttpRequest();
-    	xhr.onreadystatechange = function() {
-    	    if (xhr.readyState == 4) {
-                    if (xhr.status == 503) {
-                        that.compileProgram(programName, code, onDone, onDoneError);
-                    } else if (xhr.status === 200) {
-                        onDone(xhr.responseText);
-    		} else {
-                        onDoneError(xhr.responseText);
-    		}
-    	    }
-    	};
-    	xhr.open("POST", this.compilationServletUrl, true);
-    	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-    	xhr.send(params);
-    };
-
 
     Evaluator.prototype.executeCompiledProgram = function(compiledBytecode, onDoneSuccess, onDoneFail) {
     	this.aState.clearForEval();

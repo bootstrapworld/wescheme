@@ -17,7 +17,7 @@ goog.require('plt.compiler.compile');
 
     // this function is now obsolete - all it does is pretend a server was found,
     // since we now
-    var initialize = function(compilation_servers, afterInitialize, onFailure) {
+    var initialize = function(afterInitialize, onFailure) {
         afterInitialize();
     };
 

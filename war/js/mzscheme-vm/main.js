@@ -1,15 +1,12 @@
-var evaluator = new Evaluator(
-    { write: function(x) { writeToInteractions(x) },
+var evaluator = new Evaluator({ 
+      write: function(x) { writeToInteractions(x) },
       writeError: function(err) { reportError(err) },
-      compilationServletUrl: "/servlets/standalone.ss",
-      scriptCompilationServletUrl: "/servlets/standalone.ss"
     });
 evaluator.setRootLibraryPath("/collects");
 
 
 
 var executeButtonPressed = function() {
-    evaluator.compilationServletUrl = document.getElementById('compilationServletUrl').value;
     var interactionText = document.getElementById('textarea');
     writeToInteractions(interactionText.value);
     blockInput();

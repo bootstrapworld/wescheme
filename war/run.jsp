@@ -7,8 +7,6 @@
 <jsp:directive.page contentType="text/html;charset=UTF-8" language="java" />
 <%
     String publicId = request.getParameter("publicId");
-
-    String compilationServerUrl = (new org.wescheme.project.WeSchemeProperties(getServletContext())).getCompilationServerUrl();
 %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
@@ -71,7 +69,7 @@
 
 </head>
 
-<body onload="plt.wescheme.runner.init('<%= compilationServerUrl %>', '<%= publicId%>')">
+<body onload="plt.wescheme.runner.init('<%= publicId%>')">
   <main id="interactions" role="log" aria-live="assertive">
   </main>
   <jsp:include page="/footer.jsp"/>

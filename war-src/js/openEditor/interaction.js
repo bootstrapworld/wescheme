@@ -409,31 +409,14 @@ WeSchemeInteractions = (function () {
 
     //////////////////////////////////////////////////////////////////////
 
-
-    // Initializes the evaluator to use round-robin compilation, given a list of
-    // servers.
-    // TODO: compilation_servers shouldn't exist anymore
-    var compilation_servers = [];
-
-
     // Configures the evaluator to use round-robin compilation between
     // a set of servers.  Compilation will also fall back to other
     // servers under network failure.
     WeSchemeInteractions.prototype.initializeRoundRobinCompilation = function(evaluator, after) {
-        var that = this;
         plt.wescheme.RoundRobin.initialize(
-            compilation_servers,
             function() {
                 evaluator.setCompileProgram(
                     plt.wescheme.RoundRobin.roundRobinCompiler);
-                after();
-            },
-            function() {
-                // Under this situation, all compilation servers are inaccessible.
-                evaluator.setCompileProgram(
-                    plt.wescheme.RoundRobin.roundRobinCompiler);
-                alert("WeScheme appears to be busy or unavailable at this time." +
-                      "  Please try again later.");
                 after();
             });
     };

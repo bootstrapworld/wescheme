@@ -24,12 +24,12 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
 
 (function() {
 
-    var Runner = function(compilationServerUrl, interactionsDiv) {
+    var Runner = function(interactionsDiv) {
         var that = this;
         this.interactionsDiv = jQuery(interactionsDiv);
-        this.evaluator = new Evaluator({ write: function(thing) { that.addToInteractions(thing); },
-                                        compilationServletUrl: compilationServerUrl
-                                       });
+        this.evaluator = new Evaluator({ 
+           write: function(thing) { that.addToInteractions(thing); },
+        });
         this.evaluator.setImageProxy("/imageProxy");
         this.evaluator.setRootLibraryPath("/js/mzscheme-vm/collects");
         this.evaluator.setDynamicModuleLoader(
@@ -110,23 +110,12 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
     // a set of servers.  Compilation will also fall back to other
     // servers under network failure.
     var initializeRoundRobinCompilation = function(evaluator, after) {
-        var that = this;
         // Initializes the evaluator to use round-robin compilation, given a list of
         // servers.
-        // TODO: compilation_servers shouldn't exist anymore
-        var compilation_servers = [];
         plt.wescheme.RoundRobin.initialize(
-            compilation_servers,
             function() {
                 evaluator.setCompileProgram(
                     plt.wescheme.RoundRobin.roundRobinCompiler);
-                after();
-            },
-            () => {
-                // Under this situation, all compilation servers are inaccessible.
-                evaluator.setCompileProgram(plt.wescheme.RoundRobin.roundRobinCompiler);
-                alert("WeScheme appears to be busy or unavailable at this time." +
-                      "  Please try again later.");
                 after();
             });
     };
@@ -134,8 +123,8 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
 
 
 
-    function init(compilationServerUrl, publicId) { 
-      var runner = new Runner(compilationServerUrl, document.getElementById('interactions'));
+    function init(publicId) { 
+      var runner = new Runner(document.getElementById('interactions'));
       var afterLoad = function(aProgram) {
         var title = aProgram.getTitle(),
             sourceCode = aProgram.getSourceCode(),
