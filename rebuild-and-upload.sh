@@ -2,7 +2,6 @@
 
 # Adapted from https://stackoverflow.com/a/3278427/718349
 
-echo "deploying version" $1
 git remote update > /dev/null
 
 UPSTREAM='@{u}'
@@ -15,25 +14,21 @@ if [ $LOCAL = $REMOTE ]; then
 elif [ $REMOTE = $BASE ]; then
     :
 else
-    echo "Error: The git repo is not up-to-date. Please run git pull first." >&2
+    echo "Error: The git repo is not up-to-date. Please run git pull first." 1>&2
     exit 1
 fi
 
-python_grep() {
-  echo "python -c \"import sys, re; print(re.search('$1', sys.stdin.read()).group(0))\""
-}
+appengine_versions=$(gcloud app versions list)
+echo $appengine_versions
+versions=$(echo $appengine_versions | sed -e 's/default /\n\0/g' | sed -e '1d' -e 's/^[^ \t]\+[ \t]\+\([^ \t]\+\).*/\1/')
 
-versions="$(./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh list_versions war 2>/dev/null | eval $(python_grep '(?ms)(?<=^default: ).*?]') )"
+echo "Following are all versions:"
+echo $versions
 
-echo "Following are all versions: $versions"
-echo
-current_version="$(cat war/WEB-INF/appengine-web.xml | eval $(python_grep '(?<=version>)'))"
-
-echo "The current version number in war/WEB-INF/appengine-web.xml is: $current_version"
-
+echo "Deploying with version string: $1"
 
 echo
-echo -n "BEFORE DEPLOYING, make sure the version number is correct. Press CTRL+C to cancel, or Enter to continue: "
+echo -n "BEFORE DEPLOYING, make sure the version string is correct! Press CTRL+C to cancel, or Enter to continue: "
 read input
 
 set -e
@@ -51,5 +46,4 @@ rm war/js/mzscheme-vm/*-min.js
 ant compile
 
 # Now upload
-#./lib/appengine-java-sdk-1.9.60/bin/appcfg.sh update war
 gcloud app deploy war/WEB-INF/appengine-web.xml --version $1 --no-promote

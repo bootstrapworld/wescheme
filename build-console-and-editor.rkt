@@ -11,7 +11,7 @@
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
-(define appengine-version "1.9.60")
+(define appengine-version "1.9.98")
 (define appengine-url
   (format "https://storage.googleapis.com/appengine-sdks/featured/appengine-java-sdk-~a.zip" appengine-version))
 (define appengine-zip-path

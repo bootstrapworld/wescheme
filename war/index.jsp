@@ -65,7 +65,7 @@ UserService us = UserServiceFactory.getUserService();
                  data-client_id="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com"
                  data-ux_mode="redirect"
                  data-auto_prompt="false"
-                 data-login_uri="https://test-auth2-dot-wescheme-hrd-2.appspot.com/login.jsp">
+                 data-login_uri="https://292-dot-wescheme-hrd-2.appspot.com/login.jsp">
             </div>
             <div class="g_id_signin" data-type="standard"></div>
         </a>

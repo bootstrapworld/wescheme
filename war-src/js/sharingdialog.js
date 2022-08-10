@@ -2,11 +2,11 @@ goog.provide("plt.wescheme.SharingDialog");
 
 goog.require("goog.dom");
 goog.require('goog.ui.AdvancedTooltip');
+goog.require("goog.html.SafeHtml")
 
 goog.require("plt.wescheme.AjaxActions");
 goog.require("plt.wescheme.helpers");
 goog.require("plt.wescheme.WeSchemeIntentBus");
-
 
 // if (typeof (plt) === 'undefined') {
 //     this.plt = {};
@@ -189,7 +189,7 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
         var tooltip = new goog.ui.AdvancedTooltip(parent);
         tooltip.className = 'tooltip';
         if (aProgramOrDigest.hasSharingUrls()) {
-            tooltip.setHtml("<h2>Program sharing</h2>" + "This program has been shared.", true);
+            tooltip.setSafeHtml(new goog.html.SafeHtml("<h2>Program sharing</h2> This program has been shared."));
             var aList = goog.dom.createElement("ul");
             var entries = aProgramOrDigest.getSharedAsEntries();
             // We'll just look at the first one.
@@ -202,10 +202,9 @@ goog.require("plt.wescheme.WeSchemeIntentBus");
             item.appendChild(goog.dom.createTextNode(" [" + plt.wescheme.helpers.prettyPrintDate(elt.modified) + "]"));
             item.appendChild(plt.wescheme.helpers.generateSocialBookmarks(title, anchor.href));
             goog.dom.appendChild(tooltip.getElement(), aList);
-
         } else {
-            tooltip.setHtml("<h2>Program sharing</h2>" +
-                            "This program has not been shared yet.  Click the share icon to share it.", true);
+            tooltip.setSafeHtml(new goog.html.SafeHtml("<h2>Program sharing</h2>" +
+                "This program has not been shared yet.  Click the share icon to share it."));
         }
         tooltip.setHotSpotPadding(new goog.math.Box(5, 5, 5, 5));
         tooltip.setCursorTracking(true);

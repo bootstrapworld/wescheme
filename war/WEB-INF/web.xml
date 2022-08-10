@@ -5,17 +5,17 @@
 
 <web-app xmlns="http://java.sun.com/xml/ns/javaee" version="2.5">
 
-    <mime-mapping>
-        <extension>ogg</extension>
-        <mime-type>audio/ogg</mime-type>
-    </mime-mapping>
+  <mime-mapping>
+      <extension>ogg</extension>
+      <mime-type>audio/ogg</mime-type>
+  </mime-mapping>
 
-    <mime-mapping>
-        <extension>mp3</extension>
-        <mime-type>audio/mpeg</mime-type>
-    </mime-mapping>
+  <mime-mapping>
+      <extension>mp3</extension>
+      <mime-type>audio/mpeg</mime-type>
+  </mime-mapping>
 
-
+  <app-engine-apis>true</app-engine-apis>
 
   <servlet>
     <servlet-name>/cron/keyServer</servlet-name>
