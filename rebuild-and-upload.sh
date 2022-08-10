@@ -1,7 +1,17 @@
 #!/bin/sh
 
-# Adapted from https://stackoverflow.com/a/3278427/718349
+# install cloud sdk if it's not already installed
+if ! [ -d lib/google-cloud-sdk/ ]
+then
+    echo "The Google Cloud SDK hasn't been installed yet"
+    echo "Running silent deployment script...(from https://cloud.google.com/sdk/docs/downloads-interactive#silent)"
+    curl https://sdk.cloud.google.com > install.sh
+    bash install.sh --disable-prompts --install-dir=lib/
+    rm install.sh
+fi
 
+
+# Adapted from https://stackoverflow.com/a/3278427/718349
 git remote update > /dev/null
 
 UPSTREAM='@{u}'

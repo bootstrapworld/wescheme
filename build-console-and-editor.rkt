@@ -11,6 +11,7 @@
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
 (define-runtime-path codemirror-dest-dir (build-path "war" "js" "codemirror"))
 
+;; appengine-sdk installation settings
 (define appengine-version "1.9.98")
 (define appengine-url
   (format "https://storage.googleapis.com/appengine-sdks/featured/appengine-java-sdk-~a.zip" appengine-version))
@@ -19,12 +20,12 @@
 (define appengine-dir
   (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
 
+;; google-oauth-client installation settings
 (define googauth-version "1.34.1")
 ;; We don't download a specific client, we download an assembly zip which has some double-versioning labeling convention
 (define googauth-assembly-version 
   (format "~a-~a" googauth-version googauth-version))
 (define googauth-url
-;; ie:     https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client-assembly/1.34.1/google-oauth-client-assembly-1.34.1-1.34.1.zip
   (format "https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client-assembly/~a/google-oauth-client-assembly-~a.zip" googauth-version googauth-assembly-version))
 (define googauth-assembly-zip-path
   (build-path "externals" (format "google-oauth-client-assembly-~a.zip" googauth-assembly-version )))
@@ -153,7 +154,7 @@
                (close-output-port op)))])
     (fprintf (current-error-port)
              "The API will be installed in: ~s" appengine-dir)
-    (sleep 5)
+    (sleep 2)
     (unless (directory-exists? (build-path appengine-dir 'up))
       (make-directory* (build-path appengine-dir 'up)))
     (let ([zip-path (normalize-path appengine-zip-path)])
@@ -184,7 +185,7 @@
                (close-output-port op)))])
     (fprintf (current-error-port)
              "Google OAuth will be installed in: ~s" googauth-dir)
-    (sleep 5)
+    (sleep 2)
     (unless (directory-exists? (build-path googauth-dir 'up))
       (make-directory* (build-path googauth-dir 'up)))
     (let ([zip-path (normalize-path googauth-assembly-zip-path)])
