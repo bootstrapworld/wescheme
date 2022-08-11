@@ -121,18 +121,19 @@
   (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./war/js/codemirror/addon/edit")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./war/js/codemirror/addon/runmode"))
 
-(define (ensure-codemirror-installed!)
-  (unless (directory-exists? codemirror-src-dir)
-    (fprintf (current-error-port) "The node dependency 'Codemirror' hasn't been installed.\n  Trying to run: npm install...\n")
+(define (nodelibs-installed?)
+  (and (directory-exists? codemirror-src-dir)
+       (directory-exists? (build-path "node_modules" "google-closure-library"))
+       (directory-exists? (build-path "node_modules" "google-closure-compiler"))))
+
+(define (ensure-nodelibs-installed!)
+  (unless (nodelibs-installed?)
+    (fprintf (current-error-port) "At least one node dependency is missing.\n  Trying to run: npm install...\n")
     (call-system "npm" "install")
 
-    (unless (directory-exists? codemirror-src-dir)
-      (fprintf (current-error-port) "Codemirror could not be installed.  Exiting.\n")
-      (exit 0)))
-
-  (unless (file-exists? "./node_modules/codemirror/lib/codemirror.js")
-    (fprintf (current-error-port) "Codemirror hasn't built.\n  Trying to run: npm install now...\n")
-    (call-system "npm" "install")))
+    (unless (nodelibs-installed?)
+      (fprintf (current-error-port) "Node dependencies could not be installed.  Exiting.\n")
+      (exit 0))))
 
 (define (ensure-appengine-installed!)
   (unless (directory-exists? appengine-dir)
@@ -174,9 +175,9 @@
            (void)]
           [else
            (fprintf (current-error-port)
-                    "Trying to download it now... saving to ~s\n" googauth-assembly-zip-path)
+              "Trying to download it now... saving to ~s\n" googauth-assembly-zip-path)
            (fprintf (current-error-port)
-                    "(This might take a while; the API download is about 10 MB.)\n")
+              "(This might take a while; the API download is about 10 MB.)\n")
            (call-with-output-file googauth-assembly-zip-path
              (lambda (op)
                (define ip (get-pure-port (string->url googauth-url)))
@@ -201,7 +202,7 @@
   (call-system "bash" "./update-compiled-files.sh" new-path old-path))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(ensure-codemirror-installed!)
+(ensure-nodelibs-installed!)
 (ensure-appengine-installed!)
 (ensure-googauth-installed!)
 

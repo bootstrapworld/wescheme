@@ -20,10 +20,9 @@ In order to build the server, the following tools are needed:
  - Node 16.15.* (or latest LTS version)
    - npm 8.11.0 (should be included in Node download)
  - Git
- - Java Development Kit **Version 8**. Newer versions do not work.
+ - JDK 17
  - Racket
  - Apache Ant
- - gcloud
 
 All these should be accessible from $PATH. The tools assume a
 Unix-like environment to run shell commands, including 'unzip'. See
@@ -43,12 +42,9 @@ Installing WeScheme for local development
 
    $ git clone git://github.com/bootstrapworld/wescheme
 
-2.  Run 'npm install' to install the various node dependencies.
+2.  Run 'build-console-and-editor.rkt' to generate all the JS bundles needed for the webserver. This script will also check to ensure that node dependencies are installed. If not, it will run `npm install` before generating the bundles.
 
-3.  Run 'build-console-and-editor.rkt' to generate all the JS bundles needed for the webserver
-
-THIS STEP IS IMPORTANT!
-
+IMPORTANT:
 The script "build-console-and-editor.rkt" must be executed after any
 changes are made to the javascript source files in war-src/js.  The
 webapp itself uses files in war, which are built by
@@ -57,17 +53,16 @@ JavaScript files (such as CodeMirror) with the Closure Compiler, so
 you must run this every time you change the JavaScript files.
 
 
-
 ----------------------------------------------------------------------
 
 Running WeScheme locally:
 
-After running build-console-and-editor.rkt, use Apache Ant with the
-'runserver' target.
+After running build-console-and-editor.rkt, run `./runserver` to use the
+gcloud java appserver.
 
-   $ ant runserver
+   $ ./runserver.sh
 
-This will bring up a locally-running Webserver running off port 8081.
+This will bring up a locally-running Webserver running off port 8080.
 
 
 ----------------------------------------------------------------------
@@ -76,8 +71,8 @@ Hacking WeScheme:
 
 The directory structure of WeScheme is a fairly typical Java web app.
 
-Treat war as an output distribution directory.  Do not try to modify
-files in there directly.  Rather, the majority of the JavaScript files
+Treat `war` as an output distribution directory.  Do not try to modify
+files in there directly!  Rather, the majority of the JavaScript files
 can be found in:
 
    war-src/js
@@ -103,7 +98,9 @@ per application page.
         editing environment.
 
 ----------------------------------------------------------------------
-Building on a Windows Machine
+Building on a Windows Machine 
+
+FIXME(Nicholas)
 
 The build tools of this project requires a unix-like environment. The
 bash shell that is part of the standard installation of "GIT for
@@ -117,12 +114,12 @@ execute the script 'build-console-and-editor.rkt', make sure that a
 softlink to your java.exe is defined the current directory. You can
 create such a link with the command:
 
-   ln -s "C:\Program Files (x86)\Java\jdk1.8.0_XX\bin\java.exe" java
+   $ ln -s "C:\Program Files (x86)\Java\jdk1.8.0_XX\bin\java.exe" java
 
 Note that the link must be named "java" and not "java.exe".
 
 ----------------------------------------------------------------------
-The Selenium Test Suite.
+The Selenium Test Suite - extremely outdated, and unlikely to work
 
 We use Selenium (http://seleniumhq.org)
 
@@ -145,16 +142,10 @@ set to slightly slower than the "Fast" speed.
 
 ----------------------------------------------------------------------
 
-Eclipse:
-
-- Install plugins here: https://developers.google.com/eclipse/docs/install-eclipse-4.6
-- If there is an error about DataNucleus, installing http://www.datanucleus.org/products/datanucleus/jdo/guides/eclipse.html might help
-- Need to set version to 1.8 (Project > Properties > Java Compiler. Set Compiler compliance level to 1.8).
-
-----------------------------------------------------------------------
-
 Upload process:
 
-Run `rebuild-and-upload.sh`. This will create a new version (or replace an existing one, if you supply the name of an existing one as an argument), but WILL NOT promote all traffic to that version by default. Promoting traffic must be done from the Google Console: https://console.cloud.google.com/appengine/versions?project=wescheme-hrd-2&serviceId=default&versionssize=50 
+Run `rebuild-and-upload.sh`, supplying a version string as the argument:
 
-To create or replace a specific version, use `rebuild-and-upload.sh <your-version>`.
+    $ ./rebuild-and-upload.sh MyTest
+
+This will deploy a version of WeScheme to `https://MyTest-dot-wescheme-hrd-2.appspot.com`. During deployment, you will have the option of promoting the WeScheme.org this new version. We **strong recommend against this**. Instead, test the app first at the aforementioned URL, and then promote WeScheme manually from the Google Console: https://console.cloud.google.com/appengine/versions?project=wescheme-hrd-2&serviceId=default&versionssize=50 .

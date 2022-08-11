@@ -74,15 +74,9 @@
   </target>
 
 
-
   <target name="datanucleusenhance" depends="compile"
       description="Performs JDO enhancement on compiled data classes.">
     <enhance_war war="war" />
-  </target>
-
-  <target name="runserver" depends="datanucleusenhance"
-      description="Starts the development server.">
-    <dev_appserver war="war" address="0.0.0.0" port="8081"/>
   </target>
 
   <target name="update" depends="datanucleusenhance"
