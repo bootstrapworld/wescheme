@@ -98,9 +98,7 @@ per application page.
         editing environment.
 
 ----------------------------------------------------------------------
-Building on a Windows Machine 
-
-FIXME(Nicholas)
+Building on a Windows Machine
 
 The build tools of this project requires a unix-like environment. The
 bash shell that is part of the standard installation of "GIT for
@@ -108,15 +106,37 @@ Windows" will do perfectly. Get it here, if you don't have it yet.
 
 http://git-for-windows.github.io/
 
+Additionally, you may find steps to installing WSL2 and Ubuntu here:
+
+https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-10#1-overview
+
 To install WeScheme, follow the instructions of the section
 "Installing WeScheme for local development" above, but before you
 execute the script 'build-console-and-editor.rkt', make sure that a
 softlink to your java.exe is defined the current directory. You can
 create such a link with the command:
 
-   $ ln -s "C:\Program Files (x86)\Java\jdk1.8.0_XX\bin\java.exe" java
+   $ ln -s "C:\Program Files (x86)\Java\jdk17.X.X_XX\bin\java.exe" java
 
 Note that the link must be named "java" and not "java.exe".
+
+You may also configure your java setting within Windows environmental variables
+by providing the paths to the jdk and the jdk/bin while also defining the system
+variable JAVA_HOME as a path to the jdk.
+
+To confirm that you have the correct version of Java installed and accessible,
+the command java --version in a bash terminal should return something including
+"Java 17.X.X" in the first line.
+
+To build the project, executue build-console-and-editor.rkt and then execute runserver.
+
+So:
+
+./build-console-and-editor.rkt
+./runserver.sh
+
+These installations may take a long time originally, but then the server will be easy
+to start.
 
 ----------------------------------------------------------------------
 The Selenium Test Suite - extremely outdated, and unlikely to work

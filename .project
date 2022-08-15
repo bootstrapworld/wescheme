@@ -31,4 +31,15 @@
 		<nature>com.google.appengine.eclipse.core.gaeNature</nature>
 		<nature>com.google.gdt.eclipse.core.webAppNature</nature>
 	</natures>
+	<filteredResources>
+		<filter>
+			<id>1660195308455</id>
+			<name></name>
+			<type>30</type>
+			<matcher>
+				<id>org.eclipse.core.resources.regexFilterMatcher</id>
+				<arguments>node_modules|.git|__CREATED_BY_JAVA_LANGUAGE_SERVER__</arguments>
+			</matcher>
+		</filter>
+	</filteredResources>
 </projectDescription>
