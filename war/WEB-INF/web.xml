@@ -4,6 +4,7 @@
 	  "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app xmlns="http://java.sun.com/xml/ns/javaee" version="2.5">
+  <app-engine-apis>true</app-engine-apis>
 
   <mime-mapping>
       <extension>ogg</extension>
@@ -247,7 +248,4 @@
 					<transport-guarantee>CONFIDENTIAL</transport-guarantee>
 			</user-data-constraint>
 	</security-constraint>
-
-  <app-engine-apis>true</app-engine-apis>
-  
 </web-app>
