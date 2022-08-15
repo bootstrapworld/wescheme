@@ -1,6 +1,6 @@
 {
   "devDependencies": {
-    "google-closure-compiler": "^20220601.0.0"
+    "google-closure-compiler": "^20220803.0.0"
   },
   "dependencies": {
     "codemirror": "^5.65.4",
