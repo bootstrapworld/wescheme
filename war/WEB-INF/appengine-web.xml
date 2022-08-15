@@ -9,8 +9,11 @@
 		<property name="file.encoding" value="UTF-8" />
 		<property name="DEFAULT_ENCODING" value="UTF-8" />
 	</system-properties>
-	<!-- from https://cloud.google.com/appengine/docs/standard/java-gen2/services/access#entry_point_features  -->
+	<!-- from https://cloud.google.com/appengine/docs/standard/java-gen2/services/access#entry_point_features 
     <env-variables>
-       <env-var name="JAVA_USER_OPTS" value="--add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED --add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED" />
+       <env-var name="JAVA_USER_OPTS" value="--add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED \
+        --add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED \
+        --add-opens java.base/java.net=ALL-UNNAMED" />
     </env-variables>
+     -->
 </appengine-web-app>
