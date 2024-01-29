@@ -1,0 +1,18 @@
+
+h1 {
+	text-align:	center;
+	width:		100%;
+	font-size: 60px; 
+	margin-bottom: 0px;
+}
+
+img{background: none; vertical-align: middle; width: 40%; max-width: 450px;}
+
+#links {
+       margin-top: 1.5em;
+       margin-bottom: 1.5em;
+}
+
+@media only screen and (max-width: 480px), only screen and (max-device-width: 480px){
+  a.button{font-size: 12px; width: 100px;}
+}

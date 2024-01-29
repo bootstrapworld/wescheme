@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>WeScheme</title>
+
+    <!-- JQuery -->
+    <script src="/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
+    <script src="/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="/css/jquery-ui.css"/>
+
+    <!-- The splash screen JavaScript libraries. -->
+    <script src="/js/splash-calc-min.js" type="text/javascript"></script>
+
+
+    <link rel="stylesheet" type="text/css" href="/css/common.css" />
+    <link rel="stylesheet" type="text/css" href="/css/splash.css" id="style" />
+    <meta name="google-signin-scope" content="profile email">
+    <meta name="google-signin-client_id" content="981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
+    <style>
+        #loggedInWrapper, #loggedInWrapper { display: none; }
+        #loginButton { margin:  -1px; }
+    </style>
+
+    <script type="text/javascript">
+        var WeSchemeClientId = "981340394888-d28ji2vus7h06du2hgum27sf1mjs7ssm.apps.googleusercontent.com";
+        var auth2;
+        var id_token;
+        var startApp = function() {
+            gapi.load('auth2', function(){
+              // Retrieve the singleton for the GoogleAuth library and set up the client.
+              auth2 = gapi.auth2.init({
+                client_id: WeSchemeClientId,
+                cookiepolicy: 'single_host_origin',
+              });
+              auth2.then(function(){
+                authInstance = gapi.auth2.getAuthInstance();
+                if(authInstance.isSignedIn.get()) {
+                  id_token = authInstance.currentUser.get().getAuthResponse().id_token;
+                  console.log('user is logged in! id=', id_token);
+                  document.getElementById("loggedInWrapper").style.display = "block";
+                  document.getElementById("loggedOutWrapper").style.display = "none";
+                } else {
+                  console.log('user is NOT logged in!');
+                  document.getElementById("loggedInWrapper").style.display = "none";
+                  document.getElementById("loggedOutWrapper").style.display = "block";
+                  attachSignin(document.getElementById('loginButton'));
+                }                
+              })
+          });
+        };
+
+        function attachSignin(element) {
+            auth2.attachClickHandler(element, {},
+                function(googleUser) {
+                  id_token = googleUser.getAuthResponse().id_token;
+                  console.log("ID Token: " + id_token);
+
+                  document.getElementById("loggedInWrapper").style.display = "block";
+                  document.getElementById("loggedOutWrapper").style.display = "none";
+                  window.location= '/login.jsp?idtoken='+id_token+'&dest=index.jsp';
+
+                }, function(error) {
+                  alert(JSON.stringify(error, undefined, 2));
+                });
+          }
+
+
+        var onOpenEditor = function() {
+            window.location='/openEditor';
+        };
+
+        var onMyPrograms = function() {
+            window.location='/console.jsp?idtoken='+id_token;
+        };
+
+        var onLogin = function() {
+            //window.location = 'https://www.wescheme.org/_ah/conflogin?continue=https://www.wescheme.org/login.jsp';
+        };
+
+        var onLogout = function() {
+            if(confirm("You will be logged out of WeScheme and other Google services.")) {
+                gapi.load('auth2', function() { 
+                    gapi.auth2.getAuthInstance().signOut();
+                    window.location='/logout';
+                });
+            }
+        };
+
+        function assignHandlers() {
+            $("#startCoding").click(onOpenEditor);
+            $("#loginButton").click(onLogin);
+            $("#logoutButton").click(onLogout);
+            $("#myPrograms").click(onMyPrograms);
+        }
+    </script>
+</head>
+
+<body onload="assignHandlers(); startApp(); ">
+<header><h1>WeScheme</h1></header>
+<main>
+    <div id="loggedOutWrapper">
+        <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding 
+            <span class="tooltip" id="startCodingDescription">...without being able to save</span>
+        </a>
+
+        <img src="css/images/BigLogo.png" alt="">
+
+        <a class="button" id="loginButton" aria-describedby="loginDescription" href="javascript: void(0)">
+                <span class="tooltip" id="loginDescription">...to access your programs</span>
+            <div id="loginButton" class="customGPlusSignIn" data-onsuccess="onSignIn">
+                <span class="buttonText">Log In</span>
+            </div>
+        </a>
+    </div>
+
+    <div id="loggedInWrapper">
+        <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs
+            <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
+        </a>
+
+        <img src="css/images/BigLogo.png" alt="">
+
+        <a class="button" id="logoutButton" href="javascript: void(0)">Log Out
+             <span class="tooltip" id="loginDescription">...of all Google services</span>
+        </a>
+    </div>
+
+<div id="links">
+    <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
+</div>
+</main>
+
+<footer id="footer">
+	<ul>
+		<li><a href="/about/">About</a></li>
+		<li><a href="/contact/">Contact</a></li>
+		<li><a href="/privacy/">Privacy</a></li>
+		<li><a href="/copyright/">Copyright</a></li>
+	</ul>
+</footer>
+
+</body></html>

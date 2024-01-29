@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WeScheme</title>
+
+    <link rel="icon" href="/static/img/favicon.ico">
+
+    <meta name="referrer" content="no-referrer-when-downgrade">
+
+    <script src="/node_modules/google-closure-library/closure/goog/base.js"></script>
+
+    <!-- JQuery -->
+    <script src="/static/js/jquery/jquery-1.3.2-min.js" type="text/javascript"></script>
+    <script src="/static/js/jquery/jquery-ui-1.7.3.custom.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/jquery-ui.css"/>
+
+    <!-- The splash screen JavaScript libraries. -->
+    <script src="/static/js/splash-calc-min.js" type="text/javascript"></script>
+
+    <link rel="stylesheet" type="text/css" href="/static/css/common.css" />
+    <link rel="stylesheet" type="text/css" href="/static/css/splash.css" id="style" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        #loggedOutWrapper > *, #loggedInWrapper > * { vertical-align: middle; }
+        #startCoding { width: 200px; }
+        #loggedOutWrapper #rightButton .tooltip { top: 50px; }
+    </style>
+
+    <script>
+        var onOpenEditor = function() {
+            window.location='/openEditor';
+        };
+
+        var onMyPrograms = function() {
+            window.location='/console';
+        };
+
+        var onLogout = function() {
+            if(confirm("You will be logged out of WeScheme and other Google services.")) {
+                window.location='/logout';
+            }
+        };
+
+        function assignHandlers() {
+            $("#startCoding").click(onOpenEditor);
+            $("#logoutButton").click(onLogout);
+            $("#myPrograms").click(onMyPrograms);
+        }
+    </script>
+
+    <!-- Google analytics support -->
+    {% include "google-analytics.html.jinja" %}
+</head>
+
+<body onload="assignHandlers();">
+<header><h1>WeScheme</h1></header>
+
+<main>
+
+    {% if logged_in %}
+        <div id="loggedInWrapper">
+            <div id="leftButton">
+                <a class="button" id="myPrograms" aria-describedby="myProgramsDescription" href="javascript: void(0)">My Programs</a>
+                <span class="tooltip" id="myProgramsDescription">...see and manage my programs</span>
+            </div>
+
+            <img src="/static/img/BigLogo.png" alt="">
+
+            <div id="rightButton">
+                <a class="button" id="logoutButton" href="javascript: void(0)">Log Out</a>
+                <span class="tooltip" id="loginDescription">...of all Google services</span>
+            </div>
+        </div>
+
+    {% else %}
+        <div id="loggedOutWrapper">
+            <div id="leftButton">
+                <a class="button" id="startCoding" aria-describedby="startCodingDescription" href="javascript: void(0)">Start Coding</a>
+                <span class="tooltip" id="startCodingDescription">...without being able to save</span>
+            </div>
+
+            <img src="/static/img/BigLogo.png" alt="">
+
+            <div id="rightButton" aria-describedby="loginDescription" href="javascript: void(0)">
+
+                <div id="g_id_onload"
+                    data-client_id="{{ client_id }}"
+                    data-context="signin"
+                    data-ux_mode="redirect"
+                    data-login_uri="{{ site_url + "/login" }}"
+                    data-nonce=""
+                    data-auto_prompt="false">
+                </div>
+
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="rectangular"
+                    data-theme="outline"
+                    data-text="signin_with"
+                    data-size="large"
+                    data-logo_alignment="left">
+                </div>
+
+                <span class="tooltip" id="loginDescription">...to access your programs</span>
+            </a>
+        </div>
+    {% endif %}
+
+
+    <div id="links">
+        <a href="http://www.BootstrapWorld.org">Looking for a curriculum, too?</a>
+    </div>
+</main>
+
+{% include "footer.html" %}
+
+</body>
+</html>
