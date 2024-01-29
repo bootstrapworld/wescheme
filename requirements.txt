@@ -1,0 +1,10 @@
+Flask
+google-cloud-datastore
+google-auth
+requests
+Flask-Caching
+google-api-core
+google-auth
+google-cloud-core
+google-cloud-datastore
+googleapis-common-protos

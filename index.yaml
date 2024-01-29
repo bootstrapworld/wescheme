@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Program
+  properties:
+  - name: author_
+  - name: time_
+    direction: desc
