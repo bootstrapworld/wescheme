@@ -45,20 +45,12 @@ var initializeEditor;
 
 
     var maybeWarnOnExit = function(warnOnExit) {
-	var doubleCheck = function(){
-	    return "Are you sure you want to leave the Editor? (all unsaved changes will be lost)";
-	};
-
-	if (warnOnExit) {
-	    window.onbeforeunload = doubleCheck;
-            myEditor.suppressWarningBeforeUnloadB.changes().mapE(function(v) {
-	        if (v) {
-                    window.onbeforeunload = undefined;
-                } else { 
-	            window.onbeforeunload = doubleCheck;
-                }
-            });
-	}
+    	// Chrome blocks prompt() and alert() in onbeforeunload, so we have to return a string
+    	// See https://stackoverflow.com/questions/7794301/window-onunload-is-not-working-properly-in-chrome-browser-can-any-one-help-me?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+	    window.onbeforeunload = function(e) {
+	    	return myEditor.suppressWarningBeforeUnload? null
+				: "Are you sure you want to leave the Editor? (all unsaved changes will be lost)";
+	    };
     };
 
 

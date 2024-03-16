@@ -36,10 +36,6 @@ var WeSchemeTextContainer;
 	WeSchemeTextContainer.prototype.refresh = function() {
 		this.impl.refresh();
 	};
-	// Returns a behavior of the source code
-	WeSchemeTextContainer.prototype.getSourceB = function() {
-		return this.impl.getSourceB();
-	};
 	WeSchemeTextContainer.prototype.getDiv = function() {
 		return this.div;
 	};
@@ -97,8 +93,6 @@ var WeSchemeTextContainer;
 		// "initCallback".
 
 		var that = this;
-		this.behaviorE = receiverE();
-		this.behavior = startsWith(this.behaviorE, "");
 		this.highlightedAreas = [];		
 				
 		
@@ -129,7 +123,11 @@ var WeSchemeTextContainer;
       			 	//inputStyle: "contenteditable"  /*  Force on for screen readers  */
 				});
        	this.editor.getGutterElement().setAttribute('aria-hidden', "true"); // ARIA - don't read line numbers
-       	this.editor.on('change', function() { that.behaviorE.sendEvent(that.editor.getValue());});
+       	this.editor.on('change', function() { 
+			that.unhighlightAll();
+			myEditor.isDirty = true;
+			plt.wescheme.WeSchemeIntentBus.notify("definitions-changed", that);
+       	});
        	this.editor.getInputField().setAttribute("role", "input");
         // capture all paste events, and remove curly quotes before inserting
         // this solves the use-case where a teacher uses a rich text editor to write code
@@ -183,20 +181,13 @@ var WeSchemeTextContainer;
 	  onSuccess.call(that, that);
 	};
 
-	CodeMirrorImplementation.prototype.getSourceB = function() {
-		return this.behavior;
-	};
-
 	CodeMirrorImplementation.prototype.getCode = function(startOffset, endOffset) {
 		// On exceptional cases, onChange does NOT get called.
 		// I haven't traced exactly where this is happening in the
 		// CodeMirror source, but it's happening.  So we have to do
 		// some defensive programming here...
 		var code = this.editor.getValue();
-		if (valueNow(this.behavior) !== code) {
-			this.behaviorE.sendEvent(code);
-		}
-
+		
 		if (typeof(startOffset) !== undefined) {
 			if (typeof(endOffset) !== undefined) {
 				return code.substring(startOffset, endOffset);
@@ -210,7 +201,6 @@ var WeSchemeTextContainer;
 
 	CodeMirrorImplementation.prototype.setCode = function(code) {
 		this.editor.setValue(code);
-		this.behaviorE.sendEvent(code);
 		this.editor.refresh();
 	};
 
