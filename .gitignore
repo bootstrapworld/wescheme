@@ -7,4 +7,4 @@ __pycache__
 static/**/*-min.js
 static/**/*-calc.js
 static/mzscheme-vm/support.js
-codemirror5
+static/codemirror5/
