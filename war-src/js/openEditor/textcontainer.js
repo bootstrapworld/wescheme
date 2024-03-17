@@ -225,7 +225,7 @@ var WeSchemeTextContainer;
 		offset--; //off-by-one otherwise
 
 		// make sure we're getting the right stylesheet!
-		var stylesheet = document.querySelectorAll('[href="/css/default.css"]')[0].sheet,
+		var stylesheet = document.querySelectorAll('[href="/static/css/default.css"]')[0].sheet,
         name = "highlight" + (currentHighlightNumber+'x');//to prevent overwriting with prefixes
 		currentHighlightNumber++;
             
