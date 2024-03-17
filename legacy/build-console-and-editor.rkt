@@ -7,31 +7,6 @@
          net/url
          (for-syntax racket/base))
 
-(define-runtime-path closure-dir (build-path "node_modules" "google-closure-library" "closure" "goog" ))
-(define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
-(define-runtime-path codemirror-dest-dir (build-path "static" "codemirror"))
-
-;; appengine-sdk installation settings
-(define appengine-version "1.9.98")
-(define appengine-url
-  (format "https://storage.googleapis.com/appengine-sdks/featured/appengine-java-sdk-~a.zip" appengine-version))
-(define appengine-zip-path
-  (build-path "externals" (format "appengine-java-sdk-~a.zip" appengine-version)))
-(define appengine-dir
-  (build-path "lib" (format "appengine-java-sdk-~a" appengine-version)))
-
-;; google-oauth-client installation settings
-(define googauth-version "1.34.1")
-;; We don't download a specific client, we download an assembly zip which has some double-versioning labeling convention
-(define googauth-assembly-version 
-  (format "~a-~a" googauth-version googauth-version))
-(define googauth-url
-  (format "https://repo1.maven.org/maven2/com/google/oauth-client/google-oauth-client-assembly/~a/google-oauth-client-assembly-~a.zip" googauth-version googauth-assembly-version))
-(define googauth-assembly-zip-path
-  (build-path "externals" (format "google-oauth-client-assembly-~a.zip" googauth-assembly-version )))
-(define googauth-dir
-  (build-path "lib" "google-oauth-java-client"))
-
 ;; out-of-date?: path path -> boolean
 ;; Returns true if the target file looks at least as new as the source file.
 (define (out-of-date? source-file target-file)
@@ -108,19 +83,19 @@
                         (string-append "static/js/" dest ".js")))
 
 (define (generate-js-runtime!)
-  (call-system "bash" "./legacy-bin/generate-js-runtime.sh"))
+  (call-system "bash" "./legacy/generate-js-runtime.sh"))
 
 ;; move a fresh copy of CM - and the addons we need - to ./static/codemirror/lib
 (define (update-codemirror-lib!)
-  (unless (directory-exists? codemirror-dest-dir)
-    (make-directory* codemirror-dest-dir))
+  (unless (directory-exists? (build-path ".." "static" "codemirror"))
+    (make-directory* (build-path ".." "static" "codemirror")))
   (call-system "cp" "-r" "./node_modules/codemirror/lib" "./static/codemirror")
   (call-system "mkdir" "-p" "./static/codemirror/addon")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./static/codemirror/addon/edit")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror/addon/runmode"))
 
 (define (nodelibs-installed?)
-  (and (directory-exists? codemirror-src-dir)
+  (and (directory-exists? (build-path "node_modules" "codemirror"))
        (directory-exists? (build-path "node_modules" "google-closure-library"))
        (directory-exists? (build-path "node_modules" "google-closure-compiler"))))
 
@@ -135,7 +110,7 @@
 
 
 (define (update-compiled-libs! new-path old-path)
-  (call-system "bash" "./legacy-bin/update-compiled-files.sh" new-path old-path))
+  (call-system "bash" "./legacy/update-compiled-files.sh" new-path old-path))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (ensure-nodelibs-installed!)
@@ -174,4 +149,4 @@
 
 ;; ######################################################################
 (printf "Compressing JavaScript libraries.  This may take a few minutes, depending if this is the first time this has been run.\n")
-(call-system "racket" "legacy-bin/compress-js.rkt" #;"--quiet" "--permissive" "static")
+(call-system "racket" "legacy/compress-js.rkt" #;"--quiet" "--permissive" "static")
