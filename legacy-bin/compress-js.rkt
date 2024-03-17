@@ -3,7 +3,7 @@
 (require racket/path
          racket/file
          racket/cmdline
-         "closure-compile/main.rkt")
+         "main.rkt")
 
 ;; This program compresses all of the JavaScript files using Closure Compiler,
 ;; with simple optimizations.  All ".js" files (excluding the -min.js files)
