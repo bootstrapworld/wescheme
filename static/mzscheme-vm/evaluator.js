@@ -368,7 +368,7 @@ var Evaluator = (function() {
     };
 
 
-    //FIXME: duplicated code from war-src/js/openEditor/interaction.js,
+    //FIXME: duplicated code from war-src/openEditor/interaction.js,
     //has already caused a problem 
 
 

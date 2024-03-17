@@ -7,7 +7,7 @@ testing=false
 
 echo 'Building support.js:';
 
-pushd war-src/js/js-runtime/ > /dev/null
+pushd war-src/js-runtime/ > /dev/null
 
 if [ -f $target_new ]; then
 	rm -f $target_new 

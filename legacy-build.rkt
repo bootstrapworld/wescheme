@@ -93,15 +93,15 @@
 ;; NOTE: there are some [JSC_UNREACHABLE_CODE] warnings that we are silencing
 (define (build src dest)
   (make-directory* (path-only (string-append "static/js/" dest "-new.js")))
-  ;(fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/js/" src "\n"))
+  ;(fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/" src "\n"))
   (call-system "zsh" "-c"
     (string-append "node ./node_modules/google-closure-compiler/cli.js \
-      --js war-src/js/**/*.js \
+      --js war-src/**/*.js \
       --js node_modules/google-closure-library/**/*.js  \
       --dependency_mode PRUNE \
       --strict_mode_input false \
       --warning_level QUIET \
-      --entry_point ./war-src/js/" src)
+      --entry_point ./war-src/" src)
     #:pipe-output-to (string-append "static/js/" dest "-new.js"))
 
   (update-compiled-libs! (string-append "static/js/" dest "-new.js")
