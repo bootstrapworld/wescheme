@@ -180,7 +180,7 @@ if (typeof(world) === 'undefined') {
                 thing !== undefined &&
                 thing instanceof BaseImage);
     };
-    /*
+    
     // almost certainly dead code
     BaseImage.prototype.updatePinhole = function(x, y) {
         var aCopy = clone(this);
@@ -188,7 +188,7 @@ if (typeof(world) === 'undefined') {
         aCopy.pinholeY = y;
         return aCopy;
     };
-    */
+    
     // return Integer-only height for the getter methods
     BaseImage.prototype.getHeight = function(){
         return Math.round(this.height);
@@ -1042,6 +1042,24 @@ if (typeof(world) === 'undefined') {
         this.width      = img.getWidth();
         this.height     = img.getHeight();
         this.direction  = direction;
+
+        // if it's a vertex-based image, reflect the vertices and
+        // use them to make the flipped image a vertex-based image as well
+        if(img.vertices) {
+            var vs = unzipVertices(img.vertices);
+            var vals = (direction == "horizontal")? vs.xs : vs.ys;
+            var min = Math.min.apply( Math, vals );
+            var max = Math.max.apply( Math, vals );
+            var mid = (max-min) / 2;
+
+            this.vertices = img.vertices.map(function(v){
+                return {
+                    x: (direction == "horizontal")? mid + (mid - v.x) : v.x,
+                    y: (direction == "vertical")?   mid + (mid - v.y) : v.y
+                };
+            });
+        }
+
     };
 
     FlipImage.prototype = heir(BaseImage.prototype);
