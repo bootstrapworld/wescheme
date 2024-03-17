@@ -9,7 +9,7 @@
 
 (define-runtime-path closure-dir (build-path "node_modules" "google-closure-library" "closure" "goog" ))
 (define-runtime-path codemirror-src-dir (build-path "node_modules" "codemirror"))
-(define-runtime-path codemirror-dest-dir (build-path "static" "codemirror5"))
+(define-runtime-path codemirror-dest-dir (build-path "static" "codemirror"))
 
 ;; appengine-sdk installation settings
 (define appengine-version "1.9.98")
@@ -110,14 +110,14 @@
 (define (generate-js-runtime!)
   (call-system "bash" "./legacy-bin/generate-js-runtime.sh"))
 
-;; move a fresh copy of CM - and the addons we need - to ./static/codemirror5/lib
+;; move a fresh copy of CM - and the addons we need - to ./static/codemirror/lib
 (define (update-codemirror-lib!)
   (unless (directory-exists? codemirror-dest-dir)
     (make-directory* codemirror-dest-dir))
-  (call-system "cp" "-r" "./node_modules/codemirror/lib" "./static/codemirror5")
-  (call-system "mkdir" "-p" "./static/codemirror5/addon")
-  (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./static/codemirror5/addon/edit")
-  (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror5/addon/runmode"))
+  (call-system "cp" "-r" "./node_modules/codemirror/lib" "./static/codemirror")
+  (call-system "mkdir" "-p" "./static/codemirror/addon")
+  (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./static/codemirror/addon/edit")
+  (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror/addon/runmode"))
 
 (define (nodelibs-installed?)
   (and (directory-exists? codemirror-src-dir)
@@ -147,7 +147,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (if (out-of-date? "./node_modules/codemirror/lib/codemirror.js"
-                  "./static/codemirror5/lib/codemirror.js")
+                  "./static/codemirror/lib/codemirror.js")
   (begin
     (printf "Updating CodeMirror and copying lib\n")
     (update-codemirror-lib!))
