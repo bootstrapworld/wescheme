@@ -14,16 +14,16 @@ if (typeof(world) === 'undefined') {
 
     // augment: hash hash -> hash
     // Functionally extend a hashtable with another one.
-    var augment = function(o, a) {
+    var augment = function(currentConfig, newConfig) {
 	var oo = {};
-	for (var e in o) {
-	    if (Object.hasOwnProperty.call(o, e)) {
-		oo[e] = o[e];
+	for (var e in currentConfig) {
+	    if (Object.hasOwnProperty.call(currentConfig, e)) {
+		oo[e] = currentConfig[e];
 	    }
 	}
-	for (var e in a) {
-	    if (Object.hasOwnProperty.call(a, e)) {
-		oo[e] = a[e];
+	for (var e in newConfig) {
+	    if (Object.hasOwnProperty.call(newConfig, e)) {
+		oo[e] = newConfig[e];
 	    }
 	}
 	return oo;

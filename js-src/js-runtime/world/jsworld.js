@@ -389,10 +389,15 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 	var config = new world.config.WorldConfig();
 	for(var i = 0; i < handlers.length; i++) {
 	    if (isList(handlers[i])) {
-		attribs = handlers[i];
+			attribs = handlers[i];
 	    }
 	    else if (isHandler(handlers[i])) {
-		config = handlers[i](config);
+	    	try {
+				config = handlers[i](config);
+			} catch (e) {
+				console.error(e);
+				handleError(e);
+			}
 	    }
 	    else if ( types.isWorldConfig(handlers[i]) ) {
 		    handlers[i].startupArgs = helpers.map(expandHandler, handlers[i].startupArgs);
@@ -722,7 +727,6 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 
 
     var handleError = function(e) {
-    	console.log('handling error', e);
     	/*
 		helpers.reportError(e);
 		// When something bad happens, shut down 
@@ -745,23 +749,23 @@ Jsworld.bigBang = function(initWorld, toplevelNode, handlers, theCaller, theRest
 			 }
 			*/
 			if ( types.isSchemeError(e) ) {
-				console.log(1);
+				console.log('scheme error');
 				terminator(e);
 			}
 			else if ( types.isInternalError(e) ) {
-				console.log(2);
+				console.log('internal error');
 				terminator(e);
 			}
 			else if (typeof(e) == 'string') {
-				console.log(3);
+				console.log('generic error');
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e, [])) );
 			}
 			else if (e instanceof Error) {
-				console.log(4);
+				console.log('Error Type error');
 				terminator( types.schemeError(types.incompleteExn(types.exnFail, e.message, [])) );
 			}
 			else {
-				console.log(5);
+				console.log('unknown error type');
 				terminator( types.schemeError(e) );
 			}
 		});

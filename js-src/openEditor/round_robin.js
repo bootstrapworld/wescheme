@@ -81,6 +81,7 @@ goog.require('plt.compiler.compile');
           // if it's a fatal error, log the error and move on
           if(/FATAL ERROR/.test(local_error.toString())){
             logResults(code, JSON.stringify(local_error), "FATAL ERROR");
+            console.error('@',local_error)
             onCompilationFail(onDoneError);
           // otherwise, render the error as usual
           } else{

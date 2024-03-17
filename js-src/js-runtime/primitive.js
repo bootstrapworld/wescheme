@@ -5795,6 +5795,14 @@ PRIMITIVES['step-count?']	= new PrimProc('step-count?', 1, false, false,
 /************************
  *** World Primitives ***
  ************************/
+
+function checkForDuplicateWorldConfig(config, configName, handleString) {
+	if(config.vals[configName]) {
+		var msg = "big-bang already has handler for " + handleString;
+		helpers.raise( types.incompleteExn(types.exnFailContract, msg, []) );   			
+	}
+}
+
 var StopWhen = WorldConfigOption.extend({
 	init: function(handler, last_picture) {
 	    this._super('stop-when');
@@ -5803,6 +5811,8 @@ var StopWhen = WorldConfigOption.extend({
 	},
                                             
   configure: function(config) {
+	  checkForDuplicateWorldConfig(config, 'stop-when', 'stop-when');
+	  checkForDuplicateWorldConfig(config, 'last-picture', 'last-picture');
       var newVals = {
         stopWhen: this.handler,
         lastPicture: this.last_picture
@@ -5820,10 +5830,11 @@ var OnTickBang = WorldConfigOption.extend({
 	},
 
 	configure: function(config) {
+   	   checkForDuplicateWorldConfig(config, 'onTick', 'on-tick');
 	    var newVals = { 
-        onTick: this.handler,
-        onTickEffect: this.effectHandler,
-        tickDelay: jsnums.toFixnum(jsnums.multiply(1000, this.aDelay))
+	        onTick: this.handler,
+	        onTickEffect: this.effectHandler,
+	        tickDelay: jsnums.toFixnum(jsnums.multiply(1000, this.aDelay))
 	    };
 	    return config.updateAll(newVals);
 	}});
@@ -5835,6 +5846,7 @@ var ToDraw = WorldConfigOption.extend({
    },
 
    configure: function(config) {
+   	   checkForDuplicateWorldConfig(config, 'onRedraw', 'to-draw');
        return config.updateAll({onRedraw: this.handler});
    }});
 
@@ -5988,6 +6000,7 @@ PRIMITIVES['on-draw'] =
 					this._super('on-draw');
 				    },
 				    configure: function(config) {
+	  				checkForDuplicateWorldConfig(config, 'onDraw', 'on-draw');
 					return config.updateAll({'onDraw': handler});
 				    }
 				}))();
@@ -6004,6 +6017,8 @@ PRIMITIVES['on-draw'] =
 					this._super('on-draw');
 				    },
 				    configure: function(config) {
+	  				checkForDuplicateWorldConfig(config, 'onDraw', 'on-draw');
+	  				checkForDuplicateWorldConfig(config, 'onDrawCss', 'on-draw');
 					return config.updateAll({'onDraw': handler,
 								 'onDrawCss': styleHandler});
 				    }
@@ -6021,6 +6036,7 @@ PRIMITIVES['initial-effect'] =
 				     this._super("initial-effect");
 				 },
 				 configure: function(config) {
+	  				checkForDuplicateWorldConfig(config, 'initialEffect', 'initial-effect');
 					return config.updateAll({'initialEffect': effect});
 				 }
 			     }))();
