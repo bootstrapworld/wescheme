@@ -1542,6 +1542,17 @@ PRIMITIVES['add1'] =
                  });
 
 
+
+PRIMITIVES['negate'] =
+    new PrimProc("negate",
+		 1,
+		 false, false,
+		 function(aState, v) {
+	             check(aState, v, isNumber, 'negate', 'number', 1, arguments);
+	             return jsnums.multiply(v, -1);
+                 });
+
+
 PRIMITIVES['<'] = 
     new PrimProc('<',
 		 2,
