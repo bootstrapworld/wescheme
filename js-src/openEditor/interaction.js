@@ -1204,7 +1204,8 @@ WeSchemeInteractions = (function () {
         if (! anchorBodyDom) {
             anchorBodyDom = document.createTextNode(
                 "at: line " + aLocation.line + 
-                    ", column " + aLocation.column +
+// no longer show column, based on https://github.com/bootstrapworld/wescheme/issues/81                
+//                    ", column " + aLocation.column +
                     ", in " + aLocation.id);
         }
         var para = document.createElement('p');

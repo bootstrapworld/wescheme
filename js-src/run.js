@@ -99,8 +99,8 @@ var myEditor = myEditor || {getScreenreader:function(){return false;}};
 
         var stacktrace = this.evaluator.getTraceFromExn(err);
         for (var i = 0; i < stacktrace.length; i++) {
-          dom.appendChild(document.createTextNode("at: line " + stacktrace[i].line +
-                                                  ", column " + stacktrace[i].column));
+// no longer show column, based on https://github.com/bootstrapworld/wescheme/issues/81                
+          dom.appendChild(document.createTextNode("at: line " + stacktrace[i].line));
         }
         return dom;
     };
