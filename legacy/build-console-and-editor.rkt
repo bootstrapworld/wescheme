@@ -87,9 +87,8 @@
 
 ;; move a fresh copy of CM - and the addons we need - to ./static/codemirror/lib
 (define (update-codemirror-lib!)
-  (unless (directory-exists? (build-path ".." "static" "codemirror"))
-    (make-directory* (build-path ".." "static" "codemirror")))
-  (call-system "cp" "-r" "./node_modules/codemirror/lib" "./static/codemirror/lib")
+  (call-system "mkdir" "-p" "./static/codemirror")
+  (call-system "cp" "-r" "./node_modules/codemirror/lib/" "./static/codemirror/")
   (call-system "mkdir" "-p" "./static/codemirror/addon")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./static/codemirror/addon/edit")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror/addon/runmode"))
