@@ -17,7 +17,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "setup": "python3.11 -m venv env && . ./env/bin/activate && python -m pip install -r requirements.txt && python -c \"import secrets; print(secrets.token_hex(20))\" >secretkey",
-    "build": "./legacy-build.rkt"
+    "build": "./legacy/build-console-and-editor.rkt"
   },
   "repository": {
     "type": "git",

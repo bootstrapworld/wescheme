@@ -88,20 +88,20 @@
     (close-output-port stdout)))
 
 
-;; run the closure compiler with all of war-src and the closure library as possible dependencies,
+;; run the closure compiler with all of js-src and the closure library as possible dependencies,
 ;; using the passed src file as the entry point. Prune dependencies and quiet warnings about strict mode
 ;; NOTE: there are some [JSC_UNREACHABLE_CODE] warnings that we are silencing
 (define (build src dest)
   (make-directory* (path-only (string-append "static/js/" dest "-new.js")))
-  ;(fprintf (current-error-port) (string-append "about to call closure compiler on ./war-src/" src "\n"))
+  ;(fprintf (current-error-port) (string-append "about to call closure compiler on ./js-src/" src "\n"))
   (call-system "zsh" "-c"
     (string-append "node ./node_modules/google-closure-compiler/cli.js \
-      --js war-src/**/*.js \
+      --js js-src/**/*.js \
       --js node_modules/google-closure-library/**/*.js  \
       --dependency_mode PRUNE \
       --strict_mode_input false \
       --warning_level QUIET \
-      --entry_point ./war-src/" src)
+      --entry_point ./js-src/" src)
     #:pipe-output-to (string-append "static/js/" dest "-new.js"))
 
   (update-compiled-libs! (string-append "static/js/" dest "-new.js")
