@@ -89,9 +89,12 @@
 (define (update-codemirror-lib!)
   (call-system "mkdir" "-p" "./static/codemirror")
   (call-system "cp" "-r" "./node_modules/codemirror/lib/" "./static/codemirror/")
-  (call-system "mkdir" "-p" "./static/codemirror/addon")
+  (call-system "mkdir" "-p" "./static/codemirror/addon") ; cherry-pick addons we need
+  (call-system "mkdir" "-p" "./static/codemirror/mode/") ; cherry-pick the scheme mode we need
+  (call-system "cp" "-r" "./node_modules/codemirror/mode/scheme" "./static/codemirror/mode")
   (call-system "cp" "-r" "./node_modules/codemirror/addon/edit/" "./static/codemirror/addon/edit")
-  (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror/addon/runmode"))
+  (call-system "cp" "-r" "./node_modules/codemirror/addon/runmode/" "./static/codemirror/addon/runmode")
+  )
 
 (define (nodelibs-installed?)
   (and (directory-exists? (build-path "node_modules" "codemirror"))

@@ -161,7 +161,7 @@ var initializeWidget = (function () {
             CodeMirror.fromTextArea(textElement,
                                     { matchBrackets: true,
                                       extraKeys: km,
-                                      mode: "scheme2",
+                                      mode: "scheme",
                                       value: "",
                                       lineWrapping: true
                                     });

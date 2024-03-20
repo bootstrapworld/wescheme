@@ -117,7 +117,7 @@ var WeSchemeTextContainer;
 				parent.getDiv(), 
 				{ 
 					theme: (options.theme || "scheme"),
-					mode: "scheme2",
+					mode: "scheme",
 					extraKeys: km,
 					lineNumbers: (typeof (options.lineNumbers) !== undefined? options.lineNumbers :  true),
 					lineWrapping: true,
