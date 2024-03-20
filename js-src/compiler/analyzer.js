@@ -1031,7 +1031,6 @@ plt.compiler = plt.compiler || {};
     var end         = new Date().getTime();
     if(debug){
       console.log("Analyzed in "+(Math.floor(end-start))+"ms");
-//      console.log(pinfo.toString());
     }
     return pinfo;
   };
