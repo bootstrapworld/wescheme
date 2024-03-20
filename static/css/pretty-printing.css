@@ -27,3 +27,7 @@ Define coloring for basic WeScheme types, and re-use them for our CM instances
 /* CM-only stuff */
 .cm-punctuation                 {color: black;}
 .cm-bracket                     {color: black;}
+
+
+div.CodeMirror span.CodeMirror-matchingbracket {background-color: lightgray; color: steelblue !important;}
+div.CodeMirror span.CodeMirror-nonmatchingbracket {background-color: red; color: black; }
