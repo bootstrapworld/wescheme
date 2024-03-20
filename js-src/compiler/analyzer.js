@@ -721,12 +721,12 @@ plt.compiler = plt.compiler || {};
           predicateBinding   = bf(predicateId, false, 1, false, structNameLoc),
           mutatorBinding     = bf(id+"-set!", false, 1, false, structNameLoc),
           refBinding         = bf(id+"-ref", false, 1, false, structNameLoc),
-         // COMMENTED OUT ON PURPOSE:
-         // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
-         //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
-         // AND WOULD YOU BELIEVE IT:
-         //  these symbols aren't exposed by the compiler either (maybe since set! isn't supported?)
-         //        mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
+ // COMMENTED OUT ON PURPOSE:
+ // these symbols are provided by separate definitions that result from desugaring, in keeping with the original compiler's behavior
+ //        selectorBindings   = selectorIds.map(function(id){return bf(id, false, 1, false, that.location)}),
+ // AND WOULD YOU BELIEVE IT:
+ //  these symbols aren't exposed by the compiler either (maybe since set! isn't supported?)
+ //        mutatorBindings    = mutatorIds.map(function(id){return bf(id, false, 2, false, that.location)}),
           // assemble all the bindings together
           bindings = [structureBinding, refBinding, constructorBinding, predicateBinding, mutatorBinding];
       return pinfo.accumulateDefinedBindings(bindings, that.location);
@@ -785,7 +785,7 @@ plt.compiler = plt.compiler || {};
     var url = window.location.protocol+"//"+window.location.host
               + (getWeSchemeModule(moduleName)?  "/loadProject?publicId="+(getWeSchemeModule(moduleName))
                                               : "/js/mzscheme-vm/collects/"+moduleName+".js");
-
+ console.log(url);
     // if the module is already loaded, we can just process without loading
     if(window.COLLECTIONS && window.COLLECTIONS[moduleName]){
       processModule(moduleName);
@@ -967,7 +967,7 @@ plt.compiler = plt.compiler || {};
     }
     var binding = env.lookup_context(this.val);
     if(binding){
-        console.log(binding)
+        console.log
       this.bindingLoc = binding.loc; //  keep track of where this symbol was bound
       return pinfo.accumulateBindingUse(binding, pinfo);
     } else {
@@ -1002,20 +1002,9 @@ plt.compiler = plt.compiler || {};
       return programs.reduce((function(pinfo, p){ return p.analyzeUses(pinfo, pinfo.env); })
                              , pinfo);
     }
-    //var pinfo1 = collectDefinitions(programs, pinfo);
-    //var pinfo2 = collectProvides(programs, pinfo1);
-    //return analyzeUses(programs, pinfo2);
-
-    return programs.reduce(
-        (function(pinfo, p){ 
-            uses_pinfo    = p.analyzeUses(pinfo, pinfo.env);
-            console.log(uses_pinfo);
-            defines_pinfo = p.collectDefinitions(uses_pinfo, uses_pinfo.env)
-            console.log(defines_pinfo);
-            provides_pinfo= p.collectProvides(defines_pinfo, defines_pinfo.env);
-            return provides_pinfo;
-        })
-        , pinfo);
+    var pinfo1 = collectDefinitions(programs, pinfo);
+    var pinfo2 = collectProvides(programs, pinfo1);
+    return analyzeUses(programs, pinfo2);
  }
  
  /////////////////////
