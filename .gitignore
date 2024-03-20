@@ -3,3 +3,8 @@ node_modules
 package-lock.json
 secretkey
 __pycache__
+.DS_Store
+static/**/*-min.js
+static/**/*-calc.js
+static/mzscheme-vm/support.js
+static/codemirror/

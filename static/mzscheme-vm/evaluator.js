@@ -182,12 +182,17 @@ var Evaluator = (function() {
         this.compileProgram(programName, code,
                             function(responseText) {
                                 var result = JSON.parse(responseText);
-		                that._onCompilationSuccess((0,eval)('(' + result.bytecode + ')'), 
+		                        that._onCompilationSuccess((0,eval)('(' + result.bytecode + ')'), 
 					                   onDone, onDoneError);
                             },
                             function(responseErrorText) {
-		                that._onCompilationFailure(JSON.parse(responseErrorText || '""'),
-					                   onDoneError);
+                                try {
+                                    var structuredError = JSON.parse(responseErrorText || '""');
+                                    that._onCompilationFailure(structuredError, onDoneError);
+                                } catch (e) {
+                                    console.error('Could not parse error JSON\n',responseErrorText);
+                                    that._onCompilationFailure(responseErrorText, onDoneError);
+                                }
                             })
     };
 
@@ -368,7 +373,7 @@ var Evaluator = (function() {
     };
 
 
-    //FIXME: duplicated code from war-src/js/openEditor/interaction.js,
+    //FIXME: duplicated code from js-src/openEditor/interaction.js,
     //has already caused a problem 
 
 

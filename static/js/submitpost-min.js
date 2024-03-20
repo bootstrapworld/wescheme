@@ -1,1 +1,0 @@
-function submitPost(a,c,d){var b=document.createElement("form");b.action=a;b.method="POST";if(c)for(var e in c)a=document.createElement("input"),a.type="hidden",a.name=e,a.value=c[e],b.appendChild(a);d&&d.target&&(b.target=d.target);document.body.appendChild(b);b.submit()};
