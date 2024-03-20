@@ -162,6 +162,8 @@ StructType = function(name, type, numberOfArgs, numberOfFields, firstField,
 StructType.prototype.toString = function() {
 	return '#<struct-type:' + this.name + '>';
 };
+StructType.prototype.toWrittenString = StructType.prototype.toString;
+StructType.prototype.toDisplayedString = StructType.prototype.toString;
 StructType.prototype.isEqual = function(other, aUnionFind) {
 	return this === other;
 };
@@ -530,10 +532,8 @@ Symbol.prototype.isEqual = function(other, aUnionFind) {
 Symbol.prototype.toString = function() {
     return this.val;
 };
-Symbol.prototype.toWrittenString = function(cache) {
-    return this.val;
-};
-Symbol.prototype.toDisplayedString = this.toWrittenString;
+Symbol.prototype.toWrittenString = Symbol.prototype.toString;
+Symbol.prototype.toDisplayedString = Symbol.prototype.toString;
 Symbol.prototype.toDomNode = function(cache) {
 	var dom = simpleToDomNode(this.toString(), 
 							"wescheme-symbol", 
@@ -887,6 +887,8 @@ var JsObject = function(name, obj) {
 JsObject.prototype.toString = function() {
 	return '#<js-object:' + typeof(this.obj) + ':' + this.name + '>';
 };
+JsObject.prototype.toWrittenString = JsObject.prototype.toString;
+JsObject.prototype.toDisplayedString = JsObject.prototype.toString;
 JsObject.prototype.isEqual = function(other, aUnionFind) {
 	return (this.obj === other.obj);
 };
@@ -902,6 +904,8 @@ var WorldConfig = function(startup, shutdown, args) {
 WorldConfig.prototype.toString = function() {
 	return '#<world-config>';
 };
+WorldConfig.prototype.toWrittenString = WorldConfig.prototype.toString;
+WorldConfig.prototype.toDisplayedString = WorldConfig.prototype.toString;
 WorldConfig.prototype.isEqual = function(other, aUnionFind) {
 	if ( ! isEqual(this.startup, other.startup, aUnionFind) ||
 	     ! isEqual(this.shutdown, other.shutdown, aUnionFind) ||
@@ -1292,6 +1296,7 @@ var liftToplevelToFunctionValue = function(primitiveF,
 	    return "#<function:" + name + ">";
 	};
 	lifted.toDomNode = function() {
+		console.log('inside lifted')
 		return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", name + ", a function");
 	};
 	lifted.toDisplayedString = lifted.toWrittenString;
@@ -1341,18 +1346,24 @@ var UndefinedValue = function() {
 UndefinedValue.prototype.toString = function() {
     return "#<undefined>";
 };
+UndefinedValue.prototype.toWrittenString = UndefinedValue.prototype.toString;
+UndefinedValue.prototype.toDisplayedString = UndefinedValue.prototype.toString;
 var UNDEFINED_VALUE = new UndefinedValue();
 
 var VoidValue = function() {};
 VoidValue.prototype.toString = function() {
 	return "#<void>";
 };
+VoidValue.prototype.toWrittenString = VoidValue.prototype.toString;
+VoidValue.prototype.toDisplayedString = VoidValue.prototype.toString;
 var VOID_VALUE = new VoidValue();
 
 var EofValue = function() {};
 EofValue.prototype.toString = function() {
 	return "#<eof>";
 }
+EofValue.prototype.toWrittenString = EofValue.prototype.toString;
+EofValue.prototype.toDisplayedString = EofValue.prototype.toString;
 var EOF_VALUE = new EofValue();
 var ClosureValue = function(name, locs, numParams, paramTypes, isRest, closureVals, body) {
     this.name = name;
@@ -1371,6 +1382,8 @@ ClosureValue.prototype.toString = function() {
 		return "#<function>";
     }
 };
+ClosureValue.prototype.toWrittenString = ClosureValue.prototype.toString;
+ClosureValue.prototype.toDisplayedString = ClosureValue.prototype.toString;
 ClosureValue.prototype.toDomNode = function () {
 	return simpleToDomNode(this.toString(), "wescheme-primproc", 
 		this.name === Empty.EMPTY? "anonymous function" : this.name + ", a function");
@@ -1386,6 +1399,8 @@ CaseLambdaValue.prototype.toString = function() {
 		return "#<case-lambda-procedure>";
     }
 };
+CaseLambdaValue.prototype.toWrittenString = CaseLambdaValue.prototype.toString;
+CaseLambdaValue.prototype.toDisplayedString = CaseLambdaValue.prototype.toString;
 var ContinuationClosureValue = function(vstack, cstack) {
     this.name = false;
     this.vstack = vstack.slice(0);
@@ -1399,6 +1414,8 @@ ContinuationClosureValue.prototype.toString = function() {
 		return "#<function>";
     }
 };
+ContinuationClosureValue.prototype.toWrittenString = ContinuationClosureValue.prototype.toString;
+ContinuationClosureValue.prototype.toDisplayedString = ContinuationClosureValue.prototype.toString;
 ContinuationClosureValue.prototype.toDomNode = function () {
 	return simpleToDomNode(this.toWrittenString(), "wescheme-primproc", 
 		this.name === Empty.EMPTY? "anonymous function" : this.name + ", a function");
