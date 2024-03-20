@@ -17,12 +17,13 @@ canvas.replOutput * {padding-left: 0px; clear: none;}
 /************************************************
 Define coloring for basic WeScheme types, and re-use them for our CM instances 
 */
-.wescheme-string,     .cm-scheme-string    {color: green; font-weight: 900;} /* max-bold for strings */
-.wescheme-number,     .cm-scheme-number    {color: blue; }
-.wescheme-boolean,    .cm-scheme-boolean   {color: darkred;}
-.wescheme-symbol,     .cm-scheme-symbol    {color: steelblue;}
-.wescheme-character,  .cm-scheme-character {color: orange !important;} /* render delimeters in char literals as char */
-.wescheme-comment,    .cm-scheme-comment   {color: #bd2bbd !important; } /* render delimeters in comments as comments */
+.wescheme-string,     .cm-string    {color: green; font-weight: 900;} /* max-bold for strings */
+.wescheme-number,     .cm-number    {color: blue; }
+.wescheme-boolean,    .cm-boolean   {color: darkred;}
+.wescheme-symbol,     .cm-builtin  {color: steelblue;}
+.wescheme-character,  .cm-character {color: orange !important;} /* render delimeters in char literals as char */
+.wescheme-comment,    .cm-comment   {color: #bd2bbd !important; } /* render delimeters in comments as comments */
+.cm-variable                    {color: steelblue;}
 /* CM-only stuff */
-span.cm-scheme-punctuation                 {color: black;}
-span.cm-scheme-rparen                      {color: black;}
+.cm-punctuation                 {color: black;}
+.cm-bracket                     {color: black;}
